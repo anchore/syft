@@ -294,3 +294,67 @@ Available formats:
 		})
 	}
 }
+
+func Test_deduplicateStdoutOutputs(t *testing.T) {
+	tests := []struct {
+		name         string
+		inputs       []sbomWriterDescription
+		expectedLen  int
+		expectedLast string
+	}{
+		{
+			name: "single stdout unchanged",
+			inputs: []sbomWriterDescription{
+				{Format: dummyFormat("cyclonedx-json"), Path: ""},
+			},
+			expectedLen:  1,
+			expectedLast: "cyclonedx-json",
+		},
+		{
+			name: "two stdout outputs keeps last",
+			inputs: []sbomWriterDescription{
+				{Format: dummyFormat("syft-table"), Path: ""},
+				{Format: dummyFormat("cyclonedx-json"), Path: ""},
+			},
+			expectedLen:  1,
+			expectedLast: "cyclonedx-json",
+		},
+		{
+			name: "three stdout outputs keeps last",
+			inputs: []sbomWriterDescription{
+				{Format: dummyFormat("syft-table"), Path: ""},
+				{Format: dummyFormat("cyclonedx-json"), Path: ""},
+				{Format: dummyFormat("spdx-json"), Path: ""},
+			},
+			expectedLen:  1,
+			expectedLast: "spdx-json",
+		},
+		{
+			name: "stdout and file both kept",
+			inputs: []sbomWriterDescription{
+				{Format: dummyFormat("syft-table"), Path: ""},
+				{Format: dummyFormat("cyclonedx-json"), Path: "/tmp/out.json"},
+			},
+			expectedLen:  2,
+			expectedLast: "syft-table",
+		},
+		{
+			name: "two stdout and one file keeps last stdout and file",
+			inputs: []sbomWriterDescription{
+				{Format: dummyFormat("syft-table"), Path: ""},
+				{Format: dummyFormat("cyclonedx-json"), Path: ""},
+				{Format: dummyFormat("spdx-json"), Path: "/tmp/out.json"},
+			},
+			expectedLen:  2,
+			expectedLast: "cyclonedx-json",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := deduplicateStdoutOutputs(tt.inputs)
+			assert.Len(t, got, tt.expectedLen)
+			assert.Equal(t, tt.expectedLast, string(got[len(got)-1].Format.ID()))
+		})
+	}
+}
