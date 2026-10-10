@@ -83,6 +83,16 @@ const nativeImageMissingSymbolsError = "one or more symbols are missing from the
 const nativeImageInvalidIndexError = "parsing the executable file generated an invalid index"
 const nativeImageMissingExportedDataDirectoryError = "exported data directory is missing"
 
+// nativeImageSbomSymbolNames are the three symbols an ELF native image must define for fetchPkgs to find
+// its SBOM. All three are required, so one missing from every string table is enough to skip the binary.
+var nativeImageSbomSymbolNames = []string{nativeImageSbomSymbol, nativeImageSbomLengthSymbol, nativeImageSbomVersionSymbol}
+
+// nativeImageStringTableChunk is how much of a string table mayHoldSbomSymbols reads at a time. The scan
+// of a binary allocates this once, however many tables it has or how large they are, and it is the
+// cataloger's whole per-binary cost beyond parsing the ELF headers, so it is kept small: a 16KB read is
+// still far fewer calls than one per symbol.
+const nativeImageStringTableChunk = 16 * intFile.KB
+
 // nativeImageMaxDecompressedSbomSize bounds the decompressed SBOM rather than the compressed bytes,
 // since gzip turns a few kilobytes into gigabytes. Real SBOMs run to single-digit MB even at 20k
 // components, and decoding costs several times that again in graph allocation.
@@ -305,6 +315,14 @@ func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, relationships []artifa
 	var sbomLength elf.Symbol
 	var svmVersion elf.Symbol
 
+	// the symbol tables are the expensive part of this cataloger: debug/elf materializes one elf.Symbol and
+	// one string per entry, and it is asked to for every ELF executable in a scan. Look for the three names
+	// in the string tables first, which streams through a fixed buffer, so a binary that cannot carry an
+	// SBOM never has its symbols loaded.
+	if !ni.mayHoldSbomSymbols() {
+		return nil, nil, errors.New(nativeImageMissingSymbolsError)
+	}
+
 	si, err := ni.getSymbols()
 	if err != nil {
 		return nil, nil, err
@@ -343,6 +361,94 @@ func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, relationships []artifa
 	}
 
 	return decompressSbom(data, sbomLocation, lengthLocation)
+}
+
+// mayHoldSbomSymbols reports whether the symbol tables getSymbols would load can name all three SBOM
+// symbols, by scanning the string tables those symbol tables link to. debug/elf resolves a symbol's name
+// as the bytes from its st_name offset up to the next NUL, so a name followed by a NUL that appears in no
+// string table is the name of no symbol, and a NUL-terminated match anywhere in the table is enough: the
+// linker may store a short name as the tail of a longer one, so nothing can be required of the bytes before
+// it. The same two tables debug/elf reads are scanned, the first SHT_SYMTAB and the first SHT_DYNSYM, each
+// through the string table its Link names, exactly as Symbols and DynamicSymbols resolve them.
+//
+// A string table this cannot read, or a file with no symbol table to scan, answers true: whatever is wrong
+// with the file is getSymbols' to report, the same way it did before this check existed.
+func (ni nativeImageElf) mayHoldSbomSymbols() bool {
+	found := make(map[string]bool, len(nativeImageSbomSymbolNames))
+	var scanner *nameScanner // made on the first table, so a binary with none costs nothing here
+	scanned := false
+	for _, typ := range []elf.SectionType{elf.SHT_SYMTAB, elf.SHT_DYNSYM} {
+		symtab := ni.file.SectionByType(typ)
+		if symtab == nil {
+			continue
+		}
+		// the same bound debug/elf's stringTable applies; a table it would refuse to read holds no names
+		if symtab.Link == 0 || symtab.Link >= uint32(len(ni.file.Sections)) {
+			continue
+		}
+		if scanner == nil {
+			scanner = newNameScanner(nativeImageSbomSymbolNames, nativeImageStringTableChunk)
+		}
+		if err := scanner.scan(ni.file.Sections[symtab.Link].Open(), found); err != nil {
+			return true
+		}
+		scanned = true
+	}
+	if !scanned {
+		return true
+	}
+	for _, name := range nativeImageSbomSymbolNames {
+		if !found[name] {
+			return false
+		}
+	}
+	return true
+}
+
+// nameScanner looks for a fixed set of NUL-terminated names in a stream, through one buffer it keeps
+// across scans. The buffer is the scan's only allocation, whatever the size of the tables: this is what
+// makes it cheaper than the symbol load it guards, which allocates in proportion to the number of symbols.
+type nameScanner struct {
+	names   []string
+	needles [][]byte
+	longest int
+	buf     []byte
+}
+
+func newNameScanner(names []string, chunk int) *nameScanner {
+	s := &nameScanner{names: names, needles: make([][]byte, len(names))}
+	for i, name := range names {
+		s.needles[i] = []byte(name + "\x00")
+		s.longest = max(s.longest, len(s.needles[i]))
+	}
+	s.buf = make([]byte, chunk+s.longest)
+	return s
+}
+
+// scan streams r through the buffer and marks each name it meets in found. The tail of every chunk is
+// carried into the next, so a name that straddles a chunk boundary is still seen whole.
+func (s *nameScanner) scan(r io.Reader, found map[string]bool) error {
+	carry := 0
+	for {
+		n, err := io.ReadFull(r, s.buf[carry:])
+		window := s.buf[:carry+n]
+		for i, needle := range s.needles {
+			if !found[s.names[i]] && bytes.Contains(window, needle) {
+				found[s.names[i]] = true
+			}
+		}
+		if err == nil {
+			// keep one byte less than the longest needle: a needle ending flush with the window was found
+			// above, and nothing longer than that can be hidden in the tail
+			carry = copy(s.buf, window[len(window)-(s.longest-1):])
+			continue
+		}
+		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+			// the table ended; everything it held has been scanned
+			return nil
+		}
+		return err
+	}
 }
 
 // getSymbols obtains the union of the symbols in the .symtab and .dynsym sections of the ELF file
