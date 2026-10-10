@@ -9,21 +9,24 @@ import (
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/cataloger/certificate"
 	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 )
 
 type Config struct {
-	Selection  file.Selection     `yaml:"selection" json:"selection" mapstructure:"selection"`
-	Hashers    []crypto.Hash      `yaml:"hashers" json:"hashers" mapstructure:"hashers"`
-	Content    filecontent.Config `yaml:"content" json:"content" mapstructure:"content"`
-	Executable executable.Config  `yaml:"executable" json:"executable" mapstructure:"executable"`
+	Selection    file.Selection     `yaml:"selection" json:"selection" mapstructure:"selection"`
+	Hashers      []crypto.Hash      `yaml:"hashers" json:"hashers" mapstructure:"hashers"`
+	Content      filecontent.Config `yaml:"content" json:"content" mapstructure:"content"`
+	Executable   executable.Config  `yaml:"executable" json:"executable" mapstructure:"executable"`
+	Certificates certificate.Config `yaml:"certificates" json:"certificates" mapstructure:"certificates"`
 }
 
 type configMarshaledForm struct {
-	Selection file.Selection     `yaml:"selection" json:"selection" mapstructure:"selection"`
-	Hashers   []string           `yaml:"hashers" json:"hashers" mapstructure:"hashers"`
-	Content   filecontent.Config `yaml:"content" json:"content" mapstructure:"content"`
+	Selection    file.Selection      `yaml:"selection" json:"selection" mapstructure:"selection"`
+	Hashers      []string            `yaml:"hashers" json:"hashers" mapstructure:"hashers"`
+	Content      filecontent.Config  `yaml:"content" json:"content" mapstructure:"content"`
+	Certificates *certificate.Config `yaml:"certificates,omitempty" json:"certificates,omitempty" mapstructure:"certificates"`
 }
 
 func DefaultConfig() Config {
@@ -32,10 +35,11 @@ func DefaultConfig() Config {
 		log.WithFields("error", err).Warn("unable to create file hashers")
 	}
 	return Config{
-		Selection:  file.FilesOwnedByPackageSelection,
-		Hashers:    hashers,
-		Content:    filecontent.DefaultConfig(),
-		Executable: executable.DefaultConfig(),
+		Selection:    file.FilesOwnedByPackageSelection,
+		Hashers:      hashers,
+		Content:      filecontent.DefaultConfig(),
+		Executable:   executable.DefaultConfig(),
+		Certificates: certificate.DefaultConfig(),
 	}
 }
 
@@ -43,6 +47,9 @@ func (cfg Config) MarshalJSON() ([]byte, error) {
 	marshaled := configMarshaledForm{
 		Selection: cfg.Selection,
 		Hashers:   hashersToString(cfg.Hashers),
+	}
+	if cfg.Certificates.Enabled {
+		marshaled.Certificates = &cfg.Certificates
 	}
 	return json.Marshal(marshaled)
 }
@@ -67,6 +74,9 @@ func (cfg *Config) UnmarshalJSON(data []byte) error {
 	}
 	cfg.Selection = marshaled.Selection
 	cfg.Hashers = hashers
+	if marshaled.Certificates != nil {
+		cfg.Certificates = *marshaled.Certificates
+	}
 	return nil
 }
 
