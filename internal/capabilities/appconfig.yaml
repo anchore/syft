@@ -40,6 +40,8 @@ application: # AUTO-GENERATED - application-level config keys
     description: search for go package licences by retrieving the package from a network proxy
   - key: golang.use-packages-lib
     description: use the golang.org/x/tools/go/packages library, which executes golang tooling found on the path in addition to potential network access to get the most accurate results
+  - key: java.maven-exclude-scopes
+    description: Maven dependency scopes to leave out when cataloging the dependencies declared in pom.xml files (e.g. test, provided). dependencies without an explicit scope are treated as 'compile'. by default no scopes are excluded
   - key: java.maven-local-repository-dir
     description: override the default location of the local Maven repository. the default is the subdirectory '.m2/repository' in your home directory
   - key: java.maven-url

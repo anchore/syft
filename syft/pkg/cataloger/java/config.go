@@ -33,6 +33,10 @@ type ArchiveCatalogerConfig struct {
 	// ResolveTransitiveDependencies enables resolving transitive dependencies for java packages found within archives.
 	// app-config: java.resolve-transitive-dependencies
 	ResolveTransitiveDependencies bool `yaml:"resolve-transitive-dependencies" json:"resolve-transitive-dependencies" mapstructure:"resolve-transitive-dependencies"`
+
+	// MavenExcludeScopes lists the Maven dependency scopes (e.g. test, provided) whose dependencies are not cataloged from pom.xml files. Dependencies without an explicit scope are treated as compile scope. When empty, dependencies of every scope are cataloged.
+	// app-config: java.maven-exclude-scopes
+	MavenExcludeScopes []string `yaml:"maven-exclude-scopes" json:"maven-exclude-scopes" mapstructure:"maven-exclude-scopes"`
 }
 
 func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
@@ -72,6 +76,11 @@ func (j ArchiveCatalogerConfig) WithMavenBaseURL(input string) ArchiveCatalogerC
 
 func (j ArchiveCatalogerConfig) WithResolveTransitiveDependencies(resolveTransitiveDependencies bool) ArchiveCatalogerConfig {
 	j.ResolveTransitiveDependencies = resolveTransitiveDependencies
+	return j
+}
+
+func (j ArchiveCatalogerConfig) WithMavenExcludeScopes(scopes []string) ArchiveCatalogerConfig {
+	j.MavenExcludeScopes = scopes
 	return j
 }
 
