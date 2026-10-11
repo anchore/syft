@@ -2054,6 +2054,19 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// note: custom snippet of the byte sequence reported for Chrome for Testing 153.
+			// The original binary was not available here.
+			logicalFixture: "chrome/153.0.8010.12/linux-amd64",
+			expected: pkg.Package{
+				Name:      "chrome",
+				Version:   "153.0.8010.12",
+				Type:      "binary",
+				PURL:      "pkg:generic/chrome@153.0.8010.12",
+				Locations: locations("chrome"),
+				Metadata:  metadata("chrome-binary"),
+			},
+		},
+		{
 			logicalFixture: "firefox/151.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "firefox",
