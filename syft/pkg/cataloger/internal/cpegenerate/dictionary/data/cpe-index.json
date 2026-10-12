@@ -2439,11 +2439,17 @@
       "@backstage/plugin-catalog-backend": [
         "cpe:2.3:a:linuxfoundation:backstage\\/plugin-catalog-backend-module-unprocessed:*:*:*:*:*:node.js:*:*"
       ],
+      "@backstage/plugin-catalog-unprocessed-entities": [
+        "cpe:2.3:a:linuxfoundation:backstage\\/plugin-catalog-unprocessed-entities:*:*:*:*:*:node.js:*:*"
+      ],
       "@backstage/plugin-catalog-unprocessed-entities-common": [
         "cpe:2.3:a:linuxfoundation:backstage\\/plugin-catalog-unprocessed-entities-common:*:*:*:*:*:node.js:*:*"
       ],
       "@backstage/plugin-scaffolder-backend": [
         "cpe:2.3:a:linuxfoundation:backstage\\/plugin-scaffolder-backend:*:*:*:*:*:*:*:*"
+      ],
+      "@backstage/plugin-scaffolder-backend-module-sentry": [
+        "cpe:2.3:a:linuxfoundation:backstage\\/plugin-scaffolder-backend-module-sentry:*:*:*:*:*:node.js:*:*"
       ],
       "@backstage/plugin-techdocs": [
         "cpe:2.3:a:linuxfoundation:\\@backstage\\/plugin-techdocs:*:*:*:*:*:node.js:*:*"
