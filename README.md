@@ -87,8 +87,11 @@ Check out our [contributing overview](https://oss.anchore.com/docs/contributing/
 
 
 
-<p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/">
+<p>
   Syft development is sponsored by <a href="https://anchore.com/">Anchore</a>, and is released under the <a href="https://github.com/anchore/syft?tab=Apache-2.0-1-ov-file">Apache-2.0 License</a>.
+  Copyright Anchore, Inc.
+</p>
+<p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/">
   The <a property="dct:title" rel="cc:attributionURL" href="https://anchore.com/wp-content/uploads/2024/11/syft-logo.svg">Syft logo</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://anchore.com/">Anchore</a> is licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt=""></a>
 </p>
 
