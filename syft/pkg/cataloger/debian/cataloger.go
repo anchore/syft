@@ -18,8 +18,8 @@ func NewDBCataloger() pkg.Cataloger {
 		WithProcessors(dependency.Processor(dbEntryDependencySpecifier))
 }
 
-// NewArchiveCataloger returns a new Debian package cataloger object capable of parsing .deb archive files
+// NewArchiveCataloger returns a new Debian package cataloger object capable of parsing .deb and .ipk (opkg) archive files
 func NewArchiveCataloger() pkg.Cataloger {
 	return generic.NewCataloger("deb-archive-cataloger").
-		WithParserByGlobs(parseDebArchive, "**/*.deb")
+		WithParserByGlobs(parseDebArchive, "**/*.deb", "**/*.ipk")
 }

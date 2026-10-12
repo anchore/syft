@@ -1,9 +1,16 @@
 package ai
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal/tmpdir"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -137,4 +144,43 @@ func TestGGUFCataloger(t *testing.T) {
 				TestCataloger(t, NewGGUFCataloger())
 		})
 	}
+}
+
+func TestGGUFCataloger_ociLayers(t *testing.T) {
+	// a GGUF OCI artifact is merged into one named package, while the other
+	// application/vnd.docker.ai.* layers (config, model.file, license and
+	// safetensors weights) never reach the GGUF parser.
+	named := newTestGGUFBuilder().
+		withStringKV("general.architecture", "llama").
+		withStringKV("general.name", "llama3-8b").
+		build()
+	part := newTestGGUFBuilder().withStringKV("general.architecture", "llama").build()
+
+	dir := t.TempDir()
+	layers := map[string]fileresolver.LayerInfo{}
+	for digest, l := range map[string]struct {
+		mediaType string
+		content   []byte
+	}{
+		"sha256:named":   {dockerAIGGUFMediaType, named},
+		"sha256:part":    {dockerAIGGUFMediaType, part},
+		"sha256:config":  {dockerAIModelConfigMediaTypes[0], []byte("not a gguf file")},
+		"sha256:file":    {dockerAIModelFileMediaType, []byte("not a gguf file")},
+		"sha256:license": {dockerAILicenseMediaType, []byte("not a gguf file")},
+		"sha256:weights": {dockerAISafeTensorsMediaType, []byte("not a gguf file")},
+	} {
+		p := filepath.Join(dir, digest[len("sha256:"):])
+		require.NoError(t, os.WriteFile(p, l.content, 0o600))
+		layers[digest] = fileresolver.LayerInfo{TempPath: p, MediaType: l.mediaType}
+	}
+	resolver := fileresolver.NewContainerImageModel(dir, layers, "example/model:latest")
+	ctx := tmpdir.WithValue(context.Background(), tmpdir.FromPath(t.TempDir()))
+
+	pkgs, _, err := NewGGUFCataloger().Catalog(ctx, resolver)
+	require.NoError(t, err)
+	require.Len(t, pkgs, 1)
+	assert.Equal(t, "llama3-8b", pkgs[0].Name)
+	header, ok := pkgs[0].Metadata.(pkg.GGUFFileHeader)
+	require.True(t, ok)
+	assert.Len(t, header.Parts, 1)
 }

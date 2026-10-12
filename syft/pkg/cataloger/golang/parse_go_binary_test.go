@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
@@ -30,6 +31,8 @@ import (
 
 // make will run the default make target for the given test fixture path
 func runMakeTarget(t *testing.T, fixtureName string) {
+	// the fixture binaries are built inside linux containers
+	testutils.SkipWithoutLinuxContainers(t)
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
 	fixtureDir := filepath.Join(cwd, "testdata/", fixtureName)

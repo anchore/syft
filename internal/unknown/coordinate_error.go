@@ -183,6 +183,10 @@ func visitErrors(err error, fn func(error) error) error {
 	// unwrap singly wrapped errors
 	if e, ok := err.(interface{ Unwrap() error }); ok {
 		wrapped := e.Unwrap()
+		if wrapped == nil {
+			// nothing is wrapped (e.g. a sync.PanicError with a non-error value), so this is a leaf
+			return fn(err)
+		}
 		got := visitErrors(wrapped, fn)
 		if got == nil {
 			return nil

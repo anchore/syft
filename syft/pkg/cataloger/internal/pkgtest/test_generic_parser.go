@@ -24,6 +24,7 @@ import (
 	"github.com/anchore/syft/internal/cmptest"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/relationship"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -150,9 +151,11 @@ func (p *CatalogTester) FromFile(t *testing.T, path string) *CatalogTester {
 
 	fixture, err := os.Open(path)
 	require.NoError(t, err)
+	// parsers don't own the reader (the generic cataloger closes it), so close it here
+	t.Cleanup(func() { _ = fixture.Close() })
 
 	p.reader = file.LocationReadCloser{
-		Location:   file.NewVirtualLocationFromDirectory(fixture.Name(), fixture.Name(), *stereofile.NewFileReference(stereofile.Path(absPath))),
+		Location:   file.NewVirtualLocationFromDirectory(filepath.ToSlash(fixture.Name()), filepath.ToSlash(fixture.Name()), *stereofile.NewFileReference(stereofile.Path(absPath))),
 		ReadCloser: fixture,
 	}
 	return p
@@ -201,6 +204,7 @@ func (p *CatalogTester) WithImageResolver(t *testing.T, fixtureName string) *Cat
 		return p
 	}
 
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", fixtureName)
 
 	s := stereoscopesource.New(img, stereoscopesource.ImageConfig{

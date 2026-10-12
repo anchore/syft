@@ -28,9 +28,9 @@ import (
 
 const (
 	safetensorsLayerMediaType = "application/vnd.docker.ai.safetensors"
-	// 8 MB matches maxHeaderBytes in the OCI model source. Real model headers
-	// are well under 1 MB; the extra slack covers outliers.
-	fetchBytes = 8 * 1024 * 1024
+	// matches maxSafeTensorsHeaderBytes in the OCI model source (8 MB header
+	// cap plus the 8-byte length prefix). Real model headers are well under 1 MB.
+	fetchBytes = 8*1024*1024 + 8
 )
 
 func main() {

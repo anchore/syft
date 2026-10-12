@@ -1,0 +1,54 @@
+version = 1
+requires-python = ">=3.9"
+
+[[package]]
+name = "forkdemo"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "pandas", version = "2.3.3", marker = "python_full_version < '3.11'" },
+    { name = "pandas", version = "3.0.6", marker = "python_full_version >= '3.11'" },
+]
+
+[package.optional-dependencies]
+legacy = [
+    { name = "numpy", version = "1.26.4" },
+]
+
+[[package]]
+name = "numpy"
+version = "1.26.4"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "numpy"
+version = "2.2.6"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "numpy"
+version = "2.4.6"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "numpy"
+version = "2.5.3"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "pandas"
+version = "2.3.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "1.26.4", marker = "python_full_version < '3.10'" },
+    { name = "numpy", version = "2.2.6", marker = "python_full_version == '3.10.*'" },
+]
+
+[[package]]
+name = "pandas"
+version = "3.0.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.4.6", marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.3", marker = "python_full_version >= '3.12'" },
+]

@@ -132,6 +132,26 @@ func Test_packageURL(t *testing.T) {
 			},
 			expect: "pkg:maven/parent/example-java-app-maven@0.1.0",
 		},
+		{
+			// regression for github.com/anchore/syft/issues/5311
+			name: "groovy 4 without pom metadata",
+			pkg: pkg.Package{
+				Name:     "groovy",
+				Version:  "4.0.33",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
+					VirtualPath: "groovy-4.0.33.jar",
+					Manifest: &pkg.JavaManifest{
+						Main: []pkg.KeyValue{
+							{Key: "Bundle-SymbolicName", Value: "groovy"},
+							{Key: "Automatic-Module-Name", Value: "org.apache.groovy.core"},
+						},
+					},
+				},
+			},
+			expect: "pkg:maven/org.apache.groovy/groovy@4.0.33",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.expect, func(t *testing.T) {
@@ -144,6 +164,7 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 	tests := []struct {
 		name     string
 		pkgName  string
+		version  string
 		metadata pkg.JavaArchive
 		expect   string
 	}{
@@ -219,6 +240,38 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 			expect:   "org.apache.derby",
 		},
 		{
+			// regression for github.com/anchore/syft/issues/5311: groovy 4+ moved to org.apache.groovy, but
+			// jars without pom metadata fall through to the known package list, which keeps the codehaus-era
+			// coordinates. The map must also beat the per-module Automatic-Module-Name in the manifest.
+			name:    "known package list groovy 4 beats the manifest",
+			pkgName: "groovy",
+			version: "4.0.33",
+			metadata: pkg.JavaArchive{
+				Manifest: &pkg.JavaManifest{
+					Main: []pkg.KeyValue{
+						{Key: "Bundle-SymbolicName", Value: "groovy"},
+						{Key: "Automatic-Module-Name", Value: "org.apache.groovy.core"},
+					},
+				},
+			},
+			expect: "org.apache.groovy",
+		},
+		{
+			// modules only published under the apache coordinates would otherwise take the group ID
+			// from the per-module Automatic-Module-Name (org.apache.groovy.ginq)
+			name:    "known package list apache-only groovy module",
+			pkgName: "groovy-ginq",
+			version: "4.0.33",
+			metadata: pkg.JavaArchive{
+				Manifest: &pkg.JavaManifest{
+					Main: []pkg.KeyValue{
+						{Key: "Automatic-Module-Name", Value: "org.apache.groovy.ginq"},
+					},
+				},
+			},
+			expect: "org.apache.groovy",
+		},
+		{
 			name: "java manifest",
 			metadata: pkg.JavaArchive{
 				Manifest: &pkg.JavaManifest{
@@ -241,7 +294,7 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expect, groupIDFromJavaMetadata(tt.pkgName, tt.metadata))
+			assert.Equal(t, tt.expect, groupIDFromJavaMetadata(tt.pkgName, tt.version, tt.metadata))
 		})
 	}
 }

@@ -156,32 +156,12 @@ func hasElfDynFlag1(f *elf.File, flag elf.DynFlag1) bool {
 }
 
 func hasElfDynTag(f *elf.File, tag elf.DynTag) bool {
-	// source https://github.com/golang/go/blob/9b4b3e5acca2dabe107fa2c3ed963097d78a4562/src/cmd/cgo/internal/testshared/shared_test.go#L280
-
-	ds := f.SectionByType(elf.SHT_DYNAMIC)
-	if ds == nil {
-		return false
-	}
-	d, err := ds.Data()
+	vals, err := f.DynValue(tag)
 	if err != nil {
+		log.WithFields("error", err).Trace("unable to read dynamic section from elf file")
 		return false
 	}
-
-	for len(d) > 0 {
-		var t elf.DynTag
-		switch f.Class {
-		case elf.ELFCLASS32:
-			t = elf.DynTag(f.ByteOrder.Uint32(d[0:4]))
-			d = d[8:]
-		case elf.ELFCLASS64:
-			t = elf.DynTag(f.ByteOrder.Uint64(d[0:8]))
-			d = d[16:]
-		}
-		if t == tag {
-			return true
-		}
-	}
-	return false
+	return len(vals) > 0
 }
 
 func isELFPIE(f *elf.File) bool {

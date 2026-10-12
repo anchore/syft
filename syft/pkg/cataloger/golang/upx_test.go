@@ -2,10 +2,15 @@ package golang
 
 import (
 	"bytes"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 )
 
 // every case here is one the magic scan must reject, asserted on parseUPXInfo's errNotUPX result.
@@ -103,4 +108,35 @@ func TestParseUPXInfo_ValidHeader(t *testing.T) {
 	assert.Equal(t, uint8(14), info.version)
 	assert.Equal(t, uint8(22), info.format)
 	assert.Equal(t, uint32(0x100000), info.originalSize)
+}
+
+// TestImageSmallUPXNeedsLoaderPadding checks the fixture rather than the code. UPX pads to a 4 byte
+// boundary before its loader stub, and the cataloger tests over image-small-upx only catch an unpacker that
+// ignores that padding if there is some. A build that needs none passes either way, which is how the bug
+// went unnoticed. The case without padding is covered by TestDecompressUPX_TailExtentsArePlacedPastTheLoader.
+func TestImageSmallUPXNeedsLoaderPadding(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
+	img := imagetest.GetFixtureImage(t, "docker-archive", "image-small-upx")
+	rc, err := img.OpenPathFromSquash(stereoscopeFile.Path("/run-me"))
+	require.NoError(t, err)
+	data, err := io.ReadAll(rc)
+	require.NoError(t, rc.Close())
+	require.NoError(t, err)
+
+	r := bytes.NewReader(data)
+	info, err := parseUPXInfo(r, int64(len(data)))
+	require.NoError(t, err)
+	require.NotZero(t, info.loaderSize, "real UPX output carries a loader stub")
+
+	// walk the first run of extents to the end marker in front of the stub
+	extentsEnd := info.firstBlockOff
+	for blockNum := 0; ; blockNum++ {
+		block, _, err := readChainBlock(r, extentsEnd, blockNum, info.inputLen)
+		require.NoError(t, err)
+		if block == nil {
+			break
+		}
+		extentsEnd = block.dataOffset + int64(block.compressedSize)
+	}
+	require.NotZero(t, extentsEnd%4, "the fixture no longer needs padding: change the version string in its Dockerfile")
 }

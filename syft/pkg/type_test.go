@@ -126,6 +126,10 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: LuaRocksPkg,
 		},
 		{
+			purl:     "pkg:cpan/URI@5.35?author=OALDERS",
+			expected: CpanPkg,
+		},
+		{
 			purl:     "pkg:swift/github.com/apple/swift-numerics/swift-numerics@1.0.2",
 			expected: SwiftPkg,
 		},

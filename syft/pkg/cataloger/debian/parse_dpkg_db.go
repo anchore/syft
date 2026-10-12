@@ -183,9 +183,11 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (*dpkgExtractedMetadata, error) 
 	}
 
 	sourceName, sourceVersion := extractSourceVersion(raw.Source)
+	if sourceName != "" {
+		raw.Source = sourceName
+	}
 	if sourceVersion != "" {
 		raw.SourceVersion = sourceVersion
-		raw.Source = sourceName
 	}
 
 	if raw.Package == "" {
@@ -263,8 +265,14 @@ func extractAllFields(reader *bufio.Reader) (map[string]any, error) {
 }
 
 // If the source entry string is of the form "<name> (<version>)" then parse and return the components, if
-// of the "<name>" form, then return name and nil
+// of the "<name>" form, then return name and nil. Yocto (opkg/ipk) instead writes the bitbake recipe filename
+// ("<name>_<version>.bb"), which is split the same way.
 func extractSourceVersion(source string) (string, string) {
+	if recipe, ok := strings.CutSuffix(source, ".bb"); ok && !strings.ContainsAny(recipe, " (") {
+		// bitbake reserves "_" as the recipe name / version separator
+		name, version, _ := strings.Cut(recipe, "_")
+		return name, version
+	}
 	// special handling for the Source field since it has formatted data
 	match := internal.MatchNamedCaptureGroups(sourceRegexp, source)
 	return match["name"], match["version"]

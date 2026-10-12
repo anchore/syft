@@ -1,7 +1,6 @@
 package golang
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"go/build"
@@ -21,6 +20,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
+	"github.com/anchore/syft/syft/internal/windows"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
@@ -39,7 +39,12 @@ func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 
 // parseGoModFile takes a go.mod and tries to resolve and lists all packages discovered.
 func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (pkgs []pkg.Package, relationships []artifact.Relationship, err error) {
-	modDir := filepath.Dir(string(reader.Location.Reference().RealPath))
+	realPath := string(reader.Location.Reference().RealPath)
+	if windows.HostRunningOnWindows() {
+		// directory resolvers hand back volume-encoded posix paths (/c/...), the go toolchain needs the native path
+		realPath = windows.FromPosix(realPath)
+	}
+	modDir := filepath.Dir(realPath)
 	digests, err := parseGoSumFile(resolver, reader)
 	if err != nil {
 		log.Debugf("unable to get go.sum: %v", err)
@@ -437,7 +442,7 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 	// github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 	// github.com/BurntSushi/toml v0.4.1 h1:GaI7EiDXDRfa8VshkTj7Fym7ha+y8/XxIgD2okUIjLw=
 	// github.com/BurntSushi/toml v0.4.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
-	scanner := bufio.NewScanner(contents)
+	scanner := internal.NewLineScanner(contents)
 	// optionally, resize scanner's capacity for lines over 64K, see next example
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -448,6 +453,9 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 		nameVersion := fmt.Sprintf("%s %s", parts[0], parts[1])
 		hash := parts[2]
 		out[nameVersion] = hash
+	}
+	if err := scanner.Err(); err != nil {
+		return out, fmt.Errorf("unable to read go.sum: %w", err)
 	}
 
 	return out, nil

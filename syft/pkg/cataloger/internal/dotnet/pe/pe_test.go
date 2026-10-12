@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
@@ -199,6 +200,7 @@ func fixtureResolvers(t *testing.T, fixtures ...string) map[string]file.Resolver
 			continue
 		}
 
+		testutils.SkipWithoutLinuxContainers(t)
 		img := imagetest.GetFixtureImage(t, "docker-archive", fixture)
 
 		s := stereoscopesource.New(img, stereoscopesource.ImageConfig{

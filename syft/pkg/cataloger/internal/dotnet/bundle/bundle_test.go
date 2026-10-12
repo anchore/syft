@@ -16,7 +16,7 @@ import (
 func fileWithSignatureAt(size, sigStart int, headerOffset uint64) []byte {
 	data := make([]byte, size)
 	binary.LittleEndian.PutUint64(data[sigStart-8:sigStart], headerOffset)
-	copy(data[sigStart:], dotNetBundleSignature)
+	copy(data[sigStart:], dotNetBundleSignature[:])
 	return data
 }
 
@@ -74,7 +74,7 @@ func TestFindBundleHeaderOffset(t *testing.T) {
 		{
 			// there is no room for the 8-byte header offset before the signature
 			name:        "signature too close to the start to carry an offset",
-			data:        append(append([]byte{0, 0}, dotNetBundleSignature...), make([]byte, 32)...),
+			data:        append(append([]byte{0, 0}, dotNetBundleSignature[:]...), make([]byte, 32)...),
 			searchLimit: 128,
 		},
 		{
@@ -294,4 +294,137 @@ func TestFindDepsJSONInManifest_PlausibleEntryCountIsWalked(t *testing.T) {
 	got, err := findDepsJSONInManifest(readSeekCloser{bytes.NewReader(buf.Bytes())}, 2, 1)
 	require.NoError(t, err)
 	assert.Empty(t, got, "no deps.json entry in this manifest")
+}
+
+// A windowed search only gives the same answer as reading the file whole if a marker lying across a
+// window boundary - or one whose header offset lies across it - is still matched. These are the offsets
+// where an overlap that is absent, too small, or applied to the wrong end of the buffer goes wrong.
+func TestFindBundleHeaderOffset_MarkerAcrossWindowBoundary(t *testing.T) {
+	const window = markerSearchWindowSize
+	const headerOffset = 0x1234
+	size := window + 4096
+
+	for _, tt := range []struct {
+		name     string
+		sigStart int
+	}{
+		{"whole marker inside the first window", window - 4096},
+		{"header offset split across the boundary", window - 4},
+		{"header offset ends exactly at the boundary", window},
+		{"signature split one byte into the second window", window - len(dotNetBundleSignature) + 1},
+		{"signature split down the middle", window - len(dotNetBundleSignature)/2},
+		{"signature starts one byte before the boundary", window - 1},
+		{"whole marker inside the second window", window + 2048},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			data := fileWithSignatureAt(size, tt.sigStart, headerOffset)
+
+			got, err := findBundleHeaderOffset(readSeekCloser{bytes.NewReader(data)}, int64(size))
+
+			require.NoError(t, err)
+			assert.Equal(t, int64(headerOffset), got)
+		})
+	}
+}
+
+// recordingReader records the largest single read it is asked for. The search buffer is what bounds
+// that length, so this is what fails if the implementation ever sizes a buffer against the file again.
+type recordingReader struct {
+	*bytes.Reader
+	largestRead int
+}
+
+func (r *recordingReader) ReadAt(p []byte, off int64) (int, error) {
+	if len(p) > r.largestRead {
+		r.largestRead = len(p)
+	}
+	return r.Reader.ReadAt(p, off)
+}
+
+func (*recordingReader) Close() error { return nil }
+
+// Holding an executable at its full size to look for 32 bytes is what made this the largest single
+// consumer of memory in a scan of a Windows volume, so the bound matters more than the result here.
+func TestFindBundleHeaderOffset_ReadsAreBoundedByTheWindow(t *testing.T) {
+	size := 5 * markerSearchWindowSize
+	data := fileWithSignatureAt(size, size-1024, 0x1234)
+	r := &recordingReader{Reader: bytes.NewReader(data)}
+
+	got, err := findBundleHeaderOffset(r, int64(size))
+
+	require.NoError(t, err)
+	require.Equal(t, int64(0x1234), got, "the marker must still be found at the far end of the file")
+	assert.LessOrEqual(t, r.largestRead, markerSearchWindowSize,
+		"no single read may exceed the search window, whatever the file's size")
+}
+
+// Every window after the first begins with bytes already searched. Re-reporting a match from that
+// overlap would be harmless, but failing to advance past it would spin forever.
+func TestFindBundleHeaderOffset_UnmarkedFileTerminates(t *testing.T) {
+	for _, size := range []int{
+		markerSearchWindowSize - 1,
+		markerSearchWindowSize,
+		markerSearchWindowSize + 1,
+		markerSearchWindowSize + markerSearchOverlap,
+		3 * markerSearchWindowSize,
+	} {
+		got, err := findBundleHeaderOffset(readSeekCloser{bytes.NewReader(make([]byte, size))}, int64(size))
+
+		require.NoError(t, err)
+		assert.Zero(t, got)
+	}
+}
+
+// lateShortReader reads cleanly until shortFrom and only then hands back fewer bytes than were asked for.
+// shortReader above comes up short on its very first read, which the search answers before it has slid at
+// all; the reader running out partway through a windowed search is a different branch.
+type lateShortReader struct {
+	*bytes.Reader
+	shortFrom int64 // a read starting here or beyond stops after shortLen bytes
+	shortLen  int
+}
+
+func (r *lateShortReader) ReadAt(p []byte, off int64) (int, error) {
+	if off < r.shortFrom || len(p) <= r.shortLen {
+		return r.Reader.ReadAt(p, off)
+	}
+
+	n, _ := r.Reader.ReadAt(p[:r.shortLen], off)
+	return n, io.EOF
+}
+
+func (*lateShortReader) Close() error { return nil }
+
+// A squashfs block that decompresses short makes unionreader return fewer bytes than were asked for, and
+// nothing says that lands in the first window. Whatever the search did get still has to be searched, and the
+// bytes the reader never produced have to end it rather than being read as a file with no bundle in it.
+func TestFindBundleHeaderOffset_ShortReadAfterASlideSearchesWhatWasRead(t *testing.T) {
+	const window = markerSearchWindowSize
+	const shortLen = 4096 // what the second window gets before the reader gives up
+	const headerOffset = 0x1234
+	size := 2*window + 8192
+
+	for _, tt := range []struct {
+		name     string
+		sigStart int
+		want     int64
+	}{
+		{"marker inside the bytes the second window did get", window + 1024, headerOffset},
+		{"marker straddling the boundary into those bytes", window - 4, headerOffset},
+		{"marker beyond where the reader gave up", window + shortLen + 1024, 0},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			// honest about its length: only the read past the first window comes up short
+			r := &lateShortReader{
+				Reader:    bytes.NewReader(fileWithSignatureAt(size, tt.sigStart, headerOffset)),
+				shortFrom: window,
+				shortLen:  shortLen,
+			}
+
+			got, err := findBundleHeaderOffset(r, int64(size))
+
+			require.NoError(t, err, "a reader that runs out is not a parse failure")
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }

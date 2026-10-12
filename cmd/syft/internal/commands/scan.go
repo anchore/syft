@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"strings"
@@ -180,6 +181,10 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return err
+	}
+	// output files are opened up front; release them if we bail out before writing
+	if c, ok := writer.(io.Closer); ok {
+		defer func() { _ = c.Close() }()
 	}
 
 	sources := opts.From

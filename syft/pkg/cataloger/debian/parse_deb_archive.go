@@ -2,6 +2,7 @@ package debian
 
 import (
 	"archive/tar"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -23,18 +24,27 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// parseDebArchive parses a Debian package archive (.deb) file and returns the packages it contains.
-// A .deb file is an ar archive containing three main files:
-// - debian-binary: Version of the .deb format (usually "2.0")
+// parseDebArchive parses a Debian package archive (.deb) or opkg package (.ipk) file and returns the packages it
+// contains. Both are ar archives containing three main files:
+// - debian-binary: Version of the archive format (usually "2.0")
 // - control.tar.gz/xz/zst: Contains package metadata (control file, md5sums, conffiles)
 // - data.tar.gz/xz/zst: Contains the actual files to be installed (not processed by this cataloger)
 //
-// This function extracts and processes the control information to create package metadata.
+// This function extracts and processes the control information to create package metadata. Licenses come
+// from copyright files in the data tar, falling back to the control file's License field (common for .ipk).
+// Only ar-framed .ipk files are supported; the older gzipped-tar framing (e.g. OpenWrt's ipkg-build) is
+// rejected as an invalid archive.
 func parseDebArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	arReader := ar.NewReader(reader)
+	validatedReader, err := newValidatedArReader(reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid ar archive: %w", err)
+	}
+
+	arReader := ar.NewReader(validatedReader)
 
 	var metadata *pkg.DpkgArchiveEntry
 	var licenses []string
+	var ctrlLicenses []string
 	var unknownErr error
 	var sawControl, sawData bool
 	for {
@@ -56,7 +66,7 @@ func parseDebArchive(ctx context.Context, _ file.Resolver, _ *generic.Environmen
 			if err != nil {
 				return nil, nil, unknown.New(reader.Location, fmt.Errorf("failed to decompress control.tar.* file: %w", err))
 			}
-			metadata, err = processControlTar(dcReader)
+			metadata, ctrlLicenses, err = processControlTar(dcReader)
 			switch {
 			case err != nil && metadata == nil:
 				return nil, nil, unknown.New(reader.Location, fmt.Errorf("failed to process control.tar.* file: %w", err))
@@ -85,6 +95,10 @@ func parseDebArchive(ctx context.Context, _ file.Resolver, _ *generic.Environmen
 
 	if metadata == nil {
 		return nil, nil, unknown.New(reader.Location, fmt.Errorf("no application found described in .dpkg archive"))
+	}
+
+	if len(licenses) == 0 && len(ctrlLicenses) > 0 {
+		licenses = ctrlLicenses
 	}
 
 	// a partial parse still yields a usable package, so report what went wrong alongside it rather than
@@ -128,10 +142,10 @@ func processDataTar(dcReader io.ReadCloser) ([]string, error) {
 }
 
 // processControlTar always returns whatever metadata it managed to parse, even alongside a non-nil
-// error. A non-nil error with non-nil metadata means the package is usable but incomplete (e.g. a
-// clipped file listing); nil metadata means nothing usable was found and the caller should treat it
-// as fatal.
-func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
+// error, along with any licenses declared in the control file's License field. A non-nil error with
+// non-nil metadata means the package is usable but incomplete (e.g. a clipped file listing); nil
+// metadata means nothing usable was found and the caller should treat it as fatal.
+func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, []string, error) {
 	defer internal.CloseAndLogError(dcReader, "")
 
 	tarReader := tar.NewReader(dcReader)
@@ -140,6 +154,7 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 	var files []pkg.DpkgFileRecord
 	var confFileRecords []pkg.DpkgFileRecord
 	var listingErr error
+	var licenses []string
 
 	for {
 		header, err := tarReader.Next()
@@ -147,7 +162,7 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 			break
 		}
 		if err != nil {
-			return metadata, fmt.Errorf("failed to read control tar: %w", err)
+			return metadata, nil, fmt.Errorf("failed to read control tar: %w", err)
 		}
 
 		switch filepath.Base(header.Name) {
@@ -155,12 +170,13 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 			// parseDpkgStatus already streams via bufio.Reader
 			entries, err := parseDpkgStatus(tarReader)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse control file: %w", err)
+				return nil, nil, fmt.Errorf("failed to parse control file: %w", err)
 			}
 			if len(entries) == 0 {
-				return nil, fmt.Errorf("no package entries found in control file")
+				return nil, nil, fmt.Errorf("no package entries found in control file")
 			}
 			entry := pkg.DpkgArchiveEntry(entries[0].toDpkgEntry())
+			licenses = declaredLicenseValues(entries[0].License)
 			metadata = &entry
 		case "md5sums":
 			// parseDpkgMD5Info streams via bufio.Scanner and reports its own clipping/scan errors
@@ -176,7 +192,7 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 	}
 
 	if metadata == nil {
-		return nil, fmt.Errorf("control file not found in archive")
+		return nil, nil, fmt.Errorf("control file not found in archive")
 	}
 
 	if len(confFileRecords) > 0 && len(files) > 0 {
@@ -195,7 +211,22 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 
 	// a clipped or unreadable file listing leaves the package usable, so hand both back and let the
 	// caller decide
-	return metadata, listingErr
+	return metadata, licenses, listingErr
+}
+
+// newValidatedArReader checks for the ar global header before handing the stream to the ar reader, which
+// otherwise skips those bytes unchecked and reads garbage headers from non-ar input.
+func newValidatedArReader(reader io.ReadCloser) (io.ReadCloser, error) {
+	prefix := make([]byte, len(ar.GLOBAL_HEADER))
+	if _, err := io.ReadFull(reader, prefix); err != nil {
+		return nil, fmt.Errorf("failed to read ar header: %w", err)
+	}
+
+	if !bytes.Equal(prefix, []byte(ar.GLOBAL_HEADER)) {
+		return nil, fmt.Errorf("expected ar header %q, got %q", string(ar.GLOBAL_HEADER), string(prefix))
+	}
+
+	return io.NopCloser(io.MultiReader(bytes.NewReader(prefix), reader)), nil
 }
 
 // a .deb's member sizes are bounded by the archive, but what they decompress to is not: xz and zstd

@@ -327,7 +327,7 @@ func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest
 // findLicenseFromJavaMetadata attempts to find license information from all available maven metadata properties and pom info
 func (j *archiveParser) findLicenseFromJavaMetadata(ctx context.Context, groupID, artifactID, version string, parsedPom *parsedPomProject, manifest *pkg.JavaManifest) []pkg.License {
 	if groupID == "" {
-		if gID := groupIDFromJavaMetadata(artifactID, pkg.JavaArchive{Manifest: manifest}); gID != "" {
+		if gID := groupIDFromJavaMetadata(artifactID, version, pkg.JavaArchive{Manifest: manifest}); gID != "" {
 			groupID = gID
 		}
 	}
@@ -786,7 +786,7 @@ func newPackageFromMavenData(ctx context.Context, r *maven.Resolver, pomProperti
 	vPathSuffix := ""
 	groupID := ""
 	if parentMetadata, ok := parentPkg.Metadata.(pkg.JavaArchive); ok {
-		groupID = groupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
+		groupID = groupIDFromJavaMetadata(parentPkg.Name, parentPkg.Version, parentMetadata)
 	}
 
 	parentKey := fmt.Sprintf("%s:%s:%s", groupID, parentPkg.Name, parentPkg.Version)
@@ -863,8 +863,8 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	}
 
 	// try to determine identity with the metadata
-	groupID := groupIDFromJavaMetadata(p.Name, metadata)
-	parentGroupID := groupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
+	groupID := groupIDFromJavaMetadata(p.Name, p.Version, metadata)
+	parentGroupID := groupIDFromJavaMetadata(parentPkg.Name, parentPkg.Version, parentMetadata)
 	if uniquePkgKey(groupID, &p) == uniquePkgKey(parentGroupID, parentPkg) {
 		return true
 	}
