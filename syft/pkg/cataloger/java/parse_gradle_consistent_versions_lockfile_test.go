@@ -109,17 +109,20 @@ func Test_parseGradleConsistentVersionsLockfile_requiresLockfileEntrySignature(t
 		"com.example:bare:2.0",
 		"com.example:missing-count:3.0 (constraints: deadbeef)",
 		"com.example:bad-hash:4.0 (1 constraints: not-a-hash)",
+		"com.example:word-hash:4.5 (3 constraints: hash_word)",
 		"[Test dependencies]",
+		"[Unexpected section]",
 		"com.example:test:5.0 (2 constraints: 0123abcd)",
 	}, "\r\n")
 	reader := file.NewLocationReadCloser(file.NewLocation("versions.lock"), io.NopCloser(strings.NewReader(contents)))
 
 	pkgs, _, err := parseGradleConsistentVersionsLockfile(context.Background(), nil, nil, reader)
 	require.NoError(t, err)
-	require.Len(t, pkgs, 2)
+	require.Len(t, pkgs, 3)
 	assert.Equal(t, "valid", pkgs[0].Name)
-	assert.Equal(t, "test", pkgs[1].Name)
-	assert.Equal(t, "test", pkgs[1].Metadata.(pkg.JavaArchive).PomProperties.Scope)
+	assert.Equal(t, "word-hash", pkgs[1].Name)
+	assert.Equal(t, "test", pkgs[2].Name)
+	assert.Equal(t, "test", pkgs[2].Metadata.(pkg.JavaArchive).PomProperties.Scope)
 }
 
 func Test_parseGradleConsistentVersionsLockfile_acceptsHistoricalGeneratedHeaders(t *testing.T) {

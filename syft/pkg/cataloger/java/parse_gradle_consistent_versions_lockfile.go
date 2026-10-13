@@ -20,7 +20,7 @@ var (
 		"# Run ./gradlew writeVersionsLocks to regenerate this file":                                               {},
 		"# Run ./gradlew writeVersionsLocks to regenerate this file. Blank lines are to minimize merge conflicts.": {},
 	}
-	gradleConsistentVersionsLockfileEntry = regexp.MustCompile(`^([^:\s]+):([^:\s]+):([^:\s(]+)\s+\(\d+ constraints: [0-9a-fA-F]+\)$`)
+	gradleConsistentVersionsLockfileEntry = regexp.MustCompile(`^([^:\s]+):([^:\s]+):([^:\s(]+)\s+\(\d+ constraints: \w+\)$`)
 )
 
 // parseGradleConsistentVersionsLockfile parses Palantir gradle-consistent-versions lockfiles (versions.lock),
@@ -52,8 +52,11 @@ func parseGradleConsistentVersionsLockfile(_ context.Context, _ file.Resolver, _
 			continue
 		}
 
+		if line == "[Test dependencies]" {
+			inTestSection = true
+			continue
+		}
 		if strings.HasPrefix(line, "[") {
-			inTestSection = line == "[Test dependencies]"
 			continue
 		}
 
