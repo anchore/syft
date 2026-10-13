@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"context"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -91,11 +93,72 @@ func Test_parseGradleConsistentVersionsLockfile(t *testing.T) {
 
 func Test_parseGradleConsistentVersionsLockfile_lineTooLong(t *testing.T) {
 	// packages before an oversized line are kept, and the scan error is still reported
-	contents := "org.example:before:1.0 (1 constraints: 00000000)\n" + strings.Repeat("a", 2<<20) + "\norg.example:after:2.0 (1 constraints: 00000000)\n"
+	contents := "# Run ./gradlew writeVersionsLocks to regenerate this file\norg.example:before:1.0 (1 constraints: 00000000)\n" + strings.Repeat("a", 2<<20) + "\norg.example:after:2.0 (1 constraints: 00000000)\n"
 	reader := file.NewLocationReadCloser(file.NewLocation("versions.lock"), io.NopCloser(strings.NewReader(contents)))
 
 	pkgs, _, err := parseGradleConsistentVersionsLockfile(context.Background(), nil, nil, reader)
 	require.ErrorIs(t, err, bufio.ErrTooLong)
 	require.Len(t, pkgs, 1)
 	assert.Equal(t, "before", pkgs[0].Name)
+}
+
+func Test_parseGradleConsistentVersionsLockfile_requiresLockfileEntrySignature(t *testing.T) {
+	contents := strings.Join([]string{
+		"# Run ./gradlew writeVersionsLocks to regenerate this file. Blank lines are to minimize merge conflicts.",
+		"com.example:valid:1.0 (1 constraints: deadbeef)",
+		"com.example:bare:2.0",
+		"com.example:missing-count:3.0 (constraints: deadbeef)",
+		"com.example:bad-hash:4.0 (1 constraints: not-a-hash)",
+		"[Test dependencies]",
+		"com.example:test:5.0 (2 constraints: 0123abcd)",
+	}, "\r\n")
+	reader := file.NewLocationReadCloser(file.NewLocation("versions.lock"), io.NopCloser(strings.NewReader(contents)))
+
+	pkgs, _, err := parseGradleConsistentVersionsLockfile(context.Background(), nil, nil, reader)
+	require.NoError(t, err)
+	require.Len(t, pkgs, 2)
+	assert.Equal(t, "valid", pkgs[0].Name)
+	assert.Equal(t, "test", pkgs[1].Name)
+	assert.Equal(t, "test", pkgs[1].Metadata.(pkg.JavaArchive).PomProperties.Scope)
+}
+
+func Test_parseGradleConsistentVersionsLockfile_acceptsHistoricalGeneratedHeaders(t *testing.T) {
+	tests := []string{
+		"# Run ./gradlew --write-locks to regenerate this file",
+		"# Run ./gradlew writeVersionsLock to regenerate this file",
+		"# Run ./gradlew writeVersionsLocks to regenerate this file",
+		"# Run ./gradlew writeVersionsLocks to regenerate this file. Blank lines are to minimize merge conflicts.",
+	}
+
+	for _, header := range tests {
+		t.Run(header, func(t *testing.T) {
+			contents := header + "\r\norg.example:valid:1.0 (1 constraints: deadbeef)\r\n"
+			reader := file.NewLocationReadCloser(file.NewLocation("versions.lock"), io.NopCloser(strings.NewReader(contents)))
+
+			pkgs, _, err := parseGradleConsistentVersionsLockfile(context.Background(), nil, nil, reader)
+			require.NoError(t, err)
+			require.Len(t, pkgs, 1)
+			assert.Equal(t, "valid", pkgs[0].Name)
+		})
+	}
+}
+
+func Test_parseGradleConsistentVersionsLockfile_rejectsUnidentifiedVersionsLock(t *testing.T) {
+	contents := "org.example:valid:1.0 (1 constraints: deadbeef)\r\n"
+	reader := file.NewLocationReadCloser(file.NewLocation("versions.lock"), io.NopCloser(strings.NewReader(contents)))
+
+	pkgs, _, err := parseGradleConsistentVersionsLockfile(context.Background(), nil, nil, reader)
+	require.NoError(t, err)
+	assert.Empty(t, pkgs)
+}
+
+func TestNewGradleLockfileCataloger_ignoresUnidentifiedVersionsLock(t *testing.T) {
+	dir := t.TempDir()
+	contents := "org.example:valid:1.0 (1 constraints: deadbeef)\r\n"
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "versions.lock"), []byte(contents), 0o600))
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, dir).
+		Expects(nil, nil).
+		TestCataloger(t, NewGradleLockfileCataloger())
 }

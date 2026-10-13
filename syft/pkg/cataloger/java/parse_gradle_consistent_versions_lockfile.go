@@ -3,6 +3,7 @@ package java
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -10,6 +11,16 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+)
+
+var (
+	gradleConsistentVersionsLockfileHeader = map[string]struct{}{
+		"# Run ./gradlew --write-locks to regenerate this file":                                                    {},
+		"# Run ./gradlew writeVersionsLock to regenerate this file":                                                {},
+		"# Run ./gradlew writeVersionsLocks to regenerate this file":                                               {},
+		"# Run ./gradlew writeVersionsLocks to regenerate this file. Blank lines are to minimize merge conflicts.": {},
+	}
+	gradleConsistentVersionsLockfileEntry = regexp.MustCompile(`^([^:\s]+):([^:\s]+):([^:\s(]+)\s+\(\d+ constraints: [0-9a-fA-F]+\)$`)
 )
 
 // parseGradleConsistentVersionsLockfile parses Palantir gradle-consistent-versions lockfiles (versions.lock),
@@ -25,12 +36,19 @@ func parseGradleConsistentVersionsLockfile(_ context.Context, _ file.Resolver, _
 
 	scanner := internal.NewLineScanner(reader)
 
+	identified := false
 	inTestSection := false
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
 		// skip empty lines and comments
 		if line == "" || strings.HasPrefix(line, "#") {
+			if _, ok := gradleConsistentVersionsLockfileHeader[line]; ok {
+				identified = true
+			}
+			continue
+		}
+		if !identified {
 			continue
 		}
 
@@ -39,18 +57,12 @@ func parseGradleConsistentVersionsLockfile(_ context.Context, _ file.Resolver, _
 			continue
 		}
 
-		// drop the constraint summary suffix, e.g. " (1 constraints: 38053b3b)"
-		groupNameVersion := strings.Fields(line)[0]
-
-		parts := strings.Split(groupNameVersion, ":")
-		if len(parts) != 3 {
+		parts := gradleConsistentVersionsLockfileEntry.FindStringSubmatch(line)
+		if len(parts) != 4 {
 			continue
 		}
 
-		group, name, version := parts[0], parts[1], parts[2]
-		if group == "" || name == "" || version == "" {
-			continue
-		}
+		group, name, version := parts[1], parts[2], parts[3]
 
 		pkgs = append(pkgs, newGradleConsistentVersionsPackage(reader, group, name, version, inTestSection))
 	}
