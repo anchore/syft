@@ -6,13 +6,14 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math/rand"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/file"
 )
 
 var jarEntriesFixture = map[string]string{
@@ -130,7 +131,7 @@ func TestResolver_add_firstEntryAtAPathWins(t *testing.T) {
 	r.finish()
 
 	assert.Equal(t, "first", readStore(t, r)["a.txt"].body)
-	assert.Len(t, r.files, 1)
+	assert.Equal(t, 1, r.entries)
 }
 
 func TestResolver_pathsAndContents(t *testing.T) {
@@ -252,6 +253,22 @@ func TestResolver_impliedDirectoriesArePathsButNotFiles(t *testing.T) {
 	assert.Empty(t, locations)
 }
 
+// stereoscope finds a directory's children by looking the directory up by name: directories the archive
+// never listed must be indexed, and the root, which has no name, answered another way
+func TestResolver_globsForADirectorysChildren(t *testing.T) {
+	r := resolverOver(t, 1<<20, map[string]string{
+		"LICENSE":                    "root",
+		"META-INF/LICENSE.txt":       "nested",
+		"META-INF/maven/g/a/pom.xml": "deeper",
+	})
+
+	assert.Equal(t, []string{"LICENSE"}, globPaths(t, r, "/*"))
+	assert.Equal(t, []string{"LICENSE"}, globPaths(t, r, "*"))
+	assert.Equal(t, []string{"META-INF/LICENSE.txt"}, globPaths(t, r, "/META-INF/*"))
+	assert.Equal(t, []string{"META-INF/LICENSE.txt"}, globPaths(t, r, "META-INF/*"))
+	assert.Equal(t, []string{"META-INF/maven/g/a/pom.xml"}, globPaths(t, r, "**/a/*"))
+}
+
 func TestResolver_invalidGlobIsAnError(t *testing.T) {
 	r := resolverOver(t, 1<<20, jarEntriesFixture)
 	_, err := r.FilesByGlob("**/[")
@@ -311,14 +328,14 @@ func TestResolver_linksCollapseToOnePath(t *testing.T) {
 			reason:  "collapsing is per file, not per pattern",
 		},
 		{
-			name: "a dangling link keeps its own path",
+			name: "a dangling link is not a file",
 			entries: []testEntry{
 				{name: "opt/real.jar", body: "PK\x03\x04"},
 				{name: "opt/gone.jar", link: "missing.jar"},
 			},
 			pattern: "**/*.jar",
-			want:    []string{"opt/gone.jar", "opt/real.jar"},
-			reason:  "it names no content, so it belongs to no other file's group",
+			want:    []string{"opt/real.jar"},
+			reason:  "it names no content",
 		},
 		{
 			name: "two dangling links are two paths, not one",
@@ -327,8 +344,8 @@ func TestResolver_linksCollapseToOnePath(t *testing.T) {
 				{name: "opt/b.jar", link: "missing.jar"},
 			},
 			pattern: "**/*.jar",
-			want:    []string{"opt/a.jar", "opt/b.jar"},
-			reason:  "nothing resolves them to a common file, so neither may absorb the other",
+			want:    nil,
+			reason:  "a link to nothing is not a file",
 		},
 		{
 			name: "a chain of links collapses onto the file at its end",
@@ -348,8 +365,8 @@ func TestResolver_linksCollapseToOnePath(t *testing.T) {
 				{name: "opt/b.jar", link: "a.jar"},
 			},
 			pattern: "**/*.jar",
-			want:    []string{"opt/a.jar", "opt/b.jar"},
-			reason:  "neither reaches content, so each stands under its own path",
+			want:    nil,
+			reason:  "neither reaches a file",
 		},
 		{
 			name: "a hard link resolves from the archive root, not from its own directory",
@@ -368,60 +385,6 @@ func TestResolver_linksCollapseToOnePath(t *testing.T) {
 			r := resolverFrom(t, tt.entries...)
 			assert.Equal(t, tt.want, globPaths(t, r, tt.pattern), tt.reason)
 		})
-	}
-}
-
-// the choice must not depend on the order the search found the candidates in
-func TestResolver_collapseIgnoresTheOrderItFinds(t *testing.T) {
-	r := resolverFrom(t,
-		testEntry{name: "opt/real.jar", body: "PK\x03\x04"},
-		testEntry{name: "opt/a-sym.jar", link: "real.jar"},
-		testEntry{name: "opt/m-sym.jar", link: "real.jar"},
-		testEntry{name: "opt/z-sym.jar", link: "real.jar"},
-	)
-
-	candidates := []*node{
-		r.byPath["/opt/real.jar"], r.byPath["/opt/a-sym.jar"],
-		r.byPath["/opt/m-sym.jar"], r.byPath["/opt/z-sym.jar"],
-	}
-	for _, n := range candidates {
-		require.NotNil(t, n)
-	}
-
-	rng := rand.New(rand.NewSource(1))
-	for range 64 {
-		rng.Shuffle(len(candidates), func(i, j int) {
-			candidates[i], candidates[j] = candidates[j], candidates[i]
-		})
-
-		found := map[*node]struct{}{}
-		for _, n := range candidates {
-			found[n] = struct{}{}
-		}
-
-		best := onePathPerFile(found)
-		require.Len(t, best, 1, "four paths, one file")
-		assert.Equal(t, "/opt/real.jar", best[0].path, "the file itself must win from any order")
-	}
-
-	// and with the file itself not among the candidates, the lowest-sorting link wins from any order
-	links := candidates[:0:0]
-	for _, n := range candidates {
-		if n.path != "/opt/real.jar" {
-			links = append(links, n)
-		}
-	}
-	for range 64 {
-		rng.Shuffle(len(links), func(i, j int) { links[i], links[j] = links[j], links[i] })
-
-		found := map[*node]struct{}{}
-		for _, n := range links {
-			found[n] = struct{}{}
-		}
-
-		best := onePathPerFile(found)
-		require.Len(t, best, 1)
-		assert.Equal(t, "/opt/a-sym.jar", best[0].path, "the lowest-sorting link must win from any order")
 	}
 }
 
@@ -452,24 +415,21 @@ func TestResolver_collapsedLocationReadsTheTarget(t *testing.T) {
 func TestResolver_danglingLinkHasNoContent(t *testing.T) {
 	r := resolverFrom(t, testEntry{name: "opt/gone.jar", link: "missing.jar"})
 
-	locations, err := r.FilesByGlob("**/*.jar")
-	require.NoError(t, err)
+	var locations []file.Location
+	for l := range r.AllLocations(context.Background()) {
+		locations = append(locations, l)
+	}
 	require.Len(t, locations, 1)
 	assert.Equal(t, "opt/gone.jar", locations[0].RealPath)
 
-	reader, err := r.FileContentsByLocation(locations[0])
-	require.NoError(t, err)
-	body, err := io.ReadAll(reader)
-	require.NoError(t, err)
-	assert.Empty(t, string(body), "a link to nothing holds nothing")
+	_, err := r.FileContentsByLocation(locations[0])
+	assert.Error(t, err, "a link to nothing has no content to read")
 
 	metadata, err := r.FileMetadataByLocation(locations[0])
 	require.NoError(t, err)
-	assert.Equal(t, "opt/missing.jar", metadata.LinkDestination,
-		"where it pointed is still reported, resolved against the link's own directory")
+	assert.Equal(t, "missing.jar", metadata.LinkDestination, "where it pointed is still reported, as the archive named it")
 }
 
-// a link has no content to sniff a type from; the file it points at answers under its own path
 func TestResolver_mimeTypeAnswersOnlyWithFiles(t *testing.T) {
 	r := resolverFrom(t,
 		testEntry{name: "opt/real.jar", body: "PK\x03\x04 zip contents here"},

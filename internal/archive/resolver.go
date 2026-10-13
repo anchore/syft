@@ -17,19 +17,18 @@ import (
 	"github.com/mholt/archives"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/stereoscope/pkg/filetree"
 	intFile "github.com/anchore/syft/internal/file"
-	syftindex "github.com/anchore/syft/internal/index"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/file"
 )
 
 // Resolver is one archive opened as its own filesystem: a file.Resolver over the entries Extract fed
-// into it, holding their content within the scan's limits.
+// into it, holding their content within the scan's limits. Entries are indexed in a stereoscope file
+// tree, the same index the directory and image resolvers search.
 //
-// Paths are archive-relative with no leading slash. Files and directories are indexed by base name and
-// linked into a tree, so a glob is narrowed to the names its segments fix and verified up the parent
-// chain; see glob.go.
+// Paths are archive-relative with no leading slash.
 type Resolver struct {
 	// Digests are of the archive file itself.
 	Digests []file.Digest
@@ -53,34 +52,11 @@ type Resolver struct {
 	written int64
 	chunk   []byte
 
-	// byPath holds every file and directory by rooted path, including directories the archive never
-	// listed but that entry paths imply
-	byPath map[string]*node
-
-	// files holds every file the archive listed, in path order once finished
-	files []*node
-
-	// names and dirs index files and directories by base name, for globs
-	names syftindex.PrefixSuffix[[]*node]
-	dirs  syftindex.PrefixSuffix[[]*node]
-}
-
-type node struct {
-	path     string // rooted, e.g. "/META-INF/MANIFEST.MF"
-	name     string // the last component of path
-	isDir    bool
-	header   *tar.Header // nil for a directory the archive never listed
-	content  blob
-	metadata file.Metadata
-
-	// the tree the paths spell out, so a glob is matched up the chain and a directory's files are
-	// found beneath it
-	parent   *node
-	children []*node
-
-	// target is the node whose content this node reads: itself for a regular file, the resolved node
-	// for a link, and nil for a link that leads nowhere inside this archive
-	target *node
+	tree    *filetree.FileTree
+	index   filetree.Index
+	search  filetree.Searcher // built by finish, once every entry is in the tree
+	content map[stereoscopeFile.ID]*blob
+	entries int // non-directory entries added
 }
 
 var _ file.Resolver = (*Resolver)(nil)
@@ -94,7 +70,9 @@ func newResolver(ctx context.Context, fileSystemID, archivePath string, charge *
 		charge:       charge,
 		budget:       budgetFromContext(ctx),
 		tempDir:      tmpdir.FromContext(ctx),
-		byPath:       map[string]*node{"/": {path: "/", isDir: true}},
+		tree:         filetree.New(),
+		index:        filetree.NewIndex(),
+		content:      map[stereoscopeFile.ID]*blob{},
 	}
 }
 
@@ -108,10 +86,10 @@ func (r *Resolver) Cleanup() {
 	r.charge.release()
 }
 
-// approxIndexBytesPerEntry estimates what holding one node costs beyond its content: the node, its
-// header, and its path map and name index slots. It is charged for every node an entry creates,
-// including the directories its path implies, so an archive of many tiny entries or of a few entries
-// with very deep paths is still bounded by the limits.
+// approxIndexBytesPerEntry estimates what holding one tree node costs beyond its content: the node, its
+// header and metadata, and its index slots. It is charged for every node an entry creates, including
+// the directories its path implies, so an archive of many tiny entries or of a few entries with very
+// deep paths is still bounded by the limits.
 const approxIndexBytesPerEntry = 2 * 1024
 
 func approxIndexBytes(hdr tar.Header) int64 {
@@ -126,42 +104,37 @@ func (r *Resolver) add(hdr tar.Header, content io.Reader) error {
 	if entryPath == "/" {
 		return nil
 	}
-
-	// directories the path implies that do not exist yet are nodes this entry pays for
-	var newDirs int64
-	for i := 1; i < len(entryPath); i++ {
-		if entryPath[i] == '/' {
-			if _, ok := r.byPath[entryPath[:i]]; !ok {
-				newDirs++
-			}
-		}
-	}
-	if !r.chargeIndex(approxIndexBytes(hdr) + newDirs*approxIndexBytesPerEntry) {
-		return ErrDiskLimitReached
-	}
-
-	for i := 1; i < len(entryPath); i++ {
-		if entryPath[i] == '/' {
-			r.nodeAt(entryPath[:i], true)
-		}
-	}
-	_, existed := r.byPath[entryPath]
-	n := r.nodeAt(entryPath, hdr.FileInfo().IsDir())
-	if n.header != nil {
+	if exists, res, _ := r.tree.File(stereoscopeFile.Path(entryPath)); exists && res.HasReference() {
 		return nil
 	}
 
+	// directories the path implies that do not exist yet are nodes this entry pays for
+	var newDirs []string
+	for i := 1; i < len(entryPath); i++ {
+		if entryPath[i] == '/' && !r.tree.HasPath(stereoscopeFile.Path(entryPath[:i])) {
+			newDirs = append(newDirs, entryPath[:i])
+		}
+	}
+	if !r.chargeIndex(approxIndexBytes(hdr) + int64(len(newDirs))*approxIndexBytesPerEntry) {
+		return ErrDiskLimitReached
+	}
+	// indexed as if listed, since a search for a directory's children looks the directory up by name
+	for _, dir := range newDirs {
+		if err := r.store(dir, tar.Header{Name: dir, Typeflag: tar.TypeDir, Mode: 0o755}, &blob{}); err != nil {
+			log.WithFields("entry", hdr.Name, "error", err).Trace("skipping archive entry")
+			return nil
+		}
+	}
+
+	b := &blob{}
 	if hdr.Typeflag == tar.TypeReg && content != nil {
 		// reading one byte past the cap is how an entry over it is told apart from one exactly at it
-		err := r.put(&n.content, io.LimitReader(content, maxEntryBytes+1))
-		if err == nil && n.content.size > maxEntryBytes {
+		err := r.put(b, io.LimitReader(content, maxEntryBytes+1))
+		if err == nil && b.size > maxEntryBytes {
 			err = errEntryTooLarge
 		}
 		if err != nil {
-			r.discard(&n.content)
-			if !existed {
-				delete(r.byPath, entryPath)
-			}
+			r.discard(b)
 			if errors.Is(err, errEntryTooLarge) {
 				r.truncate(fmt.Errorf("an entry was skipped: %w of %s", err, humanize.IBytes(uint64(maxEntryBytes))))
 				return nil
@@ -175,16 +148,43 @@ func (r *Resolver) add(hdr tar.Header, content io.Reader) error {
 		}
 	}
 
-	n.header = &hdr
-	n.metadata = r.metadataOf(n)
-	if n.isDir {
+	if err := r.store(entryPath, hdr, b); err != nil {
+		// a path the tree cannot hold, such as a file beneath another file's name
+		r.discard(b)
+		log.WithFields("entry", hdr.Name, "error", err).Trace("skipping archive entry")
 		return nil
 	}
-	r.files = append(r.files, n)
-	r.names.Update(path.Base(entryPath), func(current *syftindex.Node[[]*node]) []*node {
-		return append(current.Value(), n)
-	})
+	if hdr.Typeflag != tar.TypeDir {
+		r.entries++
+	}
 	return nil
+}
+
+func (r *Resolver) store(entryPath string, hdr tar.Header, b *blob) error {
+	ref, err := r.addToTree(entryPath, hdr)
+	if err != nil {
+		return err
+	}
+	metadata := stereoscopeFile.NewMetadata(hdr, r.open(b))
+	metadata.Path = reportedPath(entryPath)
+	r.index.Add(*ref, metadata)
+	r.content[ref.ID()] = b
+	return nil
+}
+
+func (r *Resolver) addToTree(entryPath string, hdr tar.Header) (*stereoscopeFile.Reference, error) {
+	p := stereoscopeFile.Path(entryPath)
+	switch hdr.Typeflag {
+	case tar.TypeDir:
+		return r.tree.AddDir(p)
+	case tar.TypeSymlink:
+		return r.tree.AddSymLink(p, stereoscopeFile.Path(hdr.Linkname))
+	case tar.TypeLink:
+		// a hard link names its target from the archive root
+		return r.tree.AddHardLink(p, stereoscopeFile.Path(path.Join("/", hdr.Linkname)))
+	default:
+		return r.tree.AddFile(p)
+	}
 }
 
 // maxEntryBytes caps any one entry, as the legacy java extraction did (see intFile.SafeCopy): without it
@@ -212,76 +212,9 @@ func (r *Resolver) chargeIndex(n int64) bool {
 	return r.charge.index(n)
 }
 
-// nodeAt returns the node at a rooted path, creating it under its parent, which must exist already.
-func (r *Resolver) nodeAt(p string, isDir bool) *node {
-	if n, ok := r.byPath[p]; ok {
-		return n
-	}
-	slash := strings.LastIndexByte(p, '/')
-	parentPath := p[:slash]
-	if parentPath == "" {
-		parentPath = "/"
-	}
-	parent := r.byPath[parentPath]
-	n := &node{path: p, name: p[slash+1:], isDir: isDir, parent: parent}
-	parent.children = append(parent.children, n)
-	r.byPath[p] = n
-	if isDir {
-		r.dirs.Update(n.name, func(current *syftindex.Node[[]*node]) []*node {
-			return append(current.Value(), n)
-		})
-	}
-	return n
-}
-
-// finish orders the files and resolves links once every entry is added.
+// finish builds the search context once every entry is added.
 func (r *Resolver) finish() {
-	sort.Slice(r.files, func(i, j int) bool { return r.files[i].path < r.files[j].path })
-	for _, n := range r.byPath {
-		n.target = r.linkTarget(n)
-	}
-}
-
-// maxLinkHops bounds a chain of links pointing at links, which is also what ends a cycle.
-const maxLinkHops = 8
-
-func (r *Resolver) linkTarget(n *node) *node {
-	for hops := 0; hops <= maxLinkHops; hops++ {
-		if n.header == nil || n.isDir {
-			return nil
-		}
-		if n.header.Linkname == "" {
-			return n
-		}
-		next, ok := r.byPath[linkDestination(n.path, n.header.Linkname, n.header.Typeflag == tar.TypeLink)]
-		if !ok {
-			return nil
-		}
-		n = next
-	}
-	return nil
-}
-
-// linkDestination is the rooted path a link points at inside the archive. A hard link names its
-// target from the archive root, as does an absolute symlink, so "/etc/passwd" is an entry of this
-// archive and never the host's. A relative symlink is joined onto the link's own directory, and
-// cleaning against the root keeps "../../x" inside the archive.
-func linkDestination(linkPath, linkname string, hard bool) string {
-	if hard || path.IsAbs(linkname) {
-		return path.Join("/", linkname)
-	}
-	return path.Join(path.Dir(linkPath), linkname)
-}
-
-func (r *Resolver) metadataOf(n *node) file.Metadata {
-	metadata := stereoscopeFile.NewMetadata(*n.header, r.open(&n.content))
-	// NewMetadata copies the header and points FileInfo into the copy; share the one the node holds
-	metadata.FileInfo = n.header.FileInfo()
-	metadata.Path = reportedPath(n.path)
-	if n.header.Linkname != "" {
-		metadata.LinkDestination = reportedPath(linkDestination(n.path, n.header.Linkname, n.header.Typeflag == tar.TypeLink))
-	}
-	return metadata
+	r.search = filetree.NewSearchContext(r.tree, r.index)
 }
 
 // reportedPath is how paths leave the resolver: archive-relative with no leading slash.
@@ -293,136 +226,129 @@ func rootedPath(userPath string) string {
 	return path.Clean("/" + userPath)
 }
 
-func (r *Resolver) coordinates(n *node) file.Coordinates {
-	return file.Coordinates{
-		RealPath:     reportedPath(n.path),
+// location names a resolution: a link is reported at its target's path with the link's own path as
+// the access path.
+func (r *Resolver) location(res stereoscopeFile.Resolution) file.Location {
+	coordinates := file.Coordinates{
+		RealPath:     reportedPath(string(res.RealPath)),
 		FileSystemID: r.fileSystemID,
 		ArchivePath:  r.archivePath,
 	}
-}
-
-// locationOf names a node by its own path.
-func (r *Resolver) locationOf(n *node) file.Location {
-	return file.NewLocationFromCoordinates(r.coordinates(n))
-}
-
-// resolvedLocation names the file behind a node: a link is reported at its target's path with the
-// link's own path as the access path, and a link leading nowhere is reported as itself.
-func (r *Resolver) resolvedLocation(n *node) file.Location {
-	if n.target == nil || n.target == n {
-		return r.locationOf(n)
+	accessPath := reportedPath(string(res.RequestPath))
+	if accessPath == "" || accessPath == coordinates.RealPath {
+		return file.NewLocationFromCoordinates(coordinates)
 	}
-	return file.NewVirtualLocationFromCoordinates(r.coordinates(n.target), reportedPath(n.path))
+	return file.NewVirtualLocationFromCoordinates(coordinates, accessPath)
+}
+
+// resolve finds the file a path names, following links, and reports false for directories and
+// paths the archive never listed.
+func (r *Resolver) resolve(userPath string) (*stereoscopeFile.Resolution, bool) {
+	res, err := r.search.SearchByPath(rootedPath(userPath), filetree.FollowBasenameLinks)
+	if err != nil || res == nil || !res.HasReference() {
+		return nil, false
+	}
+	entry, err := r.index.Get(*res.Reference)
+	if err != nil || entry.IsDir() {
+		return nil, false
+	}
+	return res, true
 }
 
 func (r *Resolver) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
-	n, ok := r.byPath[rootedPath(location.RealPath)]
-	if !ok || n.header == nil {
+	res, ok := r.resolve(location.RealPath)
+	if !ok {
 		return nil, fmt.Errorf("no archive entry for path=%q", location.RealPath)
 	}
-	return entryReader{r.open(&n.content)}, nil
+	return entryReader{r.open(r.content[res.ID()])}, nil
 }
 
 func (r *Resolver) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
-	n, ok := r.byPath[rootedPath(location.RealPath)]
-	if !ok {
+	exists, res, err := r.tree.File(stereoscopeFile.Path(rootedPath(location.RealPath)))
+	if err != nil || !exists || !res.HasReference() {
 		return file.Metadata{}, fmt.Errorf("no archive entry for path=%q", location.RealPath)
 	}
-	return n.metadata, nil
+	entry, err := r.index.Get(*res.Reference)
+	if err != nil {
+		return file.Metadata{}, err
+	}
+	return entry.Metadata, nil
 }
 
 func (r *Resolver) HasPath(userPath string) bool {
-	_, ok := r.byPath[rootedPath(userPath)]
-	return ok
+	return r.tree.HasPath(stereoscopeFile.Path(rootedPath(userPath)))
 }
 
 func (r *Resolver) FilesByPath(paths ...string) ([]file.Location, error) {
 	var out []file.Location
-	seen := map[*node]struct{}{}
+	seen := stereoscopeFile.NewFileReferenceSet()
 	for _, userPath := range paths {
-		n, ok := r.byPath[rootedPath(userPath)]
-		if !ok || n.isDir || n.header == nil {
+		res, ok := r.resolve(userPath)
+		if !ok || seen.Contains(*res.Reference) {
 			continue
 		}
-		if _, dup := seen[n]; dup {
-			continue
-		}
-		seen[n] = struct{}{}
-		out = append(out, r.resolvedLocation(n))
+		seen.Add(*res.Reference)
+		out = append(out, r.location(*res))
 	}
 	return out, nil
 }
 
 func (r *Resolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
-	matched := map[*node]struct{}{}
-	for _, pattern := range patterns {
-		for _, segments := range parseGlob(pattern) {
-			candidates, exact := r.globCandidates(segments)
-			for _, n := range candidates {
-				if !exact {
-					ok, err := matchNode(segments, n)
-					if err != nil {
-						return nil, fmt.Errorf("invalid glob %q: %w", pattern, err)
-					}
-					if !ok {
-						continue
-					}
-				}
-				matched[n] = struct{}{}
-			}
-		}
-	}
-
 	var out []file.Location
-	for _, n := range onePathPerFile(matched) {
-		out = append(out, r.resolvedLocation(n))
-	}
-	sort.Slice(out, func(i, j int) bool {
-		if out[i].RealPath != out[j].RealPath {
-			return out[i].RealPath < out[j].RealPath
+	seen := stereoscopeFile.NewFileReferenceSet()
+	for _, pattern := range patterns {
+		results, err := r.searchByGlob(rootedPath(pattern))
+		if err != nil {
+			return nil, fmt.Errorf("invalid glob %q: %w", pattern, err)
 		}
-		return out[i].AccessPath < out[j].AccessPath
-	})
+		for _, res := range results {
+			if !res.HasReference() || seen.Contains(*res.Reference) {
+				continue
+			}
+			entry, err := r.index.Get(*res.Reference)
+			if err != nil || entry.IsDir() {
+				continue
+			}
+			seen.Add(*res.Reference)
+			out = append(out, r.location(res))
+		}
+	}
+	sortLocations(out)
 	return out, nil
 }
 
-// onePathPerFile keeps one matched path per file. Several paths can name the same content, such as
-// a link and its target, and a resolver answers with one: the file's own path when it matched,
-// otherwise the lowest-sorting link. A link leading nowhere stands as its own file.
-func onePathPerFile(matched map[*node]struct{}) []*node {
-	best := map[*node]*node{}
-	for n := range matched {
-		key := n.target
-		if key == nil {
-			key = n
-		}
-		current, seen := best[key]
-		if !seen || n == key || (current != key && n.path < current.path) {
-			best[key] = n
-		}
+// searchByGlob is the index search, except that stereoscope answers "<dir>/*" by looking the directory
+// up by name and the root has none, so "/*" walks the tree instead.
+func (r *Resolver) searchByGlob(pattern string) ([]stereoscopeFile.Resolution, error) {
+	if pattern == "/*" {
+		return r.tree.FilesByGlob(pattern, filetree.FollowBasenameLinks)
 	}
-	out := make([]*node, 0, len(best))
-	for _, n := range best {
-		out = append(out, n)
-	}
-	return out
+	return r.search.SearchByGlob(pattern, filetree.FollowBasenameLinks)
+}
+
+// sortLocations orders answers by path, which decides how locations group into packages when results
+// merge into the SBOM.
+func sortLocations(locations []file.Location) {
+	sort.Slice(locations, func(i, j int) bool {
+		if locations[i].RealPath != locations[j].RealPath {
+			return locations[i].RealPath < locations[j].RealPath
+		}
+		return locations[i].AccessPath < locations[j].AccessPath
+	})
 }
 
 func (r *Resolver) FilesByMIMEType(types ...string) ([]file.Location, error) {
-	wanted := map[string]struct{}{}
-	for _, t := range types {
-		wanted[t] = struct{}{}
+	results, err := r.search.SearchByMIMEType(types...)
+	if err != nil {
+		return nil, err
 	}
 	var out []file.Location
-	for _, n := range r.files {
-		// only a file holding bytes has a type of its own; a link's target answers for itself
-		if n.target != n {
-			continue
-		}
-		if _, ok := wanted[n.metadata.MIMEType]; ok {
-			out = append(out, r.locationOf(n))
+	for _, res := range results {
+		if res.HasReference() {
+			out = append(out, r.location(res))
 		}
 	}
+	sortLocations(out)
 	return out, nil
 }
 
@@ -439,9 +365,11 @@ func (r *Resolver) AllLocations(ctx context.Context) <-chan file.Location {
 	out := make(chan file.Location)
 	go func() {
 		defer close(out)
-		for _, n := range r.files {
+		refs := r.tree.AllFiles(stereoscopeFile.TypeRegular, stereoscopeFile.TypeSymLink, stereoscopeFile.TypeHardLink)
+		sort.Slice(refs, func(i, j int) bool { return refs[i].RealPath < refs[j].RealPath })
+		for _, ref := range refs {
 			select {
-			case out <- r.locationOf(n):
+			case out <- r.location(stereoscopeFile.Resolution{RequestPath: ref.RealPath, Reference: &ref}):
 			case <-ctx.Done():
 				return
 			}

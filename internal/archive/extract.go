@@ -156,7 +156,7 @@ func (r *Resolver) extract(ctx context.Context, format archives.Extractor, conte
 		r.truncate(fmt.Errorf("extraction stopped, possible decompression bomb: %w", err))
 		return nil
 	}
-	if err != nil && ctx.Err() == nil && len(r.files) > 0 {
+	if err != nil && ctx.Err() == nil && r.entries > 0 {
 		// the stream broke partway (a truncated .tar.gz); what was read before that is still good
 		r.truncate(fmt.Errorf("extraction stopped early: %w", err))
 		return nil

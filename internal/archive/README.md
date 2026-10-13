@@ -59,31 +59,21 @@ Nothing an archive declares is trusted. Content is charged chunk by chunk as it 
 deflate or gzip bomb stops at the disk limit with the entry dropped whole. Every node is charged
 against the memory limit, including directories implied by deep paths, so an archive of millions of
 tiny entries or of a few entries with 4 KiB names stops at the memory limit. Names longer than
-PATH_MAX are refused, link chains stop after `maxLinkHops`, and nesting stops at the task's
+PATH_MAX are refused, and nesting stops at the task's
 `MaxDepth`. See the bomb tests in `extract_test.go`.
 
 ## Lookup
 
-Paths are archive-relative with no leading slash; a leading slash on a query is tolerated. Directories
-implied by entry paths exist for `HasPath` but are never files, and every node is linked to its
-parent and children. The first entry at a path wins over later duplicates.
+Entries are indexed in a stereoscope `filetree.FileTree` + `filetree.Index` and searched with
+`filetree.SearchContext`, the same index the directory and image resolvers use. Paths are
+archive-relative with no leading slash; a leading slash on a query is tolerated. Directories implied
+by entry paths exist for `HasPath` but are never files. The first entry at a path wins over later
+duplicates.
 
-Links resolve inside the archive only, up to `maxLinkHops` hops, which also ends a cycle. A glob or
-path lookup matching a link and its target returns one location: the file's own path when it
-matched, otherwise the lowest-sorting link, with `AccessPath` naming the path matched and `RealPath`
-the file read. A dangling link keeps its own path and reads as empty. `FilesByMIMEType` answers only
-with files holding bytes, since a link has nothing to sniff; `AllLocations` enumerates every path,
-links included. Answers are sorted by path.
-
-`FilesByGlob` (glob.go) parses a pattern once, cached (bounded by `maxCachedGlobs`), into segments.
-A brace group inside a segment, `g{o,o.exe}`, makes that segment a set of alternatives; only a group
-spanning `/` expands the whole pattern. The literal text at either end of every alternative is looked
-up in a base-name index (`internal/index`): files for the last segment, directories for the rest, so
-`**/one/two/**/[a-z]thing` is narrowed to what lies under directories named `two` or to files ending
-in `thing`, whichever is smaller (a file-name lookup of `narrowEnough` or fewer is taken as is). Each
-candidate is then verified segment by segment up its parent chain with `path.Match`. `**/<name>`,
-`**/*<suffix>`, `**/<prefix>*` and brace sets of those are answered from the index alone. Only a
-pattern with no literal text anywhere, such as `**/[lm]*`, is matched against every file.
+Links resolve inside the archive only, as the file tree resolves them: a hard link names its target
+from the archive root. A lookup matching a link and its target returns one location, with
+`AccessPath` naming the path matched and `RealPath` the file read. Dangling and cyclic links are not
+files. `AllLocations` enumerates every non-directory path, links included. Answers are sorted by path.
 
 ## Other pieces
 

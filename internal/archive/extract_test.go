@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -106,7 +107,7 @@ func TestResolver_extract_diskLimitBitesMidEntry(t *testing.T) {
 	r, root := extractBytes(t, data, "test.tar.gz", charge)
 
 	assert.Error(t, r.Truncated)
-	assert.Equal(t, []string{"a/first.txt"}, storedNames(t, r))
+	assert.Equal(t, []string{"a", "a/first.txt", "b"}, storedNames(t, r), "the directory a refused entry implied stays")
 	assert.Greater(t, r.written, int64(40*1024), "the first entry landed whole and the second part way")
 	_, disk := charge.held()
 	assert.LessOrEqual(t, disk, int64(budget))
@@ -177,7 +178,7 @@ func TestResolver_extract_entryNamesAreCleanedAndNothingIsWrittenUnderThem(t *te
 			r, root := extractBytes(t, data, name, nil)
 			require.NoError(t, r.Truncated)
 
-			assert.Equal(t, []string{"META-INF", "META-INF/MANIFEST.MF", "bin/link.txt", "etc/hosts", "etc/passwd", "passwd", "shadow"},
+			assert.Equal(t, []string{"META-INF", "META-INF/MANIFEST.MF", "bin", "bin/link.txt", "etc", "etc/hosts", "etc/passwd", "passwd", "shadow"},
 				storedNames(t, r))
 			assert.Empty(t, filesIn(t, root), "entries live in the store, never under their own names")
 			assert.NoFileExists(t, filepath.Join(t.TempDir(), "..", "etc", "passwd"))
@@ -185,13 +186,13 @@ func TestResolver_extract_entryNamesAreCleanedAndNothingIsWrittenUnderThem(t *te
 			got := readStore(t, r)
 			assert.Equal(t, "evil", got["etc/passwd"].body)
 			assert.Equal(t, "pwned", got["etc/hosts"].body)
-			assert.Equal(t, byte(tar.TypeDir), got["META-INF"].typeflag)
+			assert.Equal(t, stereoscopeFile.TypeDirectory, got["META-INF"].kind)
 			assert.Equal(t, fs.FileMode(0o555), got["META-INF"].mode.Perm())
 			assert.Equal(t, "Manifest-Version: 1.0", got["META-INF/MANIFEST.MF"].body)
 
 			// links are headers carrying their target verbatim; the index resolves them inside the archive
 			for _, link := range []string{"passwd", "shadow", "bin/link.txt"} {
-				assert.Equal(t, byte(tar.TypeSymlink), got[link].typeflag)
+				assert.Equal(t, stereoscopeFile.TypeSymLink, got[link].kind)
 				assert.Empty(t, got[link].body)
 			}
 			assert.Equal(t, "../../../../etc/passwd", got["passwd"].linkTarget)
@@ -204,7 +205,7 @@ func TestResolver_extract_entryNamesAreCleanedAndNothingIsWrittenUnderThem(t *te
 func TestResolver_extract_dataEdgeCases(t *testing.T) {
 	t.Run("an empty archive is not an error", func(t *testing.T) {
 		r, _ := extractBytes(t, zipBytes(t, map[string]string{}), "test.zip", nil)
-		assert.Empty(t, r.files)
+		assert.Zero(t, r.entries)
 		assert.NoError(t, r.Truncated)
 	})
 
@@ -551,8 +552,8 @@ func TestExtract_entryCountBombIsBoundedByTheMemoryLimit(t *testing.T) {
 	t.Cleanup(r.Cleanup)
 
 	assert.Error(t, r.Truncated)
-	assert.Less(t, len(r.files), 20_000)
-	assert.LessOrEqual(t, int64(len(r.byPath))*approxIndexBytesPerEntry, limits.MaxMemoryBytes+approxIndexBytesPerEntry,
+	assert.Less(t, r.entries, 20_000)
+	assert.LessOrEqual(t, int64(nodeCount(r))*approxIndexBytesPerEntry, limits.MaxMemoryBytes+approxIndexBytesPerEntry,
 		"nodes held must not exceed what the memory limit paid for")
 	peakMemory, _ := limiter.Peak()
 	assert.LessOrEqual(t, peakMemory, limits.MaxMemoryBytes)
@@ -579,7 +580,7 @@ func TestExtract_deepPathBombIsBoundedByTheMemoryLimit(t *testing.T) {
 	t.Cleanup(r.Cleanup)
 
 	assert.Error(t, r.Truncated)
-	assert.LessOrEqual(t, int64(len(r.byPath))*approxIndexBytesPerEntry, limits.MaxMemoryBytes+approxIndexBytesPerEntry)
+	assert.LessOrEqual(t, int64(nodeCount(r))*approxIndexBytesPerEntry, limits.MaxMemoryBytes+approxIndexBytesPerEntry)
 	peakMemory, _ := limiter.Peak()
 	assert.LessOrEqual(t, peakMemory, limits.MaxMemoryBytes)
 }

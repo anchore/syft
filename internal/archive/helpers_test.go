@@ -16,6 +16,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/file"
 )
@@ -260,22 +261,21 @@ type storedEntry struct {
 	body       string
 	linkTarget string
 	mode       fs.FileMode
-	typeflag   byte
+	kind       stereoscopeFile.Type
 }
 
-// readStore reads every listed entry, files and directories alike, by name.
+// readStore reads every stored entry by name: files, links, and directories listed or implied.
 func readStore(t testing.TB, r *Resolver) map[string]storedEntry {
 	t.Helper()
 	out := map[string]storedEntry{}
-	for _, n := range r.byPath {
-		if n.header == nil {
-			continue
-		}
-		out[n.header.Name] = storedEntry{
-			body:       readEntry(t, r.open(&n.content)),
-			linkTarget: n.header.Linkname,
-			mode:       n.header.FileInfo().Mode(),
-			typeflag:   n.header.Typeflag,
+	for _, ref := range r.tree.AllFiles(stereoscopeFile.AllTypes()...) {
+		entry, err := r.index.Get(ref)
+		require.NoError(t, err)
+		out[entry.Metadata.Path] = storedEntry{
+			body:       readEntry(t, r.open(r.content[ref.ID()])),
+			linkTarget: entry.Metadata.LinkDestination,
+			mode:       entry.Metadata.FileInfo.Mode(),
+			kind:       entry.Metadata.Type,
 		}
 	}
 	return out
@@ -285,13 +285,25 @@ func readStore(t testing.TB, r *Resolver) map[string]storedEntry {
 func storedNames(t testing.TB, r *Resolver) []string {
 	t.Helper()
 	var names []string
-	for _, n := range r.byPath {
-		if n.header != nil {
-			names = append(names, n.header.Name)
-		}
+	for name := range readStore(t, r) {
+		names = append(names, name)
 	}
 	sort.Strings(names)
 	return names
+}
+
+// nodeCount is every path the tree holds, including directories the archive never listed.
+func nodeCount(r *Resolver) int {
+	return len(r.tree.AllRealPaths())
+}
+
+// contentAt is the blob held for the entry at a rooted path.
+func contentAt(t testing.TB, r *Resolver, p string) *blob {
+	t.Helper()
+	_, res, err := r.tree.File(stereoscopeFile.Path(p))
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	return r.content[res.Reference.ID()]
 }
 
 // memCharge is a charge against a memory bound with disk unbounded.

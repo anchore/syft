@@ -230,8 +230,8 @@ func TestStorage_filesystemCostDoesNotTrackEntryCount(t *testing.T) {
 	assert.Len(t, filesIn(t, smallRoot), 1)
 	assert.Len(t, filesIn(t, largeRoot), 1, "5000 entries cost the same filesystem entries as 2")
 
-	assert.Len(t, small.files, 2)
-	assert.Len(t, large.files, 5000)
+	assert.Equal(t, 2, small.entries)
+	assert.Equal(t, 5000, large.entries)
 
 	// entries cost their content and nothing else on disk: no headers, no padding
 	assert.Equal(t, int64(2), small.written)
@@ -264,10 +264,7 @@ func TestStorage_anEntryAtTheEndIsReadBySeeking(t *testing.T) {
 	offset := int64(bytes.Index(body, []byte(wanted)))
 	require.Greater(t, offset, int64(len(body))*9/10, "the last entry must really be at the end of the file")
 
-	n := r.byPath["/zz-last.txt"]
-	require.NotNil(t, n)
-
-	reader := r.open(&n.content)
+	reader := r.open(contentAt(t, r, "/zz-last.txt"))
 	end, err := reader.Seek(0, io.SeekEnd)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(wanted)), end)
