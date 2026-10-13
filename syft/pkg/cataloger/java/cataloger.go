@@ -37,7 +37,8 @@ func NewPomCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
 	}
 }
 
-// NewGradleLockfileCataloger returns a cataloger capable of parsing dependencies from a gradle.lockfile file.
+// NewGradleLockfileCataloger returns a cataloger capable of parsing dependencies from gradle.lockfile files and
+// palantir gradle-consistent-versions versions.lock files.
 // Note: Older versions of lockfiles aren't supported yet
 func NewGradleLockfileCataloger() pkg.Cataloger {
 	return generic.NewCataloger("java-gradle-lockfile-cataloger").
