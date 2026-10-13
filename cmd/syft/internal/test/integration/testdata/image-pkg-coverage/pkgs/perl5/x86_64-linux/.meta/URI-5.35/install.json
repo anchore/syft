@@ -1,0 +1,11 @@
+{
+  "dist": "URI-5.35",
+  "name": "URI",
+  "pathname": "O/OA/OALDERS/URI-5.35.tar.gz",
+  "provides": {
+    "URI": {"file": "lib/URI.pm", "version": "5.35"},
+    "URI::Escape": {"file": "lib/URI/Escape.pm", "version": "5.35"}
+  },
+  "target": "URI",
+  "version": "5.35"
+}

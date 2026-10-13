@@ -21,6 +21,7 @@ const (
 	CocoapodsPkg            Type = "pod"
 	ConanPkg                Type = "conan"
 	CondaPkg                Type = "conda"
+	CpanPkg                 Type = "cpan"
 	DartPubPkg              Type = "dart-pub"
 	DebPkg                  Type = "deb"
 	DotnetPkg               Type = "dotnet"
@@ -68,6 +69,7 @@ var AllPkgs = []Type{
 	CocoapodsPkg,
 	ConanPkg,
 	CondaPkg,
+	CpanPkg,
 	DartPubPkg,
 	DebPkg,
 	DotnetPkg,
@@ -123,6 +125,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeConan
 	case CondaPkg:
 		return packageurl.TypeGeneric
+	case CpanPkg:
+		return packageurl.TypeCpan
 	case DartPubPkg:
 		return packageurl.TypePub
 	case DebPkg:
@@ -224,6 +228,8 @@ func TypeByName(name string) Type {
 		return RustPkg
 	case "conda":
 		return CondaPkg
+	case packageurl.TypeCpan:
+		return CpanPkg
 	case packageurl.TypePub:
 		return DartPubPkg
 	case "dotnet", packageurl.TypeNuget: // "dotnet" is here to support legacy use cases; "nuget" is the canonical purl type

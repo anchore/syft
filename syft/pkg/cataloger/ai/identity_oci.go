@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io"
 	"path"
+	"sort"
 
 	gcrname "github.com/google/go-containerregistry/pkg/name"
 
@@ -28,9 +28,18 @@ func resolveSafeTensorsOCIIdentity(ctx context.Context, resolver file.Resolver, 
 		log.Debugf("failed to list docker AI model-file layers: %v", err)
 	}
 
-	// Collect config / readme candidates separately so the layer-iteration order
-	// returned by the resolver doesn't decide the precedence.
-	var configName, readmeName, readmeLicense string
+	// the resolver returns layers in map order, and the first config / README
+	// seen wins below, so sort for a stable result across runs. For OCI
+	// artifacts every RealPath is "/", so in practice this is digest order.
+	sort.Slice(modelFileLocs, func(i, j int) bool {
+		if modelFileLocs[i].RealPath != modelFileLocs[j].RealPath {
+			return modelFileLocs[i].RealPath < modelFileLocs[j].RealPath
+		}
+		return modelFileLocs[i].FileSystemID < modelFileLocs[j].FileSystemID
+	})
+
+	var configName, readmeName string
+	var readmeLicenses []string
 	var supporting []file.Location
 	for _, loc := range modelFileLocs {
 		cfg, fm := classifyOCIModelFileLayer(resolver, loc)
@@ -38,15 +47,15 @@ func resolveSafeTensorsOCIIdentity(ctx context.Context, resolver file.Resolver, 
 		case cfg != nil:
 			applyHFConfig(md, cfg)
 			if configName == "" {
-				configName = cfg.NameOrPath
+				configName = sanitizeModelName(cfg.NameOrPath)
 			}
 			supporting = append(supporting, loc)
 		case fm != nil:
-			if readmeLicense == "" {
-				readmeLicense = fm.License
+			if len(readmeLicenses) == 0 {
+				readmeLicenses = fm.Licenses
 			}
-			if readmeName == "" && len(fm.BaseModel) > 0 {
-				readmeName = fm.BaseModel[0]
+			if readmeName == "" {
+				readmeName = firstModelName(fm.BaseModel)
 			}
 			supporting = append(supporting, loc)
 		}
@@ -64,7 +73,7 @@ func resolveSafeTensorsOCIIdentity(ctx context.Context, resolver file.Resolver, 
 		supporting:   supporting,
 	}
 
-	// License precedence: a dedicated vnd.docker.ai.license layer is a
+	// License precedence: a dedicated vnd.docker.ai.license layer
 	// outranks the free-text license field in a model card's README frontmatter.
 	licLocs, err := ociResolver.FilesByMediaType(dockerAILicenseMediaType)
 	if err != nil {
@@ -74,8 +83,8 @@ func resolveSafeTensorsOCIIdentity(ctx context.Context, resolver file.Resolver, 
 	case len(licLocs) > 0:
 		id.licenses = identifyLicenseLayers(ctx, resolver, licLocs)
 		id.supporting = append(id.supporting, licLocs...)
-	case readmeLicense != "":
-		id.licenses = pkg.NewLicensesFromValuesWithContext(ctx, readmeLicense)
+	case len(readmeLicenses) > 0:
+		id.licenses = pkg.NewLicensesFromValuesWithContext(ctx, readmeLicenses...)
 	}
 
 	return id
@@ -108,10 +117,11 @@ func ociImageRefBasename(resolver file.Resolver) string {
 	return path.Base(parsed.Context().RepositoryStr())
 }
 
-// classifyOCIModelFileLayer reads up to 4 MiB of a model.file layer and decodes
-// it as either an HF config.json or a README model card's YAML frontmatter,
-// based on its leading bytes. It returns whichever it recognized; both are nil
-// when the layer is neither (or fails to decode). The caller owns precedence and
+// classifyOCIModelFileLayer reads a model.file layer (up to maxModelFileLayerSize)
+// and decodes it as either an HF config.json or a README model card's YAML
+// frontmatter, based on its leading bytes. It returns whichever it recognized;
+// both are nil when the layer is neither, fails to decode, or is JSON that
+// doesn't look like an HF config (e.g. generation_config.json). The caller owns precedence and
 // metadata enrichment.
 func classifyOCIModelFileLayer(resolver file.Resolver, loc file.Location) (*hfConfig, *readmeFrontmatter) {
 	rc, err := resolver.FileContentsByLocation(loc)
@@ -120,17 +130,18 @@ func classifyOCIModelFileLayer(resolver file.Resolver, loc file.Location) (*hfCo
 	}
 	defer internal.CloseAndLogError(rc, loc.RealPath)
 
-	buf, err := io.ReadAll(io.LimitReader(rc, 4*1024*1024))
+	buf, err := readBounded(rc, maxModelFileLayerSize)
 	if err != nil {
+		log.Debugf("failed to read docker AI model-file layer: %v", err)
 		return nil, nil
 	}
 	trimmed := bytes.TrimLeft(buf, "\xef\xbb\xbf \t\r\n")
 	switch {
 	case bytes.HasPrefix(trimmed, []byte("---")):
-		return nil, parseFrontmatter(buf)
+		return nil, parseFrontmatter(trimmed)
 	case bytes.HasPrefix(trimmed, []byte("{")):
 		var cfg hfConfig
-		if err := json.Unmarshal(buf, &cfg); err != nil {
+		if err := json.Unmarshal(trimmed, &cfg); err != nil || !cfg.looksLikeHF() {
 			return nil, nil
 		}
 		return &cfg, nil
@@ -165,8 +176,9 @@ func readLicenseSPDXIDFromFrontmatter(resolver file.Resolver, loc file.Location)
 	}
 	defer internal.CloseAndLogError(rc, loc.RealPath)
 
-	buf, err := io.ReadAll(io.LimitReader(rc, 64*1024))
+	buf, err := readPrefix(rc, maxLicensePrefixSize)
 	if err != nil {
+		log.Debugf("failed to read docker AI license layer: %v", err)
 		return ""
 	}
 	return parseLicenseFrontmatter(buf)

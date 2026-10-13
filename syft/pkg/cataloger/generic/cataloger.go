@@ -2,6 +2,8 @@ package generic
 
 import (
 	"context"
+	"fmt"
+	"runtime/debug"
 
 	"github.com/anchore/go-logger"
 	"github.com/anchore/go-sync"
@@ -221,18 +223,39 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 func (c *Cataloger) process(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 	for _, p := range c.processors {
-		pkgs, rels, err = p.process(ctx, resolver, pkgs, rels, err)
+		pkgs, rels, err = c.processSafely(ctx, p, resolver, pkgs, rels, err)
 	}
 	return pkgs, rels, err
 }
 
-func invokeParser(ctx context.Context, resolver file.Resolver, location file.Location, logger logger.Logger, parser Parser, env *Environment) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *Cataloger) processSafely(ctx context.Context, p processExecutor, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) (outPkgs []pkg.Package, outRels []artifact.Relationship, outErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			// keep the unprocessed results; there is no single location to attach an unknown to
+			log.WithFields("cataloger", c.upstreamCataloger, "panic", r).Warn("recovered from panic in package processor")
+			log.Tracef("processor panic stack:\n%s", debug.Stack())
+			outPkgs, outRels, outErr = pkgs, rels, err
+		}
+	}()
+	return p.process(ctx, resolver, pkgs, rels, err)
+}
+
+func invokeParser(ctx context.Context, resolver file.Resolver, location file.Location, logger logger.Logger, parser Parser, env *Environment) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
 	contentReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		logger.WithFields("location", location.RealPath, "error", err).Debug("unable to fetch contents")
 		return nil, nil, err
 	}
 	defer internal.CloseAndLogError(contentReader, location.AccessPath)
+
+	defer func() {
+		if r := recover(); r != nil {
+			// a malformed file must not take down the whole SBOM; the caller records this as an unknown
+			logger.WithFields("location", location.RealPath, "panic", r).Debug("recovered from panic while parsing file")
+			logger.Tracef("parser panic stack:\n%s", debug.Stack())
+			pkgs, rels, err = nil, nil, fmt.Errorf("recovered from panic while parsing file: %v", r)
+		}
+	}()
 
 	discoveredPackages, discoveredRelationships, err := parser(ctx, resolver, env, file.NewLocationReadCloser(location, contentReader))
 	if err != nil {

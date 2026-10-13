@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"errors"
 	"fmt"
+	"runtime/debug"
 
 	"github.com/dustin/go-humanize"
 
@@ -87,7 +88,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 	return results, err
 }
 
-func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver, location file.Location) ([]file.Digest, error) {
+func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver, location file.Location) (digests []file.Digest, err error) {
 	meta, err := resolver.FileMetadataByLocation(location)
 	if err != nil {
 		return nil, err
@@ -104,7 +105,16 @@ func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver,
 	}
 	defer internal.CloseAndLogError(contentReader, location.AccessPath)
 
-	digests, err := intFile.NewDigestsFromFile(ctx, contentReader, i.hashes)
+	defer func() {
+		if r := recover(); r != nil {
+			// the caller records this as an unknown for the location instead of failing the whole SBOM
+			log.WithFields("path", location.RealPath, "panic", r).Debug("recovered from panic while digesting file")
+			log.Tracef("file digest panic stack:\n%s", debug.Stack())
+			digests, err = nil, fmt.Errorf("recovered from panic while digesting file: %v", r)
+		}
+	}()
+
+	digests, err = intFile.NewDigestsFromFile(ctx, contentReader, i.hashes)
 	if err != nil {
 		return nil, internal.ErrPath{Context: "digests-cataloger", Path: location.RealPath, Err: err}
 	}

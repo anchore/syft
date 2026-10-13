@@ -1,12 +1,12 @@
 package java
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"strings"
 	"unicode"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -26,7 +26,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 	}
 
 	var lastKey string
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 
 	for scanner.Scan() {
 		line := scanner.Text()

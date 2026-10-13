@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
@@ -30,6 +31,8 @@ import (
 
 // make will run the default make target for the given test fixture path
 func runMakeTarget(t *testing.T, fixtureName string) {
+	// the fixture binaries are built inside linux containers
+	testutils.SkipWithoutLinuxContainers(t)
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
 	fixtureDir := filepath.Join(cwd, "testdata/", fixtureName)
@@ -108,24 +111,27 @@ func Test_getGOARCHFromBin(t *testing.T) {
 		},
 		{
 			name:     "xcoff-32bit",
-			filepath: "internal/xcoff/testdata/gcc-ppc32-aix-dwarf2-exec",
+			filepath: "testdata/xcoff/gcc-ppc32-aix-dwarf2-exec",
 			expected: strconv.Itoa(0x1DF),
 		},
 		{
 			name:     "xcoff-64bit",
-			filepath: "internal/xcoff/testdata/gcc-ppc64-aix-dwarf2-exec",
+			filepath: "testdata/xcoff/gcc-ppc64-aix-dwarf2-exec",
 			expected: strconv.Itoa(0x1F7),
 		},
 	}
 
 	for _, tt := range tests {
-		f, err := os.Open(tt.filepath)
-		require.NoError(t, err)
-		arch, err := getGOARCHFromBin(f)
-		require.NoError(t, err, "test name: %s", tt.name)
-		assert.Equal(t, tt.expected, arch)
-	}
+		t.Run(tt.name, func(t *testing.T) {
+			f, err := os.Open(tt.filepath)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = f.Close() })
 
+			arch, err := getGOARCHFromBin(f)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, arch)
+		})
+	}
 }
 
 func TestBuildGoPkgInfo(t *testing.T) {

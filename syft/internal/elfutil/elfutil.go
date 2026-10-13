@@ -35,6 +35,7 @@ package elfutil
 import (
 	"debug/elf"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -54,6 +55,15 @@ import (
 // Note that this is a per-section bound, not a per-file one: a file may hold several sections that each
 // sit just under it. That is deliberate, since the sections syft actually reads are few.
 const maxDeclaredSectionSize uint64 = 128 * intFile.MB
+
+// ErrDeclaredSizeExceeded marks a file this package refused to parse because a section declared more
+// decompressed bytes than maxDeclaredSectionSize allows.
+//
+// Exported so a caller can tell "syft declined to expand this" apart from "this file is broken". The
+// distinction matters where the two are reported differently: the refusal is a real gap in the SBOM and
+// worth surfacing, while a corrupt or non-Go executable is neither, and the golang cataloger sees far
+// more of the latter than the former.
+var ErrDeclaredSizeExceeded = errors.New("declared decompressed size over the limit")
 
 // legacyZlibHeaderSize is the size of the .zdebug header: the "ZLIB" magic plus a big-endian size.
 const legacyZlibHeaderSize = 12
@@ -102,6 +112,39 @@ func NewFile(r io.ReaderAt) (*elf.File, error) {
 	return f, nil
 }
 
+// CheckAllSections rejects ELF decompression bombs before debug/elf can expand one, without keeping the
+// parse.
+//
+// The attack it stops: a compressed section's header declares its own decompressed size, and debug/elf
+// believes that number, allocating it up front when the section is opened. Nothing forces the declared
+// size to match what the compressed bytes actually yield, so a small file can name an enormous one. In
+// the case this was written for, a 260KB ELF declaring a compressed .symtab drove 1.3GB of allocation.
+// This walks the section headers and refuses any reachable section declaring more than
+// maxDeclaredSectionSize, returning ErrDeclaredSizeExceeded.
+//
+// It is a strict superset of CheckSectionNameTable, which is what "All" in the name marks: reach for that
+// narrower one only where a full elf.NewFile parse on every file is not worth paying for. Like it, this
+// is for a caller whose debug/elf call is made inside another package, but it is the whole check rather
+// than the eager half: goversion reads .symtab and the string table it links, and those are expanded
+// lazily, so the name table bound alone leaves them unbounded.
+//
+// Anything that is not an ELF this package understands passes through untouched, since a caller reaching
+// for this parses other containers too (goversion takes PE and Mach-O). A file elf.NewFile cannot parse
+// passes through as well: describing a malformed file is the caller's job, not this gate's.
+func CheckAllSections(r io.ReaderAt) error {
+	if _, _, ok := identify(r); !ok {
+		return nil
+	}
+	if err := CheckSectionNameTable(r); err != nil {
+		return err
+	}
+	f, err := elf.NewFile(r)
+	if err != nil {
+		return nil //nolint:nilerr // the caller's own parse reports the format error
+	}
+	return checkReachableSections(f)
+}
+
 // checkReachableSections bounds every section syft can drive debug/elf into decompressing. This runs
 // after the parse because (*Section).Open expands lazily, so nothing has been allocated yet.
 func checkReachableSections(f *elf.File) error {
@@ -109,8 +152,8 @@ func checkReachableSections(f *elf.File) error {
 		s := f.Sections[i]
 		declared, claimed := declaredSectionSize(s)
 		if claimed && declared > maxDeclaredSectionSize {
-			return fmt.Errorf("elf section %q declares %d decompressed bytes, over the %d byte limit",
-				s.Name, declared, maxDeclaredSectionSize)
+			return fmt.Errorf("%w: elf section %q declares %d decompressed bytes, over the %d byte limit",
+				ErrDeclaredSizeExceeded, s.Name, declared, maxDeclaredSectionSize)
 		}
 	}
 	return nil
@@ -233,6 +276,10 @@ func zdebugDeclaredSize(s *elf.Section) (uint64, bool) {
 // debug/elf call is made for them inside another package, debug/buildinfo being the one syft reaches:
 // gate the reader on this and the eager section-name table read is bounded, which is everything that
 // package expands today, since it reaches .go.buildinfo through the program headers instead.
+//
+// This is deliberately the eager half only, so it is the wrong gate for a caller whose parser goes on to
+// read sections of its own. Use CheckAllSections for those: a package that reads symbols expands sections
+// this never looks at, and the difference is the whole reason both exist.
 func CheckSectionNameTable(r io.ReaderAt) error {
 	class, order, ok := identify(r)
 	if !ok {
@@ -252,8 +299,8 @@ func CheckSectionNameTable(r io.ReaderAt) error {
 		return nil //nolint:nilerr // truncated section; elf.NewFile will say so
 	}
 	if declared > maxDeclaredSectionSize {
-		return fmt.Errorf("elf section name table declares %d decompressed bytes, over the %d byte limit",
-			declared, maxDeclaredSectionSize)
+		return fmt.Errorf("%w: elf section name table declares %d decompressed bytes, over the %d byte limit",
+			ErrDeclaredSizeExceeded, declared, maxDeclaredSectionSize)
 	}
 	return nil
 }

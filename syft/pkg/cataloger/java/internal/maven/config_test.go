@@ -47,6 +47,8 @@ func Test_defaultMavenLocalRepoDir(t *testing.T) {
 				home, err := filepath.Abs(test.home)
 				require.NoError(t, err)
 				t.Setenv("HOME", home)
+				// os.UserHomeDir reads USERPROFILE on windows
+				t.Setenv("USERPROFILE", home)
 			}
 			got := defaultMavenLocalRepoDir()
 			require.Equal(t, test.expected, got)

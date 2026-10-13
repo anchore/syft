@@ -334,7 +334,7 @@ func getMetadataTypeName(metadata any) string {
 	}
 
 	// handle pointers
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 
@@ -407,7 +407,7 @@ func dereferenceToStruct(v any) reflect.Value {
 	}
 
 	val := reflect.ValueOf(v)
-	if val.Kind() == reflect.Ptr {
+	if val.Kind() == reflect.Pointer {
 		if val.IsNil() {
 			return reflect.Value{}
 		}
@@ -436,7 +436,7 @@ func hasPopulatedDigest(fileRecord reflect.Value) bool {
 
 	// check if digest is a pointer and not nil, or a non-zero value
 	switch digestField.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return !digestField.IsNil()
 	case reflect.String:
 		return digestField.String() != ""

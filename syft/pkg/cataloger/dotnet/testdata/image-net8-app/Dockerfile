@@ -72,9 +72,6 @@ RUN dotnet publish -r $RUNTIME --no-restore -o /app
 #   > Humanizer.Core.zh-Hans         2.14.1
 #   > Humanizer.Core.zh-Hant         2.14.1
 
-# lets pull in a file that is not related at all and in fact is not a .NET binary either (this should be ignored)
-RUN wget -O /app/jruby_windows_9_3_15_0.exe https://github.com/jruby/jruby/releases/download/9.3.15.0/jruby_windows_9_3_15_0.exe
-
 FROM busybox
 WORKDIR /app
 COPY --from=build /app .
