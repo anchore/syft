@@ -173,6 +173,14 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 					}
 					return fileresolver.ErrSkipPath
 				}
+
+				// also match paths nested under an excluded directory, e.g. when a
+				// symlink points directly to a file inside an excluded directory the
+				// walk never visits the excluded directory itself, so the exact match
+				// above would miss it (see issue #5232).
+				if strings.HasPrefix(path, exclusion+"/") {
+					return fileresolver.ErrSkipPath
+				}
 			}
 			return nil
 		},
