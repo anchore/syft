@@ -1348,6 +1348,20 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 			wantMajorVersion: "2",
 			wantFullVersion:  "v2.4.5",
 		},
+		{
+			name:             "pre-release version with dot-separated identifiers",
+			mainModule:       "github.com/foo/bar",
+			ldflags:          `	build	-ldflags="-s -w -X 'github.com/foo/bar/version.gitVersion=v1.28.0-rc.1' -X github.com/foo/bar/version.gitCommit=abc123"`,
+			wantMajorVersion: "1",
+			wantFullVersion:  "v1.28.0-rc.1",
+		},
+		{
+			name:             "pre-release version with multiple dot-separated identifiers",
+			mainModule:       "github.com/foo/bar",
+			ldflags:          `	build	-ldflags="-X main.version=2.0.0-beta.2.1"`,
+			wantMajorVersion: "2",
+			wantFullVersion:  "v2.0.0-beta.2.1",
+		},
 		///////////////////////////////////////////////////////////////////
 		// don't know how to handle these... yet
 		//{
