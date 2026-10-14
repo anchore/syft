@@ -13,15 +13,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var (
-	gradleConsistentVersionsLockfileHeader = map[string]struct{}{
-		"# Run ./gradlew --write-locks to regenerate this file":                                                    {},
-		"# Run ./gradlew writeVersionsLock to regenerate this file":                                                {},
-		"# Run ./gradlew writeVersionsLocks to regenerate this file":                                               {},
-		"# Run ./gradlew writeVersionsLocks to regenerate this file. Blank lines are to minimize merge conflicts.": {},
-	}
-	gradleConsistentVersionsLockfileEntry = regexp.MustCompile(`^([^:\s]+):([^:\s]+):([^:\s(]+)\s+\(\d+ constraints: \w+\)$`)
-)
+var gradleConsistentVersionsLockfileEntry = regexp.MustCompile(`^([^:\s]+):([^:\s]+):([^:\s(]+)\s+\(\d+ constraints: \w+\)$`)
 
 // parseGradleConsistentVersionsLockfile parses Palantir gradle-consistent-versions lockfiles (versions.lock),
 // see https://github.com/palantir/gradle-consistent-versions. Production dependencies are listed first, followed by
@@ -43,7 +35,7 @@ func parseGradleConsistentVersionsLockfile(_ context.Context, _ file.Resolver, _
 
 		// skip empty lines and comments
 		if line == "" || strings.HasPrefix(line, "#") {
-			if _, ok := gradleConsistentVersionsLockfileHeader[line]; ok {
+			if strings.Contains(line, "gradlew") {
 				identified = true
 			}
 			continue

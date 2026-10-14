@@ -125,12 +125,15 @@ func Test_parseGradleConsistentVersionsLockfile_requiresLockfileEntrySignature(t
 	assert.Equal(t, "test", pkgs[2].Metadata.(pkg.JavaArchive).PomProperties.Scope)
 }
 
-func Test_parseGradleConsistentVersionsLockfile_acceptsHistoricalGeneratedHeaders(t *testing.T) {
+func Test_parseGradleConsistentVersionsLockfile_acceptsGradleHeaders(t *testing.T) {
 	tests := []string{
 		"# Run ./gradlew --write-locks to regenerate this file",
 		"# Run ./gradlew writeVersionsLock to regenerate this file",
 		"# Run ./gradlew writeVersionsLocks to regenerate this file",
 		"# Run ./gradlew writeVersionsLocks to regenerate this file. Blank lines are to minimize merge conflicts.",
+		"# Run ./gradlew :writeVersionsLocks to regenerate this file",
+		"# Run ./gradlew --project-dir project writeVersionsLocks to regenerate this file",
+		"# Run gradlew.bat writeVersionsLocks to regenerate this file",
 	}
 
 	for _, header := range tests {
@@ -147,12 +150,21 @@ func Test_parseGradleConsistentVersionsLockfile_acceptsHistoricalGeneratedHeader
 }
 
 func Test_parseGradleConsistentVersionsLockfile_rejectsUnidentifiedVersionsLock(t *testing.T) {
-	contents := "org.example:valid:1.0 (1 constraints: deadbeef)\r\n"
-	reader := file.NewLocationReadCloser(file.NewLocation("versions.lock"), io.NopCloser(strings.NewReader(contents)))
+	for _, header := range []string{
+		"",
+		"# Generated dependency versions",
+		"Run ./gradlew writeVersionsLocks to regenerate this file",
+		"org.example:gradlew:1.0 (1 constraints: deadbeef)",
+	} {
+		t.Run(header, func(t *testing.T) {
+			contents := header + "\r\norg.example:valid:1.0 (1 constraints: deadbeef)\r\n"
+			reader := file.NewLocationReadCloser(file.NewLocation("versions.lock"), io.NopCloser(strings.NewReader(contents)))
 
-	pkgs, _, err := parseGradleConsistentVersionsLockfile(context.Background(), nil, nil, reader)
-	require.NoError(t, err)
-	assert.Empty(t, pkgs)
+			pkgs, _, err := parseGradleConsistentVersionsLockfile(context.Background(), nil, nil, reader)
+			require.NoError(t, err)
+			assert.Empty(t, pkgs)
+		})
+	}
 }
 
 func TestNewGradleLockfileCataloger_ignoresUnidentifiedVersionsLock(t *testing.T) {
