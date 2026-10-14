@@ -16,6 +16,7 @@ import (
 	"github.com/anchore/syft/internal/os"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/internal/task"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -84,6 +85,7 @@ func Test_EnvironmentTask(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			tarPath := imagetest.GetFixtureImageTarPath(t, test.name)
 
 			// get the source

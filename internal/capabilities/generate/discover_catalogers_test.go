@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -337,7 +338,7 @@ func TestResolveImportPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := resolveImportPath(tt.importPath, testRepoRoot)
-			require.Equal(t, tt.want, got)
+			require.Equal(t, filepath.FromSlash(tt.want), got)
 		})
 	}
 }

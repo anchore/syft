@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/diskfs/go-diskfs/filesystem"
@@ -25,7 +25,8 @@ func WalkDiskDir(fsys filesystem.FileSystem, root string, fn WalkDiskDirFunc) er
 	}
 
 	for _, info := range infos {
-		p := filepath.Join(root, info.Name())
+		// squashfs paths are posix regardless of host os
+		p := path.Join(root, info.Name())
 		err = walkDiskDir(fsys, p, info, fn)
 		if err != nil {
 			if errors.Is(err, fs.SkipDir) {
@@ -74,7 +75,7 @@ func walkDiskDir(fsys filesystem.FileSystem, name string, d os.FileInfo, walkDir
 	}
 
 	for _, d1 := range dirs {
-		name1 := filepath.Join(name, d1.Name())
+		name1 := path.Join(name, d1.Name())
 		if err := walkDiskDir(fsys, name1, d1, walkDirFn); err != nil {
 			if errors.Is(err, fs.SkipDir) {
 				break

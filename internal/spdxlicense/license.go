@@ -14,11 +14,12 @@ import (
 
 const (
 	LicenseRefPrefix = "LicenseRef-" // prefix for non-standard licenses
+	epl2LicenseID    = "EPL-2.0"
 )
 
 var licenseExpressionsByURL = map[string]string{
 	"projects.eclipse.org/license/secondary-gpl-2.0-cp": "GPL-2.0-only WITH Classpath-exception-2.0",
-	"www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt": "EPL-2.0",
+	"www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt": epl2LicenseID,
 	"www.gnu.org/software/classpath/license.html":       "GPL-2.0-only WITH Classpath-exception-2.0",
 }
 

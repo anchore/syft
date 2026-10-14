@@ -64,8 +64,8 @@ func TestListAllBinaries(t *testing.T) {
 
 	assert.Equal(t,
 		Entries{
-			LogicalEntryKey{OrgName: "busybox", Version: "1.3.6", Platform: "linux-amd64", Filename: "busybox"}: EntryInfo{IsConfigured: true, BinaryPath: "testdata/bin/busybox/1.3.6/linux-amd64/busybox", SnippetPath: ""},
-			LogicalEntryKey{OrgName: "busybox", Version: "1.3.6", Platform: "linux-arm64", Filename: "busybox"}: EntryInfo{IsConfigured: false, BinaryPath: "testdata/bin/busybox/1.3.6/linux-arm64/busybox", SnippetPath: ""},
+			LogicalEntryKey{OrgName: "busybox", Version: "1.3.6", Platform: "linux-amd64", Filename: "busybox"}: EntryInfo{IsConfigured: true, BinaryPath: filepath.FromSlash("testdata/bin/busybox/1.3.6/linux-amd64/busybox"), SnippetPath: ""},
+			LogicalEntryKey{OrgName: "busybox", Version: "1.3.6", Platform: "linux-arm64", Filename: "busybox"}: EntryInfo{IsConfigured: false, BinaryPath: filepath.FromSlash("testdata/bin/busybox/1.3.6/linux-arm64/busybox"), SnippetPath: ""},
 		},
 		entries,
 	)
@@ -105,10 +105,10 @@ func TestListAllEntries(t *testing.T) {
 
 	assert.Equal(t,
 		Entries{
-			LogicalEntryKey{OrgName: "busybox", Version: "1.3.6", Platform: "linux-amd64", Filename: "busybox"}: EntryInfo{IsConfigured: true, BinaryPath: "testdata/bin/busybox/1.3.6/linux-amd64/busybox", SnippetPath: "testdata/snippets/busybox/1.3.6/linux-amd64/busybox"},
-			LogicalEntryKey{OrgName: "busybox", Version: "1.3.6", Platform: "linux-arm64", Filename: "busybox"}: EntryInfo{IsConfigured: false, BinaryPath: "testdata/bin/busybox/1.3.6/linux-arm64/busybox", SnippetPath: "testdata/snippets/busybox/1.3.6/linux-arm64/busybox"},
+			LogicalEntryKey{OrgName: "busybox", Version: "1.3.6", Platform: "linux-amd64", Filename: "busybox"}: EntryInfo{IsConfigured: true, BinaryPath: filepath.FromSlash("testdata/bin/busybox/1.3.6/linux-amd64/busybox"), SnippetPath: filepath.FromSlash("testdata/snippets/busybox/1.3.6/linux-amd64/busybox")},
+			LogicalEntryKey{OrgName: "busybox", Version: "1.3.6", Platform: "linux-arm64", Filename: "busybox"}: EntryInfo{IsConfigured: false, BinaryPath: filepath.FromSlash("testdata/bin/busybox/1.3.6/linux-arm64/busybox"), SnippetPath: filepath.FromSlash("testdata/snippets/busybox/1.3.6/linux-arm64/busybox")},
 			// note the standalone snippet!
-			LogicalEntryKey{OrgName: "postgres", Version: "9.6.10", Platform: "linux-amd64", Filename: "postgres"}: EntryInfo{IsConfigured: false, BinaryPath: "", SnippetPath: "testdata/snippets/postgres/9.6.10/linux-amd64/postgres"},
+			LogicalEntryKey{OrgName: "postgres", Version: "9.6.10", Platform: "linux-amd64", Filename: "postgres"}: EntryInfo{IsConfigured: false, BinaryPath: "", SnippetPath: filepath.FromSlash("testdata/snippets/postgres/9.6.10/linux-amd64/postgres")},
 		},
 		entries,
 	)

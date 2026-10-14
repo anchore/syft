@@ -10,6 +10,7 @@ import (
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
@@ -18,6 +19,7 @@ import (
 func TestFileMetadataCataloger(t *testing.T) {
 	testImage := "image-file-type-mix"
 
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
 	c := NewCataloger()
@@ -157,6 +159,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 func TestFileMetadataCataloger_GivenCoordinates(t *testing.T) {
 	testImage := "image-file-type-mix"
 
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
 	c := NewCataloger()

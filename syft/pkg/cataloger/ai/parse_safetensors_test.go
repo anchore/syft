@@ -8,6 +8,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -522,14 +523,15 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 
 	t.Run("dir scan: config.json _name_or_path beats the parent directory fallback", func(t *testing.T) {
 		// When a sibling config.json carries _name_or_path
-		dir := t.TempDir()
-		require.NoError(t, os.WriteFile(filepath.Join(dir, "config.json"),
+		// (location paths are posix, so keep the temp dir slash-separated for windows)
+		dir := filepath.ToSlash(t.TempDir())
+		require.NoError(t, os.WriteFile(path.Join(dir, "config.json"),
 			[]byte(`{"_name_or_path":"org/preferred-name"}`), 0o644))
-		stPath := filepath.Join(dir, "weights.safetensors")
+		stPath := path.Join(dir, "weights.safetensors")
 		p := dirPkg(stPath, pkg.SafeTensorsModelInfo{
 			Format: "safetensors", TensorCount: 1, MetadataHash: "abc",
 		})
-		resolver := file.NewMockResolverForPaths(filepath.Join(dir, "config.json"))
+		resolver := file.NewMockResolverForPaths(path.Join(dir, "config.json"))
 		out, _, err := safeTensorsMergeProcessor(context.Background(), resolver, []pkg.Package{p}, nil, nil)
 		require.NoError(t, err)
 		require.Len(t, out, 1)

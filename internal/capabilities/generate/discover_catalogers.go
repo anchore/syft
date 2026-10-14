@@ -212,7 +212,7 @@ func parseGenericCatalogerFunction(funcDecl *ast.FuncDecl, filePath, repoRoot st
 // extractPackageNameFromPath extracts the package name from a cataloger source file path
 // e.g., "syft/pkg/cataloger/swift/cataloger.go" -> "swift"
 func extractPackageNameFromPath(filePath string) string {
-	parts := strings.Split(filePath, string(filepath.Separator))
+	parts := strings.Split(filepath.ToSlash(filePath), "/")
 
 	// find the LAST occurrence of "cataloger" in the path
 	// (to handle test fixtures with multiple "cataloger" segments)

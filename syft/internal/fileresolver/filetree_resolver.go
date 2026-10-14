@@ -35,9 +35,19 @@ func nativeOSFileOpener(ref stereoscopeFile.Reference) (io.ReadCloser, error) {
 	return stereoscopeFile.NewLazyReadCloser(filePath), nil
 }
 
+// virtual reports whether the tree is not backed by the host filesystem (e.g. a squashfs), in which case there is
+// no chroot and request/response paths are already the posix tree paths. Mapping them through the host (as the
+// chroot does) would root them on the current volume on windows (/payload.txt -> /d/payload.txt).
+func (r FiletreeResolver) virtual() bool {
+	return r.Chroot == ChrootContext{}
+}
+
 // requestPath converts a user (chroot) path into the path the file tree is keyed on. The tree is always posix
 // (windows paths are volume-encoded, e.g. /c/some/path), while ToNativePath yields a native host path.
 func (r *FiletreeResolver) requestPath(userPath string) (string, error) {
+	if r.virtual() {
+		return userPath, nil
+	}
 	nativePath, err := r.Chroot.ToNativePath(userPath)
 	if err != nil {
 		return "", err
@@ -50,6 +60,9 @@ func (r *FiletreeResolver) requestPath(userPath string) (string, error) {
 
 // responsePath takes a path from the underlying fs domain and converts it to a path that is relative to the root of the file resolver.
 func (r FiletreeResolver) responsePath(path string) string {
+	if r.virtual() {
+		return path
+	}
 	return r.Chroot.ToChrootPath(path)
 }
 
@@ -111,6 +124,9 @@ func (r FiletreeResolver) FilesByPath(userPaths ...string) ([]file.Location, err
 
 // requestGlob is the glob equivalent of requestPath.
 func (r FiletreeResolver) requestGlob(pattern string) (string, error) {
+	if r.virtual() {
+		return pattern, nil
+	}
 	glob, err := r.Chroot.ToNativeGlob(pattern)
 	if err != nil {
 		return "", err

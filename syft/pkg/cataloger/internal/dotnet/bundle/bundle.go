@@ -12,17 +12,24 @@ import (
 )
 
 const (
-	// maxBundleSearchSize bounds the bytes findSignatureOffset will hold at once while looking for the
-	// bundle marker.
+	// maxBundleSearchSize bounds how far into a file findSignatureOffset looks for the bundle marker.
 	//
 	// The marker sits inside the executable structure, so the search legitimately covers a whole
 	// single-file bundle, which routinely runs past 100MB and can reach a few hundred for an app that
 	// embeds sizable assets. Clamping to the file length alone is not enough: a mostly empty file costs
-	// almost nothing inside a compressed layer, so a small artifact can still authorize a multi-gigabyte
-	// allocation. The trade-off is that a bundle larger than this loses its deps.json rather than being
-	// cataloged, which is the correct direction to fail when the alternative is OOM-killing the scan.
-	// This mirrors maxDeclaredSectionSize in syft/internal/elfutil.
+	// almost nothing inside a compressed layer, so a small artifact can still authorize an unbounded
+	// amount of reading. The trade-off is that a bundle larger than this loses its deps.json rather than
+	// being cataloged, which is the correct direction to fail. This mirrors maxDeclaredSectionSize in
+	// syft/internal/elfutil. What the search holds in memory is bounded separately, by
+	// markerSearchWindowSize, so raising this costs time rather than resident bytes.
 	maxBundleSearchSize = 512 * intFile.MB
+
+	// markerSearchWindowSize is how much of a file findSignatureOffset holds at once.
+	markerSearchWindowSize = 256 * intFile.KB
+
+	// bundleHeaderOffsetSize is the width of the little-endian header offset stored immediately before
+	// the marker.
+	bundleHeaderOffsetSize = 8
 
 	// maxDepsJSONSize bounds an embedded deps.json. These are dependency manifests, so real ones are
 	// measured in KB even for large applications.
@@ -37,12 +44,25 @@ const (
 )
 
 // dotNetBundleSignature is the SHA-256 hash of ".net core bundle" used to identify single-file bundles.
-var dotNetBundleSignature = []byte{
+var dotNetBundleSignature = [32]byte{
 	0x8b, 0x12, 0x02, 0xb9, 0x6a, 0x61, 0x20, 0x38,
 	0x72, 0x7b, 0x93, 0x02, 0x14, 0xd7, 0xa0, 0x32,
 	0x13, 0xf5, 0xb9, 0xe6, 0xef, 0xae, 0x33, 0x18,
 	0xee, 0x3b, 0x2d, 0xce, 0x24, 0xb3, 0x6a, 0xae,
 }
+
+// markerSearchOverlap is how much of each search window carries over into the next: the bytes a marker
+// could straddle the boundary with, plus the offset that precedes it. Retaining both is what lets a
+// windowed search give the same answer as reading the file whole - a marker split across two reads is
+// still matched, and the offset in front of it is always in the same window as the match.
+const markerSearchOverlap = bundleHeaderOffsetSize + len(dotNetBundleSignature) - 1
+
+// the slide at the end of findSignatureOffset carries markerSearchOverlap bytes into the next window and
+// advances by the rest, so a window no wider than the overlap would take a negative slice index and never
+// move. The window is five orders of magnitude clear of that today; this is what refuses to compile if
+// anyone shrinks it to the marker's own scale, which is the tempting thing to do to make a test cheaper.
+// The -1 is what makes equality fail too: the window has to exceed the overlap, not merely match it.
+const _ = uint(markerSearchWindowSize - markerSearchOverlap - 1)
 
 // ExtractDepsJSON returns the deps.json embedded in the .NET single-file bundle in r, or "" if r carries no
 // bundle marker.
@@ -94,28 +114,16 @@ func findBundleHeaderOffset(r unionreader.UnionReader, searchLimit int64) (int64
 		clamped = true
 	}
 
-	// this scans a whole executable, routinely over 100MB for a single-file bundle, so the buffer is sized
-	// exactly once. An append-growing read holds both arrays at its final growth and would cost well over
-	// twice the file's own size for the same result.
-	searchData := make([]byte, limit)
-
-	// a short read is not fatal here: the marker may well be in what we did get, so search the bytes we
-	// actually hold. ReadAt reports a short read as io.EOF, and may report a full one that way too, so the
-	// count is what says how much there is to search.
-	n, err := r.ReadAt(searchData, 0)
-	if err != nil && !errors.Is(err, io.EOF) {
+	headerOffset, found, err := findSignatureOffset(r, limit)
+	if err != nil {
 		return 0, err
 	}
-
-	idx := bytes.Index(searchData[:n], dotNetBundleSignature)
-	if idx == -1 || idx < 8 {
+	if !found {
 		if clamped {
 			return 0, fmt.Errorf("no bundle marker in the first %d bytes and the rest of the %d byte file was not searched", maxBundleSearchSize, size)
 		}
 		return 0, nil
 	}
-
-	headerOffset := int64(binary.LittleEndian.Uint64(searchData[idx-8 : idx]))
 
 	if headerOffset == 0 {
 		// the marker is compiled into every apphost; only publishing as a single file fills in the offset
@@ -129,6 +137,52 @@ func findBundleHeaderOffset(r unionreader.UnionReader, searchLimit int64) (int64
 	}
 
 	return headerOffset, nil
+}
+
+// findSignatureOffset searches the first limit bytes of r for the bundle marker and returns the header
+// offset stored in the 8 bytes immediately before it, or false if the marker is not there.
+func findSignatureOffset(r unionreader.UnionReader, limit int64) (int64, bool, error) {
+	// nothing shorter than the marker plus the offset in front of it can hold a usable match
+	if limit < int64(bundleHeaderOffsetSize+len(dotNetBundleSignature)) {
+		return 0, false, nil
+	}
+
+	buf := make([]byte, min(int64(markerSearchWindowSize), limit))
+
+	var (
+		windowStart int64 // offset in the file that buf[0] holds
+		filled      int   // bytes of buf that hold file content
+	)
+
+	for {
+		// a short read is not fatal: the marker may well be in what we did get. ReadAt reports a short
+		// read as io.EOF, and may report a full one that way too, so the count is what says how much
+		// there is to search.
+		want := min(int64(len(buf)-filled), limit-windowStart-int64(filled))
+		n, err := r.ReadAt(buf[filled:int64(filled)+want], windowStart+int64(filled))
+		filled += n
+		if err != nil && !errors.Is(err, io.EOF) {
+			return 0, false, err
+		}
+
+		if idx := bytes.Index(buf[:filled], dotNetBundleSignature[:]); idx >= 0 {
+			// only reachable in the first window: after a slide the overlap guarantees that a match not
+			// already seen begins at least bundleHeaderOffsetSize into the buffer
+			if idx < bundleHeaderOffsetSize {
+				return 0, false, nil
+			}
+			return int64(binary.LittleEndian.Uint64(buf[idx-bundleHeaderOffsetSize : idx])), true, nil
+		}
+
+		// a buffer the read could not fill means the reader ran out before the limit did
+		if filled < len(buf) || windowStart+int64(filled) >= limit {
+			return 0, false, nil
+		}
+
+		copy(buf, buf[filled-markerSearchOverlap:filled])
+		windowStart += int64(filled - markerSearchOverlap)
+		filled = markerSearchOverlap
+	}
 }
 
 // dotNetBundleHeader represents the fixed portion of the bundle header (version 1+)

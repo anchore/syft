@@ -15,6 +15,7 @@ import (
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
@@ -92,6 +93,7 @@ func TestDigestsCataloger(t *testing.T) {
 func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 	testImage := "image-file-type-mix"
 
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
 	src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
@@ -162,6 +164,7 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 func TestFileDigestCataloger_GivenCoordinates(t *testing.T) {
 	testImage := "image-file-type-mix"
 
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
 	c := NewCataloger([]crypto.Hash{crypto.SHA256})
