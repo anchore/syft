@@ -292,6 +292,39 @@ func TestSelectName(t *testing.T) {
 			expected: "foo",
 		},
 		{
+			desc: "A Bundle-Name that is not a known artifact ID does not override the filename",
+			manifest: pkg.JavaManifest{
+				Main: pkg.KeyValues{
+					{Key: "Bundle-Name", Value: "foo-core"},
+					{Key: "Bundle-SymbolicName", Value: "org.example.foo-core"},
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/foo.jar"),
+			expected: "foo",
+		},
+		{
+			desc: "A known artifact ID does not override the filename when Bundle-SymbolicName is from another group",
+			manifest: pkg.JavaManifest{
+				Main: pkg.KeyValues{
+					{Key: "Bundle-Name", Value: "tomcat-catalina"},
+					{Key: "Bundle-SymbolicName", Value: "com.example.tomcat-catalina"},
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/catalina.jar"),
+			expected: "catalina",
+		},
+		{
+			desc: "The group ID must match Bundle-SymbolicName on a separator boundary",
+			manifest: pkg.JavaManifest{
+				Main: pkg.KeyValues{
+					{Key: "Bundle-Name", Value: "tomcat-catalina"},
+					{Key: "Bundle-SymbolicName", Value: "org.apache.tomcatfork.tomcat-catalina"},
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/catalina.jar"),
+			expected: "catalina",
+		},
+		{
 			// example: pkg:maven/org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-beans@5.3.26_1
 			desc: "Apache Maven Bundle Plugin might bake a version in the created-by field",
 			manifest: pkg.JavaManifest{

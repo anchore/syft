@@ -9,6 +9,7 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/cpegenerate"
 )
 
 const manifestGlob = "/META-INF/MANIFEST.MF"
@@ -155,8 +156,10 @@ func extractNameFromApacheMavenBundlePlugin(manifest *pkg.JavaManifest) string {
 //
 // Bundle-Name on its own is not trustworthy, since it is often a human readable title (catalina.jar's
 // sibling tomcat-jdbc.jar uses "Apache Tomcat JDBC Connection Pool"), so only use it when the symbolic
-// name is built from it. When the two agree the manifest is a better source for the artifact ID than the
-// filename, which is frequently a shortened alias: catalina.jar is org.apache.tomcat:tomcat-catalina.
+// name is built from it. Even then the value is only accepted when it is a known artifact ID whose group ID
+// prefixes Bundle-SymbolicName, so an arbitrary manifest value cannot become the package name. When all of
+// that agrees the manifest is a better source for the artifact ID than the filename, which is frequently a
+// shortened alias: catalina.jar is org.apache.tomcat:tomcat-catalina.
 func extractNameFromOSGiBundleName(manifest *pkg.JavaManifest) string {
 	if manifest == nil {
 		return ""
@@ -181,6 +184,16 @@ func extractNameFromOSGiBundleName(manifest *pkg.JavaManifest) string {
 	// require a separator between the prefix and the artifact ID, otherwise this is a coincidental suffix
 	// match (Bundle-Name "log" against Bundle-SymbolicName "org.example.catalog")
 	if separator := symbolicName[len(symbolicName)-len(bundleName)-1]; separator != '.' && separator != '-' {
+		return ""
+	}
+
+	// only trust artifact IDs we already know about, and require the symbolic name to start with the group ID
+	// for that artifact (org.apache.tomcat-catalina starts with org.apache.tomcat)
+	groupID, ok := cpegenerate.DefaultArtifactIDToGroupID[bundleName]
+	if !ok || !strings.HasPrefix(symbolicName, groupID) {
+		return ""
+	}
+	if rest := symbolicName[len(groupID):]; rest != "" && rest[0] != '.' && rest[0] != '-' {
 		return ""
 	}
 
