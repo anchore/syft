@@ -114,6 +114,20 @@ func TestCycloneDxImageEncoder(t *testing.T) {
 	)
 }
 
+func TestCycloneDxSourcePackageEncoder(t *testing.T) {
+	dir := t.TempDir()
+	testutil.AssertEncoderAgainstGoldenSnapshot(t,
+		testutil.EncoderSnapshotTestConfig{
+			Subject:                     testutil.SourcePackagesInput(t, dir),
+			Format:                      getEncoder(t),
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      true,
+			Redactor:                    redactor(dir),
+		},
+	)
+}
+
 func redactor(values ...string) testutil.Redactor {
 	return testutil.NewRedactions().
 		WithValuesRedacted(values...).
