@@ -68,3 +68,7 @@ application: # AUTO-GENERATED - application-level config keys
     description: base Pypi url to use
   - key: python.search-remote-licenses
     description: enables Syft to use the network to fill in more detailed license information
+  - key: terraform.registry-base-url
+    description: base Terraform Registry URL to use
+  - key: terraform.search-remote-licenses
+    description: enables Syft to use the network to download provider archives and extract license information
