@@ -8,6 +8,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/cataloger/certificate"
 	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/file/cataloger/filedigest"
@@ -22,7 +23,29 @@ func DefaultFileTaskFactories() Factories {
 		newFileMetadataCatalogerTaskFactory("file-metadata"),
 		newFileContentCatalogerTaskFactory("content"),
 		newExecutableCatalogerTaskFactory("binary-metadata"),
+		newCertificateCatalogerTaskFactory("certificate"),
 	}
+}
+
+func newCertificateCatalogerTaskFactory(tags ...string) factory {
+	return func(cfg CatalogingFactoryConfig) Task {
+		if !cfg.FilesConfig.Certificates.Enabled {
+			return nil
+		}
+		return newCertificateCatalogerTask(cfg.FilesConfig.Certificates, tags...)
+	}
+}
+
+func newCertificateCatalogerTask(cfg certificate.Config, tags ...string) Task {
+	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+		if !cfg.Enabled {
+			return nil
+		}
+		result, err := certificate.NewCataloger(cfg).Catalog(ctx, resolver)
+		builder.(sbomsync.Accessor).WriteToSBOM(func(value *sbom.SBOM) { value.Artifacts.Certificates = result })
+		return err
+	}
+	return NewTask("certificate-cataloger", fn, commonFileTags(tags)...)
 }
 
 func newFileDigestCatalogerTaskFactory(tags ...string) factory {
