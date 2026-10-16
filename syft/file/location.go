@@ -224,6 +224,10 @@ func (l Location) String() string {
 		str += fmt.Sprintf(" AccessPath=%q", l.AccessPath)
 	}
 
+	if l.ArchivePath != "" {
+		str += fmt.Sprintf(" ArchivePath=%q", l.ArchivePath)
+	}
+
 	if l.FileSystemID != "" {
 		str += fmt.Sprintf(" Layer=%q", l.FileSystemID)
 	}
@@ -233,5 +237,6 @@ func (l Location) String() string {
 func (l Location) Equals(other Location) bool {
 	return l.RealPath == other.RealPath &&
 		l.AccessPath == other.AccessPath &&
+		l.ArchivePath == other.ArchivePath &&
 		l.FileSystemID == other.FileSystemID
 }

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/internal/evidence"
 )
@@ -553,5 +554,26 @@ func TestLocationAndCoordinatesSorters(t *testing.T) {
 				}
 			})
 		})
+	}
+}
+
+func TestSorters_archivePathBreaksTies(t *testing.T) {
+	// the same path in two archives must sort the same way whatever order the inputs arrive in, or
+	// output built from map iteration is not reproducible
+	a := Coordinates{RealPath: "META-INF/MANIFEST.MF", ArchivePath: "/app.war:WEB-INF/lib/a.jar"}
+	b := Coordinates{RealPath: "META-INF/MANIFEST.MF", ArchivePath: "/app.war:WEB-INF/lib/b.jar"}
+	want := []string{a.ArchivePath, b.ArchivePath}
+
+	for _, in := range [][]Coordinates{{a, b}, {b, a}} {
+		coords := slices.Clone(in)
+		slices.SortFunc(coords, CoordinatesSorter(nil))
+		assert.Equal(t, want, []string{coords[0].ArchivePath, coords[1].ArchivePath}, "CoordinatesSorter")
+
+		locs := []Location{NewLocationFromCoordinates(in[0]), NewLocationFromCoordinates(in[1])}
+		slices.SortFunc(locs, LocationSorter(nil))
+		assert.Equal(t, want, []string{locs[0].ArchivePath, locs[1].ArchivePath}, "LocationSorter")
+
+		got := NewCoordinateSet(in...).ToSlice()
+		assert.Equal(t, want, []string{got[0].ArchivePath, got[1].ArchivePath}, "CoordinateSet.ToSlice")
 	}
 }

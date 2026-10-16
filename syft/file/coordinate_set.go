@@ -78,6 +78,9 @@ func (s CoordinateSet) ToSlice(sorters ...func(a, b Coordinates) int) []Coordina
 	if !sorted {
 		sort.SliceStable(coordinates, func(i, j int) bool {
 			if coordinates[i].FileSystemID == coordinates[j].FileSystemID {
+				if coordinates[i].RealPath == coordinates[j].RealPath {
+					return coordinates[i].ArchivePath < coordinates[j].ArchivePath
+				}
 				return coordinates[i].RealPath < coordinates[j].RealPath
 			}
 			return coordinates[i].FileSystemID < coordinates[j].FileSystemID

@@ -17,6 +17,7 @@ import (
 	"golang.org/x/exp/maps"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/archive"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/tmpdir"
@@ -57,12 +58,20 @@ var javaArchiveHashes = []crypto.Hash{
 	crypto.SHA1,
 }
 
+// archiveParser reads one java archive, whether this cataloger opened the archive file or the archive
+// cataloger task already extracted it.
 type archiveParser struct {
-	fileManifest intFile.ZipFileManifest
-	location     file.Location
-	archivePath  string
+	entries archiveEntries
+	// location is the archive's location in its parent filesystem; archive.VirtualPath(location) is its
+	// identity with the chain of containing archives prepended: "app.war:WEB-INF/lib/dep.jar"
+	location file.Location
+	fileInfo archiveFilename
+	// archiveDigests are of the archive file as a whole. When the archive cataloger task extracted the
+	// archive they come from that extraction, since the archive is not inside itself.
+	archiveDigests []file.Digest
+	// contentPath is the directory nested archives are unzipped into. Set only when this cataloger
+	// opened the archive itself, since only then does it recurse.
 	contentPath  string
-	fileInfo     archiveFilename
 	detectNested bool
 	cfg          ArchiveCatalogerConfig
 	maven        *maven.Resolver
@@ -83,7 +92,7 @@ func (gap genericArchiveParserAdapter) parseJavaArchive(ctx context.Context, _ f
 
 // processJavaArchive processes an archive for java contents, returning all Java libraries and nested archives
 func (gap genericArchiveParserAdapter) processJavaArchive(ctx context.Context, reader file.LocationReadCloser, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
-	parser, cleanupFn, err := newJavaArchiveParser(ctx, reader, true, gap.cfg)
+	parser, cleanupFn, err := newJavaArchiveParser(ctx, reader, !archive.NestedCatalogingEnabled(ctx), gap.cfg)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {
@@ -100,11 +109,12 @@ func uniquePkgKey(groupID string, p *pkg.Package) string {
 	return fmt.Sprintf("%s|%s|%s", groupID, p.Name, p.Version)
 }
 
-// newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
-// and parse nested archives or ignore them.
+// newJavaArchiveParser returns a parser for an archive file this cataloger opens itself, copied to a
+// temp dir. Can be configured to discover and parse nested archives or ignore them. The returned
+// cleanup must run even when an error is returned.
 func newJavaArchiveParser(ctx context.Context, reader file.LocationReadCloser, detectNested bool, cfg ArchiveCatalogerConfig) (*archiveParser, func(), error) {
 	// fetch the last element of the virtual path
-	virtualElements := strings.Split(reader.Path(), ":")
+	virtualElements := strings.Split(archive.VirtualPath(reader.Location), ":")
 	currentFilepath := virtualElements[len(virtualElements)-1]
 
 	td := tmpdir.FromContext(ctx)
@@ -116,21 +126,48 @@ func newJavaArchiveParser(ctx context.Context, reader file.LocationReadCloser, d
 		return nil, cleanupFn, fmt.Errorf("unable to process java archive: %w", err)
 	}
 
-	fileManifest, err := intFile.NewZipFileManifest(ctx, archivePath)
+	entries, err := newZipEntries(ctx, archivePath)
 	if err != nil {
-		return nil, cleanupFn, fmt.Errorf("unable to read files from java archive: %w", err)
+		return nil, cleanupFn, err
+	}
+
+	digests, err := getDigestsFromArchive(ctx, archivePath)
+	if err != nil {
+		return nil, cleanupFn, err
 	}
 
 	return &archiveParser{
-		fileManifest: fileManifest,
-		location:     reader.Location,
-		archivePath:  archivePath,
-		contentPath:  contentPath,
-		fileInfo:     newJavaArchiveFilename(currentFilepath),
-		detectNested: detectNested,
-		cfg:          cfg,
-		maven:        maven.NewResolver(nil, cfg.mavenConfig()),
+		entries:        entries,
+		location:       reader.Location,
+		fileInfo:       newJavaArchiveFilename(currentFilepath),
+		archiveDigests: digests,
+		contentPath:    contentPath,
+		detectNested:   detectNested,
+		cfg:            cfg,
+		maven:          maven.NewResolver(nil, cfg.mavenConfig()),
 	}, cleanupFn, nil
+}
+
+// newExtractedArchiveParser returns a parser for the archive whose extracted contents the resolver
+// holds. Its identity comes from the traversal, since none of it is inside the archive, and it never
+// recurses: archives nested inside it are the archive cataloger task's to find.
+func newExtractedArchiveParser(trav *archive.Traversal, resolver file.Resolver, cfg ArchiveCatalogerConfig) (*archiveParser, error) {
+	if resolver == nil {
+		return nil, fmt.Errorf("no resolver for the contents of %q", archive.VirtualPath(trav.Location))
+	}
+	return &archiveParser{
+		entries:        &resolverEntries{resolver: resolver},
+		location:       trav.Location,
+		fileInfo:       newJavaArchiveFilename(path.Base(trav.Location.Path())),
+		archiveDigests: trav.Digests,
+		cfg:            cfg,
+		maven:          maven.NewResolver(nil, cfg.mavenConfig()),
+	}, nil
+}
+
+// virtualPath is the archive's path with the chain of containing archives prepended.
+func (j *archiveParser) virtualPath() string {
+	return archive.VirtualPath(j.location)
 }
 
 // parse the loaded archive and return all packages found.
@@ -189,9 +226,10 @@ func (j *archiveParser) parse(ctx context.Context, parentPkg *pkg.Package) ([]pk
 		}
 		pkgs = append(pkgs, nestedPkgs...)
 		relationships = append(relationships, nestedRelationships...)
-	} else {
+	} else if !archive.NestedCatalogingEnabled(ctx) {
+		// nothing will catalog these, so record them as unknowns
 		// .jar and .war files are present in archives, are others? or generally just consider them top-level?
-		nestedArchives := j.fileManifest.GlobMatch(true, "**/*.jar", "**/*.war")
+		nestedArchives := j.entries.glob("**/*.jar", "**/*.war")
 		if len(nestedArchives) > 0 {
 			slices.Sort(nestedArchives)
 			errs = unknown.Appendf(errs, j.location, "nested archives not cataloged: %v", strings.Join(nestedArchives, ", "))
@@ -224,7 +262,7 @@ func finalizePackage(p *pkg.Package) {
 // discoverMainPackage parses the root Java manifest used as the parent package to all discovered nested packages.
 func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, error) {
 	// search and parse java manifest files
-	manifestMatches := j.fileManifest.GlobMatch(false, manifestGlob)
+	manifestMatches := j.entries.glob(manifestGlob)
 	if len(manifestMatches) > 1 {
 		return nil, fmt.Errorf("found multiple manifests in the jar: %+v", manifestMatches)
 	} else if len(manifestMatches) == 0 {
@@ -233,14 +271,14 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 	}
 
 	// fetch the manifest file
-	contents, err := intFile.ContentsFromZip(ctx, j.archivePath, manifestMatches...)
+	contents, err := j.entries.contents(ctx, manifestMatches...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract java manifests (%s): %w", j.location, err)
 	}
 
 	// parse the manifest file into a rich object
 	manifestContents := contents[manifestMatches[0]]
-	manifest, err := parseJavaManifest(j.archivePath, strings.NewReader(manifestContents))
+	manifest, err := parseJavaManifest(j.virtualPath(), strings.NewReader(manifestContents))
 	if err != nil {
 		log.Debugf("failed to parse java manifest (%s): %+v", j.location, err)
 		return nil, nil
@@ -251,12 +289,6 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 	if _, ok := manifest.Main.Get("Weave-Classes"); ok {
 		log.Debugf("excluding archive due to Weave-Classes manifest entry: %s", j.location)
 		return nil, nil
-	}
-
-	// grab and assign digest for the entire archive
-	digests, err := getDigestsFromArchive(ctx, j.archivePath)
-	if err != nil {
-		return nil, err
 	}
 
 	name, version, lics, parsedPom := j.discoverNameVersionLicense(ctx, manifest)
@@ -276,10 +308,10 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 		),
 		Type: j.fileInfo.pkgType(),
 		Metadata: pkg.JavaArchive{
-			VirtualPath:    j.location.Path(),
+			VirtualPath:    j.virtualPath(),
 			Manifest:       manifest,
 			PomProject:     pkgPomProject,
-			ArchiveDigests: digests,
+			ArchiveDigests: j.archiveDigests,
 		},
 	}, nil
 }
@@ -392,8 +424,8 @@ type parsedPomProject struct {
 // discoverMainPackageFromPomInfo attempts to resolve maven groupId, artifactId, version and other info from found pom information
 func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (group, name, version string, parsedPom *parsedPomProject) {
 	// Find the pom.properties/pom.xml if the names seem like a plausible match
-	properties, _ := pomPropertiesByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
-	projects, _ := pomProjectByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
+	properties, _ := pomPropertiesByParentPath(ctx, j.entries, j.location, j.entries.glob(pomPropertiesGlob))
+	projects, _ := pomProjectByParentPath(ctx, j.entries, j.location, j.entries.glob(pomXMLGlob))
 
 	artifactsMap := j.buildArtifactsMap(properties)
 	pomProperties, parsedPom := j.findBestPomMatch(properties, projects, artifactsMap)
@@ -524,13 +556,13 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(ctx context.Context, paren
 	var pkgs []pkg.Package
 
 	// pom.properties
-	properties, err := pomPropertiesByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
+	properties, err := pomPropertiesByParentPath(ctx, j.entries, j.location, j.entries.glob(pomPropertiesGlob))
 	if err != nil {
 		return nil, err
 	}
 
 	// pom.xml
-	projects, err := pomProjectByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
+	projects, err := pomProjectByParentPath(ctx, j.entries, j.location, j.entries.glob(pomXMLGlob))
 	if err != nil {
 		return nil, err
 	}
@@ -573,14 +605,14 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) []pkg.L
 
 	for _, glob := range []string{"/META-INF/*", "/*"} {
 		var licenseMatches []string
-		for _, f := range j.fileManifest.GlobMatch(true, glob) {
+		for _, f := range j.entries.glob(glob) {
 			if licenses.IsLicenseFile(path.Base(f)) {
 				licenseMatches = append(licenseMatches, f)
 			}
 		}
 
 		if len(licenseMatches) > 0 {
-			contents, err := intFile.ContentsFromZip(ctx, j.archivePath, licenseMatches...)
+			contents, err := j.entries.contents(ctx, licenseMatches...)
 			if err != nil {
 				log.Debugf("unable to extract java license (%s): %w", j.location, err)
 				continue
@@ -624,12 +656,12 @@ func (j *archiveParser) versionFromPropertiesFile(ctx context.Context, manifest 
 		return ""
 	}
 
-	matches := j.fileManifest.GlobMatch(true, "/version.properties")
+	matches := j.entries.glob("/version.properties")
 	if len(matches) != 1 {
 		return ""
 	}
 
-	contents, err := intFile.ContentsFromZip(ctx, j.archivePath, matches...)
+	contents, err := j.entries.contents(ctx, matches...)
 	if err != nil {
 		log.Debugf("unable to extract version.properties (%s): %v", j.location, err)
 		return ""
@@ -651,16 +683,23 @@ func (j *archiveParser) versionFromPropertiesFile(ctx context.Context, manifest 
 	return ""
 }
 
+// discoverPkgsFromNestedArchives recurses into the java archives inside this one, which needs an
+// archive file to unzip; an already-extracted archive's nested archives are the archive cataloger
+// task's to find.
 func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
+	zipped, ok := j.entries.(*zipEntries)
+	if !ok {
+		return nil, nil, nil
+	}
 	// we know that all java archives are zip formatted files, so we can use the shared zip helper
-	return discoverPkgsFromZip(ctx, j.location, j.archivePath, j.contentPath, j.fileManifest, parentPkg, j.cfg)
+	return discoverPkgsFromZip(ctx, j.location, zipped.archivePath, j.contentPath, zipped.fileManifest, parentPkg, j.cfg)
 }
 
 // discoverPkgsFromZip finds Java archives within Java archives, returning all listed Java packages found and
 // associating each discovered package to the given parent package.
 func discoverPkgsFromZip(ctx context.Context, location file.Location, archivePath, contentPath string, fileManifest intFile.ZipFileManifest, parentPkg *pkg.Package, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
 	// search and parse pom.properties files & fetch the contents
-	openers, err := intFile.ExtractFromZipToUniqueTempFile(ctx, archivePath, contentPath, fileManifest.GlobMatch(false, archiveFormatGlobs...)...)
+	openers, err := intFile.ExtractFromZipToUniqueTempFile(ctx, archivePath, contentPath, fileManifest.GlobMatch(archiveFormatGlobs...)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from zip: %w", err)
 	}
@@ -724,8 +763,8 @@ func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWit
 	return nestedPkgs, nestedRelationships, nil
 }
 
-func pomPropertiesByParentPath(ctx context.Context, archivePath string, location file.Location, extractPaths []string) (map[string]pkg.JavaPomProperties, error) {
-	contentsOfMavenPropertiesFiles, err := intFile.ContentsFromZip(ctx, archivePath, extractPaths...)
+func pomPropertiesByParentPath(ctx context.Context, entries archiveEntries, location file.Location, extractPaths []string) (map[string]pkg.JavaPomProperties, error) {
+	contentsOfMavenPropertiesFiles, err := entries.contents(ctx, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
@@ -753,8 +792,8 @@ func pomPropertiesByParentPath(ctx context.Context, archivePath string, location
 	return propertiesByParentPath, nil
 }
 
-func pomProjectByParentPath(ctx context.Context, archivePath string, location file.Location, extractPaths []string) (map[string]*parsedPomProject, error) {
-	contentsOfMavenProjectFiles, err := intFile.ContentsFromZip(ctx, archivePath, extractPaths...)
+func pomProjectByParentPath(ctx context.Context, entries archiveEntries, location file.Location, extractPaths []string) (map[string]*parsedPomProject, error) {
+	contentsOfMavenProjectFiles, err := entries.contents(ctx, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
@@ -801,7 +840,7 @@ func newPackageFromMavenData(ctx context.Context, r *maven.Resolver, pomProperti
 		// https://github.com/anchore/syft/issues/1944
 		vPathSuffix += ":" + pomProperties.GroupID + ":" + pomProperties.ArtifactID
 	}
-	virtualPath := location.Path() + vPathSuffix
+	virtualPath := archive.VirtualPath(location) + vPathSuffix
 
 	var pkgPomProject *pkg.JavaPomProject
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.1.11/document",
+  "$id": "anchore.io/schema/syft/json/16.1.12/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -720,7 +720,11 @@
         },
         "layerID": {
           "type": "string",
-          "description": "FileSystemID is an ID representing and entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank."
+          "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in."
+        },
+        "archivePath": {
+          "type": "string",
+          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem. Within each segment after the first, '%' is escaped as \"%25\" and ':' as \"%3A\", so splitting on ':' recovers the archive boundaries. Each segment is an archive's real path (links resolved), relative to the segment before it."
         }
       },
       "type": "object",
@@ -2548,7 +2552,11 @@
         },
         "layerID": {
           "type": "string",
-          "description": "FileSystemID is an ID representing and entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank."
+          "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in."
+        },
+        "archivePath": {
+          "type": "string",
+          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem. Within each segment after the first, '%' is escaped as \"%25\" and ':' as \"%3A\", so splitting on ':' recovers the archive boundaries. Each segment is an archive's real path (links resolved), relative to the segment before it."
         },
         "accessPath": {
           "type": "string",
