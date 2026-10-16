@@ -33,6 +33,7 @@ Sources:
 package elfutil
 
 import (
+	"bytes"
 	"debug/elf"
 	"encoding/binary"
 	"errors"
@@ -305,6 +306,71 @@ func CheckSectionNameTable(r io.ReaderAt) error {
 	return nil
 }
 
+// HasSectionNamed reports whether an ELF's section table names a section `name`, read the way elf.NewFile
+// resolves names: the bytes at the section's st_name offset into the name table, up to the next NUL. It
+// decodes the headers by hand and reads only the bytes it compares, so asking costs a few small reads
+// rather than a parse, which is what makes it usable as a pre-check in front of one: the golang cataloger
+// asks for .go.buildinfo before handing every executable in an image to debug/buildinfo, whose search for
+// the build info allocates a 1MB buffer and reads a whole segment when no such section exists.
+//
+// ok is false when the question cannot be answered from the file: it is not an ELF, it has no section
+// table, the name table is compressed, or some header or name lies outside the file. Each of those is
+// elf.NewFile's to describe, so a caller treats !ok as "parse it and see" rather than as an answer. A
+// found of false with ok true is a positive answer: every section header was read, every name resolved,
+// and none matched.
+func HasSectionNamed(r io.ReaderAt, name string) (found, ok bool) {
+	class, order, isELF := identify(r)
+	if !isELF {
+		return false, false
+	}
+	table, ok := readSectionTable(r, class, order)
+	if !ok || !table.acceptedByDebugELF() {
+		return false, false
+	}
+	nameTableOff, ok := table.headerOffset(table.shstrndx)
+	if !ok {
+		return false, false
+	}
+	names, err := readSectionHeader(r, class, order, nameTableOff)
+	// elf.NewFile rejects a name table of any other type, and a compressed one would have to be expanded
+	// before a single name could be read, which is the parse this exists to stand in front of
+	if err != nil || names.typ != elf.SHT_STRTAB || names.flags&uint64(elf.SHF_COMPRESSED) != 0 || names.offset < 0 {
+		return false, false
+	}
+
+	// a section is named `name` when that string sits at its name offset followed by a NUL
+	needle := []byte(name + "\x00")
+	buf := make([]byte, len(needle))
+	for i := uint64(0); i < table.shnum; i++ {
+		off, ok := table.headerOffset(i)
+		if !ok {
+			return false, false
+		}
+		sh, err := readSectionHeader(r, class, order, off)
+		if err != nil {
+			return false, false
+		}
+		// a name offset past the table is a file elf.NewFile refuses
+		if uint64(sh.name) >= names.size {
+			return false, false
+		}
+		// only as many bytes as the table has left; a name cut off by the end of the table is no match
+		n := len(needle)
+		if remaining := names.size - uint64(sh.name); remaining < uint64(n) {
+			n = int(remaining)
+		}
+		// the count decides, not the error: a read ending flush with the file reports io.EOF alongside
+		// every byte asked for
+		if got, _ := r.ReadAt(buf[:n], names.offset+int64(sh.name)); got < n {
+			return false, false
+		}
+		if n == len(needle) && bytes.Equal(buf, needle) {
+			return true, true
+		}
+	}
+	return false, true
+}
+
 // identify decodes the class and byte order every later read depends on, out of the file's 16
 // identification bytes. It reports false for anything that is not an ELF this package understands, so
 // elf.NewFile remains the single source of format errors.
@@ -336,21 +402,58 @@ func identify(r io.ReaderAt) (elf.Class, binary.ByteOrder, bool) {
 // enough that nothing gets decompressed: either way there is nothing to bound, and describing the file is
 // elf.NewFile's job rather than this package's.
 func sectionNameTableHeader(r io.ReaderAt, class elf.Class, order binary.ByteOrder) (sectionHeader, bool) {
-	shoff, shentsize, shnum, shstrndx, err := fileHeader(r, class, order)
-	if err != nil || shoff <= 0 || shentsize < sectionHeaderSize(class) {
+	table, ok := readSectionTable(r, class, order)
+	if !ok {
 		return sectionHeader{}, false
 	}
+	off, ok := table.headerOffset(table.shstrndx)
+	if !ok {
+		return sectionHeader{}, false
+	}
+	sh, err := readSectionHeader(r, class, order, off)
+	if err != nil {
+		return sectionHeader{}, false
+	}
+	return sh, true
+}
 
-	// a zero e_shnum means the real count lives in section 0's size field, and an e_shstrndx of
-	// SHN_XINDEX means the real string table index lives in that same header's link field
+// sectionTable is the shape of a file's section header table, with the two extended-numbering forms
+// already resolved: a zero e_shnum means the real count lives in section 0's size field, and an
+// e_shstrndx of SHN_XINDEX means the real string table index lives in that same header's link field.
+type sectionTable struct {
+	shoff     int64
+	shentsize int64
+	shnum     uint64
+	shstrndx  uint64
+
+	// extended marks a count taken from section 0, and xindex a name table index taken from its link;
+	// initial is that header, for a caller that wants to apply elf.NewFile's checks on it
+	extended bool
+	xindex   bool
+	initial  sectionHeader
+}
+
+// readSectionTable reports false whenever the file names no section name table or is malformed enough
+// that nothing gets decompressed: either way there is nothing to bound, and describing the file is
+// elf.NewFile's job rather than this package's.
+func readSectionTable(r io.ReaderAt, class elf.Class, order binary.ByteOrder) (sectionTable, bool) {
+	shoff, shentsize, shnum, shstrndx, err := fileHeader(r, class, order)
+	if err != nil || shoff <= 0 || shentsize < sectionHeaderSize(class) {
+		return sectionTable{}, false
+	}
+
+	table := sectionTable{shoff: shoff, shentsize: shentsize}
 	if shnum == 0 {
 		sh, err := readSectionHeader(r, class, order, shoff)
 		if err != nil {
-			return sectionHeader{}, false
+			return sectionTable{}, false
 		}
 		shnum = sh.size
+		table.extended = true
+		table.initial = sh
 		if shstrndx == uint64(elf.SHN_XINDEX) {
 			shstrndx = uint64(sh.link)
+			table.xindex = true
 		}
 	}
 
@@ -359,27 +462,43 @@ func sectionNameTableHeader(r io.ReaderAt, class elf.Class, order binary.ByteOrd
 	// non-zero; reached through SHN_XINDEX it indexes out of range and panics instead. That is a
 	// recoverable panic the task executor already contains, unlike the OOM this package exists to stop.
 	if shstrndx == 0 || shstrndx >= shnum {
-		return sectionHeader{}, false
+		return sectionTable{}, false
 	}
-	// the index is file-controlled, so guard the multiply and then the sum against a table the file
-	// places past the end of the address space
-	if shstrndx > uint64(math.MaxInt64)/uint64(shentsize) {
-		return sectionHeader{}, false
-	}
-	off := shoff + int64(shstrndx)*shentsize
-	if off < 0 {
-		return sectionHeader{}, false
-	}
+	table.shnum, table.shstrndx = shnum, shstrndx
+	return table, true
+}
 
-	sh, err := readSectionHeader(r, class, order, off)
-	if err != nil {
-		return sectionHeader{}, false
+// acceptedByDebugELF reports whether elf.NewFile would get as far as reading section names with this
+// table. The bound checks in this package do not care, since a file rejected here has nothing expanded,
+// but a query that answers for the parse has to stop where the parse would.
+func (t sectionTable) acceptedByDebugELF() bool {
+	if !t.extended {
+		return true
 	}
-	return sh, true
+	// elf.NewFile takes the count into an int, so a size past MaxInt64 reads as negative there
+	if t.initial.typ != elf.SHT_NULL || t.shnum < uint64(elf.SHN_LORESERVE) || t.shnum > math.MaxInt64 {
+		return false
+	}
+	return !t.xindex || t.shstrndx >= uint64(elf.SHN_LORESERVE)
+}
+
+// headerOffset locates section header i. The index is file-controlled, so it guards the multiply and then
+// the sum against a table the file places past the end of the address space.
+func (t sectionTable) headerOffset(i uint64) (int64, bool) {
+	if i > uint64(math.MaxInt64)/uint64(t.shentsize) {
+		return 0, false
+	}
+	off := t.shoff + int64(i)*t.shentsize
+	if off < 0 {
+		return 0, false
+	}
+	return off, true
 }
 
 // sectionHeader is the handful of fields we need out of an Elf32_Shdr or an Elf64_Shdr.
 type sectionHeader struct {
+	name   uint32
+	typ    elf.SectionType
 	flags  uint64
 	offset int64
 	size   uint64
@@ -414,6 +533,8 @@ func readSectionHeader(r io.ReaderAt, class elf.Class, order binary.ByteOrder, o
 			return sectionHeader{}, err
 		}
 		return sectionHeader{
+			name:   sh.Name,
+			typ:    elf.SectionType(sh.Type),
 			flags:  uint64(sh.Flags),
 			offset: int64(sh.Off),
 			size:   uint64(sh.Size),
@@ -425,6 +546,8 @@ func readSectionHeader(r io.ReaderAt, class elf.Class, order binary.ByteOrder, o
 		return sectionHeader{}, err
 	}
 	return sectionHeader{
+		name:   sh.Name,
+		typ:    elf.SectionType(sh.Type),
 		flags:  sh.Flags,
 		offset: int64(sh.Off),
 		size:   sh.Size,
