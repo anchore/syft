@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
@@ -70,13 +72,14 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 	}
 
 	// catalog all dependencies
+	excludedScopes := newScopeSet(p.cfg.MavenExcludeScopes)
 	for _, pom := range poms {
 		location := pomLocations[pom] // should always exist
 
 		id := r.ResolveID(ctx, pom)
 		mainPkg := resolved[id]
 
-		newPkgs, newRelationships, newErrs := collectDependencies(ctx, r, resolved, mainPkg, pom, location, p.cfg.ResolveTransitiveDependencies)
+		newPkgs, newRelationships, newErrs := collectDependencies(ctx, r, resolved, mainPkg, pom, location, p.cfg.ResolveTransitiveDependencies, excludedScopes)
 		pkgs = append(pkgs, newPkgs...)
 		relationships = append(relationships, newRelationships...)
 		errs = unknown.Join(errs, newErrs)
@@ -151,7 +154,28 @@ func newPackageFromMavenPom(ctx context.Context, r *maven.Resolver, pom *maven.P
 	return p
 }
 
-func collectDependencies(ctx context.Context, r *maven.Resolver, resolved map[maven.ID]*pkg.Package, parentPkg *pkg.Package, pom *maven.Project, loc file.Location, includeTransitiveDependencies bool) ([]pkg.Package, []artifact.Relationship, error) {
+// newScopeSet normalizes the configured Maven scopes (e.g. "test", "provided") for comparison with the scopes declared on pom dependencies
+func newScopeSet(scopes []string) *strset.Set {
+	set := strset.New()
+	for _, scope := range scopes {
+		scope = strings.ToLower(strings.TrimSpace(scope))
+		if scope != "" {
+			set.Add(scope)
+		}
+	}
+	return set
+}
+
+// dependencyScope returns the effective scope of a pom dependency; Maven treats a dependency without a scope as "compile"
+func dependencyScope(ctx context.Context, r *maven.Resolver, pom *maven.Project, dep maven.Dependency) string {
+	scope := strings.ToLower(strings.TrimSpace(r.ResolveProperty(ctx, pom, dep.Scope)))
+	if scope == "" {
+		return "compile"
+	}
+	return scope
+}
+
+func collectDependencies(ctx context.Context, r *maven.Resolver, resolved map[maven.ID]*pkg.Package, parentPkg *pkg.Package, pom *maven.Project, loc file.Location, includeTransitiveDependencies bool, excludedScopes *strset.Set) ([]pkg.Package, []artifact.Relationship, error) {
 	var errs error
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
@@ -159,6 +183,12 @@ func collectDependencies(ctx context.Context, r *maven.Resolver, resolved map[ma
 	pomID := r.ResolveID(ctx, pom)
 	for _, dep := range maven.DirectPomDependencies(pom) {
 		depID := r.ResolveDependencyID(ctx, pom, dep)
+
+		if scope := dependencyScope(ctx, r, pom, dep); excludedScopes.Has(scope) {
+			log.WithFields("pomLocation", loc, "mavenID", pomID, "dependencyID", depID, "scope", scope).Trace("skipping maven pom dependency with excluded scope")
+			continue
+		}
+
 		log.WithFields("pomLocation", loc, "mavenID", pomID, "dependencyID", depID).Trace("adding maven pom dependency")
 
 		// we may have a reference to a package pointing to an existing pom on the filesystem, but we don't want to duplicate these entries
@@ -189,7 +219,7 @@ func collectDependencies(ctx context.Context, r *maven.Resolver, resolved map[ma
 					log.WithFields("mavenID", depID, "error", err).Debug("error finding pom")
 				}
 				if depPom != nil {
-					transitivePkgs, transitiveRelationships, transitiveErrs := collectDependencies(ctx, r, resolved, depPkg, depPom, loc, includeTransitiveDependencies)
+					transitivePkgs, transitiveRelationships, transitiveErrs := collectDependencies(ctx, r, resolved, depPkg, depPom, loc, includeTransitiveDependencies, excludedScopes)
 					pkgs = append(pkgs, transitivePkgs...)
 					relationships = append(relationships, transitiveRelationships...)
 					errs = unknown.Join(errs, transitiveErrs)
