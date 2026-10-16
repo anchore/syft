@@ -51,7 +51,7 @@ require (
 	github.com/google/go-containerregistry v0.22.1
 	github.com/google/licensecheck v0.3.1
 	github.com/google/uuid v1.6.0
-	github.com/gookit/color v1.6.1
+	github.com/gookit/color v1.6.2
 	github.com/gpustack/gguf-parser-go v0.26.4
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/hashicorp/go-getter v1.8.9
