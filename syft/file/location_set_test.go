@@ -2,6 +2,7 @@ package file
 
 import (
 	"sort"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -307,4 +308,40 @@ func TestLocationSet_Hash(t *testing.T) {
 			tt.want(t, gotA, gotB)
 		})
 	}
+}
+
+func TestLocationSet_Add_DoesNotMutateCallerAnnotations(t *testing.T) {
+	first := NewLocation("/var/lib/dpkg/status").WithAnnotation("evidence", "primary")
+	second := NewLocation("/var/lib/dpkg/status").WithAnnotation("visible", "true")
+
+	s := NewLocationSet(first)
+	s.Add(second)
+
+	assert.Equal(t, map[string]string{"evidence": "primary"}, first.Annotations)
+	assert.Equal(t, map[string]string{"visible": "true"}, second.Annotations)
+	assert.Equal(t, map[string]string{"evidence": "primary", "visible": "true"}, s.ToSlice()[0].Annotations)
+}
+
+func TestLocationSet_Add_MergesIntoNilAnnotations(t *testing.T) {
+	s := NewLocationSet(Location{LocationData: LocationData{Coordinates: Coordinates{RealPath: "/a"}, AccessPath: "/a"}})
+
+	s.Add(NewLocation("/a").WithAnnotation("evidence", "primary"))
+
+	assert.Equal(t, map[string]string{"evidence": "primary"}, s.ToSlice()[0].Annotations)
+}
+
+func TestLocationSet_Add_SharedLocationAcrossGoroutines(t *testing.T) {
+	// mirrors catalogers that hand one annotated location to every package parsed in parallel
+	shared := NewLocation("/var/lib/dpkg/status").WithAnnotation("evidence", "primary")
+
+	var wg sync.WaitGroup
+	for range 50 {
+		wg.Go(func() {
+			for range 100 {
+				s := NewLocationSet(shared)
+				s.Add(shared)
+			}
+		})
+	}
+	wg.Wait()
 }
