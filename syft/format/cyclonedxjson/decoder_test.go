@@ -88,6 +88,38 @@ func TestDecoder_Decode(t *testing.T) {
 	}
 }
 
+func TestDecoder_DecodeEvidenceOccurrenceLocation(t *testing.T) {
+	reader := strings.NewReader(`{
+		"bomFormat": "CycloneDX",
+		"specVersion": "1.5",
+		"version": 1,
+		"components": [
+			{
+				"type": "library",
+				"bom-ref": "example@1.0.0",
+				"name": "example",
+				"version": "1.0.0",
+				"evidence": {
+					"occurrences": [
+						{"location": "/usr/bin/example"}
+					]
+				}
+			}
+		]
+	}`)
+
+	bom, _, _, err := NewFormatDecoder().Decode(reader)
+	require.NoError(t, err)
+
+	packages := bom.Artifacts.Packages.Sorted()
+	require.Len(t, packages, 1)
+
+	locations := packages[0].Locations.ToSlice()
+	require.Len(t, locations, 1)
+	assert.Equal(t, "/usr/bin/example", locations[0].RealPath)
+	assert.Equal(t, "/usr/bin/example", locations[0].AccessPath)
+}
+
 func TestDecoder_Identify(t *testing.T) {
 	type testCase struct {
 		name    string

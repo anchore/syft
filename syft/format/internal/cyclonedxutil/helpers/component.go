@@ -102,7 +102,7 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 
 	p := &pkg.Package{
 		Version:   c.Version,
-		Locations: decodeLocations(values),
+		Locations: decodeLocations(values, c.Evidence),
 		Licenses:  pkg.NewLicenseSet(decodeLicenses(c)...),
 		CPEs:      decodeCPEs(c),
 	}
@@ -204,13 +204,25 @@ func setPackageName(p *pkg.Package, c *cyclonedx.Component) {
 	p.Name = name
 }
 
-func decodeLocations(vals map[string]string) file.LocationSet {
+func decodeLocations(vals map[string]string, evidence *cyclonedx.Evidence) file.LocationSet {
 	v := Decode(reflect.TypeFor[[]file.Location](), vals, "syft:location", CycloneDXFields)
 	out, ok := v.([]file.Location)
 	if !ok {
 		out = nil
 	}
-	return file.NewLocationSet(out...)
+
+	locations := file.NewLocationSet(out...)
+	if evidence == nil || evidence.Occurrences == nil {
+		return locations
+	}
+
+	for _, occurrence := range *evidence.Occurrences {
+		if occurrence.Location != "" {
+			locations.Add(file.NewLocation(occurrence.Location))
+		}
+	}
+
+	return locations
 }
 
 func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeName string) any {
