@@ -240,7 +240,7 @@ func TestParseVersionResourceSection_FileVersionFallback(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fields := map[string]string{}
-			require.NoError(t, parseVersionResourceSection(bytes.NewReader(buildVersionResource(tt.withFileVersionString)), fields))
+			require.NoError(t, parseVersionResourceSection(bytes.NewReader(buildVersionResource(tt.withFileVersionString)), fields, map[string]string{}))
 			assert.Equal(t, tt.want, fields["FileVersion"])
 		})
 	}
@@ -282,7 +282,7 @@ func TestParseVersionResourceSection_TruncatedStringTableTerminates(t *testing.T
 
 	done := make(chan error, 1)
 	go func() {
-		done <- parseVersionResourceSection(bytes.NewReader(data), map[string]string{})
+		done <- parseVersionResourceSection(bytes.NewReader(data), map[string]string{}, map[string]string{})
 	}()
 
 	select {
@@ -468,7 +468,7 @@ func TestParseVersionResourceSection_TrailingBytesKeepFileVersion(t *testing.T) 
 			data := append(buildVersionResource(false), make([]byte, trailing)...)
 
 			fields := map[string]string{}
-			require.NoError(t, parseVersionResourceSection(bytes.NewReader(data), fields))
+			require.NoError(t, parseVersionResourceSection(bytes.NewReader(data), fields, map[string]string{}))
 			assert.Equal(t, "1.2.3.4", fields["FileVersion"],
 				"a resource that runs out mid-struct must still yield the fields already collected")
 		})
