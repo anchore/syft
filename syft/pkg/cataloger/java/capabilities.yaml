@@ -130,6 +130,38 @@ catalogers:
       - language
       - package
     parsers: # AUTO-GENERATED structure
+      - function: parseGradleConsistentVersionsLockfile
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/versions.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.JavaArchive
+        package_types: # AUTO-GENERATED
+          - java-archive
+        purl_types: # AUTO-GENERATED
+          - maven
+        json_schema_types: # AUTO-GENERATED
+          - JavaArchive
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
       - function: parseGradleLockfile
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
