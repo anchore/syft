@@ -242,6 +242,80 @@ func TestNewFromFile_RarExtension(t *testing.T) {
 	}
 }
 
+func TestNewFromFile_WheelExtension(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		input         string
+		wantExtracted bool
+		wantPaths     []string
+	}{
+		{
+			desc:          "zip archive with a .whl name is extracted",
+			input:         createWheel(t, t.TempDir(), "example-1.0.0-py3-none-any.whl"),
+			wantExtracted: true,
+			wantPaths:     []string{"example-1.0.0.dist-info/METADATA"},
+		},
+		{
+			desc:          "zip archive with an upper case .WHL name is extracted",
+			input:         createWheel(t, t.TempDir(), "example-1.0.0-py3-none-any.WHL"),
+			wantExtracted: true,
+			wantPaths:     []string{"example-1.0.0.dist-info/METADATA"},
+		},
+		{
+			desc:          "non-zip file with a .whl name is analyzed as a single file",
+			input:         writeFile(t, t.TempDir(), "not-a-wheel.whl", "plain text\n"),
+			wantExtracted: false,
+			wantPaths:     []string{"not-a-wheel.whl"},
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			src, err := New(Config{
+				Path: test.input,
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				require.NoError(t, src.Close())
+			})
+
+			assert.Equal(t, test.wantExtracted, src.(*fileSource).analysisPath != test.input)
+
+			res, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+
+			for _, p := range test.wantPaths {
+				refs, err := res.FilesByPath(p)
+				require.NoError(t, err)
+				assert.Len(t, refs, 1, "expected to find %q", p)
+			}
+		})
+	}
+}
+
+// createWheel writes a minimal Python wheel (a zip file holding .dist-info metadata) named name into dir and returns
+// its path.
+func createWheel(t testing.TB, dir, name string) string {
+	t.Helper()
+
+	whl := zipBytes(t, [][2]string{
+		{"example-1.0.0.dist-info/METADATA", "Metadata-Version: 2.1\nName: example\nVersion: 1.0.0\n"},
+		{"example-1.0.0.dist-info/WHEEL", "Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n"},
+		{"example/__init__.py", ""},
+	})
+
+	wheelPath := filepath.Join(dir, name)
+	require.NoError(t, os.WriteFile(wheelPath, whl, 0o600))
+	return wheelPath
+}
+
+func writeFile(t testing.TB, dir, name, contents string) string {
+	t.Helper()
+
+	p := filepath.Join(dir, name)
+	require.NoError(t, os.WriteFile(p, []byte(contents), 0o600))
+	return p
+}
+
 // createResourceAdapterArchive writes a minimal Java resource adapter archive (a zip file with a .rar extension that
 // holds a deployment descriptor and a nested jar) into dir and returns its path.
 func createResourceAdapterArchive(t testing.TB, dir string) string {

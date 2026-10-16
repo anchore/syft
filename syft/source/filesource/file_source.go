@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/mholt/archives"
@@ -213,6 +214,9 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 	}
 
 	envelopedUnarchiver, _, err := intFile.IdentifyArchive(context.Background(), path, nil)
+	if isZipWithWheelName(path) {
+		envelopedUnarchiver, err = archives.Zip{}, nil
+	}
 	if unarchiver, ok := envelopedUnarchiver.(archives.Extractor); err == nil && ok {
 		if isZipWithRarName(path, envelopedUnarchiver) {
 			log.Debugf("source path has a .rar name but zip content (e.g. a Java resource adapter archive); analyzing it as a single file")
@@ -239,6 +243,17 @@ func isZipWithRarName(path string, format archives.Format) bool {
 		return false
 	}
 
+	return hasZipContent(path)
+}
+
+// isZipWithWheelName reports whether the file has a Python wheel (.whl) name and zip content. A wheel is a zip
+// archive (PEP 427), but archive identification above uses the file name only and does not know the extension, so
+// without this the wheel is analyzed as a single file and its .dist-info metadata is never cataloged.
+func isZipWithWheelName(path string) bool {
+	return strings.EqualFold(filepath.Ext(path), ".whl") && hasZipContent(path)
+}
+
+func hasZipContent(path string) bool {
 	f, err := os.Open(path)
 	if err != nil {
 		return false
