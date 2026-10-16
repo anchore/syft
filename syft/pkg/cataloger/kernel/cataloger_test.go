@@ -2,7 +2,12 @@ package kernel
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
@@ -10,6 +15,57 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
+
+func TestKernelCatalogerARM64Image(t *testing.T) {
+	for _, path := range []string{"Image.efi", "boot/Image.efi", "Image", "boot/Image-5.10.256"} {
+		for _, sourceType := range []string{"directory", "file"} {
+			t.Run(sourceType+"/"+path, func(t *testing.T) {
+				directory := t.TempDir()
+				imagePath := filepath.Join(directory, path)
+				require.NoError(t, os.MkdirAll(filepath.Dir(imagePath), 0755))
+				image := arm64KernelImage("Linux version " + testKernelBanner + "\n\x00")
+				copy(image, "MZ")
+				require.NoError(t, os.WriteFile(imagePath, image, 0600))
+				tester := pkgtest.NewCatalogTester()
+				if sourceType == "directory" {
+					tester.FromDirectory(t, directory)
+				} else {
+					tester.FromFileSource(t, imagePath)
+				}
+				tester.ExpectsAssertion(func(t *testing.T, packages []pkg.Package, relationships []artifact.Relationship) {
+					require.Empty(t, relationships)
+					require.Len(t, packages, 1)
+					kernelPackage := packages[0]
+					require.Equal(t, "linux-kernel", kernelPackage.Name)
+					require.Equal(t, "5.10.256", kernelPackage.Version)
+					require.Equal(t, "linux-kernel-cataloger", kernelPackage.FoundBy)
+					require.Equal(t, pkg.LinuxKernelPkg, kernelPackage.Type)
+					require.Equal(t, "pkg:generic/linux-kernel@5.10.256", kernelPackage.PURL)
+					require.Equal(t, []cpe.CPE{cpe.Must("cpe:2.3:o:linux:linux_kernel:5.10.256:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource)}, kernelPackage.CPEs)
+					require.Equal(t, pkg.LinuxKernel{Architecture: "arm64", Format: "Image", Version: "5.10.256", ExtendedVersion: testKernelBanner}, kernelPackage.Metadata)
+					locations := kernelPackage.Locations.ToSlice()
+					require.Len(t, locations, 1)
+					expectedPath := path
+					if sourceType == "file" {
+						expectedPath = filepath.Base(path)
+					}
+					require.True(t, strings.HasSuffix(locations[0].RealPath, expectedPath))
+					require.Equal(t, pkg.PrimaryEvidenceAnnotation, locations[0].Annotations[pkg.EvidenceAnnotationKey])
+				}).TestCataloger(t, NewLinuxKernelCataloger(DefaultLinuxKernelCatalogerConfig()))
+			})
+		}
+	}
+}
+
+func TestKernelCatalogerARM64ImageRejectsNonKernel(t *testing.T) {
+	directory := t.TempDir()
+	image := append(make([]byte, 64), []byte("Linux version "+testKernelBanner+"\x00")...)
+	copy(image, "MZ")
+	require.NoError(t, os.WriteFile(filepath.Join(directory, "Image.efi"), image, 0600))
+	pkgtest.NewCatalogTester().FromDirectory(t, directory).
+		Expects(nil, nil).
+		TestCataloger(t, NewLinuxKernelCataloger(DefaultLinuxKernelCatalogerConfig()))
+}
 
 func Test_KernelCataloger(t *testing.T) {
 	ctx := context.TODO()
