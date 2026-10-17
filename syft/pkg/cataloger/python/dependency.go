@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -209,6 +210,15 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 		if pkgsBySitePackageAndName[sitePackagesDir] == nil {
 			pkgsBySitePackageAndName[sitePackagesDir] = make(map[string]pkg.Package)
 		}
+		// a distribution name is not unique within a site-packages tree: a
+		// top-level distribution and a copy vendored inside another one (say
+		// setuptools/_vendor/packaging) both normalize to the same name. Keeping
+		// whichever arrived last made the surviving package, and therefore every
+		// dependency edge pointing at that name, depend on cataloging order.
+		if existing, ok := pkgsBySitePackageAndName[sitePackagesDir][p.Name]; ok {
+			pkgsBySitePackageAndName[sitePackagesDir][p.Name] = preferredPackage(existing, p)
+			continue
+		}
 		pkgsBySitePackageAndName[sitePackagesDir][p.Name] = p
 	}
 
@@ -268,16 +278,69 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 	return pkgs, relationshipIndex.All(), err
 }
 
+// preferredPackage picks deterministically between two packages that share a
+// name within the same site-packages tree. The shallower path wins, so a
+// top-level distribution is preferred over a copy vendored inside another
+// distribution; equal depths fall back to the lexicographically smaller path
+// so the choice never depends on cataloging order.
+func preferredPackage(a, b pkg.Package) pkg.Package {
+	pathA, pathB := primaryLocationPath(a), primaryLocationPath(b)
+
+	depthA, depthB := strings.Count(pathA, "/"), strings.Count(pathB, "/")
+	switch {
+	case depthA != depthB:
+		if depthA < depthB {
+			return a
+		}
+		return b
+	case pathA != pathB:
+		if pathA < pathB {
+			return a
+		}
+		return b
+	}
+	return a
+}
+
+// primaryLocationPath returns a stable path for a package: the smallest of its
+// primary evidence locations, or the smallest of all its locations when none is
+// annotated as primary.
+func primaryLocationPath(p pkg.Package) string {
+	paths := make([]string, 0, len(p.Locations.ToSlice()))
+	for _, l := range packagePrimaryLocations(p) {
+		paths = append(paths, l.RealPath)
+	}
+	if len(paths) == 0 {
+		for _, l := range p.Locations.ToSlice() {
+			paths = append(paths, l.RealPath)
+		}
+	}
+	if len(paths) == 0 {
+		return ""
+	}
+	sort.Strings(paths)
+	return paths[0]
+}
+
 func collectPackages(pkgsBySitePackageAndName map[string]map[string]pkg.Package, sites []string) []pkg.Package {
 	// get packages for all sites, preferring packages from earlier sites for packages with the same name
 
 	pkgByName := make(map[string]struct{})
 	var pkgs []pkg.Package
 	for _, site := range sites {
-		for name, p := range pkgsBySitePackageAndName[site] {
+		// iterate names in a stable order: ranging over the map made the
+		// resulting slice order, and the relationship order derived from it,
+		// vary between runs on identical input
+		names := make([]string, 0, len(pkgsBySitePackageAndName[site]))
+		for name := range pkgsBySitePackageAndName[site] {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+
+		for _, name := range names {
 			if _, ok := pkgByName[name]; !ok {
 				pkgByName[name] = struct{}{}
-				pkgs = append(pkgs, p)
+				pkgs = append(pkgs, pkgsBySitePackageAndName[site][name])
 			}
 		}
 	}
