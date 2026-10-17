@@ -70,6 +70,60 @@ func Test_stdlibPackageAndRelationships(t *testing.T) {
 			wantRels: 1,
 		},
 		{
+			name: "universal binary slices with different compiler versions at one location",
+			pkgs: []pkg.Package{
+				{
+					Name:      "github.com/something/go",
+					Version:   "1.0.0",
+					Locations: file.NewLocationSet(file.NewLocation("/bin/my-app")),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "go1.21.0",
+						Architecture:      "amd64",
+						MainModule:        "github.com/something/go",
+					},
+				},
+				{
+					Name:      "github.com/something/go",
+					Version:   "1.0.0",
+					Locations: file.NewLocationSet(file.NewLocation("/bin/my-app")),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "go1.26.1",
+						Architecture:      "arm64",
+						MainModule:        "github.com/something/go",
+					},
+				},
+			},
+			wantPkgs: 2,
+			wantRels: 2,
+		},
+		{
+			name: "universal binary slices with the same compiler version at one location",
+			pkgs: []pkg.Package{
+				{
+					Name:      "github.com/something/go",
+					Version:   "1.0.0",
+					Locations: file.NewLocationSet(file.NewLocation("/bin/my-app")),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "go1.22.2",
+						Architecture:      "amd64",
+						MainModule:        "github.com/something/go",
+					},
+				},
+				{
+					Name:      "github.com/something/go",
+					Version:   "1.0.0",
+					Locations: file.NewLocationSet(file.NewLocation("/bin/my-app")),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "go1.22.2",
+						Architecture:      "arm64",
+						MainModule:        "github.com/something/go",
+					},
+				},
+			},
+			wantPkgs: 1,
+			wantRels: 1,
+		},
+		{
 			name: "go binary package with devel stdlib",
 			pkgs: []pkg.Package{
 				{
