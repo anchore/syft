@@ -3,12 +3,14 @@ package model
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -161,14 +163,21 @@ func isArchive(path string) bool {
 	return err == nil && format != nil
 }
 
+// toDependencies returns the packages that p depends on. Syft records this as
+// "dependency --dependency-of--> dependent", so the dependencies of p are on the From
+// side of the dependency-of relationships that point at p.
 func toDependencies(s *sbom.SBOM, p pkg.Package) (out []string) {
 	for _, r := range s.Relationships {
-		if r.From.ID() == p.ID() {
-			if p, ok := r.To.(pkg.Package); ok {
-				out = append(out, dependencyName(p))
-			}
+		if r.Type != artifact.DependencyOfRelationship || r.To.ID() != p.ID() {
+			continue
 		}
+		dep, ok := r.From.(pkg.Package)
+		if !ok {
+			continue
+		}
+		out = append(out, dependencyName(dep))
 	}
+	slices.Sort(out)
 	return
 }
 
