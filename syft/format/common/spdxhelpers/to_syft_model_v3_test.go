@@ -434,3 +434,43 @@ func Test_v3parseSPDXLicenses(t *testing.T) {
 	require.Len(t, declared, 1)
 	assert.Equal(t, "Apache-2.0 AND BSD-3-Clause", declared[0].Value)
 }
+
+func TestToSyftModelV3_packageLocations(t *testing.T) {
+	evidentByComment := "evident-by: indicates the package's existence is evident by the given file"
+	dbFile := &spdx.File{ID: "file-db", Name: "/lib/apk/db/installed"}
+	libFile := &spdx.File{ID: "file-lib", Name: "/usr/lib/libz.so.1"}
+
+	withEvidence := &spdx.Package{ID: "pkg-zlib", Name: "zlib", Version: "1.3.1-r2"}
+	withContains := &spdx.Package{ID: "pkg-musl", Name: "musl", Version: "1.2.5-r0"}
+	withNothing := &spdx.Package{ID: "pkg-other", Name: "other", Version: "1.0.0"}
+
+	elements := spdx.ElementList{
+		withEvidence, withContains, withNothing, dbFile, libFile,
+		&spdx.Relationship{From: withEvidence, To: spdx.ElementList{libFile}, Type: spdx.RelationshipType_Contains},
+		&spdx.Relationship{From: withEvidence, To: spdx.ElementList{dbFile}, Type: spdx.RelationshipType_Other, Comment: evidentByComment},
+		&spdx.Relationship{From: withContains, To: spdx.ElementList{libFile}, Type: spdx.RelationshipType_Contains},
+		&spdx.Relationship{From: withNothing, To: spdx.ElementList{dbFile}, Type: spdx.RelationshipType_Other, Comment: "some other note"},
+	}
+	doc := &spdx.Document{
+		SpdxDocument: spdx.SpdxDocument{
+			ID:       "https://example.org/test-doc",
+			Name:     "test-document",
+			Elements: elements,
+		},
+	}
+
+	result, err := ToSyftModelV3(doc)
+	require.NoError(t, err)
+
+	paths := map[string][]string{}
+	for _, p := range result.Artifacts.Packages.Sorted() {
+		paths[p.Name] = nil
+		for _, l := range p.Locations.ToSlice() {
+			paths[p.Name] = append(paths[p.Name], l.RealPath)
+		}
+	}
+
+	assert.Equal(t, []string{"/lib/apk/db/installed"}, paths["zlib"], "evident-by is preferred over contains")
+	assert.Equal(t, []string{"/usr/lib/libz.so.1"}, paths["musl"], "contains is used without evident-by")
+	assert.Empty(t, paths["other"], "other relationships without the evident-by comment are ignored")
+}
