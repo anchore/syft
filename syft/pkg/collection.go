@@ -61,7 +61,8 @@ func (c *Collection) Package(id artifact.ID) *Package {
 	return &p
 }
 
-// PackagesByPath returns all packages that were discovered from the given path.
+// PackagesByPath returns all packages that were discovered from the given path: a file's full path or
+// access path, or the top path of an archive, which answers with every package found within it.
 func (c *Collection) PackagesByPath(path string) []Package {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -158,17 +159,20 @@ func (c *Collection) addTypeToIndex(p Package) {
 func (c *Collection) addPathsToIndex(p Package) {
 	// note: write lock must be held by caller
 
-	observedPaths := strset.New()
-	for _, l := range p.Locations.ToSlice() {
-		if l.RealPath != "" && !observedPaths.Has(l.RealPath) {
-			c.addPathToIndex(p.id, l.RealPath)
-			observedPaths.Add(l.RealPath)
-		}
-		if l.AccessPath != "" && l.RealPath != l.AccessPath && !observedPaths.Has(l.AccessPath) {
-			c.addPathToIndex(p.id, l.AccessPath)
-			observedPaths.Add(l.AccessPath)
-		}
+	for _, path := range indexedPaths(p) {
+		c.addPathToIndex(p.id, path)
 	}
+}
+
+// indexedPaths are the paths a package is found by: each location's full path and access path, and
+// the top path of an archive it was found within.
+func indexedPaths(p Package) []string {
+	paths := strset.New()
+	for _, l := range p.Locations.ToSlice() {
+		paths.Add(l.RealPath, l.AccessPath, l.FullNestedPath())
+	}
+	paths.Remove("")
+	return paths.List()
 }
 
 func (c *Collection) addPathToIndex(id artifact.ID, path string) {
@@ -223,16 +227,8 @@ func (c *Collection) deleteTypeFromIndex(p Package) {
 func (c *Collection) deletePathsFromIndex(p Package) {
 	// note: write lock must be held by caller
 
-	observedPaths := strset.New()
-	for _, l := range p.Locations.ToSlice() {
-		if l.RealPath != "" && !observedPaths.Has(l.RealPath) {
-			c.deletePathFromIndex(p.id, l.RealPath)
-			observedPaths.Add(l.RealPath)
-		}
-		if l.AccessPath != "" && l.RealPath != l.AccessPath && !observedPaths.Has(l.AccessPath) {
-			c.deletePathFromIndex(p.id, l.AccessPath)
-			observedPaths.Add(l.AccessPath)
-		}
+	for _, path := range indexedPaths(p) {
+		c.deletePathFromIndex(p.id, path)
 	}
 }
 

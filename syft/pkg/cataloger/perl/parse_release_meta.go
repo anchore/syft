@@ -42,12 +42,12 @@ func parseReleaseMeta(ctx context.Context, resolver file.Resolver, _ *generic.En
 	if err != nil {
 		// a META.yml a strict parser rejects is routine rather than exceptional, so this skips the
 		// directory and never fails the scan
-		log.WithFields("path", reader.Path(), "error", err).Debug("unable to parse CPAN meta file")
+		log.WithFields("path", reader.FullNestedPath(), "error", err).Debug("unable to parse CPAN meta file")
 		return nil, nil, nil
 	}
 
 	if m.Name == "" || m.Version == "" {
-		log.WithFields("path", reader.Path()).Debug("CPAN meta file is missing a name or version")
+		log.WithFields("path", reader.FullNestedPath()).Debug("CPAN meta file is missing a name or version")
 		return nil, nil, nil
 	}
 

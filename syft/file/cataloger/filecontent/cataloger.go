@@ -57,7 +57,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) (map[fi
 	prog := catalogingProgress(ctx, int64(len(locations)))
 
 	for _, location := range locations {
-		prog.AtomicStage.Set(location.Path())
+		prog.AtomicStage.Set(location.FullNestedPath())
 
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {
@@ -103,7 +103,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	buf := &bytes.Buffer{}
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)
 	if _, err = io.Copy(encoder, contentReader); err != nil {
-		return "", internal.ErrPath{Context: "content-cataloger", Path: location.RealPath, Err: err}
+		return "", internal.ErrPath{Context: "content-cataloger", Path: location.FullNestedPath(), Err: err}
 	}
 	// note: it's important to close the reader before reading from the buffer since closing will flush the remaining bytes
 	if err := encoder.Close(); err != nil {

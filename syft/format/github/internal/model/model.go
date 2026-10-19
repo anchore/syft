@@ -113,9 +113,9 @@ func toPath(s source.Description, p pkg.Package) string {
 	locations := p.Locations.ToSlice()
 	if len(locations) > 0 {
 		location := locations[0]
-		packagePath := location.RealPath
-		if location.AccessPath != "" {
-			packagePath = location.AccessPath
+		packagePath := location.AccessPath
+		if packagePath == "" {
+			packagePath = location.FullNestedPath()
 		}
 		packagePath = strings.TrimPrefix(packagePath, "/")
 		switch metadata := s.Metadata.(type) {

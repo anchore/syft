@@ -15,7 +15,6 @@ import (
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/internal/relationship"
@@ -356,7 +355,7 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 			return spdx.ElementID(helpers.SanitizeElementID(id))
 		}
 		p := ""
-		parts := strings.Split(it.RealPath, "/")
+		parts := strings.Split(it.FullNestedPath(), "/")
 		for i := len(parts); i > 0; i-- {
 			part := parts[i-1]
 			if len(part) == 0 {
@@ -748,13 +747,13 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 			comments = append(comments, layerIDCommentPrefix+c.FileSystemID)
 		}
 
-		// a file inside an archive is named by its full chain ("app.war:WEB-INF/lib/a.jar:META-INF/MANIFEST.MF"),
+		// a file inside an archive is named by its full path ("/app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF"),
 		// so a consumer reading only the name does not mistake it for a file at that path in the scan
-		// root. The archive path is also kept in the comment so decoding need not guess where it ends.
-		name := c.RealPath
-		if c.ArchivePath != "" {
-			name = archive.VirtualPath(file.NewLocationFromCoordinates(c))
-			comments = append(comments, archivePathCommentPrefix+c.ArchivePath)
+		// root. The entry chain after the real path is also kept in the comment so decoding need not guess
+		// where it starts.
+		name := c.FullNestedPath()
+		if entries, ok := strings.CutPrefix(c.FullNestedPath(), c.RealPath+file.ArchivePathSeparator); ok {
+			comments = append(comments, archivePathCommentPrefix+entries)
 		}
 
 		relativePath, err := convertAbsoluteToRelative(name)

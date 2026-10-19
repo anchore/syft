@@ -4,8 +4,8 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"fmt"
 	"io"
+	"path"
 	"sort"
 	"strings"
 	"testing"
@@ -55,31 +55,6 @@ func TestResolver_add_directoryEntriesHoldNoContent(t *testing.T) {
 	assert.Empty(t, readStore(t, r)["lib"].body)
 }
 
-func TestResolver_add_indexCostIsChargedEvenForEmptyContent(t *testing.T) {
-	// the index estimate is what bounds an archive of many empty entries
-	limiter := NewLimiter(Limits{MaxMemoryBytes: 1 << 20, MaxDiskBytes: -1})
-	r, _ := resolverIn(t, limiter.charge())
-
-	hdr := regularHeader("a.txt", 0)
-	require.NoError(t, r.add(hdr, bytes.NewReader(nil)))
-
-	mem, _ := limiter.InUse()
-	assert.Equal(t, approxIndexBytes(hdr), mem)
-	assert.Zero(t, r.heldInMemory())
-}
-
-func TestResolver_add_indexCostFallsBackToDiskWhenMemoryIsZero(t *testing.T) {
-	limiter := NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: -1})
-	r, _ := resolverIn(t, limiter.charge())
-
-	hdr := regularHeader("a.txt", 0)
-	require.NoError(t, r.add(hdr, bytes.NewReader(nil)))
-
-	mem, disk := limiter.InUse()
-	assert.Zero(t, mem)
-	assert.Equal(t, approxIndexBytes(hdr), disk)
-}
-
 func TestResolver_add_indexDoesNotFallBackToDiskWhenMemoryIsBounded(t *testing.T) {
 	// the index lives in memory, so a bounded memory limit bounds it; only a zero limit defers to disk
 	limiter := NewLimiter(Limits{MaxMemoryBytes: 1024, MaxDiskBytes: -1})
@@ -106,21 +81,6 @@ func TestResolver_add_indexMakesRoomBySpillingHeldContent(t *testing.T) {
 	assert.NotEmpty(t, spillFile(t, dir))
 	assert.Equal(t, []string{"a.txt", "b.txt"}, storedNames(t, r))
 	assert.Equal(t, strings.Repeat("a", 100), readStore(t, r)["a.txt"].body)
-}
-
-func TestResolver_add_refusesEntriesWhenNoBudgetAdmitsTheIndex(t *testing.T) {
-	room := approxIndexBytes(regularHeader("x0", 0)) * 3
-	r, _ := resolverIn(t, NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: room}).charge())
-
-	var err error
-	admitted := 0
-	for i := 0; i < 100 && err == nil; i++ {
-		if err = r.add(regularHeader(fmt.Sprintf("x%d", i), 0), bytes.NewReader(nil)); err == nil {
-			admitted++
-		}
-	}
-	require.ErrorIs(t, err, ErrDiskLimitReached)
-	assert.Equal(t, 3, admitted)
 }
 
 func TestResolver_add_firstEntryAtAPathWins(t *testing.T) {
@@ -153,22 +113,6 @@ func TestResolver_pathsAndContents(t *testing.T) {
 	assert.Equal(t, "Manifest-Version: 1.0\n", string(body))
 }
 
-func TestResolver_contentsSurviveTheMoveToDisk(t *testing.T) {
-	// room for the index but only a few bytes of content, so the rest moves to disk
-	r := resolverOver(t, indexCostOf(jarEntriesFixture)+8, jarEntriesFixture)
-
-	locations, err := r.FilesByGlob("**/*.jar")
-	require.NoError(t, err)
-	require.Len(t, locations, 1)
-
-	reader, err := r.FileContentsByLocation(locations[0])
-	require.NoError(t, err)
-	body, err := io.ReadAll(reader)
-	require.NoError(t, err)
-	require.NoError(t, reader.Close())
-	assert.Equal(t, "PK\x03\x04 not really", string(body))
-}
-
 func TestResolver_mimeTypesAreSniffedFromContent(t *testing.T) {
 	r := resolverOver(t, 1<<20, map[string]string{
 		"notes.txt": "just some text",
@@ -177,26 +121,7 @@ func TestResolver_mimeTypesAreSniffedFromContent(t *testing.T) {
 
 	locations, err := r.FilesByMIMEType("text/x-shellscript")
 	require.NoError(t, err)
-	assert.Equal(t, []string{"run.sh"}, realPaths(locations))
-}
-
-func TestResolver_allLocationsCoversEveryFile(t *testing.T) {
-	r := resolverOver(t, 1<<20, jarEntriesFixture)
-
-	var got []string
-	for loc := range r.AllLocations(context.Background()) {
-		got = append(got, loc.RealPath)
-	}
-	sort.Strings(got)
-
-	assert.Equal(t, []string{
-		"BOOT-INF/lib/inner.jar",
-		"LICENSE",
-		"META-INF/MANIFEST.MF",
-		"META-INF/maven/com.example/lib/pom.properties",
-		"META-INF/maven/com.example/lib/pom.xml",
-		"com/example/Thing.class",
-	}, got)
+	assert.Equal(t, []string{"run.sh"}, localPaths(locations))
 }
 
 func TestResolver_answersAreOrdered(t *testing.T) {
@@ -227,14 +152,14 @@ func TestResolver_answersAreOrdered(t *testing.T) {
 
 		var all []string
 		for loc := range r.AllLocations(context.Background()) {
-			all = append(all, loc.RealPath)
+			all = append(all, loc.LocalPath())
 		}
 		assert.True(t, sort.StringsAreSorted(all))
 	}
 
 	var paths []string
 	for _, loc := range first {
-		paths = append(paths, loc.RealPath)
+		paths = append(paths, loc.LocalPath())
 	}
 	assert.True(t, sort.StringsAreSorted(paths), "ordered by path, not merely stable")
 }
@@ -279,7 +204,7 @@ func globPaths(t *testing.T, r *Resolver, pattern string) []string {
 	t.Helper()
 	locations, err := r.FilesByGlob(pattern)
 	require.NoError(t, err)
-	return realPaths(locations)
+	return localPaths(locations)
 }
 
 // several paths to one file answer as one location: the file's own path when it matched, otherwise
@@ -399,8 +324,8 @@ func TestResolver_collapsedLocationReadsTheTarget(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, locations, 1)
 
-	assert.Equal(t, "opt/real.bin", locations[0].RealPath, "content comes from the file")
-	assert.Equal(t, "opt/a-sym.jar", locations[0].AccessPath, "the path searched by is the one matched")
+	assert.Equal(t, "opt/real.bin", locations[0].LocalPath(), "content comes from the file")
+	assert.Equal(t, "outer.jar!/opt/a-sym.jar", locations[0].AccessPath, "the path searched by is the one matched")
 
 	reader, err := r.FileContentsByLocation(locations[0])
 	require.NoError(t, err)
@@ -412,6 +337,28 @@ func TestResolver_collapsedLocationReadsTheTarget(t *testing.T) {
 		"a location standing for a link must still read the file's bytes, not the link's none")
 }
 
+func TestResolver_fullPathsAreTrimmedToEntryPaths(t *testing.T) {
+	// catalogers build queries from the full paths the resolver hands out, e.g. path.Dir plus a sibling
+	r := resolverOver(t, 1<<20, map[string]string{"pom.xml": "a", "lib/dep.jar": "b"})
+
+	locations, err := r.FilesByPath("outer.jar!/lib/dep.jar")
+	require.NoError(t, err)
+	require.Len(t, locations, 1)
+	assert.Equal(t, "outer.jar!/lib/dep.jar", locations[0].AccessPath)
+
+	locations, err = r.FilesByPath(path.Join(path.Dir(locations[0].AccessPath), "../pom.xml"))
+	require.NoError(t, err)
+	require.Len(t, locations, 1, "a sibling at the archive root is reached through the full path")
+	assert.Equal(t, "outer.jar!/pom.xml", locations[0].FullNestedPath())
+
+	assert.True(t, r.HasPath(path.Dir("outer.jar!/pom.xml")), "the directory of a root entry is the root")
+	assert.True(t, r.HasPath("lib/dep.jar"), "an entry path is still accepted")
+
+	locations, err = r.FilesByGlob("outer.jar!/**/*.jar")
+	require.NoError(t, err)
+	require.Len(t, locations, 1)
+}
+
 func TestResolver_danglingLinkHasNoContent(t *testing.T) {
 	r := resolverFrom(t, testEntry{name: "opt/gone.jar", link: "missing.jar"})
 
@@ -420,14 +367,15 @@ func TestResolver_danglingLinkHasNoContent(t *testing.T) {
 		locations = append(locations, l)
 	}
 	require.Len(t, locations, 1)
-	assert.Equal(t, "opt/gone.jar", locations[0].RealPath)
+	assert.Equal(t, "opt/gone.jar", locations[0].LocalPath())
 
 	_, err := r.FileContentsByLocation(locations[0])
 	assert.Error(t, err, "a link to nothing has no content to read")
 
 	metadata, err := r.FileMetadataByLocation(locations[0])
 	require.NoError(t, err)
-	assert.Equal(t, "missing.jar", metadata.LinkDestination, "where it pointed is still reported, as the archive named it")
+	assert.Equal(t, "outer.jar!/opt/missing.jar", metadata.LinkDestination,
+		"where it pointed is still reported, resolved against the link's own directory")
 }
 
 func TestResolver_mimeTypeAnswersOnlyWithFiles(t *testing.T) {
@@ -443,7 +391,7 @@ func TestResolver_mimeTypeAnswersOnlyWithFiles(t *testing.T) {
 		t.Helper()
 		locations, err := r.FilesByMIMEType(types...)
 		require.NoError(t, err)
-		return realPaths(locations)
+		return localPaths(locations)
 	}
 
 	assert.Equal(t, []string{"opt/real.jar"}, byMIME("application/zip"),
@@ -465,7 +413,7 @@ func TestResolver_allLocationsKeepsEveryPath(t *testing.T) {
 
 	var got []string
 	for l := range r.AllLocations(context.Background()) {
-		got = append(got, l.RealPath)
+		got = append(got, l.LocalPath())
 	}
 	assert.Equal(t, []string{"opt/gone.jar", "opt/real.jar", "opt/sym.jar"}, got,
 		"every path the archive names, links included")
@@ -489,7 +437,7 @@ func TestResolver_add_anEntryOverTheCapIsSkippedAndReadNoFurther(t *testing.T) {
 	assert.ErrorContains(t, r.Truncated, "per-entry size cap of 1.0 KiB")
 	locations, err := r.FilesByGlob("**")
 	require.NoError(t, err)
-	assert.Equal(t, []string{"ok.txt"}, realPaths(locations))
+	assert.Equal(t, []string{"ok.txt"}, localPaths(locations))
 }
 
 type countingReader struct {

@@ -93,20 +93,20 @@ func readPackageJSONDeps(resolver file.Resolver, lockfileLocation file.Location)
 
 	pkgJSONLocation := resolver.RelativeFileByPath(lockfileLocation, "package.json")
 	if pkgJSONLocation == nil {
-		log.WithFields("lockfile", lockfileLocation.RealPath).Debug("could not find package.json for dev dependency detection")
+		log.WithFields("lockfile", lockfileLocation.FullNestedPath()).Debug("could not find package.json for dev dependency detection")
 		return prod, dev
 	}
 
 	reader, err := resolver.FileContentsByLocation(*pkgJSONLocation)
 	if err != nil {
-		log.WithFields("location", pkgJSONLocation.RealPath, "error", err).Debug("could not read package.json for dev dependency detection")
+		log.WithFields("location", pkgJSONLocation.FullNestedPath(), "error", err).Debug("could not read package.json for dev dependency detection")
 		return prod, dev
 	}
-	defer internal.CloseAndLogError(reader, pkgJSONLocation.RealPath)
+	defer internal.CloseAndLogError(reader, pkgJSONLocation.FullNestedPath())
 
 	var pkgJSON packageJSON
 	if err := json.NewDecoder(reader).Decode(&pkgJSON); err != nil {
-		log.WithFields("location", pkgJSONLocation.RealPath, "error", err).Debug("could not parse package.json for dev dependency detection")
+		log.WithFields("location", pkgJSONLocation.FullNestedPath(), "error", err).Debug("could not parse package.json for dev dependency detection")
 		return prod, dev
 	}
 

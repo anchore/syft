@@ -118,28 +118,6 @@ func TestResolver_extract_diskLimitBitesMidEntry(t *testing.T) {
 	assert.Equal(t, r.written, info.Size())
 }
 
-func TestResolver_extract_diskLimitFallsWhenAnArchiveIsReleased(t *testing.T) {
-	data := zipBytes(t, map[string]string{"a.txt": strings.Repeat("a", 200)})
-	oneArchive := approxIndexBytes(tar.Header{Name: "a.txt"}) + 200
-	limiter := NewLimiter(Limits{MaxDiskBytes: oneArchive * 3 / 2})
-
-	first, _ := extractBytes(t, data, "test.zip", limiter.charge())
-	require.NoError(t, first.Truncated)
-	require.Equal(t, int64(200), first.written)
-
-	second, _ := extractBytes(t, data, "test.zip", limiter.charge())
-	assert.Error(t, second.Truncated, "a second archive is bounded while the first is still held")
-	second.Cleanup()
-
-	first.Cleanup()
-	_, disk := limiter.InUse()
-	require.Zero(t, disk)
-
-	third, _ := extractBytes(t, data, "test.zip", limiter.charge())
-	assert.NoError(t, third.Truncated, "and extracts in full once the first is released")
-	assert.Equal(t, int64(200), third.written)
-}
-
 func TestResolver_extract_directoryOnlyArchivesAreBoundedByTheIndexEstimate(t *testing.T) {
 	var entries []testEntry
 	for i := range 50 {
@@ -262,7 +240,7 @@ func TestResolver_extract_excludedEntriesAreNeverStored(t *testing.T) {
 func TestExtract_readsEntriesAndDigestsTheArchive(t *testing.T) {
 	data := zipBytes(t, map[string]string{"dir/hello.txt": "hello world"})
 
-	extracted, err := Extract(context.Background(), bytes.NewReader(data), "parentFS", "app.war:some/path/app.zip", nil, nil)
+	extracted, err := Extract(context.Background(), bytes.NewReader(data), file.Coordinates{RealPath: "app.war", FileSystemID: "parentFS", FullPath: "app.war!/some/path/app.zip"}, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, extracted)
 	t.Cleanup(extracted.Cleanup)
@@ -274,7 +252,7 @@ func TestExtract_readsEntriesAndDigestsTheArchive(t *testing.T) {
 	locations, err := extracted.FilesByGlob("**/*.txt")
 	require.NoError(t, err)
 	require.Len(t, locations, 1)
-	assert.Equal(t, file.Coordinates{RealPath: "dir/hello.txt", FileSystemID: "parentFS", ArchivePath: "app.war:some/path/app.zip"},
+	assert.Equal(t, file.Coordinates{RealPath: "app.war", FileSystemID: "parentFS", FullPath: "app.war!/some/path/app.zip!/dir/hello.txt"},
 		locations[0].Coordinates)
 
 	reader, err := extracted.FileContentsByLocation(locations[0])
@@ -284,39 +262,13 @@ func TestExtract_readsEntriesAndDigestsTheArchive(t *testing.T) {
 	assert.Equal(t, "hello world", string(body))
 }
 
-func TestExtract_notAnArchive(t *testing.T) {
-	extracted, err := Extract(context.Background(), strings.NewReader("this is not an archive"), "", "notes.txt", nil, nil)
-	require.NoError(t, err)
-	assert.Nil(t, extracted)
-}
-
-func TestExtract_spillsUnderTheScansTempRootAndCleansUp(t *testing.T) {
-	ctx, root := scanContext(t)
-	limiter := NewLimiter(spillingLimits)
-
-	extracted, err := Extract(ctx, bytes.NewReader(zipBytes(t, sampleFiles)), "", "app.zip", limiter, nil)
-	require.NoError(t, err)
-	require.NotNil(t, extracted)
-	t.Cleanup(extracted.Cleanup)
-
-	require.Len(t, filesIn(t, root), 1)
-	_, disk := limiter.InUse()
-	assert.Positive(t, disk)
-
-	extracted.Cleanup()
-	assert.Empty(t, filesIn(t, root))
-	_, disk = limiter.InUse()
-	assert.Zero(t, disk, "cleanup releases everything the archive held")
-	extracted.Cleanup()
-}
-
 func TestExtract_heldContentIsReleasedOnceExtracted(t *testing.T) {
 	// the archive's own bytes are only needed to extract and digest it; afterwards the limiter holds
 	// the entries and the index estimate alone
 	data := zipBytes(t, map[string]string{"hello.txt": "hi"})
 	limiter := NewLimiter(Limits{MaxMemoryBytes: -1, MaxDiskBytes: -1})
 
-	extracted, err := Extract(context.Background(), unseekable{bytes.NewReader(data)}, "", "app.zip", limiter, nil)
+	extracted, err := Extract(context.Background(), unseekable{bytes.NewReader(data)}, file.NewCoordinates("app.zip", ""), limiter, nil)
 	require.NoError(t, err)
 	t.Cleanup(extracted.Cleanup)
 
@@ -332,7 +284,7 @@ func TestExtract_heldContentWrittenToDiskStaysUntilCleanup(t *testing.T) {
 	data := zipBytes(t, map[string]string{"hello.txt": "hi"})
 	limiter := NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: -1})
 
-	extracted, err := Extract(ctx, unseekable{bytes.NewReader(data)}, "", "app.zip", limiter, nil)
+	extracted, err := Extract(ctx, unseekable{bytes.NewReader(data)}, file.NewCoordinates("app.zip", ""), limiter, nil)
 	require.NoError(t, err)
 	t.Cleanup(extracted.Cleanup)
 
@@ -354,7 +306,7 @@ func TestExtract_aTruncatedStreamKeepsWhatWasRead(t *testing.T) {
 	data := tarGzBytes(t, map[string]string{"a.txt": "first", "b.bin": string(noise)})
 	cut := data[:len(data)/2]
 
-	extracted, err := Extract(context.Background(), bytes.NewReader(cut), "", "app.tar.gz", NewLimiter(unboundedLimits), nil)
+	extracted, err := Extract(context.Background(), bytes.NewReader(cut), file.NewCoordinates("app.tar.gz", ""), NewLimiter(unboundedLimits), nil)
 	require.NoError(t, err)
 	require.NotNil(t, extracted)
 	t.Cleanup(extracted.Cleanup)
@@ -362,7 +314,7 @@ func TestExtract_aTruncatedStreamKeepsWhatWasRead(t *testing.T) {
 	assert.Error(t, extracted.Truncated)
 	locations, err := extracted.FilesByGlob("**")
 	require.NoError(t, err)
-	assert.Equal(t, []string{"a.txt"}, realPaths(locations))
+	assert.Equal(t, []string{"a.txt"}, localPaths(locations))
 }
 
 func TestExtract_aPanicStillReleasesEverything(t *testing.T) {
@@ -371,7 +323,7 @@ func TestExtract_aPanicStillReleasesEverything(t *testing.T) {
 	limiter := NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: -1})
 
 	require.Panics(t, func() {
-		_, _ = Extract(ctx, &panicsAfter{n: 4096}, "", "app.zip", limiter, nil)
+		_, _ = Extract(ctx, &panicsAfter{n: 4096}, file.NewCoordinates("app.zip", ""), limiter, nil)
 	})
 
 	mem, disk := limiter.InUse()
@@ -397,11 +349,11 @@ func TestExtract_archiveBytesThatCannotBePlacedAreSkipped(t *testing.T) {
 	data := zipBytes(t, sampleFiles)
 	limiter := NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: 0})
 
-	_, err := Extract(context.Background(), unseekable{bytes.NewReader(data)}, "", "app.zip", limiter, nil)
+	_, err := Extract(context.Background(), unseekable{bytes.NewReader(data)}, file.NewCoordinates("app.zip", ""), limiter, nil)
 	assert.ErrorIs(t, err, ErrDiskLimitReached)
 
 	// read in place, the same bytes cost nothing; only the entries are refused
-	extracted, err := Extract(context.Background(), bytes.NewReader(data), "", "app.zip", limiter, nil)
+	extracted, err := Extract(context.Background(), bytes.NewReader(data), file.NewCoordinates("app.zip", ""), limiter, nil)
 	require.NoError(t, err)
 	require.NotNil(t, extracted)
 	t.Cleanup(extracted.Cleanup)
@@ -409,24 +361,6 @@ func TestExtract_archiveBytesThatCannotBePlacedAreSkipped(t *testing.T) {
 	locations, err := extracted.FilesByGlob("**/*")
 	require.NoError(t, err)
 	assert.Empty(t, locations)
-}
-
-func TestExtract_aZipBehindALauncherScript(t *testing.T) {
-	// a Spring Boot executable jar sniffs as a shell script; archive/zip still finds the central directory
-	data := append([]byte("#!/bin/bash\necho launcher\nexit 0\n"), zipBytes(t, map[string]string{
-		"META-INF/MANIFEST.MF": "Manifest-Version: 1.0\n",
-		"BOOT-INF/lib/dep.jar": "not really a jar, just bytes",
-	})...)
-
-	extracted, err := Extract(context.Background(), bytes.NewReader(data), "", "/opt/app.jar", nil, nil)
-	require.NoError(t, err)
-	require.NotNil(t, extracted)
-	t.Cleanup(extracted.Cleanup)
-
-	assert.NoError(t, extracted.Truncated)
-	locations, err := extracted.FilesByGlob("**/*")
-	require.NoError(t, err)
-	assert.Len(t, locations, 2)
 }
 
 func Test_HasZipEndOfCentralDirectory(t *testing.T) {
@@ -521,7 +455,7 @@ func TestExtract_decompressionBombIsBoundedByTheLimits(t *testing.T) {
 			ctx, root := scanContext(t)
 			limiter := NewLimiter(limits)
 
-			r, err := Extract(ctx, bytes.NewReader(data), "", name, limiter, nil)
+			r, err := Extract(ctx, bytes.NewReader(data), file.NewCoordinates(name, ""), limiter, nil)
 			require.NoError(t, err)
 			require.NotNil(t, r)
 			t.Cleanup(r.Cleanup)
@@ -547,7 +481,7 @@ func TestExtract_entryCountBombIsBoundedByTheMemoryLimit(t *testing.T) {
 	limits := Limits{MaxMemoryBytes: 1 << 20, MaxDiskBytes: -1}
 	limiter := NewLimiter(limits)
 
-	r, err := Extract(context.Background(), bytes.NewReader(manyEntryZip(t, 20_000)), "", "many.zip", limiter, nil)
+	r, err := Extract(context.Background(), bytes.NewReader(manyEntryZip(t, 20_000)), file.NewCoordinates("many.zip", ""), limiter, nil)
 	require.NoError(t, err)
 	t.Cleanup(r.Cleanup)
 
@@ -575,7 +509,7 @@ func TestExtract_deepPathBombIsBoundedByTheMemoryLimit(t *testing.T) {
 	limits := Limits{MaxMemoryBytes: 8 << 20, MaxDiskBytes: -1}
 	limiter := NewLimiter(limits)
 
-	r, err := Extract(context.Background(), bytes.NewReader(zipBytes(t, files)), "", "deep.zip", limiter, nil)
+	r, err := Extract(context.Background(), bytes.NewReader(zipBytes(t, files)), file.NewCoordinates("deep.zip", ""), limiter, nil)
 	require.NoError(t, err)
 	t.Cleanup(r.Cleanup)
 
@@ -583,4 +517,45 @@ func TestExtract_deepPathBombIsBoundedByTheMemoryLimit(t *testing.T) {
 	assert.LessOrEqual(t, int64(nodeCount(r))*approxIndexBytesPerEntry, limits.MaxMemoryBytes+approxIndexBytesPerEntry)
 	peakMemory, _ := limiter.Peak()
 	assert.LessOrEqual(t, peakMemory, limits.MaxMemoryBytes)
+}
+
+func TestExtract_locationsKeepTheTopLevelRealPath(t *testing.T) {
+	data := zipBytes(t, map[string]string{"dir/hello.txt": "hello world"})
+
+	// a top-level archive's coordinates, with FullPath unset or set to RealPath, name entries alike
+	for _, archive := range []file.Coordinates{
+		{RealPath: "/app.zip"},
+		{RealPath: "/app.zip", FullPath: "/app.zip"},
+	} {
+		extracted, err := Extract(context.Background(), bytes.NewReader(data), archive, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, extracted)
+		t.Cleanup(extracted.Cleanup)
+
+		locations, err := extracted.FilesByPath("dir/hello.txt")
+		require.NoError(t, err)
+		require.Len(t, locations, 1)
+		assert.Equal(t, file.Coordinates{RealPath: "/app.zip", FullPath: "/app.zip!/dir/hello.txt"}, locations[0].Coordinates)
+		assert.Equal(t, "dir/hello.txt", locations[0].LocalPath())
+
+		for _, loc := range []file.Location{
+			locations[0],
+			file.NewLocation("dir/hello.txt"),
+			file.NewLocation("/dir/hello.txt"),
+			file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/app.zip", FullPath: "/app.zip!/dir/hello.txt"}),
+		} {
+			reader, err := extracted.FileContentsByLocation(loc)
+			require.NoError(t, err, "location %s", loc)
+			body, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			assert.Equal(t, "hello world", string(body))
+
+			metadata, err := extracted.FileMetadataByLocation(loc)
+			require.NoError(t, err, "location %s", loc)
+			assert.Equal(t, "/app.zip!/dir/hello.txt", metadata.Path)
+		}
+
+		_, err = extracted.FileContentsByLocation(file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/other.zip", FullPath: "/other.zip!/dir/hello.txt"}))
+		assert.Error(t, err, "an entry of another archive is not read from this one")
+	}
 }

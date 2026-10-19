@@ -94,7 +94,7 @@ func readPomFromLocation(fileResolver file.Resolver, pomLocation file.Location) 
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(contents, pomLocation.RealPath)
+	defer internal.CloseAndLogError(contents, pomLocation.FullNestedPath())
 	return maven.ParsePomXML(contents)
 }
 
@@ -313,7 +313,7 @@ func pomParent(ctx context.Context, r *maven.Resolver, pom *maven.Project) *pkg.
 // src/test/resources, a tarball of a source tree) nothing else reads these poms, so they are cataloged.
 func isArchiveMetaPom(ctx context.Context, location file.Location) bool {
 	trav := archive.TraversalFromContext(ctx)
-	if trav == nil || !isJavaArchiveName(trav.Location.Path()) {
+	if trav == nil || !isJavaArchiveName(trav.Location.AccessPath) {
 		return false
 	}
 	return strings.Contains(location.Path(), "META-INF/maven/")

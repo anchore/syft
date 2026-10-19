@@ -64,8 +64,8 @@ func TestApplyCompliance(t *testing.T) {
 	p2 := pkg.Package{Name: "", Version: "1.0"}   // missing name
 	p3 := pkg.Package{Name: "pkg-3", Version: ""} // missing version
 	p4 := pkg.Package{Name: "pkg-4", Version: ""} // missing version
-	c1 := file.Coordinates{RealPath: "/coords/1"}
-	c2 := file.Coordinates{RealPath: "/coords/2"}
+	c1 := file.NewCoordinates("/coords/1", "")
+	c2 := file.NewCoordinates("/coords/2", "")
 
 	for _, p := range []*pkg.Package{&p1, &p2, &p3, &p4} {
 		p.SetID()

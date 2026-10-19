@@ -62,7 +62,7 @@ func (r *resolverEntries) glob(patterns ...string) []string {
 			continue
 		}
 		for _, location := range locations {
-			name := strings.TrimPrefix(location.Path(), "/")
+			name := strings.TrimPrefix(location.LocalPath(), "/")
 			if seen.Has(name) {
 				continue
 			}
@@ -98,7 +98,7 @@ func (r *resolverEntries) read(location file.Location) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer internal.CloseAndLogError(reader, location.RealPath)
+	defer internal.CloseAndLogError(reader, location.FullNestedPath())
 
 	var contents strings.Builder
 	if err := intFile.SafeCopy(&contents, reader); err != nil {

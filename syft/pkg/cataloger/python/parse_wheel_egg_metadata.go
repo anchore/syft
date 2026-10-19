@@ -104,13 +104,13 @@ func extractRFC5322Fields(locationReader file.LocationReadCloser) (map[string]an
 
 				fields[key] = handleSingleOrMultiField(fields[key], val)
 			} else {
-				log.Debugf("cannot parse field from path: %q from line: %q", locationReader.Path(), line)
+				log.Debugf("cannot parse field from path: %q from line: %q", locationReader.FullNestedPath(), line)
 			}
 		}
 	}
 	if err := scanner.Err(); err != nil {
 		// the caller discards everything on error, so keep the partial fields and log instead
-		log.WithFields("path", locationReader.Path(), "error", err).Debug("failed to fully read python wheel/egg metadata")
+		log.WithFields("path", locationReader.FullNestedPath(), "error", err).Debug("failed to fully read python wheel/egg metadata")
 	}
 	return fields, nil
 }

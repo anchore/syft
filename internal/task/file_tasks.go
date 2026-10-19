@@ -175,10 +175,10 @@ func coordinatesForSelection(ctx context.Context, selection file.Selection, acce
 			}
 		})
 
-		frame := archive.TraversalFromContext(ctx).ContentsArchivePath()
+		frame := archive.TraversalFromContext(ctx).FullTraversalArchivePath()
 		var coords []file.Coordinates
 		for _, c := range coordinates.ToSlice() {
-			if c.ArchivePath == frame {
+			if archive.ContainerPath(c) == frame {
 				coords = append(coords, c)
 			}
 		}

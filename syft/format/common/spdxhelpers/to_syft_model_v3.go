@@ -401,10 +401,7 @@ func v3toSyftCoordinates(f spdx.AnyFile) file.Coordinates {
 	if strings.HasPrefix(f.GetID(), layerIDPrefix) {
 		fileSystemID = strings.TrimPrefix(f.GetID(), layerIDPrefix)
 	}
-	return file.Coordinates{
-		RealPath:     f.GetName(),
-		FileSystemID: fileSystemID,
-	}
+	return file.NewCoordinates(f.GetName(), fileSystemID)
 }
 
 func v3toSyftLocation(f spdx.AnyFile) file.Location {

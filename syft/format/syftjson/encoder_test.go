@@ -98,7 +98,7 @@ func TestEncode_sameFileInManyArchivesIsReproducible(t *testing.T) {
 	s.Artifacts.FileMetadata = map[file.Coordinates]file.Metadata{}
 	p := pkg.Package{Name: "shared", Version: "1.0"}
 	for i := range 20 {
-		c := file.Coordinates{RealPath: "META-INF/MANIFEST.MF", ArchivePath: fmt.Sprintf("/app.war:WEB-INF/lib/%02d.jar", i)}
+		c := file.Coordinates{RealPath: "/app.war", FullPath: fmt.Sprintf("/app.war!/WEB-INF/lib/%02d.jar!/META-INF/MANIFEST.MF", i)}
 		s.Artifacts.FileMetadata[c] = file.Metadata{}
 		p.Locations.Add(file.NewLocationFromCoordinates(c))
 	}
@@ -168,9 +168,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Name:    "package-1",
 		Version: "1.0.1",
 		Locations: file.NewLocationSet(
-			file.NewLocationFromCoordinates(file.Coordinates{
-				RealPath: "/a/place/a",
-			}),
+			file.NewLocationFromCoordinates(file.NewCoordinates("/a/place/a", "")),
 		),
 		Type:     pkg.PythonPkg,
 		FoundBy:  "the-cataloger-1",
@@ -191,9 +189,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Name:    "package-2",
 		Version: "2.0.1",
 		Locations: file.NewLocationSet(
-			file.NewLocationFromCoordinates(file.Coordinates{
-				RealPath: "/b/place/b",
-			}),
+			file.NewLocationFromCoordinates(file.NewCoordinates("/b/place/b", "")),
 		),
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",

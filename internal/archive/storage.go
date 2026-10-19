@@ -109,7 +109,7 @@ func (r *Resolver) spill() error {
 	if err := r.openFile(); err != nil {
 		return err
 	}
-	log.WithFields("archive", r.archivePath, "held", len(r.held), "bytes", r.written).
+	log.WithFields("archive", r.archiveCoordinates.FullNestedPath(), "held", len(r.held), "bytes", r.written).
 		Debug("archive content does not fit in memory; writing it to disk")
 
 	for len(r.held) > 0 {
@@ -188,7 +188,7 @@ func (r *Resolver) releaseStorage() {
 		return
 	}
 	if err := r.file.Close(); err != nil {
-		log.WithFields("archive", r.archivePath, "error", err).Trace("unable to close archive temp file")
+		log.WithFields("archive", r.archiveCoordinates.FullNestedPath(), "error", err).Trace("unable to close archive temp file")
 	}
 	r.remove()
 	r.charge.refundDisk(r.written)

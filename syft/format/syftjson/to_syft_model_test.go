@@ -295,10 +295,7 @@ func Test_idsHaveChanged(t *testing.T) {
 }
 
 func Test_toSyftFiles(t *testing.T) {
-	coord := file.Coordinates{
-		RealPath:     "/somerwhere/place",
-		FileSystemID: "abc",
-	}
+	coord := file.NewCoordinates("/somerwhere/place", "abc")
 
 	tests := []struct {
 		name  string

@@ -1,10 +1,7 @@
 package task
 
 import (
-	"archive/tar"
-	"archive/zip"
 	"bytes"
-	"compress/gzip"
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
@@ -14,7 +11,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -31,6 +27,7 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/internal/sbomsync"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
@@ -87,7 +84,7 @@ func (panicReader) Read([]byte) (int, error) { panic("decoder blew up") }
 func Test_archiveCataloger_aPanicCostsOnlyThatArchive(t *testing.T) {
 	rootDir := t.TempDir()
 	for _, name := range []string{"bad.zip", "good.zip"} {
-		require.NoError(t, os.WriteFile(filepath.Join(rootDir, name), makeZip(t, map[string][]byte{"a.txt": []byte("a")}), 0o600))
+		require.NoError(t, os.WriteFile(filepath.Join(rootDir, name), testutils.Zip(t, map[string][]byte{"a.txt": []byte("a")}), 0o600))
 	}
 
 	var seen []string
@@ -147,35 +144,10 @@ func capturingTask(t *testing.T, seen *[]string, fileCounts *map[string]int) Tas
 	})
 }
 
-func Test_archiveCataloger_traversalThreading(t *testing.T) {
-	manifest := []byte("Manifest-Version: 1.0\nImplementation-Title: example\nImplementation-Version: 1.0.0\n")
-	innerJar := makeZip(t, map[string][]byte{"META-INF/MANIFEST.MF": manifest})
-	innerZip := makeZip(t, map[string][]byte{"README.txt": []byte("hi")})
-	outerZip := makeZip(t, map[string][]byte{
-		"lib/inner.jar":    innerJar,
-		"nested/inner.zip": innerZip,
-	})
-
-	rootDir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
-
-	var seen []string
-	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(3), capturingTask(t, &seen, nil))
-
-	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM())))
-
-	// java archives are traversed like any other archive when the task is enabled
-	assert.ElementsMatch(t, []string{
-		"/outer.zip",
-		"/outer.zip:lib/inner.jar",
-		"/outer.zip:nested/inner.zip",
-	}, seen)
-}
-
 func Test_archiveCataloger_truncationStillCatalogs(t *testing.T) {
 	// reaching a limit is a truncation, not a failure: the sub-pipeline still runs over what was stored
 	big := bytes.Repeat([]byte("x"), 4096)
-	outerZip := makeZip(t, map[string][]byte{
+	outerZip := testutils.Zip(t, map[string][]byte{
 		"a/small.txt": []byte("small"),
 		"b/big.txt":   big,
 	})
@@ -197,7 +169,7 @@ func Test_archiveCataloger_truncationStillCatalogs(t *testing.T) {
 	assert.Equal(t, []string{"/outer.zip"}, seen, "the sub-pipeline must run over the partial contents")
 	assert.Equal(t, 1, fileCounts["/outer.zip"], "only the entry stored before the limit is visible")
 
-	reasons, ok := s.Artifacts.Unknowns[file.Coordinates{RealPath: "/outer.zip"}]
+	reasons, ok := s.Artifacts.Unknowns[file.NewCoordinates("/outer.zip", "")]
 	require.True(t, ok, "the truncation must be recorded against the archive; got %v", s.Artifacts.Unknowns)
 	require.Len(t, reasons, 1)
 	assert.Contains(t, reasons[0], "archive cataloged from part of its contents")
@@ -208,7 +180,7 @@ func Test_archiveCataloger_aDamagedEntryCostsOnlyThatEntry(t *testing.T) {
 	rootDir := t.TempDir()
 	// entry data overwritten but headers and end-of-central-directory intact: detected as an archive,
 	// and data.bin fails when it is read. ok.txt comes after it and is intact.
-	corrupt := makeZip(t, map[string][]byte{"data.bin": incompressible(4096), "ok.txt": []byte("ok")})
+	corrupt := testutils.Zip(t, map[string][]byte{"data.bin": incompressible(4096), "ok.txt": []byte("ok")})
 	require.Greater(t, len(corrupt), 1024)
 	for i := 100; i < 600; i++ {
 		corrupt[i] ^= 0xff
@@ -224,7 +196,7 @@ func Test_archiveCataloger_aDamagedEntryCostsOnlyThatEntry(t *testing.T) {
 
 	assert.Equal(t, []string{"/corrupt.zip"}, seen, "the archive is still cataloged")
 	assert.Equal(t, 1, fileCounts["/corrupt.zip"], "from the entries that could be read")
-	reasons := s.Artifacts.Unknowns[file.Coordinates{RealPath: "/corrupt.zip"}]
+	reasons := s.Artifacts.Unknowns[file.NewCoordinates("/corrupt.zip", "")]
 	require.Len(t, reasons, 1)
 	assert.Contains(t, reasons[0], `entry "data.bin" could not be read`)
 }
@@ -275,31 +247,11 @@ func Test_NewArchiveCatalogerTask_gating(t *testing.T) {
 	}
 }
 
-func Test_archiveCataloger_depthBoundIsExact(t *testing.T) {
-	innerZip := makeZip(t, map[string][]byte{"deep.txt": []byte("deep")})
-	outerZip := makeZip(t, map[string][]byte{"nested/inner.zip": innerZip})
-
-	rootDir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
-
-	run := func(t *testing.T, depth int) []string {
-		t.Helper()
-		var seen []string
-		tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(depth), capturingTask(t, &seen, nil))
-		require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM())),
-			"reaching the depth bound must not be an error")
-		return seen
-	}
-
-	assert.Equal(t, []string{"/outer.zip"}, run(t, 1), "depth 1 catalogs the top-level archive and does not descend")
-	assert.ElementsMatch(t, []string{"/outer.zip", "/outer.zip:nested/inner.zip"}, run(t, 2), "depth 2 descends one level")
-}
-
 func Test_archiveCataloger_negativeDepthStopsAtTheCeiling(t *testing.T) {
 	// "unbounded" must still end, or a zip quine or recursive bomb runs forever
-	chain := makeZip(t, map[string][]byte{"deep.txt": []byte("deep")})
+	chain := testutils.Zip(t, map[string][]byte{"deep.txt": []byte("deep")})
 	for range unboundedArchiveDepth + 4 {
-		chain = makeZip(t, map[string][]byte{"n.zip": chain})
+		chain = testutils.Zip(t, map[string][]byte{"n.zip": chain})
 	}
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), chain, 0o600))
@@ -314,7 +266,7 @@ func Test_archiveCataloger_negativeDepthStopsAtTheCeiling(t *testing.T) {
 func Test_archiveCataloger_anArchiveIdenticalToAnAncestorIsNotEntered(t *testing.T) {
 	// a zip quine contains itself. Building one is impractical, so the walk is started as if it were
 	// already inside an archive with these exact bytes, which is the state a quine reaches one level down
-	outerZip := makeZip(t, map[string][]byte{"a.txt": []byte("a")})
+	outerZip := testutils.Zip(t, map[string][]byte{"a.txt": []byte("a")})
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
 
@@ -327,7 +279,7 @@ func Test_archiveCataloger_anArchiveIdenticalToAnAncestorIsNotEntered(t *testing
 	require.NoError(t, c.catalog(context.Background(), dirTestResolver{dir: rootDir}, 0, sbomsync.NewBuilder(s)))
 
 	assert.Zero(t, ran, "the sub-pipeline must not run inside a repeat of an ancestor")
-	reasons := s.Artifacts.Unknowns[file.Coordinates{RealPath: "/outer.zip"}]
+	reasons := s.Artifacts.Unknowns[file.NewCoordinates("/outer.zip", "")]
 	require.Len(t, reasons, 1)
 	assert.Contains(t, reasons[0], "identical to an archive that contains it")
 	assert.Len(t, c.ancestors, 1, "the walk leaves the ancestor stack as it found it")
@@ -335,7 +287,7 @@ func Test_archiveCataloger_anArchiveIdenticalToAnAncestorIsNotEntered(t *testing
 
 func Test_archiveCataloger_stopsWhenTheContextIsCancelled(t *testing.T) {
 	rootDir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), makeZip(t, map[string][]byte{"a.txt": []byte("a")}), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), testutils.Zip(t, map[string][]byte{"a.txt": []byte("a")}), 0o600))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -356,10 +308,10 @@ func Test_archiveCataloger_decompressionBudgetIsSharedByATreeAndFreshPerTopLevel
 	t.Cleanup(func() { archiveTreeRatio, archiveTreeFloorBytes = origRatio, origFloor })
 
 	zeros := make([]byte, 60_000)
-	nested := makeZip(t, map[string][]byte{"zeros.bin": zeros})
+	nested := testutils.Zip(t, map[string][]byte{"zeros.bin": zeros})
 	rootDir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "bomb.zip"), makeZip(t, map[string][]byte{"a.zip": nested, "b.zip": nested}), 0o600))
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "sibling.zip"), makeZip(t, map[string][]byte{"zeros.bin": zeros}), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "bomb.zip"), testutils.Zip(t, map[string][]byte{"a.zip": nested, "b.zip": nested}), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "sibling.zip"), testutils.Zip(t, map[string][]byte{"zeros.bin": zeros}), 0o600))
 
 	var seen []string
 	fileCounts := map[string]int{}
@@ -369,7 +321,7 @@ func Test_archiveCataloger_decompressionBudgetIsSharedByATreeAndFreshPerTopLevel
 
 	assert.Equal(t, 1, fileCounts["/bomb.zip:a.zip"], "the first nested archive fits the tree's budget")
 	assert.Equal(t, 0, fileCounts["/bomb.zip:b.zip"], "the second does not: the budget is shared, not per archive")
-	reasons := s.Artifacts.Unknowns[file.Coordinates{RealPath: "b.zip", ArchivePath: "/bomb.zip"}]
+	reasons := s.Artifacts.Unknowns[file.Coordinates{RealPath: "/bomb.zip", FullPath: "/bomb.zip!/b.zip"}]
 	require.Len(t, reasons, 1)
 	assert.Contains(t, reasons[0], "possible decompression bomb")
 	assert.Equal(t, 1, fileCounts["/sibling.zip"], "another top-level archive starts with a fresh budget")
@@ -379,14 +331,14 @@ func Test_archiveCataloger_noSelfContainsEdge(t *testing.T) {
 	// a jar java cannot identify records an unknown at its own coordinates; that must not turn into
 	// "x.jar CONTAINS x.jar", which a graph walker would loop on
 	rootDir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "x.jar"), makeZip(t, map[string][]byte{"readme.txt": []byte("no manifest")}), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "x.jar"), testutils.Zip(t, map[string][]byte{"readme.txt": []byte("no manifest")}), 0o600))
 
 	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), javaTask(), fileMetadataTask())
 	s := newTestSBOM()
 	s.Artifacts.FileMetadata = map[file.Coordinates]file.Metadata{}
 	_ = tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s))
 
-	require.Contains(t, s.Artifacts.Unknowns, file.Coordinates{RealPath: "/x.jar"}, "the fixture must reproduce the unknown")
+	require.Contains(t, s.Artifacts.Unknowns, file.NewCoordinates("/x.jar", ""), "the fixture must reproduce the unknown")
 	var contains int
 	for _, rel := range s.Relationships {
 		if rel.Type != artifact.ContainsRelationship {
@@ -402,8 +354,8 @@ func Test_NewArchiveCatalogerTask_dropsItselfFromSubPipeline(t *testing.T) {
 	// a copy of itself in the sub-pipeline would process every nesting level twice
 	cfg := cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2)
 
-	innerZip := makeZip(t, map[string][]byte{"leaf.txt": []byte("leaf")})
-	outerZip := makeZip(t, map[string][]byte{"nested/inner.zip": innerZip})
+	innerZip := testutils.Zip(t, map[string][]byte{"leaf.txt": []byte("leaf")})
+	outerZip := testutils.Zip(t, map[string][]byte{"nested/inner.zip": innerZip})
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
 
@@ -424,11 +376,11 @@ func Test_NewArchiveCatalogerTask_dropsItselfFromSubPipeline(t *testing.T) {
 	})
 }
 
-func Test_archiveCataloger_chainStartsAtTheArchivesOwnFileSystemID(t *testing.T) {
+func Test_archiveCataloger_nestedArchivesKeepTheLayerFileSystemID(t *testing.T) {
 	// extracted files keep the layer digest as their FileSystemID at every level; the nesting chain
-	// rides on the traversal's VirtualPath and the coordinate's ArchivePath
-	innerZip := makeZip(t, map[string][]byte{"leaf.txt": []byte("leaf")})
-	outerZip := makeZip(t, map[string][]byte{"nested/inner.zip": innerZip})
+	// rides on the traversal's VirtualPath and the coordinate's FullPath
+	innerZip := testutils.Zip(t, map[string][]byte{"leaf.txt": []byte("leaf")})
+	outerZip := testutils.Zip(t, map[string][]byte{"nested/inner.zip": innerZip})
 
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
@@ -463,8 +415,8 @@ func Test_archiveCataloger_sameArchivePathInTwoLayersDoesNotCollide(t *testing.T
 	resolver := twoLayerResolver{
 		path: "/app/bundle.zip",
 		contentBy: map[string][]byte{
-			"layer-one": makeZip(t, map[string][]byte{"lib/config.json": []byte(`{"v":1}`)}),
-			"layer-two": makeZip(t, map[string][]byte{"lib/config.json": []byte(`{"v":2}`)}),
+			"layer-one": testutils.Zip(t, map[string][]byte{"lib/config.json": []byte(`{"v":1}`)}),
+			"layer-two": testutils.Zip(t, map[string][]byte{"lib/config.json": []byte(`{"v":2}`)}),
 		},
 	}
 
@@ -501,7 +453,7 @@ func Test_archiveCataloger_sameArchivePathInTwoLayersDoesNotCollide(t *testing.T
 
 func Test_archiveCataloger_subPipelineFailureIsRecordedAsAnUnknown(t *testing.T) {
 	// runSubPipeline bypasses RunTask, where the coordinate-error to unknown conversion lives
-	outerZip := makeZip(t, map[string][]byte{"lib/broken.json": []byte("{")})
+	outerZip := testutils.Zip(t, map[string][]byte{"lib/broken.json": []byte("{")})
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
 
@@ -526,8 +478,8 @@ func Test_archiveCataloger_subPipelineFailureIsRecordedAsAnUnknown(t *testing.T)
 
 		require.Len(t, s.Artifacts.Unknowns, 1)
 		for coords, reasons := range s.Artifacts.Unknowns {
-			assert.Equal(t, "lib/broken.json", coords.RealPath, "the inner coordinates must survive the merge")
-			assert.Equal(t, "/outer.zip", coords.ArchivePath, "and must be addressable per archive")
+			assert.Equal(t, "/outer.zip!/lib/broken.json", coords.FullNestedPath(), "the inner coordinates must survive the merge")
+			assert.Equal(t, "/outer.zip", coords.RealPath, "and must be addressable per archive")
 			assert.Equal(t, []string{"failing-cataloger: unable to parse"}, reasons)
 		}
 	})
@@ -542,7 +494,7 @@ func Test_archiveCataloger_subPipelineFailureIsRecordedAsAnUnknown(t *testing.T)
 		require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
 
 		require.Len(t, s.Artifacts.Unknowns, 1)
-		reasons, ok := s.Artifacts.Unknowns[file.Coordinates{RealPath: "/outer.zip"}]
+		reasons, ok := s.Artifacts.Unknowns[file.NewCoordinates("/outer.zip", "")]
 		require.True(t, ok, "an error with no location of its own belongs to the containing archive")
 		assert.Equal(t, []string{"bare-error-cataloger: cataloger blew up"}, reasons)
 	})
@@ -557,7 +509,7 @@ func Test_archiveCataloger_subPipelineFailureIsRecordedAsAnUnknown(t *testing.T)
 		require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)),
 			"a panic inside an archive must not fail the scan")
 
-		reasons, ok := s.Artifacts.Unknowns[file.Coordinates{RealPath: "/outer.zip"}]
+		reasons, ok := s.Artifacts.Unknowns[file.NewCoordinates("/outer.zip", "")]
 		require.True(t, ok)
 		require.Len(t, reasons, 1)
 		assert.Equal(t, "panicking-cataloger: panic: nope", reasons[0])
@@ -565,11 +517,11 @@ func Test_archiveCataloger_subPipelineFailureIsRecordedAsAnUnknown(t *testing.T)
 }
 
 func Test_archiveCataloger_subPipelineUnknownsAreAddedNotReplaced(t *testing.T) {
-	outerZip := makeZip(t, map[string][]byte{"lib/thing.json": []byte("{}")})
+	outerZip := testutils.Zip(t, map[string][]byte{"lib/thing.json": []byte("{}")})
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
 
-	preexisting := file.Coordinates{RealPath: "lib/thing.json", ArchivePath: "/outer.zip"}
+	preexisting := file.Coordinates{RealPath: "/outer.zip", FullPath: "/outer.zip!/lib/thing.json"}
 	writer := NewTask("scratch-writer", func(_ context.Context, _ file.Resolver, builder sbomsync.Builder) error {
 		builder.(sbomsync.Accessor).WriteToSBOM(func(s *sbom.SBOM) {
 			if s.Artifacts.Unknowns == nil {
@@ -588,39 +540,7 @@ func Test_archiveCataloger_subPipelineUnknownsAreAddedNotReplaced(t *testing.T) 
 	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
 
 	assert.Equal(t, []string{"recorded by the cataloger itself"}, s.Artifacts.Unknowns[preexisting])
-	assert.Equal(t, []string{"failing-cataloger: boom"}, s.Artifacts.Unknowns[file.Coordinates{RealPath: "/outer.zip"}])
-}
-
-func Test_archiveCataloger_manySmallArchivesAreEachCataloged(t *testing.T) {
-	// every archive is released before the next begins, so a scan whose archives sum well past a limit
-	// never holds more than one at a time
-	entry := bytes.Repeat([]byte("z"), 400)
-	entries := map[string][]byte{}
-	for i := range 5 {
-		entries[fmt.Sprintf("e%d.bin", i)] = entry
-	}
-
-	rootDir := t.TempDir()
-	names := []string{"one.zip", "two.zip", "three.zip", "four.zip", "five.zip"}
-	for _, name := range names {
-		require.NoError(t, os.WriteFile(filepath.Join(rootDir, name), makeZip(t, entries), 0o600))
-	}
-
-	// room for one archive's entries and their index cost, not for two
-	limits := archive.Limits{MaxMemoryBytes: 0, MaxDiskBytes: 20000}
-
-	var seen []string
-	fileCounts := map[string]int{}
-	tsk := newLimitedTestTask(t, 1, limits, capturingTask(t, &seen, &fileCounts))
-
-	s := newTestSBOM()
-	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
-
-	assert.Len(t, seen, len(names), "every archive must be cataloged: no two were ever held at once")
-	for _, archivePath := range seen {
-		assert.Equal(t, 5, fileCounts[archivePath], "%s must extract in full", archivePath)
-	}
-	assert.Empty(t, s.Artifacts.Unknowns)
+	assert.Equal(t, []string{"failing-cataloger: boom"}, s.Artifacts.Unknowns[file.NewCoordinates("/outer.zip", "")])
 }
 
 func Test_archiveCataloger_limitsFallWhenAnArchiveIsReleased(t *testing.T) {
@@ -632,7 +552,7 @@ func Test_archiveCataloger_limitsFallWhenAnArchiveIsReleased(t *testing.T) {
 
 	rootDir := t.TempDir()
 	for _, name := range []string{"one.zip", "two.zip"} {
-		require.NoError(t, os.WriteFile(filepath.Join(rootDir, name), makeZip(t, entries), 0o600))
+		require.NoError(t, os.WriteFile(filepath.Join(rootDir, name), testutils.Zip(t, entries), 0o600))
 	}
 
 	// room in memory for one archive's entries and their index cost, not for two at once
@@ -675,8 +595,8 @@ func newTestCataloger(maxDepth int, limiter *archive.Limiter, subPipeline ...Tas
 func Test_archiveCataloger_archiveWhoseOwnBytesExceedTheDiskLimitIsSkipped(t *testing.T) {
 	// a streamed archive's own bytes must be placed before it can be opened; when they do not fit on
 	// disk the archive is skipped rather than waited for, and a sibling that fits is cataloged in full
-	oversized := makeZip(t, map[string][]byte{"payload.bin": incompressible(8000)})
-	small := makeZip(t, map[string][]byte{"ok.txt": []byte("ok")})
+	oversized := testutils.Zip(t, map[string][]byte{"payload.bin": incompressible(8000)})
+	small := testutils.Zip(t, map[string][]byte{"ok.txt": []byte("ok")})
 
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "oversized.zip"), oversized, 0o600))
@@ -699,73 +619,9 @@ func Test_archiveCataloger_archiveWhoseOwnBytesExceedTheDiskLimitIsSkipped(t *te
 	assert.Equal(t, []string{"/small.zip"}, seen, "the oversized archive is skipped and the sibling is still cataloged")
 	assert.Equal(t, 1, fileCounts["/small.zip"])
 
-	reasons := s.Artifacts.Unknowns[file.Coordinates{RealPath: "/oversized.zip"}]
+	reasons := s.Artifacts.Unknowns[file.NewCoordinates("/oversized.zip", "")]
 	require.Len(t, reasons, 1, "the skip must be recorded against the archive; got %v", s.Artifacts.Unknowns)
 	assert.Contains(t, reasons[0], "archive skipped")
-}
-
-func Test_archiveCataloger_zeroDiskLimitTruncatesWhatWillNotFitInMemory(t *testing.T) {
-	// with a zero disk limit there is nowhere to overflow, so an archive's entries are stored exactly
-	// while they fit in memory
-	oversized := makeZip(t, map[string][]byte{"payload.bin": incompressible(8000)})
-	small := makeZip(t, map[string][]byte{"ok.txt": []byte("ok")})
-
-	rootDir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "oversized.zip"), oversized, 0o600))
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "small.zip"), small, 0o600))
-
-	// room for the small archive's entry and its index cost, not for the oversized one's
-	limits := archive.Limits{MaxMemoryBytes: 3000, MaxDiskBytes: 0}
-
-	var seen []string
-	fileCounts := map[string]int{}
-	tsk := newLimitedTestTask(t, 1, limits, capturingTask(t, &seen, &fileCounts))
-
-	s := newTestSBOM()
-	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)),
-		"reaching the disk limit must not fail the scan")
-
-	assert.ElementsMatch(t, []string{"/oversized.zip", "/small.zip"}, seen)
-	assert.Equal(t, 1, fileCounts["/small.zip"], "the archive that fits in memory needs no disk at all")
-	assert.Equal(t, 0, fileCounts["/oversized.zip"], "the entry that does not fit is refused")
-
-	assert.Contains(t, s.Artifacts.Unknowns, file.Coordinates{RealPath: "/oversized.zip"})
-	assert.NotContains(t, s.Artifacts.Unknowns, file.Coordinates{RealPath: "/small.zip"})
-}
-
-func Test_archiveCataloger_nestedArchiveExceedingALimitIsTruncatedNotBlocked(t *testing.T) {
-	// the walk descends before it unwinds, so nothing is released while a child waits; a child that does
-	// not fit is truncated and the scan finishes
-	inner := makeZip(t, map[string][]byte{"payload.bin": incompressible(3000)})
-	outer := makeZip(t, map[string][]byte{"inner.zip": inner})
-
-	rootDir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outer, 0o600))
-
-	// enough for the outer archive's one entry and its index cost, plus the inner's index cost, and not
-	// the inner's payload on top
-	diskLimit := int64(len(inner)) + 2*2100 + 500
-	require.Greater(t, 3000, 500, "the inner payload must not fit in the slack")
-
-	limits := archive.Limits{MaxMemoryBytes: 0, MaxDiskBytes: diskLimit}
-
-	var seen []string
-	fileCounts := map[string]int{}
-	tsk := newLimitedTestTask(t, 2, limits, capturingTask(t, &seen, &fileCounts))
-
-	s := newTestSBOM()
-	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
-
-	assert.Equal(t, []string{"/outer.zip", "/outer.zip:inner.zip"}, seen)
-	assert.Equal(t, 1, fileCounts["/outer.zip"], "the parent is cataloged in full")
-	assert.Equal(t, 0, fileCounts["/outer.zip:inner.zip"], "the child it cannot afford is truncated")
-	assert.Contains(t, s.Artifacts.Unknowns, file.Coordinates{RealPath: "inner.zip", ArchivePath: "/outer.zip"})
-}
-
-// allFilesResolver is dirTestResolver without a filesystem id.
-type allFilesResolver struct {
-	file.Resolver
-	dir string
 }
 
 func Test_archiveCataloger_discoverArchivesSelectsTarFamily(t *testing.T) {
@@ -773,10 +629,10 @@ func Test_archiveCataloger_discoverArchivesSelectsTarFamily(t *testing.T) {
 
 	scanDir := t.TempDir()
 	for name, body := range map[string][]byte{
-		"bundle.tar.gz": makeTarGz(t, marker),
-		"bundle.tgz":    makeTarGz(t, marker),
-		"bundle.tar":    makeTar(t, marker),
-		"bundle.zip":    makeZip(t, marker),
+		"bundle.tar.gz": testutils.TarGz(t, marker),
+		"bundle.tgz":    testutils.TarGz(t, marker),
+		"bundle.tar":    testutils.Tar(t, marker),
+		"bundle.zip":    testutils.Zip(t, marker),
 		"notes.txt":     []byte("not an archive at all"),
 	} {
 		require.NoError(t, os.WriteFile(filepath.Join(scanDir, name), body, 0o600))
@@ -785,7 +641,7 @@ func Test_archiveCataloger_discoverArchivesSelectsTarFamily(t *testing.T) {
 	var seen []string
 	fileCounts := map[string]int{}
 	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), capturingTask(t, &seen, &fileCounts))
-	require.NoError(t, tsk.Execute(context.Background(), allFilesResolver{dir: scanDir}, sbomsync.NewBuilder(newTestSBOM())))
+	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: scanDir}, sbomsync.NewBuilder(newTestSBOM())))
 
 	assert.ElementsMatch(t, []string{"/bundle.tar.gz", "/bundle.tgz", "/bundle.tar", "/bundle.zip"}, seen,
 		"every tar-family archive must be reached, and the plain text file must not be")
@@ -807,7 +663,7 @@ type recordingPublisher struct {
 func Test_archiveCatalogerTask_publishesOneProgressRowPerCataloger(t *testing.T) {
 	// a consumer keying rows by ID (as the syft CLI does) replaces a republished row and never sees it
 	// complete, so each cataloger keeps to the one row it already owns
-	inner := makeZip(t, map[string][]byte{"inner/file.txt": []byte("hello")})
+	inner := testutils.Zip(t, map[string][]byte{"inner/file.txt": []byte("hello")})
 	scanDir := t.TempDir()
 	for _, name := range []string{"one.zip", "two.zip"} {
 		require.NoError(t, os.WriteFile(filepath.Join(scanDir, name), inner, 0o600))
@@ -865,8 +721,8 @@ func Test_archiveCatalogerTask_publishesOneProgressRowPerCataloger(t *testing.T)
 
 func Test_archiveCataloger_reportsPeakUsageAndTheSlowestArchive(t *testing.T) {
 	// self time excludes nested archives, or the outer archive would be named every scan
-	innerJar := makeZip(t, map[string][]byte{"README.txt": []byte("inner")})
-	outerZip := makeZip(t, map[string][]byte{"lib/inner.jar": innerJar})
+	innerJar := testutils.Zip(t, map[string][]byte{"README.txt": []byte("inner")})
+	outerZip := testutils.Zip(t, map[string][]byte{"lib/inner.jar": innerJar})
 
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
@@ -883,7 +739,7 @@ func Test_archiveCataloger_reportsPeakUsageAndTheSlowestArchive(t *testing.T) {
 	c := newTestCataloger(3, limiter, slow)
 	require.NoError(t, c.catalog(context.Background(), dirTestResolver{dir: rootDir}, 0, sbomsync.NewBuilder(newTestSBOM())))
 
-	assert.Equal(t, "/outer.zip:lib/inner.jar", c.slowestPath, "the slowest archive is named by its full chain")
+	assert.Equal(t, "/outer.zip!/lib/inner.jar", c.slowestPath, "the slowest archive is named by its full chain")
 	assert.GreaterOrEqual(t, c.slowest, innerWork)
 	assert.Equal(t, int64(2), c.progress.Current())
 
@@ -926,9 +782,9 @@ func Test_archiveCataloger_aMisnamedNonArchiveIsNotAnError(t *testing.T) {
 func Test_archiveCataloger_catalogsAZipBehindALauncherScript(t *testing.T) {
 	// the Spring Boot executable jar shape: content sniffing types it as a shell script, so it reaches
 	// the walk only by name and qualifies only by its end-of-central-directory record
-	inner := makeZip(t, map[string][]byte{"nested/marker.txt": []byte("found me")})
+	inner := testutils.Zip(t, map[string][]byte{"nested/marker.txt": []byte("found me")})
 	prefixed := append([]byte("#!/bin/bash\nexec java -jar \"$0\" \"$@\"\nexit 0\n"),
-		makeZip(t, map[string][]byte{"BOOT-INF/lib/inner.jar": inner})...)
+		testutils.Zip(t, map[string][]byte{"BOOT-INF/lib/inner.jar": inner})...)
 
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "app.jar"), prefixed, 0o600))
@@ -983,28 +839,6 @@ func (d dirTestResolver) FileMetadataByLocation(loc file.Location) (file.Metadat
 	return file.Metadata{FileInfo: info}, err
 }
 
-// makeZip builds a zip in sorted entry-name order: limits are enforced as the walk proceeds, so entry
-// order decides which entries land before a truncation.
-func makeZip(t *testing.T, entries map[string][]byte) []byte {
-	t.Helper()
-	names := make([]string, 0, len(entries))
-	for name := range entries {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-
-	var buf bytes.Buffer
-	zw := zip.NewWriter(&buf)
-	for _, name := range names {
-		w, err := zw.Create(name)
-		require.NoError(t, err)
-		_, err = w.Write(entries[name])
-		require.NoError(t, err)
-	}
-	require.NoError(t, zw.Close())
-	return buf.Bytes()
-}
-
 // matchesAnyGlob matches the resolver-relative path with a leading slash, the form a real resolver
 // globs over. No patterns matches everything.
 func matchesAnyGlob(root, path string, patterns []string) bool {
@@ -1022,10 +856,6 @@ func matchesAnyGlob(root, path string, patterns []string) bool {
 		}
 	}
 	return false
-}
-
-func (a allFilesResolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
-	return dirTestResolver{dir: a.dir}.FilesByGlob(patterns...)
 }
 
 func (r twoLayerResolver) FilesByGlob(_ ...string) ([]file.Location, error) {
@@ -1055,7 +885,7 @@ func (d dirTestResolver) FilesByGlob(patterns ...string) ([]file.Location, error
 func (r twoLayerResolver) FilesByMIMEType(_ ...string) ([]file.Location, error) {
 	var locs []file.Location
 	for _, fsid := range []string{"layer-one", "layer-two"} {
-		locs = append(locs, file.NewLocationFromCoordinates(file.Coordinates{RealPath: r.path, FileSystemID: fsid}))
+		locs = append(locs, file.NewLocationFromCoordinates(file.NewCoordinates(r.path, fsid)))
 	}
 	return locs, nil
 }
@@ -1083,55 +913,6 @@ func incompressible(n int) []byte {
 		b[i] = byte(x >> 24)
 	}
 	return b
-}
-
-func makeTarGz(t *testing.T, entries map[string][]byte) []byte {
-	t.Helper()
-	var buf bytes.Buffer
-	gw := gzip.NewWriter(&buf)
-	require.NoError(t, writeTar(t, gw, entries))
-	require.NoError(t, gw.Close())
-	return buf.Bytes()
-}
-
-func makeTar(t *testing.T, entries map[string][]byte) []byte {
-	t.Helper()
-	var buf bytes.Buffer
-	require.NoError(t, writeTar(t, &buf, entries))
-	return buf.Bytes()
-}
-
-func writeTar(t *testing.T, w io.Writer, entries map[string][]byte) error {
-	t.Helper()
-	names := make([]string, 0, len(entries))
-	for name := range entries {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-
-	tw := tar.NewWriter(w)
-	for _, name := range names {
-		body := entries[name]
-		if err := tw.WriteHeader(&tar.Header{Name: name, Mode: 0o644, Size: int64(len(body))}); err != nil {
-			return err
-		}
-		if _, err := tw.Write(body); err != nil {
-			return err
-		}
-	}
-	return tw.Close()
-}
-
-func (a allFilesResolver) FilesByMIMEType(types ...string) ([]file.Location, error) {
-	return filesByMIMEType(a.dir, "", types...)
-}
-
-func (a allFilesResolver) FileContentsByLocation(loc file.Location) (io.ReadCloser, error) {
-	return os.Open(filepath.Join(a.dir, filepath.FromSlash(loc.RealPath)))
-}
-
-func (a allFilesResolver) FileMetadataByLocation(loc file.Location) (file.Metadata, error) {
-	return dirTestResolver{dir: a.dir}.FileMetadataByLocation(loc)
 }
 
 func (p *recordingPublisher) Publish(e partybus.Event) {

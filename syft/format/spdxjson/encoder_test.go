@@ -123,10 +123,7 @@ func TestSPDX22JSONRequredProperties(t *testing.T) {
 	enc, err := NewFormatEncoderWithConfig(cfg)
 	require.NoError(t, err)
 
-	coords := file.Coordinates{
-		RealPath:     "/some/file",
-		FileSystemID: "ac897d978b6c38749a1",
-	}
+	coords := file.NewCoordinates("/some/file", "ac897d978b6c38749a1")
 
 	p1 := pkg.Package{
 		Name:      "files-analyzed-true",

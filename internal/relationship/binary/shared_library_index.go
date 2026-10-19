@@ -3,6 +3,7 @@ package binary
 import (
 	"path"
 
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/file"
@@ -63,7 +64,7 @@ func locationsThatProvideLibraries(accessor sbomsync.Accessor) (map[string]file.
 				continue
 			}
 
-			basename := path.Base(coord.RealPath)
+			basename := path.Base(coord.FullNestedPath())
 			set := libLocationsByBasename[basename]
 			set.Add(coord)
 			allLibLocations.Add(coord)
@@ -82,6 +83,11 @@ func packagesWithLibraryOwnership(resolver file.Resolver, accessor sbomsync.Acce
 			var ownedFilePaths []string
 			if p.Type == pkg.BinaryPkg {
 				for _, loc := range p.Locations.ToSlice() {
+					if archive.ContainerPath(loc.Coordinates) != "" {
+						// a path within an archive cannot be resolved from the scan root; the location is the library
+						addLibraryOwner(packagesByLibraryPath, allLibLocations, loc.Coordinates, p)
+						continue
+					}
 					ownedFilePaths = append(ownedFilePaths, loc.Path())
 				}
 			} else {
@@ -114,18 +120,19 @@ func populatePackagesByLibraryPath(
 		}
 
 		for _, loc := range ownedLocation {
-			// if the location is a library, add the package to the set of packages that own the library
-			if !allLibLocations.Contains(loc.Coordinates) {
-				continue
-			}
-
-			if _, ok := packagesByLibraryPath[loc.Coordinates]; !ok {
-				packagesByLibraryPath[loc.Coordinates] = pkg.NewCollection()
-			}
-
-			// we have a library path, add the package to the set of packages that own the library
-			packagesByLibraryPath[loc.Coordinates].Add(p)
+			addLibraryOwner(packagesByLibraryPath, allLibLocations, loc.Coordinates, p)
 		}
 	}
 	return packagesByLibraryPath
+}
+
+// addLibraryOwner records p as an owner of the file at coordinates when that file is a library.
+func addLibraryOwner(packagesByLibraryPath map[file.Coordinates]*pkg.Collection, allLibLocations file.CoordinateSet, coordinates file.Coordinates, p pkg.Package) {
+	if !allLibLocations.Contains(coordinates) {
+		return
+	}
+	if _, ok := packagesByLibraryPath[coordinates]; !ok {
+		packagesByLibraryPath[coordinates] = pkg.NewCollection()
+	}
+	packagesByLibraryPath[coordinates].Add(p)
 }

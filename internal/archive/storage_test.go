@@ -223,7 +223,7 @@ func TestResolver_put_discardRefundsWhatIsHeldInMemory(t *testing.T) {
 	assert.Equal(t, "keep", readEntry(t, s.open(&keep)))
 }
 
-func TestStorage_filesystemCostDoesNotTrackEntryCount(t *testing.T) {
+func TestResolver_filesystemCostDoesNotTrackEntryCount(t *testing.T) {
 	small, smallRoot := extractedResolver(t, manyEntryZip(t, 2), spillingLimits)
 	large, largeRoot := extractedResolver(t, manyEntryZip(t, 5000), spillingLimits)
 
@@ -238,7 +238,7 @@ func TestStorage_filesystemCostDoesNotTrackEntryCount(t *testing.T) {
 	assert.Equal(t, int64(5000), large.written)
 }
 
-func TestStorage_anEntryAtTheEndIsReadBySeeking(t *testing.T) {
+func TestResolver_anEntryAtTheEndIsReadBySeeking(t *testing.T) {
 	// the reader over an entry is a bounded window at its offset, not a re-read of what precedes it
 	const filler = 64 * 1024
 

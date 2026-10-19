@@ -79,6 +79,61 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			},
 		},
 		{
+			name: "package-within-archive-is-not-a-file-owner",
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				nestedOwner := pkg.Package{
+					Locations: file.NewLocationSet(file.NewLocationFromCoordinates(file.Coordinates{
+						RealPath: "/rootfs.tar",
+						FullPath: "/rootfs.tar!/var/lib/rpm/Packages",
+					})),
+					Type: pkg.RpmPkg,
+					Metadata: pkg.RpmDBEntry{
+						Files: []pkg.RpmFileRecord{{Path: "/d/path"}},
+					},
+				}
+				nestedOwner.SetID()
+
+				child := pkg.Package{
+					Locations: file.NewLocationSet(file.NewLocation("/d/path")),
+					Type:      pkg.BinaryPkg,
+				}
+				child.SetID()
+
+				return []pkg.Package{nestedOwner, child}, nil
+			},
+		},
+		{
+			name: "top-level-owner-of-an-archive-owns-packages-within-it",
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				parent := pkg.Package{
+					Locations: file.NewLocationSet(file.NewLocation("/var/lib/rpm/Packages")),
+					Type:      pkg.RpmPkg,
+					Metadata: pkg.RpmDBEntry{
+						Files: []pkg.RpmFileRecord{{Path: "/opt/bundle.tar"}},
+					},
+				}
+				parent.SetID()
+
+				child := pkg.Package{
+					Locations: file.NewLocationSet(file.NewLocationFromCoordinates(file.Coordinates{
+						RealPath: "/opt/bundle.tar",
+						FullPath: "/opt/bundle.tar!/lib/thing.jar",
+					})),
+					Type: pkg.JavaPkg,
+				}
+				child.SetID()
+
+				relationship := artifact.Relationship{
+					From: parent,
+					To:   child,
+					Type: artifact.OwnershipByFileOverlapRelationship,
+					Data: ownershipByFilesMetadata{Files: []string{"/opt/bundle.tar"}},
+				}
+
+				return []pkg.Package{parent, child}, []artifact.Relationship{relationship}
+			},
+		},
+		{
 			name: "only-real-file-owner-gets-ownership-relationship-not-symlink-owner",
 			resolver: mockFR{
 				translate: map[string]string{

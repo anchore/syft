@@ -250,7 +250,7 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 		// attach the file list
 		records, err := parseDpkgMD5Info(md5Reader)
 		if err != nil {
-			log.Debugf("dpkg md5sums file %q: %v", md5Location.RealPath, err)
+			log.Debugf("dpkg md5sums file %q: %v", md5Location.FullNestedPath(), err)
 		}
 		files = append(files, records...)
 
@@ -265,7 +265,7 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 		// attach the file list
 		records, err := parseDpkgConffileInfo(conffilesReader)
 		if err != nil {
-			log.Debugf("dpkg conffiles file %q: %v", conffilesLocation.RealPath, err)
+			log.Debugf("dpkg conffiles file %q: %v", conffilesLocation.FullNestedPath(), err)
 		}
 		files = append(files, records...)
 
@@ -288,7 +288,7 @@ func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.Dp
 	// and the md5sum information is under /var/lib/dpkg/info/; however, for distroless the installed
 	// package info is across multiple files under /var/lib/dpkg/status.d/ and the md5sums are contained in
 	// the same directory
-	searchPath := filepath.Dir(dbLocation.RealPath)
+	searchPath := filepath.Dir(dbLocation.LocalPath())
 
 	if !strings.HasSuffix(searchPath, "status.d") {
 		searchPath = path.Join(searchPath, "info")
@@ -327,7 +327,7 @@ func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, m p
 		return nil, nil
 	}
 
-	parentPath := filepath.Dir(dbLocation.RealPath)
+	parentPath := filepath.Dir(dbLocation.LocalPath())
 
 	// look for /var/lib/dpkg/info/NAME:ARCH.conffiles
 	name := md5Key(m)

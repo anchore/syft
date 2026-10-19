@@ -124,7 +124,7 @@ func readVersionFromPM(resolver file.Resolver, location file.Location) string {
 	if err != nil {
 		return ""
 	}
-	defer internal.CloseAndLogError(reader, location.Path())
+	defer internal.CloseAndLogError(reader, location.FullNestedPath())
 
 	return versionFromPM(reader)
 }

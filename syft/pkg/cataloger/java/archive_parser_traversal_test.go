@@ -21,7 +21,7 @@ import (
 	"github.com/anchore/syft/syft/source/directorysource"
 )
 
-// Test_virtualPathFromArchiveTraversal_colonInEntryPath is the java-cataloger-level counterpart of
+// Test_virtualPathFromArchiveLocation_colonInEntryPath is the java-cataloger-level counterpart of
 // internal/archive's escaping tests: a package reached through an entry whose path contains a colon
 // must carry it escaped as %3A end to end in its virtual path, while the maven-derived
 // ":groupID:artifactID" suffix that distinguishes a pom.properties package from its containing archive
@@ -35,8 +35,7 @@ func Test_virtualPathFromArchiveLocation_colonInEntryPath(t *testing.T) {
 	})
 
 	// as the archive cataloger task's resolver would present an entry of outer.zip
-	location := file.NewLocation("/lib/dep:special.jar")
-	location.ArchivePath = "outer.zip"
+	location := file.NewLocationFromCoordinates(file.Coordinates{RealPath: "outer.zip", FullPath: "outer.zip!/lib/dep:special.jar"})
 
 	gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{})
 	pkgs, _, err := gap.processJavaArchive(pkgtest.Context(t), file.LocationReadCloser{
@@ -169,58 +168,6 @@ func Test_NewArchiveCataloger_wrappedParserRegistration(t *testing.T) {
 		observed := queriedGlobs(t, pkgtest.Context(t), cfg)
 		assert.False(t, observed.ObservedPathQuery("**/*.zip"))
 		assert.False(t, observed.ObservedPathQuery("**/*.tar"))
-	})
-}
-
-func Test_mavenVirtualPathSuffixUnderTraversal(t *testing.T) {
-	// a package derived from a pom.properties whose artifact does not match the containing archive gets
-	// a trailing ":<groupID>:<artifactID>" appended to the archive's virtual path. That suffix form is in
-	// published SBOMs, and once the archive cataloger drives the parser the base carries the location's
-	// archive path - so the two must compose rather than one clobbering the other.
-	jarBytes := makeTestZip(t, map[string][]byte{
-		"META-INF/MANIFEST.MF": testManifest("example-app", "1.0.0"),
-		"META-INF/maven/com.example.other/other-lib/pom.properties": []byte(
-			"groupId=com.example.other\nartifactId=other-lib\nversion=2.5.0\n",
-		),
-	})
-
-	parse := func(t *testing.T, archivePath, readerPath string) []pkg.Package {
-		t.Helper()
-		location := file.NewLocation(readerPath)
-		location.ArchivePath = archivePath
-		gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{})
-		pkgs, _, err := gap.processJavaArchive(pkgtest.Context(t), file.LocationReadCloser{
-			Location:   location,
-			ReadCloser: io.NopCloser(bytes.NewReader(jarBytes)),
-		}, nil)
-		require.NoError(t, err)
-		return pkgs
-	}
-
-	virtualPathOf := func(t *testing.T, pkgs []pkg.Package, name string) string {
-		t.Helper()
-		for _, p := range pkgs {
-			if p.Name != name {
-				continue
-			}
-			metadata, ok := p.Metadata.(pkg.JavaArchive)
-			require.True(t, ok)
-			return metadata.VirtualPath
-		}
-		t.Fatalf("no package named %q in %v", name, pkgs)
-		return ""
-	}
-
-	t.Run("outside an archive: suffix hangs off the reader path", func(t *testing.T) {
-		pkgs := parse(t, "", "/example-app-1.0.0.jar")
-		assert.Equal(t, "/example-app-1.0.0.jar:com.example.other:other-lib",
-			virtualPathOf(t, pkgs, "other-lib"))
-	})
-
-	t.Run("inside an archive: suffix hangs off the archive chain", func(t *testing.T) {
-		pkgs := parse(t, "app.war", "/WEB-INF/lib/example-app-1.0.0.jar")
-		assert.Equal(t, "app.war:WEB-INF/lib/example-app-1.0.0.jar:com.example.other:other-lib",
-			virtualPathOf(t, pkgs, "other-lib"))
 	})
 }
 

@@ -392,10 +392,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:1:1:*:*:*:*:*:*:*", cpe.GeneratedSource)},
 					Locations: file.NewLocationSet(
 						file.NewVirtualLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/b/path",
-								FileSystemID: "a",
-							},
+							file.NewCoordinates("/b/path", "a"),
 							"/another/path",
 						),
 					),
@@ -405,10 +402,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:2:2:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource)},
 					Locations: file.NewLocationSet(
 						file.NewVirtualLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/b/path",
-								FileSystemID: "b",
-							},
+							file.NewCoordinates("/b/path", "b"),
 							"/another/path",
 						),
 					),
@@ -417,17 +411,11 @@ func TestCatalog_MergeRecords(t *testing.T) {
 			},
 			expectedLocations: []file.Location{
 				file.NewVirtualLocationFromCoordinates(
-					file.Coordinates{
-						RealPath:     "/b/path",
-						FileSystemID: "a",
-					},
+					file.NewCoordinates("/b/path", "a"),
 					"/another/path",
 				),
 				file.NewVirtualLocationFromCoordinates(
-					file.Coordinates{
-						RealPath:     "/b/path",
-						FileSystemID: "b",
-					},
+					file.NewCoordinates("/b/path", "b"),
 					"/another/path",
 				),
 			},

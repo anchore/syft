@@ -156,9 +156,10 @@ func newExtractedArchiveParser(trav *archive.Traversal, resolver file.Resolver, 
 		return nil, fmt.Errorf("no resolver for the contents of %q", archive.VirtualPath(trav.Location))
 	}
 	return &archiveParser{
-		entries:        &resolverEntries{resolver: resolver},
-		location:       trav.Location,
-		fileInfo:       newJavaArchiveFilename(path.Base(trav.Location.Path())),
+		entries:  &resolverEntries{resolver: resolver},
+		location: trav.Location,
+		// the name it was reached by, as for isJavaArchiveName
+		fileInfo:       newJavaArchiveFilename(path.Base(trav.Location.AccessPath)),
 		archiveDigests: trav.Digests,
 		cfg:            cfg,
 		maven:          maven.NewResolver(nil, cfg.mavenConfig()),
@@ -715,7 +716,7 @@ func discoverPkgsFromOpeners(ctx context.Context, location file.Location, opener
 	for pathWithinArchive, archiveOpener := range sortedIter(openers) {
 		nestedPkgs, nestedRelationships, err := discoverPkgsFromOpener(ctx, location, pathWithinArchive, archiveOpener, cfg, parentPkg)
 		if err != nil {
-			log.WithFields("location", location.Path(), "error", err).Debug("unable to discover java packages from opener")
+			log.WithFields("location", location.FullNestedPath(), "error", err).Debug("unable to discover java packages from opener")
 			continue
 		}
 
@@ -748,7 +749,7 @@ func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWit
 		}
 	}()
 
-	nestedPath := fmt.Sprintf("%s:%s", location.Path(), pathWithinArchive)
+	nestedPath := fmt.Sprintf("%s:%s", location.AccessPath, pathWithinArchive)
 	nestedLocation := file.NewLocationFromCoordinates(location.Coordinates)
 	nestedLocation.AccessPath = nestedPath
 	gap := newGenericArchiveParserAdapter(cfg)
@@ -773,7 +774,7 @@ func pomPropertiesByParentPath(ctx context.Context, entries archiveEntries, loca
 	for filePath, fileContents := range sortedIter(contentsOfMavenPropertiesFiles) {
 		pomProperties, err := parsePomProperties(filePath, strings.NewReader(fileContents))
 		if err != nil {
-			log.WithFields("contents-path", filePath, "location", location.Path(), "error", err).Debug("failed to parse pom.properties")
+			log.WithFields("contents-path", filePath, "location", location.FullNestedPath(), "error", err).Debug("failed to parse pom.properties")
 			continue
 		}
 
@@ -803,7 +804,7 @@ func pomProjectByParentPath(ctx context.Context, entries archiveEntries, locatio
 		// TODO: when we support locations of paths within archives we should start passing the specific pom.xml location object instead of the top jar
 		pom, err := maven.ParsePomXML(strings.NewReader(fileContents))
 		if err != nil {
-			log.WithFields("contents-path", filePath, "location", location.Path(), "error", err).Debug("failed to parse pom.xml")
+			log.WithFields("contents-path", filePath, "location", location.FullNestedPath(), "error", err).Debug("failed to parse pom.xml")
 			continue
 		}
 		if pom == nil {

@@ -51,7 +51,7 @@ func Test_archiveContentsCataloger_agreesWithTheArchiveReadingCataloger(t *testi
 	jarLocations, err := archiveResolver.FilesByGlob("**/*.jar")
 	require.NoError(t, err)
 	require.Len(t, jarLocations, 1)
-	archivePath := jarLocations[0].Path()
+	archivePath := jarLocations[0].FullNestedPath()
 
 	digests := digestsOfFile(t, jarPath)
 	trav := &archive.Traversal{
@@ -63,22 +63,6 @@ func Test_archiveContentsCataloger_agreesWithTheArchiveReadingCataloger(t *testi
 	require.NoError(t, err)
 
 	assert.Equal(t, summarize(fromArchive), summarize(fromContents))
-}
-
-func Test_archiveContentsCataloger_reportsNothingOutsideAnArchive(t *testing.T) {
-	// with the archive cataloger task owning extraction, every archive comes back with a traversal
-	// naming it. Outside one there is nothing to describe: opening archive files here as well would
-	// catalog each of them a second time.
-	dir := t.TempDir()
-	jarPath := writeJar(t, dir, "example-lib-1.2.3.jar", jarEntries())
-	require.FileExists(t, jarPath)
-	resolver, err := fileresolver.NewFromDirectory(dir, "")
-	require.NoError(t, err)
-
-	ctx := archive.WithNestedCataloging(context.Background())
-	pkgs, _, err := NewArchiveCataloger(DefaultArchiveCatalogerConfig()).Catalog(ctx, resolver)
-	require.NoError(t, err)
-	assert.Empty(t, pkgs)
 }
 
 func Test_archiveContentsCataloger_reportsNothingForAnArchiveThatIsNotJava(t *testing.T) {

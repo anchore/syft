@@ -145,7 +145,7 @@ func decode(resolver file.Resolver, location file.Location, into func(io.Reader,
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(reader, location.Path())
+	defer internal.CloseAndLogError(reader, location.FullNestedPath())
 
 	var m cpanMeta
 	if err := into(reader, &m); err != nil {

@@ -42,9 +42,9 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 		locations = intCataloger.AllRegularFiles(ctx, resolver)
 	} else {
 		for _, c := range coordinates {
-			locs, err := resolver.FilesByPath(c.RealPath)
+			locs, err := resolver.FilesByPath(c.LocalPath())
 			if err != nil {
-				return nil, fmt.Errorf("unable to get file locations for path %q: %w", c.RealPath, err)
+				return nil, fmt.Errorf("unable to get file locations for path %q: %w", c.FullNestedPath(), err)
 			}
 			locations = append(locations, locs...)
 		}
@@ -59,10 +59,10 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 			return nil, nil
 		}
 
-		prog.AtomicStage.Set(location.Path())
+		prog.AtomicStage.Set(location.FullNestedPath())
 
 		if internal.IsErrPathPermission(err) {
-			log.Debugf("file digests cataloger skipping %q: %+v", location.RealPath, err)
+			log.Debugf("file digests cataloger skipping %q: %+v", location.FullNestedPath(), err)
 			return nil, unknown.New(location, err)
 		}
 
@@ -108,7 +108,7 @@ func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver,
 	defer func() {
 		if r := recover(); r != nil {
 			// the caller records this as an unknown for the location instead of failing the whole SBOM
-			log.WithFields("path", location.RealPath, "panic", r).Debug("recovered from panic while digesting file")
+			log.WithFields("path", location.FullNestedPath(), "panic", r).Debug("recovered from panic while digesting file")
 			log.Tracef("file digest panic stack:\n%s", debug.Stack())
 			digests, err = nil, fmt.Errorf("recovered from panic while digesting file: %v", r)
 		}
@@ -116,7 +116,7 @@ func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver,
 
 	digests, err = intFile.NewDigestsFromFile(ctx, contentReader, i.hashes)
 	if err != nil {
-		return nil, internal.ErrPath{Context: "digests-cataloger", Path: location.RealPath, Err: err}
+		return nil, internal.ErrPath{Context: "digests-cataloger", Path: location.FullNestedPath(), Err: err}
 	}
 
 	return digests, nil

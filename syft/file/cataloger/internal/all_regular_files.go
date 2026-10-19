@@ -12,7 +12,7 @@ func AllRegularFiles(ctx context.Context, resolver file.Resolver) (locations []f
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	for location := range resolver.AllLocations(ctx) {
-		resolvedLocations, err := resolver.FilesByPath(location.RealPath)
+		resolvedLocations, err := resolver.FilesByPath(location.LocalPath())
 		if err != nil {
 			log.Debugf("unable to resolve %+v: %+v", location, err)
 			continue

@@ -13,9 +13,8 @@ import (
 // such as java can describe the archive it is inside without owning the recursion.
 type Traversal struct {
 	// Location is the archive file's location within its parent filesystem, including the access path
-	// it was reached by. Its ArchivePath names the archives above it, so VirtualPath(Location) is the
-	// full chain from the scan root as seen through that access path. The ArchivePath of the files
-	// inside it is built from the real path instead.
+	// it was reached by, so VirtualPath(Location) is the chain from the scan root as seen through that
+	// access path. The files inside it extend its real coordinates instead (see ContainerPath).
 	Location file.Location
 
 	// Digests are of the archive file itself, taken during extraction; a cataloger running inside the
@@ -31,39 +30,62 @@ type Traversal struct {
 	Packages []pkg.Package
 }
 
-// ContentsArchivePath is the ArchivePath every file inside the archive carries: the chain to it, built
-// from real paths. Outside any archive (a nil Traversal) it is blank, as for files at the scan root.
-func (t *Traversal) ContentsArchivePath() string {
+// FullTraversalArchivePath is the archive's own full path, which is the ContainerPath of every file inside it. Outside
+// any archive (a nil Traversal) it is blank, as for files on the scanned filesystem.
+func (t *Traversal) FullTraversalArchivePath() string {
 	if t == nil {
 		return ""
 	}
-	return VirtualPath(file.NewLocationFromCoordinates(t.Location.Coordinates))
+	return t.Location.FullNestedPath()
+}
+
+// ContainerPath returns the full path of the archive directly holding the file at c, or blank for a
+// file on the scanned filesystem, whether or not its FullPath is set.
+func ContainerPath(c file.Coordinates) string {
+	i := strings.LastIndex(c.FullPath, file.ArchivePathSeparator)
+	if i < 0 {
+		return ""
+	}
+	return c.FullPath[:i]
+}
+
+// archiveEntries is the "!/"-delimited chain of entry paths after RealPath, reporting false for a file
+// not inside an archive. RealPath is split off first, so a "!/" in it is not taken for a boundary.
+func archiveEntries(c file.Coordinates) (string, bool) {
+	remain, ok := strings.CutPrefix(c.FullNestedPath(), c.RealPath)
+	if !ok {
+		return "", false
+	}
+	return strings.CutPrefix(remain, file.ArchivePathSeparator)
 }
 
 // VirtualPath returns the colon-delimited chain of archives from the scan root to loc, ending in loc
-// itself: "app.war:WEB-INF/lib/dep.jar". Outside any archive it is the location's path unchanged. In an
-// entry name '%' is escaped as "%25" and then ':' as "%3A", so splitting on ':' recovers the archive
-// boundaries and no two entry names share an escaped form. The leading slash is dropped to match the
-// java cataloger, which joins slash-less zip entry names onto the containing archive's path.
+// itself as accessed: "app.war:WEB-INF/lib/dep.jar". Outside any archive it is the location's path
+// unchanged. In an entry name '%' is escaped as "%25" and then ':' as "%3A", so splitting on ':'
+// recovers the archive boundaries and no two entry names share an escaped form. Leading slashes are
+// dropped to match the java cataloger, which joins slash-less zip entry names onto the containing
+// archive's path.
 func VirtualPath(loc file.Location) string {
-	if loc.ArchivePath == "" {
-		return loc.Path()
+	accessPath := loc.AccessPath
+	if accessPath == "" {
+		accessPath = loc.FullNestedPath()
 	}
-	return loc.ArchivePath + ":" + strings.TrimPrefix(escapeEntryPath(loc.Path()), "/")
+	entries, ok := archiveEntries(loc.Coordinates)
+	if !ok {
+		return accessPath
+	}
+	segments := strings.Split(entries, file.ArchivePathSeparator)
+	segments[len(segments)-1] = strings.TrimPrefix(accessPath, ContainerPath(loc.Coordinates)+file.ArchivePathSeparator)
+	for i, s := range segments {
+		segments[i] = strings.TrimPrefix(escapeEntryPath(s), "/")
+	}
+	return loc.RealPath + ":" + strings.Join(segments, ":")
 }
 
-var (
-	entryPathEscaper   = strings.NewReplacer("%", "%25", ":", "%3A")
-	entryPathUnescaper = strings.NewReplacer("%3A", ":", "%25", "%")
-)
+var entryPathEscaper = strings.NewReplacer("%", "%25", ":", "%3A")
 
 func escapeEntryPath(p string) string {
 	return entryPathEscaper.Replace(p)
-}
-
-// UnescapeEntryPath reverses the escaping VirtualPath applies to one segment of the chain.
-func UnescapeEntryPath(p string) string {
-	return entryPathUnescaper.Replace(p)
 }
 
 type traversalCtxKey struct{}

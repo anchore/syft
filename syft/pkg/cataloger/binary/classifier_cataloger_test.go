@@ -3410,9 +3410,7 @@ func match(classifier string, paths ...string) pkg.ClassifierMatch {
 	return pkg.ClassifierMatch{
 		Classifier: classifier,
 		Location: file.NewVirtualLocationFromCoordinates(
-			file.Coordinates{
-				RealPath: realPath,
-			},
+			file.NewCoordinates(realPath, ""),
 			virtualPath,
 		),
 	}

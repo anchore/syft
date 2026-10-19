@@ -257,7 +257,7 @@ func (b *licenseBuilder) WithURLs(urls ...string) *licenseBuilder {
 
 func (b *licenseBuilder) WithLocations(locations ...file.Location) *licenseBuilder {
 	for _, loc := range locations {
-		if loc.Path() != "" {
+		if loc.RealPath != "" {
 			b.locations = append(b.locations, loc)
 		}
 	}

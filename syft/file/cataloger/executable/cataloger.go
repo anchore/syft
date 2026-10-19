@@ -68,7 +68,7 @@ func (i *Cataloger) CatalogCtx(ctx context.Context, resolver file.Resolver) (map
 
 	results := make(map[file.Coordinates]file.Executable)
 	errs := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(locs), func(loc file.Location) (*file.Executable, error) {
-		prog.AtomicStage.Set(loc.Path())
+		prog.AtomicStage.Set(loc.FullNestedPath())
 
 		exec, err := processExecutableLocation(loc, resolver)
 		if err != nil {
@@ -93,15 +93,15 @@ func (i *Cataloger) CatalogCtx(ctx context.Context, resolver file.Resolver) (map
 func processExecutableLocation(loc file.Location, resolver file.Resolver) (exec *file.Executable, err error) {
 	reader, err := resolver.FileContentsByLocation(loc)
 	if err != nil {
-		log.WithFields("error", err, "path", loc.RealPath).Debug("unable to get file contents")
+		log.WithFields("error", err, "path", loc.FullNestedPath()).Debug("unable to get file contents")
 		return nil, fmt.Errorf("unable to get file contents: %w", err)
 	}
-	defer internal.CloseAndLogError(reader, loc.RealPath)
+	defer internal.CloseAndLogError(reader, loc.FullNestedPath())
 
 	defer func() {
 		if r := recover(); r != nil {
 			// a malformed binary must not take down the whole SBOM; the caller records this as an unknown
-			log.WithFields("path", loc.RealPath, "panic", r).Debug("recovered from panic while reading executable")
+			log.WithFields("path", loc.FullNestedPath(), "panic", r).Debug("recovered from panic while reading executable")
 			log.Tracef("executable panic stack:\n%s", debug.Stack())
 			exec, err = nil, fmt.Errorf("recovered from panic while reading executable: %v", r)
 		}
@@ -109,7 +109,7 @@ func processExecutableLocation(loc file.Location, resolver file.Resolver) (exec 
 
 	uReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
-		log.WithFields("error", err, "path", loc.RealPath).Debug("unable to get union reader")
+		log.WithFields("error", err, "path", loc.FullNestedPath()).Debug("unable to get union reader")
 		return nil, fmt.Errorf("unable to get union reader: %w", err)
 	}
 
@@ -146,7 +146,7 @@ func filterByGlobs(locs []file.Location, globs []string) ([]file.Location, error
 
 func locationMatchesGlob(loc file.Location, globs []string) (bool, error) {
 	for _, glob := range globs {
-		for _, path := range []string{loc.RealPath, loc.AccessPath} {
+		for _, path := range []string{loc.LocalPath(), loc.AccessPath} {
 			if path == "" {
 				continue
 			}
@@ -169,13 +169,13 @@ func processExecutable(loc file.Location, reader unionreader.UnionReader) (*file
 
 	format, err := findExecutableFormat(reader)
 	if err != nil {
-		log.Debugf("unable to determine executable kind for %v: %v", loc.RealPath, err)
+		log.Debugf("unable to determine executable kind for %v: %v", loc.FullNestedPath(), err)
 		return nil, fmt.Errorf("unable to determine executable kind: %w", err)
 	}
 
 	if format == "" {
 		// this is not an "unknown", so just log -- this binary does not have parseable data in it
-		log.Debugf("unable to determine executable format for %q", loc.RealPath)
+		log.Debugf("unable to determine executable format for %q", loc.FullNestedPath())
 		return nil, nil
 	}
 
@@ -184,17 +184,17 @@ func processExecutable(loc file.Location, reader unionreader.UnionReader) (*file
 	switch format {
 	case file.ELF:
 		if err = findELFFeatures(&data, reader); err != nil {
-			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine ELF features")
+			log.WithFields("error", err, "path", loc.FullNestedPath()).Trace("unable to determine ELF features")
 			err = fmt.Errorf("unable to determine ELF features: %w", err)
 		}
 	case file.PE:
 		if err = findPEFeatures(&data, reader); err != nil {
-			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine PE features")
+			log.WithFields("error", err, "path", loc.FullNestedPath()).Trace("unable to determine PE features")
 			err = fmt.Errorf("unable to determine PE features: %w", err)
 		}
 	case file.MachO:
 		if err = findMachoFeatures(&data, reader); err != nil {
-			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine Macho features")
+			log.WithFields("error", err, "path", loc.FullNestedPath()).Trace("unable to determine Macho features")
 			err = fmt.Errorf("unable to determine Macho features: %w", err)
 		}
 	}

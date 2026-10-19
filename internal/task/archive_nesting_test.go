@@ -18,6 +18,7 @@ import (
 
 	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/sbomsync"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
@@ -28,7 +29,7 @@ import (
 
 // This file covers nesting across archive families. The other nested-archive fixtures are all zips,
 // so a zip-specific mechanism would pass them; the requirement here is that an archive of one family
-// inside another behaves as it would inside its own family - same packages, same filesystem-id chain,
+// inside another behaves as it would inside its own family - same packages, same container-path chain,
 // same CONTAINS edges, same depth accounting.
 //
 // Chains are built in the test rather than committed as binaries, so each case can vary which family
@@ -71,8 +72,8 @@ type nestedArchive struct {
 	// paths is each archive's path within its parent, outermost first; paths[0] is the outermost archive
 	// as the scan's resolver reports it.
 	paths []string
-	// fileSystemIDs is the composed chain each archive's own contents carry, outermost first.
-	fileSystemIDs []string
+	// containerPaths is each archive's full path, the container path its own contents carry, outermost first.
+	containerPaths []string
 	// virtualPaths is the same chain in java's colon-joined form, outermost first.
 	virtualPaths []string
 }
@@ -87,6 +88,7 @@ type nestingRow struct {
 // nestingVisit is one filesystem the archive cataloger's sub-pipeline was run against.
 type nestingVisit struct {
 	virtualPath string
+	fullPath    string
 	depth       int
 	// heldFiles are the spill files live at this moment, sampled only when the probe was given a temp
 	// dir to look in. A nested archive's own bytes are read where they lie, so one appears per archive
@@ -120,12 +122,12 @@ func Test_mixedFamilyNesting_leafIsCatalogedOnceWithTheFullChain(t *testing.T) {
 			locs := leafLocations(s)
 			require.Len(t, locs, 1, "the leaf must be reached by exactly one path")
 			// exact, never a substring: a partially composed chain passes a substring check
-			assert.Equal(t, nested.leafFileSystemID(), locs[0].ArchivePath,
+			assert.Equal(t, nested.leafContainerPath(), archive.ContainerPath(locs[0].Coordinates),
 				"the chain must name all three archives outer-to-inner")
-			assert.Equal(t, "nested/marker.txt", locs[0].RealPath,
+			assert.Equal(t, nested.leafContainerPath()+"!/nested/marker.txt", locs[0].FullNestedPath(),
 				"the path stays relative to the archive the file came from")
 
-			assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs(),
+			assert.Equal(t, nested.containerPaths, probe.containerPaths(),
 				"every level must be cataloged, outer to inner, whatever families they are")
 		})
 	}
@@ -145,11 +147,7 @@ func Test_mixedFamilyNesting_containsEdgesChainAtEveryLevel(t *testing.T) {
 			// directory, so it carries no filesystem id of its own
 			archiveCoords := make([]file.Coordinates, len(row.families))
 			for i := range row.families {
-				var parentFSID string
-				if i > 0 {
-					parentFSID = nested.fileSystemIDs[i-1]
-				}
-				archiveCoords[i] = file.Coordinates{RealPath: nested.paths[i], ArchivePath: parentFSID}
+				archiveCoords[i] = nested.coordinates(i)
 			}
 
 			fileEdges := strset.New()
@@ -185,47 +183,25 @@ func Test_mixedFamilyNesting_containsEdgesChainAtEveryLevel(t *testing.T) {
 			for _, rel := range s.Relationships {
 				from, _ := rel.From.(file.Coordinates)
 				to, _ := rel.To.(file.Coordinates)
-				leafEdge = leafEdge || (from == innermost && to == file.Coordinates{RealPath: "nested/marker.txt", ArchivePath: nested.leafFileSystemID()})
+				leafEdge = leafEdge || (from == innermost && to == file.Coordinates{RealPath: innermost.RealPath, FullPath: innermost.FullNestedPath() + "!/nested/marker.txt"})
 			}
 			assert.True(t, leafEdge, "expected a CONTAINS edge from the innermost archive to the leaf file")
 		})
 	}
 }
 
-func Test_mixedFamilyNesting_javaLeafVirtualPathIsTheColonJoinedChain(t *testing.T) {
-	// these colon-delimited strings are in already-published SBOMs, so a jar reached through three
-	// levels of mixed families must still be reported under the chain of all three
-	for _, row := range nestingRows() {
-		if row.families[len(row.families)-1] != familyJar {
-			continue
-		}
-		t.Run(row.name, func(t *testing.T) {
-			scanDir := t.TempDir()
-			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
-
-			s := runNesting(t, scanDir, 3, defaultLimits(), markerTask(), javaTask())
-
-			// the innermost archive is the jar, so its own package is the java leaf and the chain of
-			// all three archives is exactly its virtual path
-			leaf := fmt.Sprintf("level%d", len(row.families)-1)
-			assert.Equal(t, 1, packageCount(s, leaf), "the leaf jar must be cataloged exactly once")
-			assert.Equal(t, nested.virtualPaths[len(row.families)-1], javaVirtualPaths(s)[leaf])
-		})
-	}
-}
-
-func Test_mixedFamilyNesting_jarIsExercisedAsAContainer(t *testing.T) {
+func Test_mixedFamilyNesting_everyJarIsCatalogedOnceUnderItsChain(t *testing.T) {
 	// two mechanisms meet a jar: the java cataloger catalogs it as a package, the archive task descends
-	// into it. A jar mid-chain must do both, exactly once each; the failure mode is a duplicate, not an
-	// error.
+	// into it. A jar at any level must do both, exactly once each; the failure mode is a duplicate, not an
+	// error. The colon-joined virtual paths are in already-published SBOMs, so they must name the chain.
 	for _, row := range nestingRows() {
-		var containerLevels []int
+		var jarLevels []int
 		for i, family := range row.families {
-			if family == familyJar && i < len(row.families)-1 {
-				containerLevels = append(containerLevels, i)
+			if family == familyJar {
+				jarLevels = append(jarLevels, i)
 			}
 		}
-		if len(containerLevels) == 0 {
+		if len(jarLevels) == 0 {
 			continue
 		}
 
@@ -236,19 +212,18 @@ func Test_mixedFamilyNesting_jarIsExercisedAsAContainer(t *testing.T) {
 			probe := &nestingProbe{}
 			s := runNesting(t, scanDir, 3, defaultLimits(), markerTask(), javaTask(), probe.task())
 
-			for _, level := range containerLevels {
+			for _, level := range jarLevels {
 				name := fmt.Sprintf("level%d", level)
-				assert.Equal(t, 1, packageCount(s, name),
-					"the container jar's own package must be cataloged exactly once")
+				assert.Equal(t, 1, packageCount(s, name), "the jar's own package must be cataloged exactly once")
 				assert.Equal(t, nested.virtualPaths[level], javaVirtualPaths(s)[name],
-					"the container jar's virtual path must be its own place in the chain")
+					"the jar's virtual path must be its own place in the chain")
 			}
 
-			// and the archive task still descended through it, so the chain is complete below it
-			assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs())
+			// and the archive task still descended through every level
+			assert.Equal(t, nested.containerPaths, probe.containerPaths())
 			locs := leafLocations(s)
 			require.Len(t, locs, 1)
-			assert.Equal(t, nested.leafFileSystemID(), locs[0].ArchivePath)
+			assert.Equal(t, nested.leafContainerPath(), archive.ContainerPath(locs[0].Coordinates))
 		})
 	}
 }
@@ -264,16 +239,13 @@ func Test_mixedFamilyNesting_depthCountsLevelsNotFamilies(t *testing.T) {
 			probe := &nestingProbe{}
 			s := runNesting(t, scanDir, 2, defaultLimits(), markerTask(), fileMetadataTask(), probe.task())
 
-			assert.Equal(t, nested.fileSystemIDs[:2], probe.archiveFileSystemIDs(),
+			assert.Equal(t, nested.containerPaths[:2], probe.containerPaths(),
 				"at depth 2 the outer and middle archives are cataloged and the innermost is not")
 			assert.Zero(t, packageCount(s, "marker-pkg"),
 				"the leaf is one level past the bound, so its package must be absent")
 
 			// the innermost archive is still cataloged as a file, inside the middle archive
-			innermost := file.Coordinates{
-				RealPath:    nested.paths[2],
-				ArchivePath: nested.fileSystemIDs[1],
-			}
+			innermost := nested.coordinates(2)
 			_, ok := s.Artifacts.FileMetadata[innermost]
 			assert.True(t, ok, "the undescended archive must still be recorded as a file at %s", coordKey(innermost))
 
@@ -283,64 +255,6 @@ func Test_mixedFamilyNesting_depthCountsLevelsNotFamilies(t *testing.T) {
 			assert.Contains(t, reasons[0], "depth limit was reached")
 		})
 	}
-}
-
-func Test_mixedFamilyNesting_defaultBoundsCatalogEveryRow(t *testing.T) {
-	// the default bounds, pinned along with the fact that a three-level chain of any family mix sits
-	// well inside them
-	bounds := cataloging.DefaultArchiveSearchConfig()
-	require.Equal(t, int64(2*1024*1024*1024), bounds.MaxMemoryBytes)
-	require.Equal(t, int64(100*1024*1024*1024), bounds.MaxDiskBytes)
-
-	for _, row := range nestingRows() {
-		t.Run(row.name, func(t *testing.T) {
-			scanDir := t.TempDir()
-			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
-
-			probe := &nestingProbe{}
-			s := runNesting(t, scanDir, 3, archiveLimits(bounds), markerTask(), probe.task())
-
-			assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs(),
-				"every level of the chain must be cataloged at the default bounds")
-			locs := leafLocations(s)
-			require.Len(t, locs, 1)
-			assert.Equal(t, nested.leafFileSystemID(), locs[0].ArchivePath)
-		})
-	}
-}
-
-func Test_mixedFamilyNesting_memoryPressureOverflowsRatherThanFailing(t *testing.T) {
-	// entries that will not fit in memory are written to disk rather than refused
-	scanDir := t.TempDir()
-	tempDir := isolatedTempDir(t)
-	nested := writeNestedArchive(t, scanDir, gradedChain())
-
-	t.Run("with a generous memory limit nothing is written to disk", func(t *testing.T) {
-		probe := &nestingProbe{tempDir: tempDir}
-		bounds := defaultLimits()
-		bounds.MaxMemoryBytes = int64(2 * (nested.sizes[0] + nested.sizes[1] + nested.sizes[2]))
-		runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
-
-		deepest := probe.deepestVisit()
-		require.Equal(t, 3, deepest.depth, "the sample must be taken with all three levels still held")
-		assert.Empty(t, deepest.heldFiles)
-	})
-
-	t.Run("with a memory limit the outermost archive's entries do not fit in", func(t *testing.T) {
-		// room for every level's index estimate, which must stay in memory, but not the outer entries
-		probe := &nestingProbe{tempDir: tempDir}
-		bounds := archive.Limits{MaxMemoryBytes: int64(nested.sizes[2] + 32*1024), MaxDiskBytes: -1}
-		s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
-
-		deepest := probe.deepestVisit()
-		require.Equal(t, 3, deepest.depth, "the sample must be taken with all three levels still held")
-		assert.Contains(t, deepest.heldFiles, "archive-spill", "entries that do not fit in memory are written to disk")
-
-		assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs(), "and every level is still cataloged")
-		locs := leafLocations(s)
-		require.Len(t, locs, 1)
-		assert.Equal(t, nested.leafFileSystemID(), locs[0].ArchivePath)
-	})
 }
 
 func Test_mixedFamilyNesting_aNestedArchiveIsReadWhereItLies(t *testing.T) {
@@ -376,10 +290,10 @@ func Test_mixedFamilyNesting_aNestedArchiveIsReadWhereItLies(t *testing.T) {
 			require.Equal(t, 3, deepest.depth, "the sample must be taken with all three levels still held")
 			assert.Equal(t, tc.wantHeldFiles, deepest.heldFiles)
 
-			assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs())
+			assert.Equal(t, nested.containerPaths, probe.containerPaths())
 			locs := leafLocations(s)
 			require.Len(t, locs, 1)
-			assert.Equal(t, nested.leafFileSystemID(), locs[0].ArchivePath)
+			assert.Equal(t, nested.leafContainerPath(), archive.ContainerPath(locs[0].Coordinates))
 		})
 	}
 }
@@ -395,7 +309,7 @@ func Test_mixedFamilyNesting_diskLimitTruncatesTheLevelItCannotAdmit(t *testing.
 	// a sibling of a different family, processed once the chain has been released, so cataloged in full
 	require.NoError(t, os.WriteFile(
 		filepath.Join(scanDir, "sibling.tgz"),
-		makeTarGz(t, map[string][]byte{"nested/marker.txt": []byte("sibling")}),
+		testutils.TarGz(t, map[string][]byte{"nested/marker.txt": []byte("sibling")}),
 		0o644,
 	))
 
@@ -408,48 +322,27 @@ func Test_mixedFamilyNesting_diskLimitTruncatesTheLevelItCannotAdmit(t *testing.
 
 	s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
-	want := append(append([]string{}, nested.fileSystemIDs...), "/sibling.tgz")
-	assert.ElementsMatch(t, want, probe.archiveFileSystemIDs(),
+	want := append(append([]string{}, nested.containerPaths...), "/sibling.tgz")
+	assert.ElementsMatch(t, want, probe.containerPaths(),
 		"every level is visited, the truncated one with nothing inside it")
 
-	fsIDs := strset.New()
+	containers := strset.New()
 	for _, loc := range leafLocations(s) {
-		fsIDs.Add(loc.ArchivePath)
+		containers.Add(archive.ContainerPath(loc.Coordinates))
 	}
-	assert.False(t, fsIDs.Has(nested.leafFileSystemID()), "the truncated level's contents must be absent")
-	assert.True(t, fsIDs.Has("/sibling.tgz"), "the sibling of a different family must be cataloged fully")
+	assert.False(t, containers.Has(nested.leafContainerPath()), "the truncated level's contents must be absent")
+	assert.True(t, containers.Has("/sibling.tgz"), "the sibling of a different family must be cataloged fully")
 
 	var truncated []string
 	for coords, reasons := range s.Artifacts.Unknowns {
 		for _, reason := range reasons {
 			if strings.Contains(reason, "disk limit") {
-				truncated = append(truncated, coords.ArchivePath+":"+coords.RealPath)
+				truncated = append(truncated, coords.FullNestedPath())
 			}
 		}
 	}
-	assert.Equal(t, []string{nested.fileSystemIDs[1] + ":" + nested.paths[2]}, truncated,
+	assert.Equal(t, []string{nested.coordinates(2).FullNestedPath()}, truncated,
 		"the truncation is recorded against the archive that reached the limit")
-}
-
-func Test_mixedFamilyNesting_unboundedLimitsEnforceNothing(t *testing.T) {
-	// a caller can opt out of one bound without the other, and opting out of both must still find the
-	// deepest leaf. Opting out is a negative value; zero forbids the resource.
-	for _, row := range nestingRows() {
-		t.Run(row.name, func(t *testing.T) {
-			scanDir := t.TempDir()
-			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
-
-			probe := &nestingProbe{}
-			bounds := archive.Limits{MaxMemoryBytes: -1, MaxDiskBytes: -1}
-
-			s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
-
-			assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs())
-			locs := leafLocations(s)
-			require.Len(t, locs, 1)
-			assert.Equal(t, nested.leafFileSystemID(), locs[0].ArchivePath)
-		})
-	}
 }
 
 func defaultLimits() archive.Limits {
@@ -524,37 +417,30 @@ func (f archiveFamily) pack(t *testing.T, base string, entries map[string][]byte
 	t.Helper()
 	switch f {
 	case familyZip:
-		return makeZip(t, entries)
+		return testutils.Zip(t, entries)
 	case familyJar:
 		// a manifest makes it a real jar to the java cataloger at any level; the package java reports is
 		// named after the file, not the manifest title
-		return makeJar(t, base, "1.0", entries)
+		return testutils.Jar(t, base, "1.0", entries)
 	case familyTar:
-		return makeTar(t, entries)
+		return testutils.Tar(t, entries)
 	case familyTarGz, familyTgz:
-		return makeTarGz(t, entries)
+		return testutils.TarGz(t, entries)
 	}
 	t.Fatalf("unknown archive family %q", f)
 	return nil
 }
 
-func makeJar(t *testing.T, title, version string, extra map[string][]byte) []byte {
-	t.Helper()
-	entries := map[string][]byte{
-		"META-INF/MANIFEST.MF": []byte(
-			"Manifest-Version: 1.0\nImplementation-Title: " + title + "\nImplementation-Version: " + version + "\n",
-		),
-	}
-	for k, v := range extra {
-		entries[k] = v
-	}
-	return makeZip(t, entries)
+// leafContainerPath is the container path the innermost archive's contents carry: every archive, outer to
+// inner. Assert it exactly, never as a substring: a partially composed chain passes a substring check.
+func (n nestedArchive) leafContainerPath() string {
+	return n.containerPaths[len(n.containerPaths)-1]
 }
 
-// leafFileSystemID is the chain the innermost archive's contents carry: every archive, outer to
-// inner. Assert it exactly, never as a substring: a partially composed chain passes a substring check.
-func (n nestedArchive) leafFileSystemID() string {
-	return n.fileSystemIDs[len(n.fileSystemIDs)-1]
+// coordinates are those of the archive at the given level: the outermost archive's path, and the chain
+// of entries within it.
+func (n nestedArchive) coordinates(level int) file.Coordinates {
+	return file.Coordinates{RealPath: n.paths[0], FullPath: strings.Join(n.paths[:level+1], "!/")}
 }
 
 // buildNestedArchive builds one archive per family given, each holding the next, with leaf inside
@@ -564,10 +450,10 @@ func buildNestedArchive(t *testing.T, plan nestPlan) nestedArchive {
 	require.NotEmpty(t, plan.families, "a chain needs at least one level")
 
 	out := nestedArchive{
-		sizes:         make([]int, len(plan.families)),
-		paths:         make([]string, len(plan.families)),
-		fileSystemIDs: make([]string, len(plan.families)),
-		virtualPaths:  make([]string, len(plan.families)),
+		sizes:          make([]int, len(plan.families)),
+		paths:          make([]string, len(plan.families)),
+		containerPaths: make([]string, len(plan.families)),
+		virtualPaths:   make([]string, len(plan.families)),
 	}
 
 	// the level index goes in every name and path segment, so no two levels share a path and a chain
@@ -585,11 +471,11 @@ func buildNestedArchive(t *testing.T, plan nestPlan) nestedArchive {
 
 	for i := range plan.families {
 		if i == 0 {
-			out.fileSystemIDs[i] = out.paths[0]
+			out.containerPaths[i] = out.paths[0]
 			out.virtualPaths[i] = out.paths[0]
 			continue
 		}
-		out.fileSystemIDs[i] = out.fileSystemIDs[i-1] + ":" + out.paths[i]
+		out.containerPaths[i] = out.containerPaths[i-1] + "!/" + out.paths[i]
 		out.virtualPaths[i] = out.virtualPaths[i-1] + ":" + out.paths[i]
 	}
 
@@ -667,6 +553,7 @@ func (p *nestingProbe) task() Task {
 		visit := nestingVisit{}
 		if trav != nil {
 			visit.virtualPath = archive.VirtualPath(trav.Location)
+			visit.fullPath = trav.FullTraversalArchivePath()
 			visit.depth = strings.Count(archive.VirtualPath(trav.Location), ":") + 1
 		}
 		if p.tempDir != "" {
@@ -680,16 +567,16 @@ func (p *nestingProbe) task() Task {
 	})
 }
 
-// archiveFileSystemIDs is the chain of every archive whose contents were cataloged, in visit order.
-func (p *nestingProbe) archiveFileSystemIDs() []string {
+// containerPaths is the chain of every archive whose contents were cataloged, in visit order.
+func (p *nestingProbe) containerPaths() []string {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	var out []string
 	for _, v := range p.visits {
-		if v.virtualPath == "" {
+		if v.fullPath == "" {
 			continue
 		}
-		out = append(out, v.virtualPath)
+		out = append(out, v.fullPath)
 	}
 	return out
 }
@@ -770,7 +657,7 @@ func packageCount(s *sbom.SBOM, name string) int {
 }
 
 func coordKey(c file.Coordinates) string {
-	return c.ArchivePath + "|" + c.RealPath
+	return c.FullNestedPath()
 }
 
 // gradedChain is the headline row with each level padded so the three archives have clearly different

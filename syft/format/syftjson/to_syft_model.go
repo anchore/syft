@@ -90,11 +90,11 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 
 			ret.FileMetadata[coord] = file.Metadata{
 				FileInfo: stereoscopeFile.ManualInfo{
-					NameValue: path.Base(coord.RealPath),
+					NameValue: path.Base(coord.FullNestedPath()),
 					SizeValue: f.Metadata.Size,
 					ModeValue: fm,
 				},
-				Path:            coord.RealPath,
+				Path:            coord.FullNestedPath(),
 				LinkDestination: f.Metadata.LinkDestination,
 				UserID:          f.Metadata.UserID,
 				GroupID:         f.Metadata.GroupID,

@@ -203,7 +203,7 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 	errs := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(c.selectFiles(resolver)), func(req request) (result, error) {
 		location, parser := req.Location, req.Parser
 
-		log.WithFields("path", location.RealPath).Trace("parsing file contents")
+		log.WithFields("path", location.FullNestedPath()).Trace("parsing file contents")
 
 		discoveredPackages, discoveredRelationships, err := invokeParser(ctx, resolver, location, lgr, parser, &env)
 		if err != nil {
@@ -243,7 +243,7 @@ func (c *Cataloger) processSafely(ctx context.Context, p processExecutor, resolv
 func invokeParser(ctx context.Context, resolver file.Resolver, location file.Location, logger logger.Logger, parser Parser, env *Environment) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
 	contentReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		logger.WithFields("location", location.RealPath, "error", err).Debug("unable to fetch contents")
+		logger.WithFields("location", location.FullNestedPath(), "error", err).Debug("unable to fetch contents")
 		return nil, nil, err
 	}
 	defer internal.CloseAndLogError(contentReader, location.AccessPath)
@@ -251,7 +251,7 @@ func invokeParser(ctx context.Context, resolver file.Resolver, location file.Loc
 	defer func() {
 		if r := recover(); r != nil {
 			// a malformed file must not take down the whole SBOM; the caller records this as an unknown
-			logger.WithFields("location", location.RealPath, "panic", r).Debug("recovered from panic while parsing file")
+			logger.WithFields("location", location.FullNestedPath(), "panic", r).Debug("recovered from panic while parsing file")
 			logger.Tracef("parser panic stack:\n%s", debug.Stack())
 			pkgs, rels, err = nil, nil, fmt.Errorf("recovered from panic while parsing file: %v", r)
 		}
@@ -260,7 +260,7 @@ func invokeParser(ctx context.Context, resolver file.Resolver, location file.Loc
 	discoveredPackages, discoveredRelationships, err := parser(ctx, resolver, env, file.NewLocationReadCloser(location, contentReader))
 	if err != nil {
 		// these errors are propagated up, and are likely to be coordinate errors
-		logger.WithFields("location", location.RealPath, "error", err).Trace("cataloger returned errors")
+		logger.WithFields("location", location.FullNestedPath(), "error", err).Trace("cataloger returned errors")
 	}
 
 	return discoveredPackages, discoveredRelationships, err

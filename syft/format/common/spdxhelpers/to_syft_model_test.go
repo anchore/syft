@@ -344,10 +344,7 @@ func Test_toSyftRelationships(t *testing.T) {
 	}
 	pkg3.SetID()
 
-	loc1 := file.NewLocationFromCoordinates(file.Coordinates{
-		RealPath:     "/somewhere/real",
-		FileSystemID: "abc",
-	})
+	loc1 := file.NewLocationFromCoordinates(file.NewCoordinates("/somewhere/real", "abc"))
 
 	tests := []struct {
 		name string
@@ -694,11 +691,8 @@ func Test_directPackageFiles(t *testing.T) {
 	p.OverrideID("1") // the same as the spdxID on the package element
 	f := file.Location{
 		LocationData: file.LocationData{
-			Coordinates: file.Coordinates{
-				RealPath:     "some-file",
-				FileSystemID: "",
-			},
-			AccessPath: "some-file",
+			Coordinates: file.NewCoordinates("some-file", ""),
+			AccessPath:  "some-file",
 		},
 		LocationMetadata: file.LocationMetadata{
 			Annotations: map[string]string{},

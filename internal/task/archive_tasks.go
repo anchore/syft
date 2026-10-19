@@ -194,12 +194,12 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 		ctx = archive.WithBudget(ctx, archive.NewBudget(archiveTreeBudget(parentResolver, location)))
 	}
 
-	// extracted files keep the filesystem ID of where the archive was found; the nesting chain is
-	// carried separately as the archive path. The chain names real paths, not the link the archive was
+	// extracted files keep the real path and filesystem ID of the outermost archive; the chain of entries
+	// to each is carried as its archive path. The chain names real paths, not the link the archive was
 	// reached by, so it is stable and joins to the archive's package location by prefix.
 	traversal := &archive.Traversal{Location: location, Parent: archive.TraversalFromContext(ctx)}
-	archivePath := traversal.ContentsArchivePath()
-	extracted, err := archive.Extract(ctx, archiveContent, location.FileSystemID, archivePath, c.limiter, c.exclusions)
+	archivePath := location.FullNestedPath()
+	extracted, err := archive.Extract(ctx, archiveContent, location.Coordinates, c.limiter, c.exclusions)
 	if errors.Is(err, archive.ErrDiskLimitReached) {
 		// nothing is released while this archive waits, so skip it rather than block the scan
 		recordArchiveUnknown(builder, location.Coordinates, "archive skipped: its content would exceed the disk limit")
@@ -370,7 +370,7 @@ func (c *archiveCataloger) discoverArchives(resolver file.Resolver) []archiveCan
 		if i, dup := seen[loc.Coordinates]; dup {
 			// a MIME hit is the bare real path; the name it is reached by (a link such as
 			// lib/dep.jar -> ../store/3f9a1c) is what name-based catalogers like java key off
-			if prev := candidates[i].location; prev.AccessPath == "" || prev.AccessPath == prev.RealPath {
+			if prev := candidates[i].location; prev.AccessPath == "" || prev.AccessPath == prev.FullNestedPath() {
 				candidates[i].location = loc
 			}
 			continue
@@ -384,7 +384,7 @@ func (c *archiveCataloger) discoverArchives(resolver file.Resolver) []archiveCan
 // mergeArchiveResults copies the throwaway SBOM's packages, files and relationships into the shared
 // SBOM, adding a CONTAINS relationship from the archive to everything found inside it.
 //
-// Files inside the archive are those whose ArchivePath is the archive's own chain, which leaves out the
+// Files inside the archive are those whose container is the archive's own full path, which leaves out the
 // archive itself (a java package or an unknown recorded at its coordinates would otherwise become a
 // self-loop). The nested archives are always included, so the chain of archives is navigable whatever
 // file selection is configured.
@@ -409,7 +409,7 @@ func mergeArchiveResults(archiveCoordinates file.Coordinates, archivePath string
 		contained.Add(child.location.Coordinates)
 	}
 	for _, coordinates := range scratch.AllCoordinates() {
-		if coordinates.ArchivePath == archivePath {
+		if archive.ContainerPath(coordinates) == archivePath {
 			contained.Add(coordinates)
 		}
 	}

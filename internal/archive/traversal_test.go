@@ -2,7 +2,6 @@ package archive
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,16 +17,24 @@ func TestTraversalContextRoundTrip(t *testing.T) {
 	ctx := WithTraversal(context.Background(), trav)
 	require.Same(t, trav, TraversalFromContext(ctx))
 
-	child := &Traversal{Location: locationIn("app.war", "/WEB-INF/lib/dep.jar")}
+	child := &Traversal{Location: locationIn("app.war", "WEB-INF/lib/dep.jar")}
 	ctx = WithTraversal(ctx, child)
 	require.Same(t, child, TraversalFromContext(ctx))
 }
 
-// locationIn is a location as the Index returns it: an entry path stamped with the containing chain.
-func locationIn(archivePath, entryPath string) file.Location {
-	loc := file.NewLocation(entryPath)
-	loc.ArchivePath = archivePath
-	return loc
+// locationIn is a location as the Resolver returns it: the outermost archive's real path, and the chain
+// of entry paths within it.
+func locationIn(realPath, archivePath string) file.Location {
+	return file.NewLocationFromCoordinates(file.Coordinates{RealPath: realPath, FullPath: realPath + file.ArchivePathSeparator + archivePath})
+}
+
+func TestContainerPath(t *testing.T) {
+	assert.Equal(t, "", ContainerPath(file.NewCoordinates("/app.war", "")))
+	assert.Equal(t, "", ContainerPath(file.Coordinates{RealPath: "/app.war", FullPath: "/app.war"}), "a top-level file whose FullPath is set")
+	assert.Equal(t, "", ContainerPath(file.Coordinates{RealPath: "/odd!/name"}), "a separator in a top-level real path is not an archive boundary")
+	assert.Equal(t, "/app.war", ContainerPath(locationIn("/app.war", "WEB-INF/lib/dep.jar").Coordinates))
+	assert.Equal(t, "/app.war!/WEB-INF/lib/dep.jar",
+		ContainerPath(locationIn("/app.war", "WEB-INF/lib/dep.jar!/META-INF/MANIFEST.MF").Coordinates))
 }
 
 func TestVirtualPath(t *testing.T) {
@@ -47,6 +54,11 @@ func TestVirtualPath(t *testing.T) {
 			expected: "some/dir/example.jar",
 		},
 		{
+			name:     "outside an archive with FullPath set returns the path unchanged",
+			location: file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/odd!/name.jar", FullPath: "/odd!/name.jar"}),
+			expected: "/odd!/name.jar",
+		},
+		{
 			name:     "single level trims leading slash",
 			location: locationIn("app.war", "/WEB-INF/lib/dep.jar"),
 			expected: "app.war:WEB-INF/lib/dep.jar",
@@ -58,7 +70,7 @@ func TestVirtualPath(t *testing.T) {
 		},
 		{
 			name:     "multi-level chain",
-			location: locationIn("app.war:WEB-INF/lib/dep.jar", "/inner/most.jar"),
+			location: locationIn("app.war", "WEB-INF/lib/dep.jar!/inner/most.jar"),
 			expected: "app.war:WEB-INF/lib/dep.jar:inner/most.jar",
 		},
 		{
@@ -73,9 +85,21 @@ func TestVirtualPath(t *testing.T) {
 			expected: "app.war:lib/a%3Ab%3Ac.jar",
 		},
 		{
+			// or the literal text %3A would collide with an escaped colon
+			name:     "the escape character is itself escaped",
+			location: locationIn("outer.zip", "a%3Ab.jar"),
+			expected: "outer.zip:a%253Ab.jar",
+		},
+		{
 			name:     "access path is preferred over real path",
 			location: file.NewVirtualLocation("/real/dep.jar", "/link/dep.jar"),
 			expected: "/link/dep.jar",
+		},
+		{
+			name: "access path within an archive replaces the last entry",
+			location: file.NewVirtualLocationFromCoordinates(
+				file.Coordinates{RealPath: "app.war", FullPath: "app.war!/WEB-INF/lib/real.jar"}, "app.war!/WEB-INF/lib/link.jar"),
+			expected: "app.war:WEB-INF/lib/link.jar",
 		},
 	}
 	for _, tt := range tests {
@@ -83,28 +107,4 @@ func TestVirtualPath(t *testing.T) {
 			assert.Equal(t, tt.expected, VirtualPath(tt.location))
 		})
 	}
-}
-
-func TestVirtualPath_theEscapeCharacterIsItselfEscaped(t *testing.T) {
-	// an entry path holding the literal text %3A must not collide with one holding a colon, or their
-	// contents share an ArchivePath and overwrite each other's file metadata
-	fromColon := VirtualPath(locationIn("outer.zip", "a:b.jar"))
-	fromLiteral := VirtualPath(locationIn("outer.zip", "a%3Ab.jar"))
-
-	assert.Equal(t, "outer.zip:a%3Ab.jar", fromColon)
-	assert.Equal(t, "outer.zip:a%253Ab.jar", fromLiteral)
-}
-
-func TestVirtualPath_escapingComposesAcrossNestingLevels(t *testing.T) {
-	level2 := VirtualPath(locationIn("outer.zip", "lib/mid:dle.war"))
-	require.Equal(t, "outer.zip:lib/mid%3Adle.war", level2)
-
-	final := VirtualPath(locationIn(level2, "WEB-INF/lib/inn:er.jar"))
-	require.Equal(t, "outer.zip:lib/mid%3Adle.war:WEB-INF/lib/inn%3Aer.jar", final)
-
-	assert.Equal(t,
-		[]string{"outer.zip", "lib/mid%3Adle.war", "WEB-INF/lib/inn%3Aer.jar"},
-		strings.Split(final, ":"),
-		"splitting on ':' must recover exactly the three real archive boundaries",
-	)
 }

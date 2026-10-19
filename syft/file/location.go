@@ -33,7 +33,7 @@ type LocationData struct {
 	// note: it is IMPORTANT to ignore anything but the coordinates for a Location when considering the ID (hash value)
 	// since the coordinates are the minimally correct ID for a location (symlinks should not come into play)
 
-	// AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path)
+	// AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path). For a file within an archive, it is a full path (see Coordinates.FullPath).
 	AccessPath string `hash:"ignore" json:"accessPath"`
 
 	// ref is the stereoscope file reference relative to the stereoscope.FileCatalog that has more information about this location.
@@ -110,12 +110,12 @@ func NewVirtualLocation(realPath, accessPath string) Location {
 		}}
 }
 
-// NewLocationFromCoordinates creates a new location for the given Coordinates.
+// NewLocationFromCoordinates creates a new location for the given Coordinates, accessed by their full path.
 func NewLocationFromCoordinates(coordinates Coordinates) Location {
 	return Location{
 		LocationData: LocationData{
 			Coordinates: coordinates,
-			AccessPath:  coordinates.RealPath,
+			AccessPath:  coordinates.FullNestedPath(),
 		},
 		LocationMetadata: LocationMetadata{
 			Annotations: map[string]string{},
@@ -205,11 +205,12 @@ func NewVirtualLocationFromDirectory(responsePath, responseAccessPath string, re
 	}
 }
 
+// Path is the path this location was accessed by, or its local path (see Coordinates.LocalPath).
 func (l Location) Path() string {
 	if l.AccessPath != "" {
 		return l.AccessPath
 	}
-	return l.RealPath
+	return l.LocalPath()
 }
 
 func (l Location) String() string {
@@ -220,12 +221,12 @@ func (l Location) String() string {
 
 	str += fmt.Sprintf("RealPath=%q", l.RealPath)
 
-	if l.AccessPath != "" && l.AccessPath != l.RealPath {
+	if l.AccessPath != "" {
 		str += fmt.Sprintf(" AccessPath=%q", l.AccessPath)
 	}
 
-	if l.ArchivePath != "" {
-		str += fmt.Sprintf(" ArchivePath=%q", l.ArchivePath)
+	if l.FullNestedPath() != l.RealPath {
+		str += fmt.Sprintf(" FullPath=%q", l.FullNestedPath())
 	}
 
 	if l.FileSystemID != "" {
@@ -235,8 +236,7 @@ func (l Location) String() string {
 }
 
 func (l Location) Equals(other Location) bool {
-	return l.RealPath == other.RealPath &&
+	return l.FullNestedPath() == other.FullNestedPath() &&
 		l.AccessPath == other.AccessPath &&
-		l.ArchivePath == other.ArchivePath &&
 		l.FileSystemID == other.FileSystemID
 }

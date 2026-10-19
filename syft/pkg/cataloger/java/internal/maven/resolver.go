@@ -668,7 +668,7 @@ func (r *Resolver) findParentPomByRelativePath(ctx context.Context, pom *Project
 			Debug("unable to get contents of parent pom by relative path")
 		return nil
 	}
-	defer internal.CloseAndLogError(parentContents, parentLocation.RealPath)
+	defer internal.CloseAndLogError(parentContents, parentLocation.FullNestedPath())
 	parentPom, err := ParsePomXML(parentContents)
 	if err != nil || parentPom == nil {
 		log.WithFields("error", err, "mavenID", r.resolveID(ctx, resolvingProperties, pom), "parentID", parentID, "parentLocation", parentLocation).

@@ -43,19 +43,13 @@ func Test_coordinatesForSelection(t *testing.T) {
 				Relationships: []artifact.Relationship{
 					{
 						From: pkg.Package{},
-						To: file.Coordinates{
-							RealPath:     "path",
-							FileSystemID: "fs",
-						},
+						To:   file.NewCoordinates("path", "fs"),
 						Type: artifact.ContainsRelationship,
 					},
 				},
 			},
 			files: []file.Coordinates{
-				{
-					RealPath:     "path",
-					FileSystemID: "fs",
-				},
+				file.NewCoordinates("path", "fs"),
 			},
 			ok: true,
 		},
@@ -66,10 +60,7 @@ func Test_coordinatesForSelection(t *testing.T) {
 				Relationships: []artifact.Relationship{
 					{
 						From: pkg.Package{},
-						To: file.Coordinates{
-							RealPath:     "path",
-							FileSystemID: "fs",
-						},
+						To:   file.NewCoordinates("path", "fs"),
 						// wrong type
 						Type: artifact.DependencyOfRelationship,
 					},
@@ -85,10 +76,7 @@ func Test_coordinatesForSelection(t *testing.T) {
 				Relationships: []artifact.Relationship{
 					{
 						From: file.Coordinates{}, // wrong type
-						To: file.Coordinates{
-							RealPath:     "path",
-							FileSystemID: "fs",
-						},
+						To:   file.NewCoordinates("path", "fs"),
 						Type: artifact.ContainsRelationship,
 					},
 				},
@@ -109,8 +97,8 @@ func Test_coordinatesForSelection(t *testing.T) {
 func Test_coordinatesForSelection_onlyTheResolversFrame(t *testing.T) {
 	// a package located at an archive in its parent's frame must not send the file catalogers looking up
 	// that path inside the archive's own resolver
-	atRoot := file.Coordinates{RealPath: "/app.war"}
-	inWar := file.Coordinates{RealPath: "WEB-INF/lib/dep.jar", ArchivePath: "/app.war"}
+	atRoot := file.NewCoordinates("/app.war", "")
+	inWar := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/dep.jar"}
 	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection(
 		pkg.Package{Name: "app", Locations: file.NewLocationSet(file.NewLocationFromCoordinates(atRoot))},
 		pkg.Package{Name: "dep", Locations: file.NewLocationSet(file.NewLocationFromCoordinates(inWar))},

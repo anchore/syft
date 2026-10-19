@@ -150,7 +150,7 @@ var runtimeDLLPathPattern = regexp.MustCompile(`/Microsoft\.NETCore\.App/(?P<ver
 func isRuntimePackageLocation(loc file.Location) (string, bool) {
 	// we should look at the realpath to see if it is a "**/Microsoft.NETCore.App/\d+.\d+.\d+/*.dll"
 	// and if so treat it as a runtime package
-	if match := runtimeDLLPathPattern.FindStringSubmatch(loc.RealPath); match != nil {
+	if match := runtimeDLLPathPattern.FindStringSubmatch(loc.FullNestedPath()); match != nil {
 		versionIndex := runtimeDLLPathPattern.SubexpIndex("version")
 		if versionIndex != -1 {
 			version := match[versionIndex]
@@ -177,12 +177,12 @@ func partitionPEs(depJsons []logicalDepsJSON, peFiles []logicalPE) ([]logicalDep
 
 	// sort deps.json paths from longest to shortest. This is so we are processing the most specific match first.
 	sort.Slice(depJsons, func(i, j int) bool {
-		return depJsons[i].Location.RealPath > depJsons[j].Location.RealPath
+		return depJsons[i].Location.FullNestedPath() > depJsons[j].Location.FullNestedPath()
 	})
 
 	// we should be processing PE files in a stable order
 	sort.Slice(peFiles, func(i, j int) bool {
-		return peFiles[i].Location.RealPath > peFiles[j].Location.RealPath
+		return peFiles[i].Location.FullNestedPath() > peFiles[j].Location.FullNestedPath()
 	})
 
 	peFilesByPath := make(map[file.Coordinates][]logicalPE)
@@ -191,7 +191,7 @@ func partitionPEs(depJsons []logicalDepsJSON, peFiles []logicalPE) ([]logicalDep
 		var found bool
 		for i := range depJsons {
 			dep := &depJsons[i]
-			if isParentOf(dep.Location.RealPath, pe.Location.RealPath) && attachAssociatedExecutables(dep, pe) {
+			if isParentOf(dep.Location.LocalPath(), pe.Location.LocalPath()) && attachAssociatedExecutables(dep, pe) {
 				peFilesByPath[dep.Location.Coordinates] = append(peFilesByPath[dep.Location.Coordinates], pe)
 				found = true
 				// note: we cannot break from the dep JSON search since the same binary could be associated with multiple packages
@@ -222,8 +222,8 @@ func partitionPEs(depJsons []logicalDepsJSON, peFiles []logicalPE) ([]logicalDep
 // attachAssociatedExecutables looks for PE files matching runtime or resource entries
 // and attaches them to the appropriate package.
 func attachAssociatedExecutables(dep *logicalDepsJSON, pe logicalPE) bool {
-	appDir := path.Dir(dep.Location.RealPath)
-	relativeDllPath := strings.TrimPrefix(strings.TrimPrefix(pe.Location.RealPath, appDir), "/")
+	appDir := path.Dir(dep.Location.LocalPath())
+	relativeDllPath := strings.TrimPrefix(strings.TrimPrefix(pe.Location.LocalPath(), appDir), "/")
 
 	var found bool
 	for key, p := range dep.PackagesByNameVersion {
@@ -471,7 +471,7 @@ func readDepsJSON(resolver file.Resolver, loc file.Location) (*depsJSON, error) 
 	if err != nil {
 		return nil, unknown.New(loc, fmt.Errorf("unable to read deps.json file: %w", err))
 	}
-	defer internal.CloseAndLogError(reader, loc.RealPath)
+	defer internal.CloseAndLogError(reader, loc.FullNestedPath())
 
 	dj, err := newDepsJSON(file.NewLocationReadCloser(loc, reader))
 	if err != nil {
@@ -479,7 +479,7 @@ func readDepsJSON(resolver file.Resolver, loc file.Location) (*depsJSON, error) 
 	}
 
 	if dj == nil {
-		return nil, unknown.New(loc, fmt.Errorf("expected to find packages in deps.json but did not: %q", loc.RealPath))
+		return nil, unknown.New(loc, fmt.Errorf("expected to find packages in deps.json but did not: %q", loc.FullNestedPath()))
 	}
 
 	return dj, nil
@@ -520,7 +520,7 @@ func readPEFile(resolver file.Resolver, loc file.Location) (*logicalPE, error) {
 	if err != nil {
 		return nil, unknown.New(loc, fmt.Errorf("unable to read PE file: %w", err))
 	}
-	defer internal.CloseAndLogError(reader, loc.RealPath)
+	defer internal.CloseAndLogError(reader, loc.FullNestedPath())
 
 	ldpe, err := readLogicalPE(file.NewLocationReadCloser(loc, reader))
 	if err != nil {
@@ -566,7 +566,7 @@ func readELFBundledDepsJSON(resolver file.Resolver, loc file.Location) (*logical
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(reader, loc.RealPath)
+	defer internal.CloseAndLogError(reader, loc.FullNestedPath())
 
 	header := make([]byte, 4)
 	if _, err := io.ReadFull(reader, header); err != nil {

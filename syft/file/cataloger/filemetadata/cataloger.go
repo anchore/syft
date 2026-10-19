@@ -34,7 +34,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 			go func() {
 				defer close(ch)
 				for _, c := range coordinates {
-					locs, err := resolver.FilesByPath(c.RealPath)
+					locs, err := resolver.FilesByPath(c.LocalPath())
 					if err != nil {
 						errs = unknown.Append(errs, c, err)
 						continue
@@ -55,7 +55,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 
 	prog := catalogingProgress(ctx, -1)
 	for location := range locations {
-		prog.AtomicStage.Set(location.Path())
+		prog.AtomicStage.Set(location.FullNestedPath())
 
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {

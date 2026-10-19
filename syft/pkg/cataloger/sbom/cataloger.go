@@ -40,7 +40,7 @@ func NewCataloger() pkg.Cataloger {
 func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	readSeeker, err := adaptToReadSeeker(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read SBOM file %q: %w", reader.RealPath, err)
+		return nil, nil, fmt.Errorf("unable to read SBOM file %q: %w", reader.FullNestedPath(), err)
 	}
 	s, _, _, err := format.Decode(readSeeker)
 	if err != nil {
@@ -48,7 +48,7 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 	}
 
 	if s == nil {
-		log.WithFields("path", reader.RealPath).Trace("file is not an SBOM")
+		log.WithFields("path", reader.FullNestedPath()).Trace("file is not an SBOM")
 		return nil, nil, nil
 	}
 

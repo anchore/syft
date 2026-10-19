@@ -55,7 +55,7 @@ func parseAlpmDB(ctx context.Context, resolver file.Resolver, env *generic.Envir
 		return nil, nil, nil
 	}
 
-	base := path.Dir(reader.RealPath)
+	base := path.Dir(reader.LocalPath())
 
 	var locs []file.Location
 
@@ -102,7 +102,7 @@ func fetchPkgFiles(base string, resolver file.Resolver) ([]pkg.AlpmFileRecord, f
 	if err != nil {
 		return []pkg.AlpmFileRecord{}, loc, unknown.New(loc, fmt.Errorf("failed to get contents: %w", err))
 	}
-	defer internal.CloseAndLogError(reader, loc.RealPath)
+	defer internal.CloseAndLogError(reader, loc.FullNestedPath())
 
 	pkgFiles, err := parseMtree(reader)
 	if err != nil {
@@ -126,7 +126,7 @@ func fetchBackupFiles(base string, resolver file.Resolver) ([]pkg.AlpmFileRecord
 	if err != nil {
 		return []pkg.AlpmFileRecord{}, loc, unknown.New(loc, fmt.Errorf("failed to get contents: %w", err))
 	}
-	defer internal.CloseAndLogError(reader, loc.RealPath)
+	defer internal.CloseAndLogError(reader, loc.FullNestedPath())
 
 	filesMetadata, err := parseAlpmDBEntry(reader)
 	if err != nil {

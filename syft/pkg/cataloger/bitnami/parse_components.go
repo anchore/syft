@@ -67,7 +67,7 @@ func parseComponentsJSON(_ context.Context, _ file.Resolver, _ *generic.Environm
 			Revision:     revision,
 			Architecture: entry.Arch,
 			Distro:       entry.Distro,
-			Path:         path.Join(path.Dir(reader.RealPath), name),
+			Path:         path.Join(path.Dir(reader.LocalPath()), name),
 		}
 
 		p := pkg.Package{

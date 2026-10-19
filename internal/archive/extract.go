@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"path"
-	"strings"
 
 	"github.com/mholt/archives"
 
@@ -22,11 +21,12 @@ import (
 // ErrDiskLimitReached when the archive's own bytes cannot be placed within the disk limit. The caller
 // must Cleanup the result.
 //
-// fileSystemID and archivePath are stamped onto every location the resolver returns: the filesystem
-// the archive was found on, and the colon-delimited chain of archives from the scan root to this one.
-func Extract(ctx context.Context, r io.Reader, fileSystemID, archivePath string, limiter *Limiter, exclusions Exclusions) (*Resolver, error) {
+// archiveCoordinates are those of the archive file itself; every location the resolver returns
+// extends them with its entry path (see file.Coordinates).
+func Extract(ctx context.Context, r io.Reader, archiveCoordinates file.Coordinates, limiter *Limiter, exclusions Exclusions) (*Resolver, error) {
 	charge := limiter.charge()
-	resolver := newResolver(ctx, fileSystemID, archivePath, charge)
+	resolver := newResolver(ctx, archiveCoordinates, charge)
+	archivePath := archiveCoordinates.FullNestedPath()
 
 	// deferred so that a panic in a decoder still gives back the charge and removes any spill file
 	succeeded := false
@@ -43,7 +43,7 @@ func Extract(ctx context.Context, r io.Reader, fileSystemID, archivePath string,
 	// the archive's own bytes are needed only until they are extracted and digested
 	defer release()
 
-	format := identifyFormat(ctx, archiveFileName(archivePath), content)
+	format := identifyFormat(ctx, path.Base(archiveCoordinates.LocalPath()), content)
 	if format == nil {
 		return nil, nil
 	}
@@ -73,12 +73,6 @@ func (r *Resolver) acquire(content io.Reader) (ReaderAtSeeker, func(), error) {
 		return nil, nil, fmt.Errorf("unable to read archive content: %w", err)
 	}
 	return r.open(&b), func() { r.discard(&b) }, nil
-}
-
-// archiveFileName returns the archive's own file name from the end of its archive path, which format
-// identification reads for its extension.
-func archiveFileName(archivePath string) string {
-	return path.Base(archivePath[strings.LastIndexByte(archivePath, ':')+1:])
 }
 
 // identifyFormat returns the format able to extract this content, or nil when it is not an archive.

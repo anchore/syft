@@ -10,7 +10,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path"
 	"sort"
 	"testing"
 
@@ -179,7 +178,7 @@ func resolverIn(t testing.TB, charge *charge) (*Resolver, string) {
 	t.Helper()
 	root := t.TempDir()
 	ctx := tmpdir.WithValue(context.Background(), tmpdir.FromPath(root))
-	r := newResolver(ctx, "", "test-archive", charge)
+	r := newResolver(ctx, file.NewCoordinates("test-archive", ""), charge)
 	t.Cleanup(r.Cleanup)
 	return r, root
 }
@@ -197,7 +196,7 @@ func addAll(t testing.TB, r *Resolver, entries []testEntry) {
 func resolverOver(t testing.TB, maxInMemory int64, files map[string]string) *Resolver {
 	t.Helper()
 	r, _ := resolverIn(t, memCharge(maxInMemory))
-	r.archivePath = "outer.jar"
+	r.archiveCoordinates = file.NewCoordinates("outer.jar", "")
 	addAll(t, r, fileEntries(files))
 	return r
 }
@@ -207,33 +206,9 @@ func resolverOver(t testing.TB, maxInMemory int64, files map[string]string) *Res
 func resolverFrom(t testing.TB, entries ...testEntry) *Resolver {
 	t.Helper()
 	r, _ := resolverIn(t, memCharge(1<<20))
-	r.archivePath = "outer.jar"
+	r.archiveCoordinates = file.NewCoordinates("outer.jar", "")
 	addAll(t, r, entries)
 	return r
-}
-
-// indexCostOf is what add charges for the given entries in name order: every listed node and every
-// directory their paths imply.
-func indexCostOf(entries map[string]string) int64 {
-	names := make([]string, 0, len(entries))
-	for name := range entries {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	seen := map[string]bool{}
-	var total int64
-	for _, name := range names {
-		p := path.Clean("/" + name)
-		for i := 1; i < len(p); i++ {
-			if p[i] == '/' && !seen[p[:i]] {
-				seen[p[:i]] = true
-				total += approxIndexBytesPerEntry
-			}
-		}
-		seen[p] = true
-		total += approxIndexBytes(tar.Header{Name: name})
-	}
-	return total
 }
 
 // extractBytes extracts an archive into a resolver built over the given charge.
@@ -316,11 +291,11 @@ func diskCharge(maxDisk int64) *charge {
 	return NewLimiter(Limits{MaxDiskBytes: maxDisk}).charge()
 }
 
-// realPaths lists the real path of every location, sorted.
-func realPaths(locations []file.Location) []string {
+// localPaths lists the local entry path of every location (rather than full nested archive path), sorted.
+func localPaths(locations []file.Location) []string {
 	var out []string
 	for _, loc := range locations {
-		out = append(out, loc.RealPath)
+		out = append(out, loc.LocalPath())
 	}
 	sort.Strings(out)
 	return out
@@ -342,7 +317,7 @@ func extractedResolver(t testing.TB, data []byte, limits Limits) (*Resolver, str
 	t.Helper()
 	ctx, root := scanContext(t)
 
-	r, err := Extract(ctx, bytes.NewReader(data), "", "app.zip", NewLimiter(limits), nil)
+	r, err := Extract(ctx, bytes.NewReader(data), file.NewCoordinates("app.zip", ""), NewLimiter(limits), nil)
 	require.NoError(t, err)
 	require.NotNil(t, r)
 	t.Cleanup(r.Cleanup)

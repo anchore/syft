@@ -52,7 +52,7 @@ func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location,
 	// to reconcile the installed-files.txt path to the same layer (or the next adjacent lower layer).
 
 	// find the installed-files.txt file relative to the directory where the METADATA file resides (in path AND layer structure)
-	installedFilesPath := path.Join(path.Dir(metadataLocation.RealPath), "installed-files.txt")
+	installedFilesPath := path.Join(path.Dir(metadataLocation.LocalPath()), "installed-files.txt")
 	installedFilesRef := resolver.RelativeFileByPath(metadataLocation, installedFilesPath)
 
 	if installedFilesRef != nil {
@@ -65,7 +65,7 @@ func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location,
 		defer internal.CloseAndLogError(installedFilesContents, installedFilesPath)
 
 		// parse the installed-files contents
-		installedFiles, err := parseInstalledFiles(installedFilesContents, metadataLocation.RealPath, sitePackagesRootPath)
+		installedFiles, err := parseInstalledFiles(installedFilesContents, metadataLocation.LocalPath(), sitePackagesRootPath)
 		if err != nil {
 			retErr = unknown.Newf(*installedFilesRef, "unable to parse installed-files.txt for python package: %w", retErr)
 		}
@@ -82,7 +82,7 @@ func fetchRecordFiles(resolver file.Resolver, metadataLocation file.Location) (f
 	// to reconcile the RECORD path to the same layer (or the next adjacent lower layer).
 
 	// find the RECORD file relative to the directory where the METADATA file resides (in path AND layer structure)
-	recordPath := path.Join(path.Dir(metadataLocation.RealPath), "RECORD")
+	recordPath := path.Join(path.Dir(metadataLocation.LocalPath()), "RECORD")
 	recordRef := resolver.RelativeFileByPath(metadataLocation, recordPath)
 
 	if recordRef != nil {
@@ -106,7 +106,7 @@ func fetchRecordFiles(resolver file.Resolver, metadataLocation file.Location) (f
 // fetchTopLevelPackages finds a corresponding top_level.txt file for the given python package metadata file and returns the set of package names contained.
 func fetchTopLevelPackages(resolver file.Resolver, metadataLocation file.Location) (pkgs []string, sources []file.Location, err error) {
 	// a top_level.txt file specifies the python top-level packages (provided by this python package) installed into site-packages
-	parentDir := path.Dir(metadataLocation.RealPath)
+	parentDir := path.Dir(metadataLocation.LocalPath())
 	topLevelPath := path.Join(parentDir, "top_level.txt")
 	topLevelLocation := resolver.RelativeFileByPath(metadataLocation, topLevelPath)
 
@@ -156,7 +156,7 @@ type vcsInfo struct {
 }
 
 func fetchDirectURLData(resolver file.Resolver, metadataLocation file.Location) (d *pkg.PythonDirectURLOriginInfo, sources []file.Location, err error) {
-	parentDir := path.Dir(metadataLocation.RealPath)
+	parentDir := path.Dir(metadataLocation.LocalPath())
 	directURLPath := path.Join(parentDir, "direct_url.json")
 	directURLLocation := resolver.RelativeFileByPath(metadataLocation, directURLPath)
 

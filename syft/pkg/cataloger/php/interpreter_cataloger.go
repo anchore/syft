@@ -182,12 +182,12 @@ func (p interpreterCataloger) catalogExtensions(resolver file.Resolver) ([]pkg.P
 
 func (p interpreterCataloger) catalogExtension(resolver file.Resolver, location file.Location) ([]pkg.Package, error) {
 	reader, err := resolver.FileContentsByLocation(location)
-	defer internal.CloseAndLogError(reader, location.RealPath)
+	defer internal.CloseAndLogError(reader, location.FullNestedPath())
 	if err != nil {
 		return nil, unknown.ProcessPathErrors(err)
 	}
 
-	name, cls := p.getClassifier(location.RealPath)
+	name, cls := p.getClassifier(location.FullNestedPath())
 	if name == "" || cls == nil {
 		return nil, nil
 	}

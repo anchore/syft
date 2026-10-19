@@ -239,13 +239,13 @@ func (c *goLicenseResolver) findLicensesInSource(ctx context.Context, resolver f
 
 func (c *goLicenseResolver) parseLicenseFromLocation(ctx context.Context, l file.Location, resolver file.Resolver) ([]pkg.License, error) {
 	var out []pkg.License
-	fileName := path.Base(l.RealPath)
+	fileName := path.Base(l.FullNestedPath())
 	if licenses.IsLicenseFile(fileName) {
 		contents, err := resolver.FileContentsByLocation(l)
 		if err != nil {
 			return nil, err
 		}
-		defer internal.CloseAndLogError(contents, l.RealPath)
+		defer internal.CloseAndLogError(contents, l.FullNestedPath())
 		out = pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(l, contents))
 	}
 	return out, nil

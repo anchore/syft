@@ -73,7 +73,8 @@ func (c *archiveCataloger) Catalog(ctx context.Context, resolver file.Resolver) 
 // catalogExtracted reports the java package of the archive whose contents the resolver holds, if it
 // is a java archive. Archives nested inside it are left to the archive cataloger task.
 func (c *archiveCataloger) catalogExtracted(ctx context.Context, trav *archive.Traversal, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
-	if !isJavaArchiveName(trav.Location.Path()) {
+	// by the name it was reached by: a content-addressed jar is named like one only by its link
+	if !isJavaArchiveName(trav.Location.AccessPath) {
 		return nil, nil, nil
 	}
 

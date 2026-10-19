@@ -716,15 +716,15 @@
       "properties": {
         "path": {
           "type": "string",
-          "description": "RealPath is the canonical absolute form of the path accessed (all symbolic links have been followed and relative path components like '.' and '..' have been removed)."
+          "description": "RealPath is the canonical absolute form of the path accessed (all symbolic links have been followed and relative path components like '.' and '..' have been removed). For a file found within an archive, it is the real path of the outermost archive on the scanned filesystem."
         },
         "layerID": {
           "type": "string",
           "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in."
         },
-        "archivePath": {
+        "fullPath": {
           "type": "string",
-          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem. Within each segment after the first, '%' is escaped as \"%25\" and ':' as \"%3A\", so splitting on ':' recovers the archive boundaries. Each segment is an archive's real path (links resolved), relative to the segment before it."
+          "description": "RealFullPath is the full path to the file: RealPath, then for a file within an archive a \"!/\"-delimited chain of entry paths through any nested archives, ending with the file's own entry path (e.g. \"/app.war!/WEB-INF/lib/dep.jar!/META-INF/MANIFEST.MF\"). Each segment is a real path (links resolved) relative to the archive before it. For a file not within an archive it equals RealPath; it may be blank on coordinates not built by a constructor, such as those decoded from an older SBOM."
         }
       },
       "type": "object",
@@ -2548,19 +2548,19 @@
       "properties": {
         "path": {
           "type": "string",
-          "description": "RealPath is the canonical absolute form of the path accessed (all symbolic links have been followed and relative path components like '.' and '..' have been removed)."
+          "description": "RealPath is the canonical absolute form of the path accessed (all symbolic links have been followed and relative path components like '.' and '..' have been removed). For a file found within an archive, it is the real path of the outermost archive on the scanned filesystem."
         },
         "layerID": {
           "type": "string",
           "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in."
         },
-        "archivePath": {
+        "fullPath": {
           "type": "string",
-          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem. Within each segment after the first, '%' is escaped as \"%25\" and ':' as \"%3A\", so splitting on ':' recovers the archive boundaries. Each segment is an archive's real path (links resolved), relative to the segment before it."
+          "description": "RealFullPath is the full path to the file: RealPath, then for a file within an archive a \"!/\"-delimited chain of entry paths through any nested archives, ending with the file's own entry path (e.g. \"/app.war!/WEB-INF/lib/dep.jar!/META-INF/MANIFEST.MF\"). Each segment is a real path (links resolved) relative to the archive before it. For a file not within an archive it equals RealPath; it may be blank on coordinates not built by a constructor, such as those decoded from an older SBOM."
         },
         "accessPath": {
           "type": "string",
-          "description": "AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path)"
+          "description": "AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path). For a file within an archive, it is a full path (see Coordinates.RealFullPath)."
         },
         "annotations": {
           "additionalProperties": {
