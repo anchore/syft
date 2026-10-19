@@ -99,7 +99,7 @@ jobs:
       # go-make's setup only (not ./.github/actions/bootstrap): binny ships no windows release, so binny tools
       # are unavailable here (`make unit` skips the fixture refresh on windows)
       - name: Setup go + go-make tooling
-        uses: anchore/go-make/.github/actions/setup@27a9f35f41b5fe86d68815844efd2ba816e9ba6b # v0.9.1
+        uses: anchore/go-make/.github/actions/setup@abf41688f36f2cbec13105747abbe8e60f5c56ca # v0.9.3
         with:
           # keep in sync with the go-version default in ./.github/actions/bootstrap
           go-version: "1.26.2"
@@ -171,7 +171,7 @@ jobs:
         run: make snapshot-smoke-test
 
       - name: Upload snapshot artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a #v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 #v7.0.2
         with:
           name: snapshot
           path: snapshot/
@@ -188,14 +188,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c #v8.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 #v8.0.2
         with:
           name: snapshot
           path: snapshot
 
       # go-make's setup only (not ./.github/actions/bootstrap): the test only needs make + the snapshot binary
       - name: Setup go + go-make tooling
-        uses: anchore/go-make/.github/actions/setup@27a9f35f41b5fe86d68815844efd2ba816e9ba6b # v0.9.1
+        uses: anchore/go-make/.github/actions/setup@abf41688f36f2cbec13105747abbe8e60f5c56ca # v0.9.3
         with:
           # keep in sync with the go-version default in ./.github/actions/bootstrap
           go-version: "1.26.2"
@@ -221,14 +221,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c #v8.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 #v8.0.2
         with:
           name: snapshot
           path: snapshot
 
       # go-make's setup only (not ./.github/actions/bootstrap): the test only needs make + the snapshot binary
       - name: Setup go + go-make tooling
-        uses: anchore/go-make/.github/actions/setup@27a9f35f41b5fe86d68815844efd2ba816e9ba6b # v0.9.1
+        uses: anchore/go-make/.github/actions/setup@abf41688f36f2cbec13105747abbe8e60f5c56ca # v0.9.3
         with:
           # keep in sync with the go-version default in ./.github/actions/bootstrap
           go-version: "1.26.2"
@@ -261,7 +261,7 @@ jobs:
           download-test-fixture-cache: true
 
       - name: Download snapshot artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c #v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 #v8.0.2
         with:
           name: snapshot
           path: snapshot
@@ -307,7 +307,7 @@ jobs:
           download-test-fixture-cache: true
 
       - name: Download snapshot artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c #v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 #v8.0.2
         with:
           name: snapshot
           path: snapshot
@@ -339,7 +339,7 @@ jobs:
           download-test-fixture-cache: true
 
       - name: Download snapshot artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c #v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 #v8.0.2
         with:
           name: snapshot
           path: snapshot

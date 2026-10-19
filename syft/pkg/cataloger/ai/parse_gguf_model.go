@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	gguf_parser "github.com/gpustack/gguf-parser-go"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -22,7 +24,7 @@ import (
 
 // parseGGUFModel parses a GGUF model file and returns the discovered package.
 // This implementation only reads the header portion of the file, not the entire model.
-func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGGUFModel(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	defer internal.CloseAndLogError(reader, reader.FullNestedPath())
 
 	td := tmpdir.FromContext(ctx)
@@ -34,7 +36,6 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 		return nil, nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer cleanup()
-	tempPath := tempFile.Name()
 
 	// copy and validate the GGUF file header (bounded to maxHeaderSize)
 	if err := copyHeader(tempFile, reader); err != nil {
@@ -45,14 +46,18 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 		tempFile.Close()
 		return nil, nil, fmt.Errorf("failed to rewind GGUF header: %w", err)
 	}
-	err = validateGGUFHeader(tempFile)
+	if err := validateGGUFHeader(tempFile); err != nil {
+		tempFile.Close()
+		return nil, nil, fmt.Errorf("invalid GGUF header: %w", err)
+	}
+	err = extendToModelSize(tempFile, modelSize(resolver, reader.Location))
 	tempFile.Close()
 	if err != nil {
-		return nil, nil, fmt.Errorf("invalid GGUF header: %w", err)
+		return nil, nil, fmt.Errorf("failed to extend GGUF header copy: %w", err)
 	}
 
 	// Parse using gguf-parser-go with options to skip unnecessary data
-	ggufFile, err := gguf_parser.ParseGGUFFile(tempPath,
+	ggufFile, err := gguf_parser.ParseGGUFFile(tempFile.Name(),
 		gguf_parser.SkipLargeMetadata(),
 	)
 	if err != nil {
@@ -97,6 +102,33 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 	)
 
 	return []pkg.Package{p}, nil, nil
+}
+
+// modelSize returns the size of the model file, or 0 when the resolver can't say.
+func modelSize(resolver file.Resolver, loc file.Location) int64 {
+	if resolver == nil {
+		return 0
+	}
+	m, err := resolver.FileMetadataByLocation(loc)
+	if err != nil || m.FileInfo == nil {
+		return 0
+	}
+	return m.Size()
+}
+
+// extendToModelSize grows the header copy to the model's real size, since the parser checks the tensor data
+// the header declares against the file size. It must run after validation so the header itself never reads
+// from the hole. The file is marked sparse first so the hole takes no disk space; where that isn't possible
+// the copy is left as is, and the parser rejects models larger than it.
+func extendToModelSize(f *os.File, size int64) error {
+	if size <= maxHeaderSize {
+		return nil
+	}
+	if err := markSparse(f); err != nil {
+		log.Debugf("unable to mark GGUF header copy sparse, not extending it: %v", err)
+		return nil
+	}
+	return f.Truncate(size)
 }
 
 // computeKVMetadataHash computes a stable hash of the sanitized KV metadata for use as a global identifier
