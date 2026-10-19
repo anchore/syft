@@ -147,7 +147,7 @@ func (v *ggufHeaderValidator) checkKey(key string, vt gguf_parser.GGUFMetadataVa
 			return fmt.Errorf("expected string, got %v", vt)
 		}
 	case "general.quantization_version", "general.file_type":
-		if !vt.IsNumeric() {
+		if !isNumericGGUFType(vt) {
 			return fmt.Errorf("expected number, got %v", vt)
 		}
 	case "general.alignment":
@@ -155,7 +155,7 @@ func (v *ggufHeaderValidator) checkKey(key string, vt gguf_parser.GGUFMetadataVa
 			return fmt.Errorf("expected non-zero uint32, got %v %v", vt, n)
 		}
 	case "split.tensors.count":
-		if !vt.IsNumeric() {
+		if !isNumericGGUFType(vt) {
 			return fmt.Errorf("expected number, got %v", vt)
 		}
 		if math.IsNaN(n) || n < 0 || n > maxGGUFSplitTensors {
@@ -355,4 +355,22 @@ func convertGGUFMetadataKVs(kvs gguf_parser.GGUFMetadataKVs) map[string]any {
 	}
 
 	return result
+}
+
+// isNumericGGUFType reports whether values of the type are numbers.
+func isNumericGGUFType(vt gguf_parser.GGUFMetadataValueType) bool {
+	switch vt {
+	case gguf_parser.GGUFMetadataValueTypeUint8,
+		gguf_parser.GGUFMetadataValueTypeInt8,
+		gguf_parser.GGUFMetadataValueTypeUint16,
+		gguf_parser.GGUFMetadataValueTypeInt16,
+		gguf_parser.GGUFMetadataValueTypeUint32,
+		gguf_parser.GGUFMetadataValueTypeInt32,
+		gguf_parser.GGUFMetadataValueTypeFloat32,
+		gguf_parser.GGUFMetadataValueTypeUint64,
+		gguf_parser.GGUFMetadataValueTypeInt64,
+		gguf_parser.GGUFMetadataValueTypeFloat64:
+		return true
+	}
+	return false
 }
