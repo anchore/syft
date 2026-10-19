@@ -28,6 +28,8 @@ const (
 	maxGGUFSplitTensors = 1 << 17
 	// maxGGUFKeyLength is the key length limit from the GGUF spec.
 	maxGGUFKeyLength = 65535
+	// maxGGUFTensorDims is GGML_MAX_DIMS.
+	maxGGUFTensorDims = 4
 	// maxGGUFKVCount bounds the metadata KV count. Real files hold hundreds; vocabularies live in arrays.
 	maxGGUFKVCount = 65536
 	// maxGGUFReadStringBytes bounds, across the header, the key and string bytes the library reads in
@@ -78,10 +80,10 @@ func copyHeader(w io.Writer, r io.Reader) error {
 	return nil
 }
 
-// validateGGUFHeader walks the metadata KV section and rejects values that gguf-parser-go would panic
-// on, recurse on without bound, or overallocate for. It reads without storing anything.
-// ponytail: tensor infos are not checked here (zero block size types, dimension overflow); those
-// panics are recoverable and are left to the per-file panic recovery in the generic cataloger.
+// validateGGUFHeader walks the metadata KV and tensor info sections and rejects values that gguf-parser-go
+// would panic on, recurse on without bound, or overallocate for. It reads without storing anything.
+// ponytail: tensor types and dimensions are not checked here (zero block size types, dimension overflow);
+// those panics are recoverable and are left to the per-file panic recovery in the generic cataloger.
 func validateGGUFHeader(r io.Reader) error {
 	v := &ggufHeaderValidator{
 		r:                   bufio.NewReader(r),
@@ -96,8 +98,9 @@ func validateGGUFHeader(r io.Reader) error {
 		return fmt.Errorf("reading header prefix: %w", err)
 	}
 	v.v1 = prefix.Version <= 1
-	// the tensor count is validated by the library
-	if _, err := v.readLen(); err != nil {
+	// tensors are walked below, so a count beyond the header runs into EOF
+	tensorCount, err := v.readLen()
+	if err != nil {
 		return fmt.Errorf("reading tensor count: %w", err)
 	}
 	kvCount, err := v.readLen()
@@ -121,7 +124,36 @@ func validateGGUFHeader(r io.Reader) error {
 			return fmt.Errorf("metadata key %q: %w", key, err)
 		}
 	}
+
+	for i := uint64(0); i < tensorCount; i++ {
+		if err := v.skipTensorInfo(); err != nil {
+			return fmt.Errorf("tensor info %d: %w", i, err)
+		}
+	}
 	return nil
+}
+
+// skipTensorInfo consumes one tensor info: name, dimension count, dimensions, type, data offset.
+func (v *ggufHeaderValidator) skipTensorInfo() error {
+	// the library reads names in full, so they are bounded like keys
+	if _, err := v.readKey(); err != nil {
+		return fmt.Errorf("name: %w", err)
+	}
+	var nDims uint32
+	if err := binary.Read(v.r, binary.LittleEndian, &nDims); err != nil {
+		return err
+	}
+	if nDims > maxGGUFTensorDims {
+		return fmt.Errorf("dimension count %d exceeds %d", nDims, maxGGUFTensorDims)
+	}
+	for range nDims {
+		if _, err := v.readLen(); err != nil {
+			return err
+		}
+	}
+	// type (uint32) and data offset (uint64)
+	_, err := v.r.Discard(4 + 8)
+	return err
 }
 
 type ggufHeaderValidator struct {
