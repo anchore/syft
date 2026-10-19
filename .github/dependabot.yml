@@ -26,9 +26,6 @@ updates:
         update-types: ["version-update:semver-major"]
       # go-make module and action refs are bumped together by automation
       - dependency-name: "github.com/anchore/go-make"
-      # v0.26.3+ rejects a header whose tensors declare more data than follows it, which breaks parsing the
-      # header-only copy of a model that the GGUF cataloger reads
-      - dependency-name: "github.com/gpustack/gguf-parser-go"
 
   - package-ecosystem: "github-actions"
     directories:
