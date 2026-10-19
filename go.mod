@@ -103,6 +103,7 @@ require (
 require (
 	github.com/pb33f/ordered-map/v2 v2.3.2
 	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
+	golang.org/x/sys v0.49.0
 	howett.net/plist v1.0.1
 )
 
@@ -332,7 +333,6 @@ require (
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/term v0.47.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect

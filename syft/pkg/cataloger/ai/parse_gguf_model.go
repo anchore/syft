@@ -14,6 +14,7 @@ import (
 	gguf_parser "github.com/gpustack/gguf-parser-go"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -35,7 +36,6 @@ func parseGGUFModel(ctx context.Context, resolver file.Resolver, _ *generic.Envi
 		return nil, nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer cleanup()
-	tempPath := tempFile.Name()
 
 	// copy and validate the GGUF file header (bounded to maxHeaderSize)
 	if err := copyHeader(tempFile, reader); err != nil {
@@ -46,24 +46,18 @@ func parseGGUFModel(ctx context.Context, resolver file.Resolver, _ *generic.Envi
 		tempFile.Close()
 		return nil, nil, fmt.Errorf("failed to rewind GGUF header: %w", err)
 	}
-	err = validateGGUFHeader(tempFile)
-	tempFile.Close()
-	if err != nil {
+	if err := validateGGUFHeader(tempFile); err != nil {
+		tempFile.Close()
 		return nil, nil, fmt.Errorf("invalid GGUF header: %w", err)
 	}
-
-	// the parser checks the tensor data the header declares against the file size, so extend the copy to the
-	// model's real size. This happens after validation so the header itself never reads from the hole.
-	// ponytail: the hole is sparse on most filesystems but not NTFS, where the model size is reserved in the
-	// temp dir until cleanup; mark the file sparse there if that becomes a problem
-	if size := modelSize(resolver, reader.Location); size > maxHeaderSize {
-		if err := os.Truncate(tempPath, size); err != nil {
-			return nil, nil, fmt.Errorf("failed to extend GGUF header copy: %w", err)
-		}
+	err = extendToModelSize(tempFile, modelSize(resolver, reader.Location))
+	tempFile.Close()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to extend GGUF header copy: %w", err)
 	}
 
 	// Parse using gguf-parser-go with options to skip unnecessary data
-	ggufFile, err := gguf_parser.ParseGGUFFile(tempPath,
+	ggufFile, err := gguf_parser.ParseGGUFFile(tempFile.Name(),
 		gguf_parser.SkipLargeMetadata(),
 	)
 	if err != nil {
@@ -120,6 +114,21 @@ func modelSize(resolver file.Resolver, loc file.Location) int64 {
 		return 0
 	}
 	return m.Size()
+}
+
+// extendToModelSize grows the header copy to the model's real size, since the parser checks the tensor data
+// the header declares against the file size. It must run after validation so the header itself never reads
+// from the hole. The file is marked sparse first so the hole takes no disk space; where that isn't possible
+// the copy is left as is, and the parser rejects models larger than it.
+func extendToModelSize(f *os.File, size int64) error {
+	if size <= maxHeaderSize {
+		return nil
+	}
+	if err := markSparse(f); err != nil {
+		log.Debugf("unable to mark GGUF header copy sparse, not extending it: %v", err)
+		return nil
+	}
+	return f.Truncate(size)
 }
 
 // computeKVMetadataHash computes a stable hash of the sanitized KV metadata for use as a global identifier
