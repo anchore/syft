@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.1.12/document",
+  "$id": "anchore.io/schema/syft/json/16.1.13/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -724,7 +724,7 @@
         },
         "fullPath": {
           "type": "string",
-          "description": "RealFullPath is the full path to the file: RealPath, then for a file within an archive a \"!/\"-delimited chain of entry paths through any nested archives, ending with the file's own entry path (e.g. \"/app.war!/WEB-INF/lib/dep.jar!/META-INF/MANIFEST.MF\"). Each segment is a real path (links resolved) relative to the archive before it. For a file not within an archive it equals RealPath; it may be blank on coordinates not built by a constructor, such as those decoded from an older SBOM."
+          "description": "FullPath is the full path to the file: RealPath, then for a file within an archive a \"!/\"-delimited chain of entry paths through any nested archives, ending with the file's own entry path (e.g. \"/app.war!/WEB-INF/lib/dep.jar!/META-INF/MANIFEST.MF\"). Each segment is a real path (links resolved) relative to the archive before it. For a file not within an archive it is blank, so coordinates outside archives are unchanged by the field (in JSON, equality and ID)."
         }
       },
       "type": "object",
@@ -2556,11 +2556,11 @@
         },
         "fullPath": {
           "type": "string",
-          "description": "RealFullPath is the full path to the file: RealPath, then for a file within an archive a \"!/\"-delimited chain of entry paths through any nested archives, ending with the file's own entry path (e.g. \"/app.war!/WEB-INF/lib/dep.jar!/META-INF/MANIFEST.MF\"). Each segment is a real path (links resolved) relative to the archive before it. For a file not within an archive it equals RealPath; it may be blank on coordinates not built by a constructor, such as those decoded from an older SBOM."
+          "description": "FullPath is the full path to the file: RealPath, then for a file within an archive a \"!/\"-delimited chain of entry paths through any nested archives, ending with the file's own entry path (e.g. \"/app.war!/WEB-INF/lib/dep.jar!/META-INF/MANIFEST.MF\"). Each segment is a real path (links resolved) relative to the archive before it. For a file not within an archive it is blank, so coordinates outside archives are unchanged by the field (in JSON, equality and ID)."
         },
         "accessPath": {
           "type": "string",
-          "description": "AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path). For a file within an archive, it is a full path (see Coordinates.RealFullPath)."
+          "description": "AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path). For a file within an archive, it is a full path (see Coordinates.FullPath)."
         },
         "annotations": {
           "additionalProperties": {
