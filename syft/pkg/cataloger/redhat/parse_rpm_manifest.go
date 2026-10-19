@@ -22,15 +22,12 @@ func parseRpmManifest(ctx context.Context, _ file.Resolver, _ *generic.Environme
 
 	for {
 		line, err := r.ReadString('\n')
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
+		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, nil, err
 		}
 
 		if line == "" {
-			continue
+			break
 		}
 
 		metadata, err := newMetadataFromManifestLine(strings.TrimSuffix(line, "\n"))
