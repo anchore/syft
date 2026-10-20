@@ -16,6 +16,7 @@ import (
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -75,6 +76,7 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageSquash(img)
@@ -184,6 +186,7 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageSquash(img)
@@ -241,6 +244,7 @@ func Test_imageSquashResolver_FilesByMIMEType(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixtureName, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureName)
 
 			resolver, err := NewFromContainerImageSquash(img)
@@ -258,6 +262,7 @@ func Test_imageSquashResolver_FilesByMIMEType(t *testing.T) {
 }
 
 func Test_imageSquashResolver_hasFilesystemIDInLocation(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-duplicate-path")
 
 	resolver, err := NewFromContainerImageSquash(img)
@@ -316,6 +321,7 @@ func TestSquashImageResolver_FilesContents(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageSquash(img)
@@ -341,6 +347,7 @@ func TestSquashImageResolver_FilesContents(t *testing.T) {
 
 func TestSquashImageResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 	resolver, err := NewFromContainerImageSquash(img)
@@ -499,6 +506,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageSquash(img)
@@ -545,6 +553,7 @@ func locationSorter(a, b file.Location) int {
 }
 
 func TestSquashResolver_AllLocations(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-files-deleted")
 
 	resolver, err := NewFromContainerImageSquash(img)
@@ -580,6 +589,7 @@ func TestSquashResolver_AllLocations(t *testing.T) {
 // content and metadata), so that image results are in parity with directory results (which cannot distinguish a
 // hardlink from a regular file). this must hold for both the squashed and all-layers resolvers.
 func TestImageResolvers_Hardlinks(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-hardlinks")
 
 	resolvers := map[string]file.Resolver{}

@@ -20,6 +20,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
+	"github.com/anchore/syft/syft/internal/windows"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
@@ -38,7 +39,12 @@ func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 
 // parseGoModFile takes a go.mod and tries to resolve and lists all packages discovered.
 func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (pkgs []pkg.Package, relationships []artifact.Relationship, err error) {
-	modDir := filepath.Dir(string(reader.Location.Reference().RealPath))
+	realPath := string(reader.Location.Reference().RealPath)
+	if windows.HostRunningOnWindows() {
+		// directory resolvers hand back volume-encoded posix paths (/c/...), the go toolchain needs the native path
+		realPath = windows.FromPosix(realPath)
+	}
+	modDir := filepath.Dir(realPath)
 	digests, err := parseGoSumFile(resolver, reader)
 	if err != nil {
 		log.Debugf("unable to get go.sum: %v", err)

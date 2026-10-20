@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -95,6 +96,9 @@ func Test_makeDiskKey(t *testing.T) {
 }
 
 func Test_errors(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows ignores unix permission bits on directories")
+	}
 	tmp := t.TempDir()
 	cache := filepath.Join(tmp, "cache")
 	// make a non-writable directory

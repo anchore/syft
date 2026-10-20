@@ -30,6 +30,13 @@ type testGGUFBuilder struct {
 	version     uint32
 	tensorCount uint64
 	kvPairs     []testKVPair
+	tensors     []testTensorInfo
+}
+
+type testTensorInfo struct {
+	name     string
+	dims     []uint64
+	ggmlType uint32
 }
 
 type testKVPair struct {
@@ -69,6 +76,13 @@ func (b *testGGUFBuilder) withUint64KV(key string, value uint64) *testGGUFBuilde
 
 func (b *testGGUFBuilder) withUint32KV(key string, value uint32) *testGGUFBuilder {
 	b.kvPairs = append(b.kvPairs, testKVPair{key: key, valueType: ggufTypeUint32, value: value})
+	return b
+}
+
+// withTensor adds a tensor info and counts it in the header tensor count.
+func (b *testGGUFBuilder) withTensor(name string, ggmlType uint32, dims ...uint64) *testGGUFBuilder {
+	b.tensors = append(b.tensors, testTensorInfo{name: name, dims: dims, ggmlType: ggmlType})
+	b.tensorCount++
 	return b
 }
 
@@ -145,6 +159,19 @@ func (b *testGGUFBuilder) build() []byte {
 		}
 	}
 
+	// Write tensor infos: name, dimension count, dimensions, type, data offset
+	var offset uint64
+	for _, ti := range b.tensors {
+		b.writeString(ti.name)
+		binary.Write(b.buf, binary.LittleEndian, uint32(len(ti.dims)))
+		for _, d := range ti.dims {
+			b.writeLen(d)
+		}
+		binary.Write(b.buf, binary.LittleEndian, ti.ggmlType)
+		binary.Write(b.buf, binary.LittleEndian, offset)
+		offset += 32
+	}
+
 	return b.buf.Bytes()
 }
 
@@ -154,3 +181,14 @@ func (b *testGGUFBuilder) buildInvalidMagic() []byte {
 	binary.Write(buf, binary.LittleEndian, uint32(0x12345678))
 	return buf.Bytes()
 }
+
+// GGML tensor types used by the test builder
+const (
+	ggmlTypeF32  = 0
+	ggmlTypeF16  = 1
+	ggmlTypeQ4_0 = 2
+	ggmlTypeQ8_0 = 8
+	ggmlTypeQ2_K = 10
+	ggmlTypeQ4_K = 12
+	ggmlTypeQ6_K = 14
+)

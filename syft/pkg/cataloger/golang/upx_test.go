@@ -10,6 +10,7 @@ import (
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 )
 
 // every case here is one the magic scan must reject, asserted on parseUPXInfo's errNotUPX result.
@@ -114,6 +115,7 @@ func TestParseUPXInfo_ValidHeader(t *testing.T) {
 // ignores that padding if there is some. A build that needs none passes either way, which is how the bug
 // went unnoticed. The case without padding is covered by TestDecompressUPX_TailExtentsArePlacedPastTheLoader.
 func TestImageSmallUPXNeedsLoaderPadding(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-small-upx")
 	rc, err := img.OpenPathFromSquash(stereoscopeFile.Path("/run-me"))
 	require.NoError(t, err)

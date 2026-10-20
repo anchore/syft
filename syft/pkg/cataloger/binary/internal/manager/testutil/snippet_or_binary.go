@@ -3,7 +3,9 @@ package testutil
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,10 +20,11 @@ import (
 // not specify the "bin" or "snippets" parent path... this is determined logically [snippets > binary unless told
 // otherwise]). Path should also be to the directory containing the binary or snippets of interest (not the binaries
 // or snippets itself).
-func SnippetOrBinary(t *testing.T, path string, requireBinary bool) string {
+func SnippetOrBinary(t *testing.T, logicalPath string, requireBinary bool) string {
 	t.Helper()
 
-	require.Len(t, internal.SplitFilepath(path), 3, "path must be a in the form <name>/<version>/<arch>")
+	// logicalPath is a posix key, not a host path
+	require.Len(t, strings.Split(logicalPath, "/"), 3, "path must be a in the form <name>/<version>/<arch>")
 
 	// cd to testdata directory and load the config
 
@@ -43,11 +46,11 @@ func SnippetOrBinary(t *testing.T, path string, requireBinary bool) string {
 
 	var fixturePath string
 	for k, v := range entries.Sorted() {
-		if filepath.Dir(k.Path()) == path {
+		if path.Dir(k.Path()) == logicalPath {
 			// prefer the snippet over the binary
 			if !requireBinary {
 				if v.SnippetPath != "" {
-					t.Logf("using snippet for %q", path)
+					t.Logf("using snippet for %q", logicalPath)
 					require.NoError(t, validateSnippet(v.BinaryPath, v.SnippetPath))
 					fixturePath = v.SnippetPath
 					break
@@ -56,10 +59,10 @@ func SnippetOrBinary(t *testing.T, path string, requireBinary bool) string {
 					fixturePath = v.BinaryPath
 					break
 				}
-				t.Fatalf("no binary or snippet found for %q", path)
+				t.Fatalf("no binary or snippet found for %q", logicalPath)
 			}
 			if v.BinaryPath != "" {
-				t.Logf("forcing the use of the original binary for %q", path)
+				t.Logf("forcing the use of the original binary for %q", logicalPath)
 				fixturePath = v.BinaryPath
 				break
 			}
@@ -68,12 +71,12 @@ func SnippetOrBinary(t *testing.T, path string, requireBinary bool) string {
 				t.Skip("no binary found, but is covered by a snippet. Please add this case to the 'binary/testdata/config.yaml' and recreate the snippet")
 			}
 
-			t.Fatalf("no binary found for %q", path)
+			t.Fatalf("no binary found for %q", logicalPath)
 		}
 	}
 
 	if fixturePath == "" {
-		t.Fatalf("no fixture found for %q", path)
+		t.Fatalf("no fixture found for %q", logicalPath)
 	}
 
 	// this should be relative to the tests-fixtures directory and should be the directory containing the binary or
@@ -101,6 +104,7 @@ func validateSnippet(binaryPath, snippetPath string) error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	expected, err := internal.Sha256SumFile(f)
 	if err != nil {
