@@ -42,7 +42,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 		locations = intCataloger.AllRegularFiles(ctx, resolver)
 	} else {
 		for _, c := range coordinates {
-			locs, err := resolver.FilesByPath(c.LocalPath())
+			locs, err := resolver.FilesByPath(c.FullNestedPath())
 			if err != nil {
 				return nil, fmt.Errorf("unable to get file locations for path %q: %w", c.FullNestedPath(), err)
 			}

@@ -109,6 +109,16 @@ func zipFromEntries(t testing.TB, entries []testEntry) []byte {
 	return buf.Bytes()
 }
 
+func gzBytes(t testing.TB, body string) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	_, err := gw.Write([]byte(body))
+	require.NoError(t, err)
+	require.NoError(t, gw.Close())
+	return buf.Bytes()
+}
+
 func tarGzBytes(t testing.TB, files map[string]string) []byte {
 	return tarGzFromEntries(t, fileEntries(files))
 }
@@ -216,7 +226,8 @@ func extractBytes(t testing.TB, data []byte, name string, charge *charge) (*Reso
 	t.Helper()
 	r, root := resolverIn(t, charge)
 	content := bytes.NewReader(data)
-	format := identifyFormat(context.Background(), name, content)
+	format, err := identifyFormat(context.Background(), name, content)
+	require.NoError(t, err)
 	require.NotNil(t, format, "fixture must identify as an archive")
 	require.NoError(t, r.extract(context.Background(), format, content, nil))
 	return r, root

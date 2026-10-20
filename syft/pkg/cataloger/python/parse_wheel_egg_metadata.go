@@ -48,7 +48,7 @@ func parseWheelOrEggMetadata(locationReader file.LocationReadCloser) (parsedData
 	}
 
 	// add additional metadata not stored in the egg/wheel metadata file
-	metadataPath := locationReader.Path()
+	metadataPath := locationReader.LocalPath()
 
 	pd.SitePackagesRootPath = determineSitePackagesRootPath(metadataPath)
 	if pd.Licenses != "" || pd.LicenseExpression != "" {

@@ -530,18 +530,23 @@ func collectPackageFileRelationships(spdxIDMap map[string]any, doc *spdx.Documen
 }
 
 func toSyftCoordinates(f *spdx.File) file.Coordinates {
-	c := file.NewCoordinates(f.FileName, "")
-	for _, line := range strings.Split(f.FileComment, "\n") {
+	return coordinatesFromFile(f.FileName, f.FileComment, string(f.FileSPDXIdentifier))
+}
+
+// coordinatesFromFile decodes what fileComment encodes.
+func coordinatesFromFile(name, comment, id string) file.Coordinates {
+	c := file.NewCoordinates(name, "")
+	for _, line := range strings.Split(comment, "\n") {
 		if v, ok := strings.CutPrefix(line, layerIDCommentPrefix); ok {
 			c.FileSystemID = v
 		}
 		if v, ok := strings.CutPrefix(line, archivePathCommentPrefix); ok {
 			// the name is the full path; the real path is what precedes the entry chain
-			c.RealPath = strings.TrimSuffix(f.FileName, file.ArchivePathSeparator+v)
-			c.FullPath = f.FileName
+			c.RealPath = strings.TrimSuffix(name, file.ArchivePathSeparator+v)
+			c.FullPath = name
 		}
 	}
-	if v, ok := strings.CutPrefix(string(f.FileSPDXIdentifier), layerIDCommentPrefix); ok {
+	if v, ok := strings.CutPrefix(id, layerIDCommentPrefix); ok {
 		c.FileSystemID = v
 	}
 	return c

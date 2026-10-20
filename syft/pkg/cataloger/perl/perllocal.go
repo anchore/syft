@@ -217,7 +217,7 @@ func parsePerllocal(r io.Reader) []perllocalEntry {
 func primaryPath(p pkg.Package) string {
 	for _, location := range p.Locations.ToSlice() {
 		if location.Annotations[pkg.EvidenceAnnotationKey] == pkg.PrimaryEvidenceAnnotation {
-			return location.Path()
+			return location.LocalPath()
 		}
 	}
 	return ""

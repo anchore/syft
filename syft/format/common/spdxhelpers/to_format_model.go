@@ -712,6 +712,26 @@ const (
 	archivePathCommentPrefix = "archivePath: "
 )
 
+// fileComment carries the layer ID and, for a file inside an archive, its archive path. Such a file is
+// named by its full path ("/app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF"), so a consumer reading
+// only the name does not mistake it for a file at that path in the scan root; the entry chain after the
+// real path is also kept in the comment so decoding need not guess where it starts.
+func fileComment(c file.Coordinates) string {
+	var entries string
+	if rest, ok := strings.CutPrefix(c.FullPath, c.RealPath); ok {
+		entries, _ = strings.CutPrefix(rest, file.ArchivePathSeparator)
+	}
+	switch {
+	case c.FileSystemID != "" && entries != "":
+		return layerIDCommentPrefix + c.FileSystemID + "\n" + archivePathCommentPrefix + entries
+	case c.FileSystemID != "":
+		return layerIDCommentPrefix + c.FileSystemID
+	case entries != "":
+		return archivePathCommentPrefix + entries
+	}
+	return ""
+}
+
 func toFiles(s sbom.SBOM) (results []*spdx.File) {
 	artifacts := s.Artifacts
 
@@ -742,30 +762,16 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 
 		// TODO: add file classifications (?) and content as a snippet
 
-		var comments []string
-		if c.FileSystemID != "" {
-			comments = append(comments, layerIDCommentPrefix+c.FileSystemID)
-		}
-
-		// a file inside an archive is named by its full path ("/app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF"),
-		// so a consumer reading only the name does not mistake it for a file at that path in the scan
-		// root. The entry chain after the real path is also kept in the comment so decoding need not guess
-		// where it starts.
 		name := c.FullNestedPath()
-		if entries, ok := strings.CutPrefix(c.FullNestedPath(), c.RealPath+file.ArchivePathSeparator); ok {
-			comments = append(comments, archivePathCommentPrefix+entries)
-		}
-
 		relativePath, err := convertAbsoluteToRelative(name)
 		if err != nil {
 			log.Debugf("unable to convert relative path '%s' to absolute path: %s", name, err)
 			relativePath = name
 		}
-		comment := strings.Join(comments, "\n")
 
 		results = append(results, &spdx.File{
 			FileSPDXIdentifier: toSPDXID(c),
-			FileComment:        comment,
+			FileComment:        fileComment(c),
 			// required, no attempt made to determine license information
 			LicenseConcluded:  noAssertion,
 			FileCopyrightText: noAssertion,

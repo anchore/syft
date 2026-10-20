@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -234,19 +235,39 @@ func entryPath(rooted string) string {
 
 // fullPath is how paths leave the resolver: the archive's own full path, then the entry path.
 func (r *Resolver) fullPath(rooted string) string {
-	return r.archiveCoordinates.FullNestedPath() + "!/" + entryPath(rooted)
+	return r.archiveCoordinates.FullNestedPath() + file.ArchivePathSeparator + entryPath(rooted)
 }
 
 // rootedPath is the tree path a query names, which is either form a path takes: a full path is trimmed to
 // the entry path within this archive, and anything else (a LocalPath) is taken as archive-relative
 // already. The archive's full path with a trailing "!" (what path.Dir gives for an entry at the root)
-// names the root.
-func (r *Resolver) rootedPath(userPath string) string {
-	archivePath := r.archiveCoordinates.FullNestedPath() + "!"
-	if userPath == archivePath {
-		return "/"
+// names the root. A full path into another archive in the scan names nothing here and reports false.
+func (r *Resolver) rootedPath(userPath string) (string, bool) {
+	if rest, ok := strings.CutPrefix(userPath, r.archiveCoordinates.FullNestedPath()); ok {
+		if rest == file.ArchivePathSeparator[:1] {
+			return "/", true
+		}
+		if strings.HasPrefix(rest, file.ArchivePathSeparator) {
+			// keep the separator's slash as the rooted path's
+			return path.Clean(rest[len(file.ArchivePathSeparator)-1:]), true
+		}
 	}
-	return path.Clean("/" + strings.TrimPrefix(userPath, archivePath+"/"))
+	if r.outside(userPath) {
+		return "", false
+	}
+	if !strings.HasPrefix(userPath, "/") {
+		userPath = "/" + userPath
+	}
+	return path.Clean(userPath), true
+}
+
+// outside reports whether a path not under this archive's full path is a full path from the scan
+// nonetheless: every full path in this archive tree starts with the outermost archive's real path and a
+// separator. The real path alone is taken as an entry path, so an entry named like the outermost archive
+// is found by its LocalPath.
+func (r *Resolver) outside(userPath string) bool {
+	rest, ok := strings.CutPrefix(userPath, r.archiveCoordinates.RealPath)
+	return ok && strings.HasPrefix(rest, file.ArchivePathSeparator)
 }
 
 // coordinates name an entry by the outermost archive's real path, which never includes a path inside an
@@ -272,7 +293,11 @@ func (r *Resolver) location(res stereoscopeFile.Resolution) file.Location {
 // resolve finds the file a path names, following links, and reports false for directories and
 // paths the archive never listed.
 func (r *Resolver) resolve(userPath string) (*stereoscopeFile.Resolution, bool) {
-	res, err := r.search.SearchByPath(r.rootedPath(userPath), filetree.FollowBasenameLinks)
+	rooted, ok := r.rootedPath(userPath)
+	if !ok {
+		return nil, false
+	}
+	res, err := r.search.SearchByPath(rooted, filetree.FollowBasenameLinks)
 	if err != nil || res == nil || !res.HasReference() {
 		return nil, false
 	}
@@ -292,7 +317,10 @@ func (r *Resolver) FileContentsByLocation(location file.Location) (io.ReadCloser
 }
 
 func (r *Resolver) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
-	rooted := r.rootedPath(location.FullNestedPath())
+	rooted, ok := r.rootedPath(location.FullNestedPath())
+	if !ok {
+		return file.Metadata{}, fmt.Errorf("no archive entry for path=%q", location.FullNestedPath())
+	}
 	exists, res, err := r.tree.File(stereoscopeFile.Path(rooted))
 	if err != nil || !exists || !res.HasReference() {
 		return file.Metadata{}, fmt.Errorf("no archive entry for path=%q", location.FullNestedPath())
@@ -311,18 +339,19 @@ func (r *Resolver) FileMetadataByLocation(location file.Location) (file.Metadata
 }
 
 func (r *Resolver) HasPath(userPath string) bool {
-	return r.tree.HasPath(stereoscopeFile.Path(r.rootedPath(userPath)))
+	rooted, ok := r.rootedPath(userPath)
+	return ok && r.tree.HasPath(stereoscopeFile.Path(rooted))
 }
 
 func (r *Resolver) FilesByPath(paths ...string) ([]file.Location, error) {
 	var out []file.Location
-	seen := stereoscopeFile.NewFileReferenceSet()
+	var seen []stereoscopeFile.ID // few paths are asked for at once
 	for _, userPath := range paths {
 		res, ok := r.resolve(userPath)
-		if !ok || seen.Contains(*res.Reference) {
+		if !ok || slices.Contains(seen, res.ID()) {
 			continue
 		}
-		seen.Add(*res.Reference)
+		seen = append(seen, res.ID())
 		out = append(out, r.location(*res))
 	}
 	return out, nil
@@ -332,7 +361,11 @@ func (r *Resolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
 	var out []file.Location
 	seen := stereoscopeFile.NewFileReferenceSet()
 	for _, pattern := range patterns {
-		results, err := r.searchByGlob(r.rootedPath(pattern))
+		rooted, ok := r.rootedPath(pattern)
+		if !ok {
+			continue
+		}
+		results, err := r.searchByGlob(rooted)
 		if err != nil {
 			return nil, fmt.Errorf("invalid glob %q: %w", pattern, err)
 		}
@@ -387,7 +420,7 @@ func (r *Resolver) FilesByMIMEType(types ...string) ([]file.Location, error) {
 	return out, nil
 }
 
-// RelativeFileByPath resolves against the archive root, the only frame an archive has.
+// RelativeFileByPath resolves against the archive root: an archive has no layers to be relative to.
 func (r *Resolver) RelativeFileByPath(_ file.Location, userPath string) *file.Location {
 	locations, _ := r.FilesByPath(userPath)
 	if len(locations) == 0 {

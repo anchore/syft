@@ -105,5 +105,5 @@ func TestCoordinates_ID_unchangedByTopLevelFullRealPath(t *testing.T) {
 func TestCoordinates_LocalPath(t *testing.T) {
 	assert.Equal(t, "/a.jar", NewCoordinates("/a.jar", "").LocalPath())
 	assert.Equal(t, "/a.jar", Coordinates{RealPath: "/a.jar"}.LocalPath())
-	assert.Equal(t, "META-INF/MANIFEST.MF", Coordinates{RealPath: "/a.war", FullPath: "/a.war!/lib/b.jar!/META-INF/MANIFEST.MF"}.LocalPath())
+	assert.Equal(t, "/META-INF/MANIFEST.MF", Coordinates{RealPath: "/a.war", FullPath: "/a.war!/lib/b.jar!/META-INF/MANIFEST.MF"}.LocalPath())
 }

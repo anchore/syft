@@ -113,6 +113,34 @@ func TestResolver_pathsAndContents(t *testing.T) {
 	assert.Equal(t, "Manifest-Version: 1.0\n", string(body))
 }
 
+func TestResolver_fullPathsOutsideTheArchiveNameNothing(t *testing.T) {
+	r, _ := resolverIn(t, memCharge(1<<20))
+	r.archiveCoordinates = file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/dep.jar"}
+	addAll(t, r, fileEntries(map[string]string{"/app.war": "same name", "/META-INF/MANIFEST.MF": "m"}))
+
+	locations, err := r.FilesByPath("/app.war!/WEB-INF/lib/dep.jar!/META-INF/MANIFEST.MF")
+	require.NoError(t, err)
+	assert.Len(t, locations, 1, "a full path in this archive")
+
+	for _, p := range []string{"/app.war!/WEB-INF/lib/dep.jar", "/app.war!/WEB-INF/lib/other.jar!/META-INF/MANIFEST.MF"} {
+		locations, err = r.FilesByPath(p)
+		require.NoError(t, err)
+		assert.Empty(t, locations, "%s is outside the archive", p)
+		assert.False(t, r.HasPath(p), p)
+	}
+
+	for _, p := range []string{"app.war", "/app.war"} {
+		locations, err = r.FilesByPath(p)
+		require.NoError(t, err)
+		require.Len(t, locations, 1, "%s is an entry path named like the outermost archive", p)
+		assert.Equal(t, "/app.war!/WEB-INF/lib/dep.jar!/app.war", locations[0].FullPath, p)
+	}
+
+	again, err := r.FilesByPath(locations[0].LocalPath())
+	require.NoError(t, err)
+	assert.Equal(t, locations, again, "a LocalPath finds its own entry")
+}
+
 func TestResolver_mimeTypesAreSniffedFromContent(t *testing.T) {
 	r := resolverOver(t, 1<<20, map[string]string{
 		"notes.txt": "just some text",
@@ -121,7 +149,7 @@ func TestResolver_mimeTypesAreSniffedFromContent(t *testing.T) {
 
 	locations, err := r.FilesByMIMEType("text/x-shellscript")
 	require.NoError(t, err)
-	assert.Equal(t, []string{"run.sh"}, localPaths(locations))
+	assert.Equal(t, []string{"/run.sh"}, localPaths(locations))
 }
 
 func TestResolver_answersAreOrdered(t *testing.T) {
@@ -187,11 +215,11 @@ func TestResolver_globsForADirectorysChildren(t *testing.T) {
 		"META-INF/maven/g/a/pom.xml": "deeper",
 	})
 
-	assert.Equal(t, []string{"LICENSE"}, globPaths(t, r, "/*"))
-	assert.Equal(t, []string{"LICENSE"}, globPaths(t, r, "*"))
-	assert.Equal(t, []string{"META-INF/LICENSE.txt"}, globPaths(t, r, "/META-INF/*"))
-	assert.Equal(t, []string{"META-INF/LICENSE.txt"}, globPaths(t, r, "META-INF/*"))
-	assert.Equal(t, []string{"META-INF/maven/g/a/pom.xml"}, globPaths(t, r, "**/a/*"))
+	assert.Equal(t, []string{"/LICENSE"}, globPaths(t, r, "/*"))
+	assert.Equal(t, []string{"/LICENSE"}, globPaths(t, r, "*"))
+	assert.Equal(t, []string{"/META-INF/LICENSE.txt"}, globPaths(t, r, "/META-INF/*"))
+	assert.Equal(t, []string{"/META-INF/LICENSE.txt"}, globPaths(t, r, "META-INF/*"))
+	assert.Equal(t, []string{"/META-INF/maven/g/a/pom.xml"}, globPaths(t, r, "**/a/*"))
 }
 
 func TestResolver_invalidGlobIsAnError(t *testing.T) {
@@ -226,7 +254,7 @@ func TestResolver_linksCollapseToOnePath(t *testing.T) {
 				{name: "opt/hard.jar", link: "opt/real.jar", hard: true},
 			},
 			pattern: "**/*.jar",
-			want:    []string{"opt/real.jar"},
+			want:    []string{"/opt/real.jar"},
 			reason:  "one file, so one location - and it is named by the path that holds it",
 		},
 		{
@@ -238,7 +266,7 @@ func TestResolver_linksCollapseToOnePath(t *testing.T) {
 				{name: "opt/m-sym.jar", link: "real.bin"},
 			},
 			pattern: "**/*.jar",
-			want:    []string{"opt/real.bin"},
+			want:    []string{"/opt/real.bin"},
 			reason:  "the content is the target's, so that is the real path the answer carries",
 		},
 		{
@@ -249,7 +277,7 @@ func TestResolver_linksCollapseToOnePath(t *testing.T) {
 				{name: "opt/one-sym.jar", link: "one.jar"},
 			},
 			pattern: "**/*.jar",
-			want:    []string{"opt/one.jar", "opt/two.jar"},
+			want:    []string{"/opt/one.jar", "/opt/two.jar"},
 			reason:  "collapsing is per file, not per pattern",
 		},
 		{
@@ -259,7 +287,7 @@ func TestResolver_linksCollapseToOnePath(t *testing.T) {
 				{name: "opt/gone.jar", link: "missing.jar"},
 			},
 			pattern: "**/*.jar",
-			want:    []string{"opt/real.jar"},
+			want:    []string{"/opt/real.jar"},
 			reason:  "it names no content",
 		},
 		{
@@ -280,7 +308,7 @@ func TestResolver_linksCollapseToOnePath(t *testing.T) {
 				{name: "opt/outer.jar", link: "mid.jar"},
 			},
 			pattern: "**/*.jar",
-			want:    []string{"opt/real.jar"},
+			want:    []string{"/opt/real.jar"},
 			reason:  "following one hop at a time reaches the same file from every path",
 		},
 		{
@@ -300,7 +328,7 @@ func TestResolver_linksCollapseToOnePath(t *testing.T) {
 				{name: "opt/nested/hard.jar", link: "opt/real.jar", hard: true},
 			},
 			pattern: "**/*.jar",
-			want:    []string{"opt/real.jar"},
+			want:    []string{"/opt/real.jar"},
 			reason:  "read as relative it would resolve to opt/nested/opt/real.jar and dangle",
 		},
 	}
@@ -324,7 +352,7 @@ func TestResolver_collapsedLocationReadsTheTarget(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, locations, 1)
 
-	assert.Equal(t, "opt/real.bin", locations[0].LocalPath(), "content comes from the file")
+	assert.Equal(t, "/opt/real.bin", locations[0].LocalPath(), "content comes from the file")
 	assert.Equal(t, "outer.jar!/opt/a-sym.jar", locations[0].AccessPath, "the path searched by is the one matched")
 
 	reader, err := r.FileContentsByLocation(locations[0])
@@ -367,7 +395,7 @@ func TestResolver_danglingLinkHasNoContent(t *testing.T) {
 		locations = append(locations, l)
 	}
 	require.Len(t, locations, 1)
-	assert.Equal(t, "opt/gone.jar", locations[0].LocalPath())
+	assert.Equal(t, "/opt/gone.jar", locations[0].LocalPath())
 
 	_, err := r.FileContentsByLocation(locations[0])
 	assert.Error(t, err, "a link to nothing has no content to read")
@@ -394,12 +422,12 @@ func TestResolver_mimeTypeAnswersOnlyWithFiles(t *testing.T) {
 		return localPaths(locations)
 	}
 
-	assert.Equal(t, []string{"opt/real.jar"}, byMIME("application/zip"),
+	assert.Equal(t, []string{"/opt/real.jar"}, byMIME("application/zip"),
 		"the file answers, not the two links to it")
-	assert.Equal(t, []string{"opt/notes.txt"}, byMIME("text/plain"))
+	assert.Equal(t, []string{"/opt/notes.txt"}, byMIME("text/plain"))
 	assert.Empty(t, byMIME(""),
 		"a link sniffs to no type, and must not be reachable by asking for that")
-	assert.Equal(t, []string{"opt/notes.txt", "opt/real.jar"}, byMIME("application/zip", "text/plain"))
+	assert.Equal(t, []string{"/opt/notes.txt", "/opt/real.jar"}, byMIME("application/zip", "text/plain"))
 }
 
 // AllLocations enumerates what the archive holds rather than searching for files: the file metadata
@@ -415,7 +443,7 @@ func TestResolver_allLocationsKeepsEveryPath(t *testing.T) {
 	for l := range r.AllLocations(context.Background()) {
 		got = append(got, l.LocalPath())
 	}
-	assert.Equal(t, []string{"opt/gone.jar", "opt/real.jar", "opt/sym.jar"}, got,
+	assert.Equal(t, []string{"/opt/gone.jar", "/opt/real.jar", "/opt/sym.jar"}, got,
 		"every path the archive names, links included")
 }
 
@@ -437,7 +465,7 @@ func TestResolver_add_anEntryOverTheCapIsSkippedAndReadNoFurther(t *testing.T) {
 	assert.ErrorContains(t, r.Truncated, "per-entry size cap of 1.0 KiB")
 	locations, err := r.FilesByGlob("**")
 	require.NoError(t, err)
-	assert.Equal(t, []string{"ok.txt"}, localPaths(locations))
+	assert.Equal(t, []string{"/ok.txt"}, localPaths(locations))
 }
 
 type countingReader struct {

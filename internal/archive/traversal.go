@@ -2,6 +2,8 @@ package archive
 
 import (
 	"context"
+	"path"
+	"slices"
 	"strings"
 
 	"github.com/anchore/syft/syft/file"
@@ -28,6 +30,52 @@ type Traversal struct {
 	// they have run. Catalogers inside a nested archive read them through Parent, as java does to link a
 	// nested jar to the jar that holds it.
 	Packages []pkg.Package
+}
+
+// FullPathIn is the full path of the entry at entryPath inside the archive whose full path is
+// containerPath, or entryPath itself for a blank containerPath (the scan root).
+func FullPathIn(containerPath, entryPath string) string {
+	if containerPath == "" {
+		return entryPath
+	}
+	if !strings.HasPrefix(entryPath, "/") {
+		entryPath = "/" + entryPath
+	}
+	// cleaning an already clean path allocates nothing
+	return containerPath + file.ArchivePathSeparator + path.Clean(entryPath)[1:]
+}
+
+// OwnerContainers are the containers a package owns files within: the container of each of its
+// locations, each once, as coordinates whose FullPath is the container's full path (blank at the scan
+// root). A package without locations owns files at the scan root. See OwnedCoordinates.
+func OwnerContainers(p pkg.Package) []file.Coordinates {
+	var out []file.Coordinates
+	for _, l := range p.Locations.ToUnorderedSlice() {
+		c := file.Coordinates{FileSystemID: l.FileSystemID}
+		if container := ContainerPath(l.Coordinates); container != "" {
+			c.RealPath, c.FullPath = l.RealPath, container
+		}
+		if !slices.Contains(out, c) {
+			out = append(out, c)
+		}
+	}
+	if len(out) == 0 {
+		out = append(out, file.Coordinates{})
+	}
+	return out
+}
+
+// OwnedCoordinates are the coordinates of the file at ownedPath within container, one of
+// OwnerContainers. At the scan root the path may still need resolving (it may pass through links).
+func OwnedCoordinates(container file.Coordinates, ownedPath string) file.Coordinates {
+	if container.FullPath == "" {
+		return file.Coordinates{RealPath: ownedPath, FileSystemID: container.FileSystemID}
+	}
+	return file.Coordinates{
+		RealPath:     container.RealPath,
+		FileSystemID: container.FileSystemID,
+		FullPath:     FullPathIn(container.FullPath, ownedPath),
+	}
 }
 
 // FullTraversalArchivePath is the archive's own full path, which is the ContainerPath of every file inside it. Outside
@@ -75,7 +123,10 @@ func VirtualPath(loc file.Location) string {
 		return accessPath
 	}
 	segments := strings.Split(entries, file.ArchivePathSeparator)
-	segments[len(segments)-1] = strings.TrimPrefix(accessPath, ContainerPath(loc.Coordinates)+file.ArchivePathSeparator)
+	if rest, ok := strings.CutPrefix(accessPath, ContainerPath(loc.Coordinates)); ok && strings.HasPrefix(rest, file.ArchivePathSeparator) {
+		accessPath = rest[len(file.ArchivePathSeparator):]
+	}
+	segments[len(segments)-1] = accessPath
 	for i, s := range segments {
 		segments[i] = strings.TrimPrefix(escapeEntryPath(s), "/")
 	}
@@ -85,6 +136,9 @@ func VirtualPath(loc file.Location) string {
 var entryPathEscaper = strings.NewReplacer("%", "%25", ":", "%3A")
 
 func escapeEntryPath(p string) string {
+	if !strings.ContainsAny(p, "%:") {
+		return p
+	}
 	return entryPathEscaper.Replace(p)
 }
 

@@ -33,27 +33,35 @@ func Test_identifyFormat(t *testing.T) {
 	launcher := append([]byte("#!/bin/bash\nexec java -jar \"$0\" \"$@\"\nexit 0\n"), zipBytes(t, sampleFiles)...)
 
 	tests := []struct {
-		name string
-		data []byte
-		want archives.Extractor
+		name        string
+		data        []byte
+		want        archives.Extractor
+		unsupported bool
 	}{
-		{"test.zip", zipBytes(t, sampleFiles), archives.Zip{}},
-		{"test.tar.gz", tarGzBytes(t, sampleFiles), archives.CompressedArchive{}},
-		{"plain.txt", []byte("just text"), nil},
+		{"test.zip", zipBytes(t, sampleFiles), archives.Zip{}, false},
+		{"test.tar.gz", tarGzBytes(t, sampleFiles), archives.CompressedArchive{}, false},
+		{"plain.txt", []byte("just text"), nil, false},
 		// identified by mholt, but not opened until their decoders are deliberately supported
-		{"test.7z", []byte("7z\xbc\xaf\x27\x1c\x00\x04"), nil},
-		{"test.rar", []byte("Rar!\x1a\x07\x01\x00"), nil},
+		{"test.7z", []byte("7z\xbc\xaf\x27\x1c\x00\x04"), nil, true},
+		{"test.rar", []byte("Rar!\x1a\x07\x01\x00"), nil, true},
+		// a bare compression format holds one stream, not files
+		{"page.1.gz", gzBytes(t, "a man page"), nil, false},
 		// a java resource adapter archive is a zip that shares rar's extension
-		{"adapter.rar", zipBytes(t, sampleFiles), archives.Zip{}},
+		{"adapter.rar", zipBytes(t, sampleFiles), archives.Zip{}, false},
 		// the name can be claimed by identification, so the probe alone must not admit prose
-		{"app.jar", []byte("plain text, no central directory anywhere in it"), nil},
-		{"bundle", []byte("plain text, no central directory anywhere in it"), nil},
+		{"app.jar", []byte("plain text, no central directory anywhere in it"), nil, false},
+		{"bundle", []byte("plain text, no central directory anywhere in it"), nil, false},
 		// content sniffing types this as a shell script; only its tail says zip
-		{"app.jar", launcher, archives.Zip{}},
+		{"app.jar", launcher, archives.Zip{}, false},
 	}
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("%s/%d bytes", tt.name, len(tt.data)), func(t *testing.T) {
-			got := identifyFormat(ctx, tt.name, bytes.NewReader(tt.data))
+			got, err := identifyFormat(ctx, tt.name, bytes.NewReader(tt.data))
+			if tt.unsupported {
+				assert.ErrorIs(t, err, ErrUnsupportedFormat)
+			} else {
+				assert.NoError(t, err)
+			}
 			if tt.want == nil {
 				assert.Nil(t, got)
 				return
@@ -227,7 +235,9 @@ func TestResolver_extract_excludedEntriesAreNeverStored(t *testing.T) {
 	r, _ := resolverIn(t, limiter.charge())
 	content := bytes.NewReader(data)
 
-	err := r.extract(context.Background(), identifyFormat(context.Background(), "test.zip", content), content,
+	format, err := identifyFormat(context.Background(), "test.zip", content)
+	require.NoError(t, err)
+	err = r.extract(context.Background(), format, content,
 		NewExclusions([]string{"**/vendor", "**/*.rpm"}))
 	require.NoError(t, err)
 	require.NoError(t, r.Truncated)
@@ -314,7 +324,7 @@ func TestExtract_aTruncatedStreamKeepsWhatWasRead(t *testing.T) {
 	assert.Error(t, extracted.Truncated)
 	locations, err := extracted.FilesByGlob("**")
 	require.NoError(t, err)
-	assert.Equal(t, []string{"a.txt"}, localPaths(locations))
+	assert.Equal(t, []string{"/a.txt"}, localPaths(locations))
 }
 
 func TestExtract_aPanicStillReleasesEverything(t *testing.T) {
@@ -536,7 +546,7 @@ func TestExtract_locationsKeepTheTopLevelRealPath(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, locations, 1)
 		assert.Equal(t, file.Coordinates{RealPath: "/app.zip", FullPath: "/app.zip!/dir/hello.txt"}, locations[0].Coordinates)
-		assert.Equal(t, "dir/hello.txt", locations[0].LocalPath())
+		assert.Equal(t, "/dir/hello.txt", locations[0].LocalPath())
 
 		for _, loc := range []file.Location{
 			locations[0],

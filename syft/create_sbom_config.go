@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
-	"slices"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
@@ -202,7 +201,6 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description, exclusions []s
 	environmentTasks := c.environmentTasks()
 	scopeTasks := c.scopeTasks()
 	relationshipsTasks := c.relationshipTasks(src)
-	unknownTasks := c.unknownsTasks()
 	osFeatureDetectionTasks := c.osFeatureDetectionTasks()
 
 	pkgTasks, fileTasks, selectionEvidence, err := c.selectTasks(src)
@@ -212,7 +210,14 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description, exclusions []s
 
 	// the same package and file catalogers run against the contents of every archive, after the scan
 	// root and before relationship and unknowns post-processing
-	archiveTask := task.NewArchiveCatalogerTask(c.Archive, append(slices.Clone(pkgTasks), fileTasks...), exclusions)
+	archiveTask := task.NewArchiveCatalogerTask(c.Archive, c.Unknowns, pkgTasks, fileTasks, exclusions)
+
+	// the archive cataloger reports the archives it does not expand, which the labeler can only guess at
+	unknowns := c.Unknowns
+	if archiveTask != nil {
+		unknowns.IncludeUnexpandedArchives = false
+	}
+	unknownTasks := unknownsTasks(unknowns)
 
 	// combine the user-provided and configured tasks
 	switch {
@@ -466,10 +471,10 @@ func (c *CreateSBOMConfig) environmentTasks() []task.Task {
 
 // unknownsTasks returns a set of tasks that perform any necessary post-processing
 // to identify SBOM elements as unknowns
-func (c *CreateSBOMConfig) unknownsTasks() []task.Task {
+func unknownsTasks(cfg cataloging.UnknownsConfig) []task.Task {
 	var tasks []task.Task
 
-	if t := task.NewUnknownsLabelerTask(c.Unknowns); t != nil {
+	if t := task.NewUnknownsLabelerTask(cfg); t != nil {
 		tasks = append(tasks, t)
 	}
 

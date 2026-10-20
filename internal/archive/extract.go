@@ -16,10 +16,13 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
+// ErrUnsupportedFormat is returned for an archive in a format that is not extracted (see supportedExtractor).
+var ErrUnsupportedFormat = errors.New("archive format is not supported")
+
 // Extract opens the archive read from r as its own filesystem, holding its bytes and entries within
-// the limiter's bounds. It returns nil when the content is not an archive it can read, and
-// ErrDiskLimitReached when the archive's own bytes cannot be placed within the disk limit. The caller
-// must Cleanup the result.
+// the limiter's bounds. It returns nil when the content is not an archive, ErrUnsupportedFormat when it
+// is one that is not extracted, and ErrDiskLimitReached when the archive's own bytes cannot be placed
+// within the disk limit. The caller must Cleanup the result.
 //
 // archiveCoordinates are those of the archive file itself; every location the resolver returns
 // extends them with its entry path (see file.Coordinates).
@@ -43,9 +46,9 @@ func Extract(ctx context.Context, r io.Reader, archiveCoordinates file.Coordinat
 	// the archive's own bytes are needed only until they are extracted and digested
 	defer release()
 
-	format := identifyFormat(ctx, path.Base(archiveCoordinates.LocalPath()), content)
-	if format == nil {
-		return nil, nil
+	format, err := identifyFormat(ctx, path.Base(archiveCoordinates.LocalPath()), content)
+	if format == nil || err != nil {
+		return nil, err
 	}
 
 	if err := resolver.extract(ctx, format, content, exclusions); err != nil {
@@ -81,20 +84,35 @@ func (r *Resolver) acquire(content io.Reader) (ReaderAtSeeker, func(), error) {
 // directory, and reading the tar as a zip would lose the rest. The end of the stream is consulted
 // only when the head identifies nothing supported, which is how a zip appended to a launcher script (a
 // Spring Boot executable jar) is found, and how a java resource adapter (a zip named .rar) is read.
-func identifyFormat(ctx context.Context, name string, content ReaderAtSeeker) archives.Extractor {
+func identifyFormat(ctx context.Context, name string, content ReaderAtSeeker) (archives.Extractor, error) {
 	if _, err := content.Seek(0, io.SeekStart); err != nil {
-		return nil
+		return nil, nil
 	}
 	format, _, err := intFile.IdentifyArchive(ctx, name, content)
 	if err == nil {
 		if extractor := supportedExtractor(format); extractor != nil {
-			return extractor
+			return extractor, nil
 		}
 	}
 	if HasZipEndOfCentralDirectory(content) {
-		return archives.Zip{}
+		return archives.Zip{}, nil
 	}
-	return nil
+	if err == nil && holdsFiles(format) {
+		return nil, fmt.Errorf("%w: %s", ErrUnsupportedFormat, format.MediaType())
+	}
+	return nil, nil
+}
+
+// holdsFiles reports whether the format is an archive of files rather than a bare compression format,
+// such as a gzipped man page, which holds one stream and is not cataloged as an archive.
+func holdsFiles(format archives.Format) bool {
+	switch f := format.(type) {
+	case archives.CompressedArchive:
+		return f.Extraction != nil
+	case archives.Extractor:
+		return true
+	}
+	return false
 }
 
 // supportedExtractor admits only the zip and tar families, the tar family optionally compressed. Other

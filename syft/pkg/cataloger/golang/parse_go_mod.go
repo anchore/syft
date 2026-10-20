@@ -39,16 +39,13 @@ func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 
 // parseGoModFile takes a go.mod and tries to resolve and lists all packages discovered.
 func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (pkgs []pkg.Package, relationships []artifact.Relationship, err error) {
+	// the go toolchain needs the go.mod on the host: a location without a reference (such as a file within
+	// an archive) has none, so only the go.mod and go.sum contents are cataloged
 	realPath := string(reader.Location.Reference().RealPath)
-	if realPath == "" {
-		// the Reference().RealPath is used to find full paths when using a directory scan, it does not provide correct paths for archive scanning
-		realPath = reader.LocalPath()
-	}
 	if windows.HostRunningOnWindows() {
 		// directory resolvers hand back volume-encoded posix paths (/c/...), the go toolchain needs the native path
 		realPath = windows.FromPosix(realPath)
 	}
-	modDir := filepath.Dir(realPath)
 	digests, err := parseGoSumFile(resolver, reader)
 	if err != nil {
 		log.Debugf("unable to get go.sum: %v", err)
@@ -69,12 +66,12 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 	var sourceModules map[string]*packages.Module
 	var catalogedModules []pkg.Package
 
-	if c.usePackagesLib {
+	if c.usePackagesLib && realPath != "" {
 		var sourcePackages map[string][]pkgInfo
 		var sourceDependencies map[string][]string
 		var sourceModuleToPkg map[string]artifact.Identifiable
 
-		sourcePackages, sourceModules, sourceDependencies, err = c.loadPackages(modDir, reader.Location)
+		sourcePackages, sourceModules, sourceDependencies, err = c.loadPackages(filepath.Dir(realPath), reader.Location)
 		catalogedModules, sourceModuleToPkg = c.catalogModules(ctx, scanRoot, sourcePackages, sourceModules, reader, digests)
 		relationships = buildModuleRelationships(catalogedModules, sourceDependencies, sourceModuleToPkg)
 	}

@@ -104,7 +104,7 @@ func Test_archiveCataloger_aPanicCostsOnlyThatArchive(t *testing.T) {
 
 func newTestTask(t *testing.T, cfg cataloging.ArchiveSearchConfig, subPipeline ...Task) Task {
 	t.Helper()
-	tsk := NewArchiveCatalogerTask(cfg, subPipeline, nil)
+	tsk := NewArchiveCatalogerTask(cfg, cataloging.UnknownsConfig{}, subPipeline, nil, nil)
 	require.NotNil(t, tsk)
 	return tsk
 }
@@ -112,7 +112,7 @@ func newTestTask(t *testing.T, cfg cataloging.ArchiveSearchConfig, subPipeline .
 // newLimitedTestTask builds the task with the limiter's own limits, where zero forbids the resource.
 func newLimitedTestTask(t *testing.T, maxDepth int, limits archive.Limits, subPipeline ...Task) Task {
 	t.Helper()
-	tsk := newArchiveCatalogerTask(maxDepth, limits, subPipeline, nil)
+	tsk := newArchiveCatalogerTask(maxDepth, limits, false, subPipeline, nil, nil)
 	require.NotNil(t, tsk)
 	return tsk
 }
@@ -236,7 +236,7 @@ func Test_NewArchiveCatalogerTask_gating(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewArchiveCatalogerTask(tt.cfg, tt.subPipeline, nil)
+			got := NewArchiveCatalogerTask(tt.cfg, cataloging.UnknownsConfig{}, tt.subPipeline, nil, nil)
 			if tt.wantTask {
 				require.NotNil(t, got)
 				assert.Equal(t, ArchiveCatalogerTaskName, got.Name())
@@ -362,7 +362,7 @@ func Test_NewArchiveCatalogerTask_dropsItselfFromSubPipeline(t *testing.T) {
 	var ran int
 	countTask := countingTask(&ran)
 
-	poisoned := []Task{countTask, NewArchiveCatalogerTask(cfg, []Task{countTask}, nil)}
+	poisoned := []Task{countTask, NewArchiveCatalogerTask(cfg, cataloging.UnknownsConfig{}, []Task{countTask}, nil, nil)}
 	require.NotNil(t, poisoned[1])
 
 	tsk := newTestTask(t, cfg, poisoned...)
@@ -371,8 +371,8 @@ func Test_NewArchiveCatalogerTask_dropsItselfFromSubPipeline(t *testing.T) {
 	assert.Equal(t, 2, ran, "two archives, one sub-pipeline task each")
 
 	t.Run("a sub-pipeline of nothing but itself yields no task", func(t *testing.T) {
-		only := []Task{NewArchiveCatalogerTask(cfg, []Task{countTask}, nil)}
-		assert.Nil(t, NewArchiveCatalogerTask(cfg, only, nil))
+		only := []Task{NewArchiveCatalogerTask(cfg, cataloging.UnknownsConfig{}, []Task{countTask}, nil, nil)}
+		assert.Nil(t, NewArchiveCatalogerTask(cfg, cataloging.UnknownsConfig{}, only, nil, nil))
 	})
 }
 
@@ -585,10 +585,10 @@ func Test_archiveCataloger_limitsFallWhenAnArchiveIsReleased(t *testing.T) {
 
 func newTestCataloger(maxDepth int, limiter *archive.Limiter, subPipeline ...Task) *archiveCataloger {
 	return &archiveCataloger{
-		maxDepth:    maxDepth,
-		subPipeline: subPipeline,
-		limiter:     limiter,
-		progress:    bus.StartCatalogerTask(context.Background(), archiveCatalogerProgressInfo(), -1, ""),
+		maxDepth: maxDepth,
+		pkgTasks: subPipeline,
+		limiter:  limiter,
+		progress: bus.StartCatalogerTask(context.Background(), archiveCatalogerProgressInfo(), -1, ""),
 	}
 }
 

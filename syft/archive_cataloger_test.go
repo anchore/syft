@@ -383,6 +383,92 @@ func TestArchiveCataloger_defaultFileSelectionCoversRootJars(t *testing.T) {
 	}
 }
 
+func TestArchiveCataloger_defaultFileSelectionCoversNestedJars(t *testing.T) {
+	// a nested jar's package is found inside the jar but located in the archive holding it, so that
+	// archive's file catalogers must run after it, as the root's do
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "outer.zip"), testutils.Zip(t, map[string][]byte{
+		"lib/inner.jar": testutils.Jar(t, "inner", "1.0", nil),
+	}), 0o644))
+
+	cfg := DefaultCreateSBOMConfig().
+		WithCatalogerSelection(cataloging.NewSelectionRequest().WithDefaults("java")).
+		WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2))
+	s := scanDirWithExclusions(t, dir, cfg)
+
+	require.Equal(t, []string{"outer.zip!/lib/inner.jar"}, packageLocations(s, "inner"))
+	jar := file.Coordinates{RealPath: "outer.zip", FullPath: "outer.zip!/lib/inner.jar"}
+	assert.Contains(t, s.Artifacts.FileMetadata, jar)
+	assert.Contains(t, s.Artifacts.FileDigests, jar)
+}
+
+func TestArchiveCataloger_archiveUnknowns(t *testing.T) {
+	dir := t.TempDir()
+	plain := testutils.Zip(t, map[string]string{"readme.txt": "hi"})
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "outer.zip"), testutils.Zip(t, map[string][]byte{
+		"lib/inner.jar": testutils.Jar(t, "inner", "1.0", nil),
+		"lib/plain.zip": plain,
+	}), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "plain.zip"), plain, 0o644))
+
+	scan := func(depth int) map[string][]string {
+		cfg := DefaultCreateSBOMConfig().
+			WithCatalogerSelection(cataloging.NewSelectionRequest().WithDefaults("java")).
+			WithUnknownsConfig(cataloging.DefaultUnknownsConfig()).
+			WithFilesConfig(filecataloging.DefaultConfig().WithSelection(file.AllFilesSelection)).
+			WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(depth))
+		out := map[string][]string{}
+		for c, reasons := range scanDirWithExclusions(t, dir, cfg).Artifacts.Unknowns {
+			out[c.FullNestedPath()] = reasons
+		}
+		return out
+	}
+
+	t.Run("an expanded archive is not reported as not cataloged", func(t *testing.T) {
+		assert.Empty(t, scan(3))
+	})
+
+	t.Run("an archive past the depth limit is reported once, by the archive cataloger", func(t *testing.T) {
+		unknowns := scan(1)
+		assert.NotContains(t, unknowns, "outer.zip")
+		for _, nested := range []string{"outer.zip!/lib/inner.jar", "outer.zip!/lib/plain.zip"} {
+			require.Len(t, unknowns[nested], 1, nested)
+			assert.Contains(t, unknowns[nested][0], "depth limit was reached")
+		}
+	})
+
+	t.Run("an archive is reported as not cataloged when nesting is off", func(t *testing.T) {
+		assert.Equal(t, []string{"archive not cataloged"}, scan(0)["plain.zip"])
+	})
+}
+
+func TestArchiveCataloger_unsupportedArchiveFormatsAreReported(t *testing.T) {
+	dir := t.TempDir()
+	var page bytes.Buffer
+	gw := gzip.NewWriter(&page)
+	_, err := gw.Write([]byte("a man page"))
+	require.NoError(t, err)
+	require.NoError(t, gw.Close())
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "outer.zip"), testutils.Zip(t, map[string][]byte{
+		"legacy.7z": []byte("7z\xbc\xaf\x27\x1c\x00\x04"),
+		"page.1.gz": page.Bytes(),
+	}), 0o644))
+
+	cfg := DefaultCreateSBOMConfig().
+		WithCatalogerSelection(cataloging.NewSelectionRequest().WithDefaults("java")).
+		WithUnknownsConfig(cataloging.DefaultUnknownsConfig()).
+		WithFilesConfig(filecataloging.DefaultConfig().WithSelection(file.AllFilesSelection)).
+		WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(3))
+	unknowns := map[string][]string{}
+	for c, reasons := range scanDirWithExclusions(t, dir, cfg).Artifacts.Unknowns {
+		unknowns[c.FullNestedPath()] = reasons
+	}
+
+	assert.Equal(t, map[string][]string{
+		"outer.zip!/legacy.7z": {"archive-cataloger: archive not cataloged: archive format is not supported: application/x-7z-compressed"},
+	}, unknowns, "a bare compressed file holds no files, so it is not an archive left uncataloged")
+}
+
 func TestArchiveCataloger_javaParentLinkageMatchesTheLegacyPath(t *testing.T) {
 	// a consumer walking java DEPENDENCY_OF edges (the only structure SPDX and CycloneDX keep) must see
 	// the same war-to-jar linkage whether or not the archive task does the recursion

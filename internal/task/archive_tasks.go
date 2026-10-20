@@ -30,27 +30,33 @@ import (
 
 const ArchiveCatalogerTaskName = "archive-cataloger"
 
-// NewArchiveCatalogerTask returns a task that extracts every archive it finds, runs subPipeline
-// against the archive's contents as a standalone filesystem, and records CONTAINS relationships
-// from the archive to what was found inside it. It recurses into the archives it extracts up to
-// cfg.MaxDepth; the task drops itself from subPipeline so that is the only recursion.
+// NewArchiveCatalogerTask returns a task that extracts every archive it finds, runs the same tasks
+// against the archive's contents as a standalone filesystem, and records
+// CONTAINS relationships from the archive to what was found inside it. It recurses into the archives
+// it extracts up to cfg.MaxDepth; the task drops itself from the tasks so that is the only recursion.
+//
+// Each archive is handled as the scan root is: pkgTasks, then the archives nested in it, then fileTasks,
+// which see the packages found in the nested archives (see Traversal.PackageFiles).
+//
+// The task is the authority on which archives were not cataloged and why; with
+// unknowns.IncludeUnexpandedArchives it also reports archives in formats it does not extract.
 //
 // exclusions are the scan's exclusion patterns, applied inside each archive. Returns nil when archive
 // cataloging is disabled (MaxDepth == 0; negative means as deep as unboundedArchiveDepth).
-func NewArchiveCatalogerTask(cfg cataloging.ArchiveSearchConfig, subPipeline []Task, exclusions []string) Task {
-	return newArchiveCatalogerTask(cfg.MaxDepth, archiveLimits(cfg), subPipeline, exclusions)
+func NewArchiveCatalogerTask(cfg cataloging.ArchiveSearchConfig, unknowns cataloging.UnknownsConfig, pkgTasks, fileTasks []Task, exclusions []string) Task {
+	return newArchiveCatalogerTask(cfg.MaxDepth, archiveLimits(cfg), unknowns.IncludeUnexpandedArchives, pkgTasks, fileTasks, exclusions)
 }
 
 func archiveLimits(cfg cataloging.ArchiveSearchConfig) archive.Limits {
 	return archive.Limits{MaxMemoryBytes: cfg.MaxMemoryBytes, MaxDiskBytes: cfg.MaxDiskBytes}
 }
 
-func newArchiveCatalogerTask(maxDepth int, limits archive.Limits, subPipeline []Task, exclusions []string) Task {
+func newArchiveCatalogerTask(maxDepth int, limits archive.Limits, reportUnsupportedUnknowns bool, pkgTasks, fileTasks []Task, exclusions []string) Task {
 	if maxDepth == 0 {
 		return nil
 	}
-	subPipeline = withoutArchiveCataloger(subPipeline)
-	if len(subPipeline) == 0 {
+	pkgTasks, fileTasks = withoutArchiveCataloger(pkgTasks), withoutArchiveCataloger(fileTasks)
+	if len(pkgTasks)+len(fileTasks) == 0 {
 		return nil
 	}
 
@@ -59,11 +65,13 @@ func newArchiveCatalogerTask(maxDepth int, limits archive.Limits, subPipeline []
 		ctx = bus.WithCatalogerTaskRegistry(ctx)
 
 		c := &archiveCataloger{
-			maxDepth:    maxDepth,
-			subPipeline: subPipeline,
-			limiter:     archive.NewLimiter(limits),
-			exclusions:  archive.NewExclusions(exclusions),
-			progress:    bus.StartCatalogerTask(ctx, archiveCatalogerProgressInfo(), -1, ""),
+			maxDepth:                  maxDepth,
+			reportUnsupportedUnknowns: reportUnsupportedUnknowns,
+			pkgTasks:                  pkgTasks,
+			fileTasks:                 fileTasks,
+			limiter:                   archive.NewLimiter(limits),
+			exclusions:                archive.NewExclusions(exclusions),
+			progress:                  bus.StartCatalogerTask(ctx, archiveCatalogerProgressInfo(), -1, ""),
 		}
 		err := c.catalog(ctx, resolver, 0, builder)
 		c.progress.AtomicStage.Set(fmt.Sprintf("%s archives", humanize.Comma(c.progress.Current())))
@@ -96,10 +104,12 @@ func withoutArchiveCataloger(tasks []Task) []Task {
 }
 
 type archiveCataloger struct {
-	maxDepth    int
-	subPipeline []Task
-	limiter     *archive.Limiter
-	exclusions  archive.Exclusions
+	maxDepth                  int
+	reportUnsupportedUnknowns bool
+	pkgTasks                  []Task
+	fileTasks                 []Task
+	limiter                   *archive.Limiter
+	exclusions                archive.Exclusions
 
 	// progress is the one row for the whole walk: its count is how many archives have been entered
 	progress *monitor.TaskProgress
@@ -164,6 +174,9 @@ func (c *archiveCataloger) catalogCandidates(ctx context.Context, resolver file.
 	return errs
 }
 
+// processArchive processes the given candidate archive, catching panics
+//
+//nolint:funlen
 func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver file.Resolver, candidate archiveCandidate, depth int, builder sbomsync.Builder) (err error) {
 	// the decoders run on untrusted bytes; a panic in one costs this archive, not the scan
 	defer func() {
@@ -200,6 +213,12 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	traversal := &archive.Traversal{Location: location, Parent: archive.TraversalFromContext(ctx)}
 	archivePath := location.FullNestedPath()
 	extracted, err := archive.Extract(ctx, archiveContent, location.Coordinates, c.limiter, c.exclusions)
+	if errors.Is(err, archive.ErrUnsupportedFormat) {
+		if c.reportUnsupportedUnknowns {
+			recordArchiveUnknown(builder, location.Coordinates, "archive not cataloged: "+err.Error())
+		}
+		return nil
+	}
 	if errors.Is(err, archive.ErrDiskLimitReached) {
 		// nothing is released while this archive waits, so skip it rather than block the scan
 		recordArchiveUnknown(builder, location.Coordinates, "archive skipped: its content would exceed the disk limit")
@@ -233,18 +252,33 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	ctx = archive.WithTraversal(ctx, traversal)
 
 	c.progress.Increment()
-	scratch := c.runSubPipeline(ctx, extracted, location.Coordinates)
-	traversal.Packages = packagesAt(scratch, location.Coordinates)
-	children := c.discoverArchives(extracted)
-	mergeArchiveResults(location.Coordinates, archivePath, children, scratch, builder)
-	c.progress.AtomicStage.Set(fmt.Sprintf("%s archives (%s)", humanize.Comma(c.progress.Current()), archivePath))
 
-	// self time stops before descending, so a containing archive is not charged for what it contains
-	if took := time.Since(started); took > c.slowest {
+	// everything found in this archive and the archives nested in it, merged into the parent's SBOM once complete
+	found := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
+	foundBuilder := sbomsync.NewBuilder(found)
+	runArchiveTasks(ctx, c.pkgTasks, extracted, location.Coordinates, foundBuilder)
+	direct := found.Artifacts.Packages.Sorted()
+	traversal.Packages = packagesAt(direct, location.Coordinates)
+
+	// self time excludes descending, so a containing archive is not charged for what it contains
+	selfTime := time.Since(started)
+
+	// as at the scan root, nested archives are cataloged before this archive's files, so the packages
+	// describing them (located in this archive) select their files here
+	children := c.discoverArchives(extracted)
+	errs := c.catalogCandidates(ctx, extracted, children, depth+1, foundBuilder)
+
+	started = time.Now()
+	runArchiveTasks(ctx, c.fileTasks, extracted, location.Coordinates, foundBuilder)
+	addContains(location.Coordinates, archivePath, direct, children, found)
+	mergeArchiveResults(found, builder)
+	c.progress.AtomicStage.Set(humanize.Comma(c.progress.Current()) + " archives (" + archivePath + ")")
+
+	if took := selfTime + time.Since(started); took > c.slowest {
 		c.slowest, c.slowestPath = took, archivePath
 	}
 
-	return c.catalogCandidates(ctx, extracted, children, depth+1, builder)
+	return errs
 }
 
 // a top-level archive and everything nested in it may decompress to archiveTreeRatio times its size, or
@@ -273,30 +307,37 @@ func (c *archiveCataloger) isAncestor(digests []file.Digest) bool {
 }
 
 // packagesAt returns the packages located at the given coordinates, i.e. those describing the file there.
-func packagesAt(s *sbom.SBOM, coordinates file.Coordinates) []pkg.Package {
+func packagesAt(pkgs []pkg.Package, coordinates file.Coordinates) []pkg.Package {
 	var out []pkg.Package
-	for _, p := range s.Artifacts.Packages.Sorted() {
-		if p.Locations.CoordinateSet().Contains(coordinates) {
+	for _, p := range pkgs {
+		if locatedAt(p, coordinates) {
 			out = append(out, p)
 		}
 	}
 	return out
 }
 
+// locatedAt reports whether one of p's locations is at the given coordinates.
+func locatedAt(p pkg.Package, coordinates file.Coordinates) bool {
+	for _, l := range p.Locations.ToUnorderedSlice() {
+		if l.Coordinates == coordinates {
+			return true
+		}
+	}
+	return false
+}
+
 func recordArchiveUnknown(builder sbomsync.Builder, coordinates file.Coordinates, reason string) {
 	appendUnknowns(builder, ArchiveCatalogerTaskName, []unknown.CoordinateError{{Coordinates: coordinates, Reason: errors.New(reason)}})
 }
 
-// runSubPipeline runs every task against the resolver into a throwaway SBOM, so results can be
-// attributed to the containing archive before merging into the shared SBOM.
+// runArchiveTasks runs each task against the archive's contents.
 //
 // Failures are recorded as RunTask records them at the top level: errors carrying coordinates keep
 // them, anything else is attributed to the archive. A failure never fails the archive or the scan.
-func (c *archiveCataloger) runSubPipeline(ctx context.Context, resolver file.Resolver, archiveCoordinates file.Coordinates) *sbom.SBOM {
-	scratch := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	scratchBuilder := sbomsync.NewBuilder(scratch)
-	for _, t := range c.subPipeline {
-		err := runSubTaskSafely(ctx, t, resolver, scratchBuilder)
+func runArchiveTasks(ctx context.Context, tasks []Task, resolver file.Resolver, archiveCoordinates file.Coordinates, builder sbomsync.Builder) {
+	for _, t := range tasks {
+		err := runSubTaskSafely(ctx, t, resolver, builder)
 		if err == nil {
 			continue
 		}
@@ -306,9 +347,8 @@ func (c *archiveCataloger) runSubPipeline(ctx context.Context, resolver file.Res
 		if remaining != nil {
 			unknowns = append(unknowns, unknown.CoordinateError{Coordinates: archiveCoordinates, Reason: remaining})
 		}
-		appendUnknowns(scratchBuilder, t.Name(), unknowns)
+		appendUnknowns(builder, t.Name(), unknowns)
 	}
-	return scratch
 }
 
 // runSubTaskSafely is runTaskSafely without the task name in a panic's error, since appendUnknowns
@@ -345,10 +385,12 @@ var zipArchiveGlobs = []string{
 	"**/*.egg", "**/*.whl", "**/*.lpkg", "**/*.zap", "**/*.exe",
 }
 
+var archiveMIMETypes = slices.Sorted(slices.Values(mimetype.ArchiveMIMETypeSet.List()))
+
 // discoverArchives returns every file worth opening: those whose content is an archive, plus those
 // named like a zip whose tail may still hold one.
 func (c *archiveCataloger) discoverArchives(resolver file.Resolver) []archiveCandidate {
-	archives, err := resolver.FilesByMIMEType(mimetype.ArchiveMIMETypeSet.List()...)
+	archives, err := resolver.FilesByMIMEType(archiveMIMETypes...)
 	if err != nil {
 		log.WithFields("error", err).Debug("unable to list archive files for recursive cataloging")
 		return nil
@@ -381,44 +423,78 @@ func (c *archiveCataloger) discoverArchives(resolver file.Resolver) []archiveCan
 	return candidates
 }
 
-// mergeArchiveResults copies the throwaway SBOM's packages, files and relationships into the shared
-// SBOM, adding a CONTAINS relationship from the archive to everything found inside it.
-//
-// Files inside the archive are those whose container is the archive's own full path, which leaves out the
-// archive itself (a java package or an unknown recorded at its coordinates would otherwise become a
-// self-loop). The nested archives are always included, so the chain of archives is navigable whatever
-// file selection is configured.
-func mergeArchiveResults(archiveCoordinates file.Coordinates, archivePath string, children []archiveCandidate, scratch *sbom.SBOM, builder sbomsync.Builder) {
-	pkgs := scratch.Artifacts.Packages.Sorted()
-	if len(pkgs) > 0 {
+// mergeArchiveResults copies everything found in an archive into its parent's SBOM.
+func mergeArchiveResults(found *sbom.SBOM, builder sbomsync.Builder) {
+	if pkgs := found.Artifacts.Packages.Sorted(); len(pkgs) > 0 {
 		builder.AddPackages(pkgs...)
 	}
-
 	if accessor, ok := builder.(sbomsync.Accessor); ok {
 		accessor.WriteToSBOM(func(s *sbom.SBOM) {
-			mergeFileArtifacts(&s.Artifacts, &scratch.Artifacts)
+			mergeFileArtifacts(&s.Artifacts, &found.Artifacts)
 		})
 	}
-
-	var rels []artifact.Relationship
-	for _, p := range pkgs {
-		rels = append(rels, artifact.Relationship{From: archiveCoordinates, To: p, Type: artifact.ContainsRelationship})
+	if len(found.Relationships) > 0 {
+		builder.AddRelationships(found.Relationships...)
 	}
+}
+
+// addContains adds a CONTAINS relationship from the archive to each package found directly in it, each
+// file directly in it that the SBOM describes, and each nested archive, so the hierarchy is navigable
+// whatever file selection is configured.
+//
+// Files directly in the archive are those whose container is the archive's own full path, which leaves
+// out the archive itself (a java package or an unknown recorded at its coordinates would otherwise
+// become a self-loop) and the files of nested archives, contained by those.
+func addContains(archiveCoordinates file.Coordinates, archivePath string, direct []pkg.Package, children []archiveCandidate, found *sbom.SBOM) {
 	contained := file.NewCoordinateSet()
 	for _, child := range children {
 		contained.Add(child.location.Coordinates)
 	}
-	for _, coordinates := range scratch.AllCoordinates() {
+	addInside := func(coordinates file.Coordinates) {
 		if archive.ContainerPath(coordinates) == archivePath {
 			contained.Add(coordinates)
 		}
 	}
+	eachFileArtifactCoordinates(&found.Artifacts, addInside)
+	for _, r := range found.Relationships {
+		if c, ok := r.From.(file.Coordinates); ok {
+			addInside(c)
+		}
+		if c, ok := r.To.(file.Coordinates); ok {
+			addInside(c)
+		}
+	}
+
+	var rels []artifact.Relationship
+	for _, p := range direct {
+		rels = append(rels, artifact.Relationship{From: archiveCoordinates, To: p, Type: artifact.ContainsRelationship})
+	}
 	for _, coordinates := range contained.ToSlice() {
 		rels = append(rels, artifact.Relationship{From: archiveCoordinates, To: coordinates, Type: artifact.ContainsRelationship})
 	}
-	rels = append(rels, scratch.Relationships...)
-	if len(rels) > 0 {
-		builder.AddRelationships(rels...)
+	found.Relationships = append(found.Relationships, rels...)
+}
+
+// eachFileArtifactCoordinates calls fn with the coordinates of every file artifact, once per artifact
+// kind describing it.
+func eachFileArtifactCoordinates(a *sbom.Artifacts, fn func(file.Coordinates)) {
+	for c := range a.FileMetadata {
+		fn(c)
+	}
+	for c := range a.FileDigests {
+		fn(c)
+	}
+	for c := range a.FileContents {
+		fn(c)
+	}
+	for c := range a.FileLicenses {
+		fn(c)
+	}
+	for c := range a.Executables {
+		fn(c)
+	}
+	for c := range a.Unknowns {
+		fn(c)
 	}
 }
 
