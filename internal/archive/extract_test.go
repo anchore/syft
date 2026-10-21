@@ -314,6 +314,34 @@ func TestResolver_extract_skippedCompressedTarBytesSpendTheBudget(t *testing.T) 
 	}
 }
 
+// a body behind a header that doesn't read as a regular file (here a socket per its mode bits) is never
+// opened, but the tar reader still decompresses it to reach the next header
+func TestResolver_extract_bodiesOfNonRegularTarEntriesSpendTheBudget(t *testing.T) {
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gw)
+	body := strings.Repeat("\x00", 4<<20)
+	require.NoError(t, tw.WriteHeader(&tar.Header{Name: "sock", Typeflag: tar.TypeReg, Mode: 0o140644, Size: int64(len(body))}))
+	_, err := tw.Write([]byte(body))
+	require.NoError(t, err)
+	require.NoError(t, tw.WriteHeader(&tar.Header{Name: "after.txt", Typeflag: tar.TypeReg, Mode: 0o644, Size: 5}))
+	_, err = tw.Write([]byte("after"))
+	require.NoError(t, err)
+	require.NoError(t, tw.Close())
+	require.NoError(t, gw.Close())
+
+	r, _ := resolverIn(t, memCharge(1<<30))
+	r.budget = NewBudget(1 << 20)
+	content := bytes.NewReader(buf.Bytes())
+	format, err := identifyFormat(context.Background(), "test.tar.gz", content)
+	require.NoError(t, err)
+
+	require.NoError(t, r.extract(context.Background(), format, content, nil))
+	assert.ErrorIs(t, r.Truncated, errBudgetSpent)
+	assert.Empty(t, storedNames(t, r))
+	assert.Zero(t, r.budget.remaining)
+}
+
 // a zip or a plain tar seeks past what it skips, so an excluded entry there costs nothing
 func TestResolver_extract_skippedSeekableBytesAreFree(t *testing.T) {
 	entries := []testEntry{{name: "bomb.bin", body: strings.Repeat("\x00", 4<<20)}, {name: "after.txt", body: "after"}}

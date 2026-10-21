@@ -11,6 +11,7 @@ import (
 
 	"github.com/mholt/archives"
 
+	"github.com/anchore/syft/internal"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
@@ -139,20 +140,25 @@ func (r *Resolver) extract(ctx context.Context, format archives.Extractor, conte
 	if _, err := content.Seek(0, io.SeekStart); err != nil {
 		return err
 	}
-	// a compressed tar decompresses whatever an entry leaves unread to reach the next header, so there the
-	// bytes of skipped entries cost as much as kept ones. A zip or a plain tar seeks past them for free
-	_, drains := format.(archives.CompressedArchive)
-	err := format.Extract(ctx, content, func(_ context.Context, f archives.FileInfo) error {
-		hdr, ok := r.entryHeader(f)
-		skip := !ok || exclusions.Excludes(hdr.Name)
-		if !f.Mode().IsRegular() {
-			if skip {
-				return nil
-			}
-			return r.add(hdr, nil)
+	var source io.Reader = content
+	if ca, ok := format.(archives.CompressedArchive); ok && ca.Compression != nil {
+		// a compressed tar decompresses everything to reach each header, including entries skipped whole
+		// and whatever an entry leaves unread, so the budget is charged for every byte the decoder
+		// produces rather than for what is kept. A zip or a plain tar seeks past what it skips
+		rc, err := ca.OpenReader(content)
+		if err != nil {
+			return err
 		}
-		if skip && !drains {
+		defer internal.CloseAndLogError(rc, "decompressor")
+		source, format, r.metered = &meteredReader{ctx: ctx, reader: rc, budget: r.budget}, ca.Extraction, true
+	}
+	err := format.Extract(ctx, source, func(_ context.Context, f archives.FileInfo) error {
+		hdr, ok := r.entryHeader(f)
+		if !ok || exclusions.Excludes(hdr.Name) {
 			return nil
+		}
+		if !f.Mode().IsRegular() {
+			return r.add(hdr, nil)
 		}
 		entry, err := f.Open()
 		if err != nil {
@@ -164,16 +170,7 @@ func (r *Resolver) extract(ctx context.Context, format archives.Extractor, conte
 				log.WithFields("entry", hdr.Name, "error", err).Trace("unable to close archive entry")
 			}
 		}()
-		if !skip {
-			if err := r.add(hdr, entry); err != nil {
-				return err
-			}
-		}
-		if !drains {
-			return nil
-		}
-		// what add left unread (the rest of an entry over the size cap, or one skipped whole) is charged here
-		return r.drain(ctx, entry)
+		return r.add(hdr, entry)
 	})
 	r.finish()
 	if errors.Is(err, ErrDiskLimitReached) {

@@ -44,7 +44,8 @@ func (r *Resolver) put(b *blob, content io.Reader) error {
 	for {
 		n, readErr := content.Read(r.chunk)
 		if n > 0 {
-			if !r.budget.take(int64(n)) {
+			// content read through a meteredReader was charged as it was decoded
+			if !r.metered && !r.budget.take(int64(n)) {
 				return errBudgetSpent
 			}
 			if err := r.write(b, r.chunk[:n]); err != nil {
@@ -62,25 +63,23 @@ func (r *Resolver) put(b *blob, content io.Reader) error {
 	return nil
 }
 
-// drain reads the rest of a streaming entry without keeping it, charging the decompression budget for
-// every byte, so skipping an entry is not a way around the budget. A read error ends the drain quietly;
-// the archive reader reports a broken stream at the next entry.
-func (r *Resolver) drain(ctx context.Context, content io.Reader) error {
-	if r.chunk == nil {
-		r.chunk = make([]byte, copyChunkSize)
+// meteredReader charges the decompression budget for every byte read through it and stops once ctx is
+// done, so nothing a decoder produces gets around the budget.
+type meteredReader struct {
+	ctx    context.Context
+	reader io.Reader
+	budget *Budget
+}
+
+func (m *meteredReader) Read(p []byte) (int, error) {
+	if err := m.ctx.Err(); err != nil {
+		return 0, err
 	}
-	for {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-		n, err := content.Read(r.chunk)
-		if n > 0 && !r.budget.take(int64(n)) {
-			return errBudgetSpent
-		}
-		if err != nil {
-			return nil
-		}
+	n, err := m.reader.Read(p)
+	if n > 0 && !m.budget.take(int64(n)) {
+		return 0, errBudgetSpent
 	}
+	return n, err
 }
 
 // write appends p to b: into memory while the memory limit admits it, otherwise into the spill file

@@ -43,6 +43,7 @@ type Resolver struct {
 	archiveCoordinates file.Coordinates
 	charge             *charge
 	budget             *Budget
+	metered            bool // the budget is charged as the archive is decoded (see meteredReader), not in put
 
 	// content is held in memory while the memory limit admits it and in one spill file once it does
 	// not. The file is created on first use, so an archive that stays in memory never touches the
