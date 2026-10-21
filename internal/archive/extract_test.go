@@ -215,6 +215,19 @@ func TestResolver_extract_dataEdgeCases(t *testing.T) {
 		}
 	})
 
+	t.Run("an entry name with too many path components is skipped and reported", func(t *testing.T) {
+		atCap := strings.Repeat("a/", maxEntryNameDepth-1) + "f"
+		data := zipBytes(t, map[string]string{
+			atCap: "at the cap",
+			strings.Repeat("b/", maxEntryNameDepth) + "f": "over the cap",
+		})
+		r, _ := extractBytes(t, data, "test.zip", nil)
+		names := storedNames(t, r)
+		assert.Contains(t, names, atCap)
+		assert.Len(t, names, maxEntryNameDepth, "only the entry at the cap and its implied directories")
+		assert.ErrorContains(t, r.Truncated, "path components")
+	})
+
 	t.Run("an over-long entry name is skipped", func(t *testing.T) {
 		data := zipBytes(t, map[string]string{
 			strings.Repeat("a/", maxEntryNameBytes) + "f": "deep",
@@ -526,12 +539,12 @@ func TestExtract_entryCountBombIsBoundedByTheMemoryLimit(t *testing.T) {
 }
 
 func TestExtract_deepPathBombIsBoundedByTheMemoryLimit(t *testing.T) {
-	// 100 entries whose 4 KiB names each imply 500 distinct directories would be 50,000 nodes; the
-	// implied directories are charged as nodes, so the memory limit bounds them too
+	// 100 entries whose names each imply 250 distinct directories would be 25,000 nodes; the implied
+	// directories are charged as nodes, so the memory limit bounds them too
 	files := map[string]string{}
 	for i := range 100 {
 		var b strings.Builder
-		for j := range 500 {
+		for j := range maxEntryNameDepth - 6 {
 			fmt.Fprintf(&b, "%03d-%03d/", i, j)
 		}
 		b.WriteString("f")

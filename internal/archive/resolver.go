@@ -109,13 +109,16 @@ func (r *Resolver) add(hdr tar.Header, content io.Reader) error {
 		return nil
 	}
 
-	// directories the path implies that do not exist yet are nodes this entry pays for
+	// directories the path implies that do not exist yet are nodes this entry pays for. Walking from the
+	// deepest parent up stops at the first that exists, since its ancestors exist too
 	var newDirs []string
-	for i := 1; i < len(entryPath); i++ {
-		if entryPath[i] == '/' && !r.tree.HasPath(stereoscopeFile.Path(entryPath[:i])) {
-			newDirs = append(newDirs, entryPath[:i])
+	for i := strings.LastIndexByte(entryPath, '/'); i > 0; i = strings.LastIndexByte(entryPath[:i], '/') {
+		if r.tree.HasPath(stereoscopeFile.Path(entryPath[:i])) {
+			break
 		}
+		newDirs = append(newDirs, entryPath[:i])
 	}
+	slices.Reverse(newDirs)
 	if !r.chargeIndex(approxIndexBytes(hdr) + int64(len(newDirs))*approxIndexBytesPerEntry) {
 		return ErrDiskLimitReached
 	}
@@ -459,6 +462,10 @@ func (entryReader) Close() error { return nil }
 // so a longer name is a cheap way to inflate the index and no filesystem could hold it anyway.
 const maxEntryNameBytes = 4096
 
+// maxEntryNameDepth is the most path components an entry name may have. Adding an entry costs work per
+// component, and no real archive nests anywhere near this deep.
+const maxEntryNameDepth = 256
+
 // entryHeader builds the header stored for one archive entry, or reports false for an entry not worth
 // carrying: device nodes, fifos and sockets, which no cataloger reads, and names that cannot be a path
 // inside the archive. A name refused as unsafe marks the resolver truncated.
@@ -511,6 +518,9 @@ func entryName(name string) (string, error) {
 		return "", fmt.Errorf("entry name %q contains a control character", name)
 	}
 	cleaned := strings.TrimPrefix(path.Clean("/"+name), "/")
+	if depth := strings.Count(cleaned, "/") + 1; depth > maxEntryNameDepth {
+		return "", fmt.Errorf("entry name of %d path components exceeds the %d component cap", depth, maxEntryNameDepth)
+	}
 	if strings.Contains(cleaned, file.ArchivePathSeparator) {
 		return "", fmt.Errorf("entry name %q contains the archive path separator %q", name, file.ArchivePathSeparator)
 	}
