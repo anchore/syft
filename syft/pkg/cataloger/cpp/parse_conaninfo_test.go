@@ -1,8 +1,13 @@
 package cpp
 
 import (
+	"context"
+	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -125,4 +130,20 @@ func TestParseConaninfo(t *testing.T) {
 	}
 
 	pkgtest.TestFileParser(t, fixture, parseConaninfo, expected, expectedRelationships)
+}
+
+func TestParseConaninfo_pathFromTheFileReference(t *testing.T) {
+	// a scan rooted at the package directory: only the reference's real path has the package layout
+	fixture := "testdata/conaninfo/mfast/1.2.2/my_user/my_channel/package/9d1f076b471417647c2022a78d5e2c1f834289ac/conaninfo.txt"
+	f, err := os.Open(fixture)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = f.Close() })
+
+	ref := stereoscopeFile.NewFileReference(stereoscopeFile.Path("/home/user/.conan/data/mfast/1.2.2/my_user/my_channel/package/9d1f076b471417647c2022a78d5e2c1f834289ac/conaninfo.txt"))
+	location := file.NewLocationFromDirectory("/conaninfo.txt", "", *ref)
+
+	pkgs, _, err := parseConaninfo(context.Background(), nil, nil, file.NewLocationReadCloser(location, f))
+	require.NoError(t, err)
+	require.NotEmpty(t, pkgs)
+	require.Equal(t, "mfast", pkgs[len(pkgs)-1].Name)
 }

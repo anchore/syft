@@ -81,7 +81,12 @@ func parseFullRequiresLine(line string, reader file.LocationReadCloser, pkgs *[]
 // - recipe revision (recipe_hash)
 func parseConaninfo(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// First set the base package info by checking the relative path
-	fullFilePath := reader.LocalPath()
+	// the reference's real path is the absolute host path, which holds the package layout even when the
+	// scan is rooted below .conan/data
+	fullFilePath := string(reader.Reference().RealPath)
+	if fullFilePath == "" {
+		fullFilePath = reader.LocalPath()
+	}
 
 	mainMetadata, err := parseConanMetadataFromFilePath(fullFilePath)
 	if err != nil {
