@@ -647,7 +647,8 @@ func (r *Resolver) findParentPomByRelativePath(ctx context.Context, pom *Project
 	if relativePath == "" {
 		return nil
 	}
-	p := pomLocation.Path()
+	// relative to the pom within its own archive, so "../" can't clean past the archive boundary
+	p := pomLocation.LocalPath()
 	p = path.Dir(p)
 	p = path.Join(p, relativePath)
 	p = path.Clean(p)

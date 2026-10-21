@@ -205,12 +205,13 @@ func NewVirtualLocationFromDirectory(responsePath, responseAccessPath string, re
 	}
 }
 
-// Path is the path this location was accessed by, or its local path (see Coordinates.LocalPath).
+// Path is the path this location was accessed by, or its full path (see Coordinates.FullNestedPath). For a
+// file within an archive both are full paths, so use LocalPath for path arithmetic against the resolver.
 func (l Location) Path() string {
 	if l.AccessPath != "" {
 		return l.AccessPath
 	}
-	return l.LocalPath()
+	return l.FullNestedPath()
 }
 
 func (l Location) String() string {

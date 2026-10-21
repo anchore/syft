@@ -111,3 +111,12 @@ func TestCoordinates_LocalPath(t *testing.T) {
 	assert.Equal(t, "/x.txt", Coordinates{RealPath: "/data/Hello!/a.zip", FullPath: "/data/Hello!/a.zip!/x.txt"}.LocalPath())
 	assert.Equal(t, "/x.txt", Coordinates{RealPath: "/data/Hello!/a.zip", FullPath: "/data/Hello!/a.zip!/b.jar!/x.txt"}.LocalPath())
 }
+
+func TestLocation_Path(t *testing.T) {
+	nested := Coordinates{RealPath: "/a.war", FullPath: "/a.war!/lib/b.jar!/META-INF/MANIFEST.MF"}
+	assert.Equal(t, "/a.jar", NewLocation("/a.jar").Path())
+	assert.Equal(t, "/link", NewVirtualLocation("/a.jar", "/link").Path())
+	assert.Equal(t, nested.FullPath, NewLocationFromCoordinates(nested).Path())
+	assert.Equal(t, nested.FullPath, Location{LocationData: LocationData{Coordinates: nested}}.Path(), "a nested location without an access path is still full")
+	assert.Equal(t, nested.FullPath, NewVirtualLocationFromCoordinates(nested, nested.FullPath).Path())
+}
