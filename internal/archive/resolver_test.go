@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -83,15 +84,40 @@ func TestResolver_add_indexMakesRoomBySpillingHeldContent(t *testing.T) {
 	assert.Equal(t, strings.Repeat("a", 100), readStore(t, r)["a.txt"].body)
 }
 
-func TestResolver_add_firstEntryAtAPathWins(t *testing.T) {
+func TestResolver_add_lastEntryAtAPathWins(t *testing.T) {
 	r, _ := resolverIn(t, memCharge(1<<20))
 
 	require.NoError(t, r.add(regularHeader("a.txt", 5), bytes.NewReader([]byte("first"))))
 	require.NoError(t, r.add(regularHeader("a.txt", 6), bytes.NewReader([]byte("second"))))
+	require.NoError(t, r.add(regularHeader("b.txt", 1), bytes.NewReader([]byte("b"))))
+	require.NoError(t, r.add(tar.Header{Name: "b.txt", Typeflag: tar.TypeSymlink, Linkname: "a.txt"}, nil))
 	r.finish()
 
-	assert.Equal(t, "first", readStore(t, r)["a.txt"].body)
-	assert.Equal(t, 1, r.entries)
+	assert.Equal(t, "second", readStore(t, r)["a.txt"].body)
+	assert.Equal(t, "a.txt", readStore(t, r)["b.txt"].linkTarget, "a later entry may change kind")
+	assert.Equal(t, 2, r.entries)
+	assert.Equal(t, int64(len("second")), r.heldInMemory(), "the earlier copy is refunded")
+
+	locations, err := r.FilesByGlob("**/a.txt")
+	require.NoError(t, err)
+	require.Len(t, locations, 1)
+	reader, err := r.FileContentsByLocation(locations[0])
+	require.NoError(t, err)
+	assert.Equal(t, "second", readEntry(t, reader.(entryReader).ReaderAtSeeker))
+}
+
+func TestResolver_add_fileAndDirectoryAtOnePathKeepsTheFirst(t *testing.T) {
+	r, _ := resolverIn(t, memCharge(1<<20))
+
+	require.NoError(t, r.add(regularHeader("a/b", 1), bytes.NewReader([]byte("x"))))
+	require.NoError(t, r.add(regularHeader("a", 4), bytes.NewReader([]byte("file"))))
+	require.NoError(t, r.add(regularHeader("c", 4), bytes.NewReader([]byte("file"))))
+	require.NoError(t, r.add(tar.Header{Name: "c", Typeflag: tar.TypeDir, Mode: 0o755}, nil))
+	r.finish()
+
+	got := readStore(t, r)
+	assert.Equal(t, stereoscopeFile.TypeDirectory, got["a"].kind)
+	assert.Equal(t, "file", got["c"].body)
 }
 
 func TestResolver_pathsAndContents(t *testing.T) {

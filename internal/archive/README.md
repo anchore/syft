@@ -67,8 +67,8 @@ PATH_MAX are refused, and nesting stops at the task's
 Entries are indexed in a stereoscope `filetree.FileTree` + `filetree.Index` and searched with
 `filetree.SearchContext`, the same index the directory and image resolvers use. Paths are
 archive-relative with no leading slash; a leading slash on a query is tolerated. Directories implied
-by entry paths exist for `HasPath` but are never files. The first entry at a path wins over later
-duplicates.
+by entry paths exist for `HasPath` but are never files. The last entry at a path wins over earlier
+duplicates, as it does on extraction; a file and a directory at one path keep the first.
 
 Links resolve inside the archive only, as the file tree resolves them: a hard link names its target
 from the archive root. A lookup matching a link and its target returns one location, with

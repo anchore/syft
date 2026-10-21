@@ -99,13 +99,17 @@ func approxIndexBytes(hdr tar.Header) int64 {
 
 // add stores and indexes one entry, reading its content in full now since archive readers are
 // sequential. Reaching a limit stores nothing for this entry and returns ErrDiskLimitReached; entries
-// added before it remain usable. The first entry at a path wins.
+// added before it remain usable. The last entry at a path wins, as it does when the archive is
+// extracted (tar appends updates, an OCI layer applies in order, and java's legacy zip reading
+// overwrites too), so a stale earlier copy, such as an older pom.properties, can't stand in for what is
+// really there.
 func (r *Resolver) add(hdr tar.Header, content io.Reader) error {
 	entryPath := path.Clean("/" + hdr.Name)
 	if entryPath == "/" {
 		return nil
 	}
-	if exists, res, _ := r.tree.File(stereoscopeFile.Path(entryPath)); exists && res.HasReference() {
+	replacing, ok := r.replace(entryPath, hdr)
+	if !ok {
 		return nil
 	}
 
@@ -158,10 +162,35 @@ func (r *Resolver) add(hdr tar.Header, content io.Reader) error {
 		log.WithFields("entry", hdr.Name, "error", err).Trace("skipping archive entry")
 		return nil
 	}
-	if hdr.Typeflag != tar.TypeDir {
+	if hdr.Typeflag != tar.TypeDir && !replacing {
 		r.entries++
 	}
 	return nil
+}
+
+// replace clears the way for an entry at a path that is already held, reporting whether it did and
+// false when the entry should be dropped. A later non-directory entry replaces an earlier one, refunding
+// what it held. A file and a directory at one path keep the first, since swapping kinds would mean
+// re-parenting what is already beneath it.
+func (r *Resolver) replace(entryPath string, hdr tar.Header) (replacing, ok bool) {
+	exists, res, _ := r.tree.File(stereoscopeFile.Path(entryPath))
+	if !exists || !res.HasReference() {
+		return false, true
+	}
+	earlier, err := r.index.Get(*res.Reference)
+	if err != nil || earlier.IsDir() || hdr.Typeflag == tar.TypeDir {
+		return false, false
+	}
+	// a removed node's index entry is left behind, but searches only answer with references in the tree
+	if err := r.tree.RemovePath(stereoscopeFile.Path(entryPath)); err != nil {
+		log.WithFields("entry", hdr.Name, "error", err).Trace("unable to replace archive entry")
+		return false, false
+	}
+	if b := r.content[res.ID()]; b != nil {
+		r.discard(b)
+	}
+	delete(r.content, res.ID())
+	return true, true
 }
 
 func (r *Resolver) store(rooted string, hdr tar.Header, b *blob) error {
