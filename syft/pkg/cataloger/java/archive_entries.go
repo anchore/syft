@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal"
@@ -20,6 +21,10 @@ type archiveEntries interface {
 	// glob returns the entries matching any pattern. Patterns are written against a leading slash
 	// ("/META-INF/*"); the names returned have none.
 	glob(patterns ...string) []string
+
+	// globFold is glob ignoring case, for names java tooling does not agree on the case of
+	// ("META-INF/LICENSE" vs "meta-inf/license", "X.JAR").
+	globFold(patterns ...string) []string
 
 	// contents reads the named entries, keyed by the same names.
 	contents(ctx context.Context, names ...string) (map[string]string, error)
@@ -40,7 +45,11 @@ func newZipEntries(ctx context.Context, archivePath string) (*zipEntries, error)
 }
 
 func (z *zipEntries) glob(patterns ...string) []string {
-	return z.fileManifest.GlobMatch(patterns...)
+	return z.fileManifest.GlobMatch(false, patterns...)
+}
+
+func (z *zipEntries) globFold(patterns ...string) []string {
+	return z.fileManifest.GlobMatch(true, patterns...)
 }
 
 func (z *zipEntries) contents(ctx context.Context, names ...string) (map[string]string, error) {
@@ -68,6 +77,31 @@ func (r *resolverEntries) glob(patterns ...string) []string {
 			}
 			seen.Add(name)
 			names = append(names, name)
+		}
+	}
+	return names
+}
+
+// globFold walks every entry, since a resolver's globs are case-sensitive. The callers ask for a handful
+// of names once per archive, so the walk is cheap next to cataloging the archive.
+func (r *resolverEntries) globFold(patterns ...string) []string {
+	var folded []string
+	for _, pattern := range patterns {
+		folded = append(folded, strings.ToLower(pattern))
+	}
+	seen := strset.New()
+	var names []string
+	for location := range r.resolver.AllLocations(context.Background()) {
+		name := strings.TrimPrefix(location.LocalPath(), "/")
+		if seen.Has(name) {
+			continue
+		}
+		for _, pattern := range folded {
+			if ok, _ := doublestar.Match(pattern, "/"+strings.ToLower(name)); ok {
+				seen.Add(name)
+				names = append(names, name)
+				break
+			}
 		}
 	}
 	return names

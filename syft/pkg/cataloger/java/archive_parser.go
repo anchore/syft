@@ -230,7 +230,7 @@ func (j *archiveParser) parse(ctx context.Context, parentPkg *pkg.Package) ([]pk
 	} else if !archive.NestedCatalogingEnabled(ctx) {
 		// nothing will catalog these, so record them as unknowns
 		// .jar and .war files are present in archives, are others? or generally just consider them top-level?
-		nestedArchives := j.entries.glob("**/*.jar", "**/*.war")
+		nestedArchives := j.entries.globFold("**/*.jar", "**/*.war")
 		if len(nestedArchives) > 0 {
 			slices.Sort(nestedArchives)
 			errs = unknown.Appendf(errs, j.location, "nested archives not cataloged: %v", strings.Join(nestedArchives, ", "))
@@ -606,7 +606,7 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) []pkg.L
 
 	for _, glob := range []string{"/META-INF/*", "/*"} {
 		var licenseMatches []string
-		for _, f := range j.entries.glob(glob) {
+		for _, f := range j.entries.globFold(glob) {
 			if licenses.IsLicenseFile(path.Base(f)) {
 				licenseMatches = append(licenseMatches, f)
 			}
@@ -657,7 +657,7 @@ func (j *archiveParser) versionFromPropertiesFile(ctx context.Context, manifest 
 		return ""
 	}
 
-	matches := j.entries.glob("/version.properties")
+	matches := j.entries.globFold("/version.properties")
 	if len(matches) != 1 {
 		return ""
 	}
@@ -700,7 +700,7 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, pare
 // associating each discovered package to the given parent package.
 func discoverPkgsFromZip(ctx context.Context, location file.Location, archivePath, contentPath string, fileManifest intFile.ZipFileManifest, parentPkg *pkg.Package, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
 	// search and parse pom.properties files & fetch the contents
-	openers, err := intFile.ExtractFromZipToUniqueTempFile(ctx, archivePath, contentPath, fileManifest.GlobMatch(archiveFormatGlobs...)...)
+	openers, err := intFile.ExtractFromZipToUniqueTempFile(ctx, archivePath, contentPath, fileManifest.GlobMatch(false, archiveFormatGlobs...)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from zip: %w", err)
 	}
