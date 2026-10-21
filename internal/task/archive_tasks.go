@@ -181,7 +181,9 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	// the decoders run on untrusted bytes; a panic in one costs this archive, not the scan
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("panic while cataloging archive: %v at:\n%s", r, debug.Stack())
+			// the stack goes to the log, not the reason: the reason lands in the published SBOM's unknowns
+			log.WithFields("path", candidate.location.FullNestedPath()).Debugf("archive cataloging panic stack:\n%s", debug.Stack())
+			err = fmt.Errorf("panic while cataloging archive: %v", r)
 		}
 	}()
 

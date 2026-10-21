@@ -98,7 +98,7 @@ func Test_archiveCataloger_aPanicCostsOnlyThatArchive(t *testing.T) {
 	require.NoError(t, remaining)
 	require.Len(t, coordErrs, 1)
 	assert.Equal(t, "/bad.zip", coordErrs[0].Coordinates.RealPath)
-	assert.ErrorContains(t, coordErrs[0].Reason, "panic while cataloging archive: decoder blew up")
+	assert.EqualError(t, coordErrs[0].Reason, "panic while cataloging archive: decoder blew up", "no stack trace in the SBOM-bound reason")
 	assert.Equal(t, []string{"/good.zip"}, seen, "the sibling is still cataloged")
 }
 
