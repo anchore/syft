@@ -69,11 +69,15 @@ const (
 )
 
 type scanOptions struct {
-	options.Config      `yaml:",inline" mapstructure:",squash"`
-	options.Output      `yaml:",inline" mapstructure:",squash"`
-	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
-	options.Catalog     `yaml:",inline" mapstructure:",squash"`
-	Cache               options.Cache `json:"-" yaml:"cache" mapstructure:"cache"`
+	options.Config       `yaml:",inline" mapstructure:",squash"`
+	options.Output       `yaml:",inline" mapstructure:",squash"`
+	options.UpdateCheck  `yaml:",inline" mapstructure:",squash"`
+	options.Catalog      `yaml:",inline" mapstructure:",squash"`
+	Cache                options.Cache `json:"-" yaml:"cache" mapstructure:"cache"`
+	AttestedSBOM         string        `json:"attested-sbom" yaml:"attested-sbom" mapstructure:"attested-sbom"`
+	AttestedSBOMVerify   bool          `json:"attested-sbom-verify" yaml:"attested-sbom-verify" mapstructure:"attested-sbom-verify"`
+	AttestedSBOMIssuer   string        `json:"attested-sbom-issuer" yaml:"attested-sbom-issuer" mapstructure:"attested-sbom-issuer"`
+	AttestedSBOMIdentity string        `json:"attested-sbom-identity" yaml:"attested-sbom-identity" mapstructure:"attested-sbom-identity"`
 }
 
 func defaultScanOptions() *scanOptions {
@@ -90,7 +94,7 @@ func Scan(app clio.Application) *cobra.Command {
 
 	opts := defaultScanOptions()
 
-	return app.SetupCommand(&cobra.Command{
+	cmd := app.SetupCommand(&cobra.Command{
 		Use:   "scan [SOURCE]",
 		Short: "Generate an SBOM",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container images and filesystems",
@@ -107,6 +111,15 @@ func Scan(app clio.Application) *cobra.Command {
 			return runScan(cmd.Context(), id, opts, args[0])
 		},
 	}, opts)
+	cmd.Flags().StringVar(&opts.AttestedSBOM, "attested-sbom", "off",
+		"import OCI-attested SBOMs (off, additive, replacement); unverified unless --attested-sbom-verify is set")
+	cmd.Flags().BoolVar(&opts.AttestedSBOMVerify, "attested-sbom-verify", false,
+		"require Sigstore DSSE signature, Fulcio identity, Rekor and image-digest verification (fail closed)")
+	cmd.Flags().StringVar(&opts.AttestedSBOMIssuer, "attested-sbom-issuer", "",
+		"expected exact Fulcio OIDC certificate issuer (required with --attested-sbom-verify)")
+	cmd.Flags().StringVar(&opts.AttestedSBOMIdentity, "attested-sbom-identity", "",
+		"expected exact Fulcio signing certificate identity/SAN (required with --attested-sbom-verify)")
+	return cmd
 }
 
 func (o *scanOptions) PostLoad() error {
@@ -210,7 +223,7 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 		}
 	}()
 
-	s, err := generateSBOM(ctx, id, src, &opts.Catalog)
+	s, err := produceScanSBOM(ctx, id, src, opts, userInput, sources...)
 	if err != nil {
 		return err
 	}
