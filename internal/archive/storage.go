@@ -2,6 +2,7 @@ package archive
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -59,6 +60,27 @@ func (r *Resolver) put(b *blob, content io.Reader) error {
 		return readErr
 	}
 	return nil
+}
+
+// drain reads the rest of a streaming entry without keeping it, charging the decompression budget for
+// every byte, so skipping an entry is not a way around the budget. A read error ends the drain quietly;
+// the archive reader reports a broken stream at the next entry.
+func (r *Resolver) drain(ctx context.Context, content io.Reader) error {
+	if r.chunk == nil {
+		r.chunk = make([]byte, copyChunkSize)
+	}
+	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		n, err := content.Read(r.chunk)
+		if n > 0 && !r.budget.take(int64(n)) {
+			return errBudgetSpent
+		}
+		if err != nil {
+			return nil
+		}
+	}
 }
 
 // write appends p to b: into memory while the memory limit admits it, otherwise into the spill file

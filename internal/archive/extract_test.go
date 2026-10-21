@@ -282,6 +282,66 @@ func TestResolver_extract_excludedEntriesAreNeverStored(t *testing.T) {
 	assert.Equal(t, approxIndexBytes(tar.Header{Name: "keep.txt"})+4, mem, "an excluded entry costs nothing")
 }
 
+// a compressed tar reader decompresses a skipped entry to reach the next header, so skipping must still
+// spend the budget or an excluded or oversized entry would decompress without bound
+func TestResolver_extract_skippedCompressedTarBytesSpendTheBudget(t *testing.T) {
+	big := strings.Repeat("\x00", 4<<20)
+	tests := []struct {
+		name       string
+		exclusions []string
+		entryCap   int64
+	}{
+		{name: "excluded entry", exclusions: []string{"**/*.bin"}, entryCap: maxEntryBytes},
+		{name: "entry over the size cap", entryCap: 1 << 10},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func(prev int64) { maxEntryBytes = prev }(maxEntryBytes)
+			maxEntryBytes = tt.entryCap
+
+			data := tarGzFromEntries(t, []testEntry{{name: "bomb.bin", body: big}, {name: "after.txt", body: "after"}})
+			r, _ := resolverIn(t, memCharge(1<<30))
+			r.budget = NewBudget(1 << 20)
+			content := bytes.NewReader(data)
+			format, err := identifyFormat(context.Background(), "test.tar.gz", content)
+			require.NoError(t, err)
+
+			require.NoError(t, r.extract(context.Background(), format, content, NewExclusions(tt.exclusions)))
+			require.Error(t, r.Truncated)
+			assert.Empty(t, storedNames(t, r), "the walk stopped at the entry that spent the budget")
+			assert.Zero(t, r.budget.remaining)
+		})
+	}
+}
+
+// a zip or a plain tar seeks past what it skips, so an excluded entry there costs nothing
+func TestResolver_extract_skippedSeekableBytesAreFree(t *testing.T) {
+	entries := []testEntry{{name: "bomb.bin", body: strings.Repeat("\x00", 4<<20)}, {name: "after.txt", body: "after"}}
+	var plainTar bytes.Buffer
+	tw := tar.NewWriter(&plainTar)
+	for _, e := range entries {
+		hdr := e.header()
+		require.NoError(t, tw.WriteHeader(&hdr))
+		_, err := tw.Write([]byte(e.body))
+		require.NoError(t, err)
+	}
+	require.NoError(t, tw.Close())
+
+	for name, data := range map[string][]byte{"test.zip": zipFromEntries(t, entries), "test.tar": plainTar.Bytes()} {
+		t.Run(name, func(t *testing.T) {
+			r, _ := resolverIn(t, memCharge(1<<30))
+			r.budget = NewBudget(1 << 20)
+			content := bytes.NewReader(data)
+			format, err := identifyFormat(context.Background(), name, content)
+			require.NoError(t, err)
+
+			require.NoError(t, r.extract(context.Background(), format, content, NewExclusions([]string{"**/*.bin"})))
+			require.NoError(t, r.Truncated)
+			assert.Equal(t, []string{"after.txt"}, storedNames(t, r))
+		})
+	}
+}
+
 func TestExtract_readsEntriesAndDigestsTheArchive(t *testing.T) {
 	data := zipBytes(t, map[string]string{"dir/hello.txt": "hello world"})
 
