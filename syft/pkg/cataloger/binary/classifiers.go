@@ -972,7 +972,10 @@ func DefaultClassifiers() []binutils.Classifier {
 			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// Pattern found in the binary: "%s version 7.1.1" or "%s version 6.0"
 				// When executed outputs: "ffmpeg version 7.1.1" or "ffmpeg version 6.0"
-				`(?m)%s version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?)`,
+				// The optional "+" suffix preserves semver build metadata (e.g. a
+				// backported-patch stamp like "9.0.3+dev.9.0.2.p1.eb9cef3"); see the
+				// ffmpeg-library classifier for why "-" pre-release suffixes stay truncated.
+				`(?m)%s version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)`,
 			),
 			Package: "ffmpeg",
 			PURL:    mustPURL("pkg:generic/ffmpeg@version"),
@@ -982,8 +985,15 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "ffmpeg-library",
 			FileGlob: "**/libav*",
 			EvidenceMatcher: binutils.MatchAny(
-				// Primary pattern: FFmpeg version found in most libraries
-				m.FileContentsVersionMatcher(`(?m)FFmpeg version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?)`),
+				// Primary pattern: FFmpeg version found in most libraries.
+				// The optional "+" suffix preserves semver build metadata (e.g. a
+				// backported-patch stamp like "9.0.3+dev.9.0.2.p1.eb9cef3") instead of
+				// truncating to X.Y[.Z]. Build metadata compares equal to its core
+				// version, so this does not change vulnerability matching. A "-"
+				// pre-release suffix (e.g. a distro revision "6.1.1-3ubuntu5") is
+				// deliberately NOT captured: it sorts below the release in semver and
+				// would corrupt version-range matching, so it stays truncated as before.
+				m.FileContentsVersionMatcher(`(?m)FFmpeg version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)`),
 				// Fallback: library-specific version patterns for libavcodec and libavformat
 				m.FileContentsVersionMatcher(`(?m)Lavc(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 				m.FileContentsVersionMatcher(`(?m)Lavf(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
@@ -996,8 +1006,9 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "ffmpeg-library",
 			FileGlob: "**/libswresample*",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// FFmpeg version pattern for libswresample
-				`(?m)FFmpeg version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?)`),
+				// FFmpeg version pattern for libswresample. Same optional "+" build
+				// metadata handling as the ffmpeg-library classifier above.
+				`(?m)FFmpeg version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)`),
 			Package: "ffmpeg",
 			PURL:    mustPURL("pkg:generic/ffmpeg@version"),
 			CPEs:    singleCPE("cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
