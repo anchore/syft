@@ -433,6 +433,23 @@ func TestCatalog_MergeRecords(t *testing.T) {
 	}
 }
 
+func TestCatalog_PackagesByPath_nestedPackagesAreNotFoundByTheOuterArchive(t *testing.T) {
+	jar := Package{Name: "jar", Type: JavaPkg, Locations: file.NewLocationSet(file.NewLocation("/opt/x.jar"))}
+	nested := file.Coordinates{RealPath: "/opt/x.jar", FullPath: "/opt/x.jar!/lib/a.so"}
+	so := Package{Name: "so", Type: BinaryPkg, Locations: file.NewLocationSet(file.NewLocationFromCoordinates(nested))}
+	c := NewCollection(jar, so)
+
+	names := func(pkgs []Package) []string {
+		var out []string
+		for _, p := range pkgs {
+			out = append(out, p.Name)
+		}
+		return out
+	}
+	assert.Equal(t, []string{"jar"}, names(c.PackagesByPath("/opt/x.jar")))
+	assert.Equal(t, []string{"so"}, names(c.PackagesByPath(nested.FullPath)))
+}
+
 func TestCatalog_EnumerateNilCatalog(t *testing.T) {
 	var c *Collection
 	assert.Empty(t, c.Enumerate())

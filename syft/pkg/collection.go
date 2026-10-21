@@ -62,7 +62,7 @@ func (c *Collection) Package(id artifact.ID) *Package {
 }
 
 // PackagesByPath returns all packages that were discovered from the given path: a file's full path or
-// access path, or the top path of an archive, which answers with every package found within it.
+// access path. A package found within an archive is not returned for the archive's own path.
 func (c *Collection) PackagesByPath(path string) []Package {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -164,12 +164,12 @@ func (c *Collection) addPathsToIndex(p Package) {
 	}
 }
 
-// indexedPaths are the paths a package is found by: each location's full path and access path, and
-// the top path of an archive it was found within.
+// indexedPaths are the paths a package is found by: each location's full path and access path. The real
+// path of a nested location is the outermost archive, so it is left out.
 func indexedPaths(p Package) []string {
 	paths := strset.New()
 	for _, l := range p.Locations.ToSlice() {
-		paths.Add(l.RealPath, l.AccessPath, l.FullNestedPath())
+		paths.Add(l.AccessPath, l.FullNestedPath())
 	}
 	paths.Remove("")
 	return paths.List()

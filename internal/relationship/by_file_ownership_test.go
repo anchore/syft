@@ -103,7 +103,9 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			},
 		},
 		{
-			name: "top-level-owner-of-an-archive-owns-packages-within-it",
+			// the archive's own package (when it has one) is found by its path; what is inside it is
+			// linked to that package by CONTAINS, not owned by whoever owns the archive file
+			name: "top-level-owner-of-an-archive-does-not-own-packages-within-it",
 			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
 				parent := pkg.Package{
 					Locations: file.NewLocationSet(file.NewLocation("/var/lib/rpm/Packages")),
@@ -123,14 +125,7 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 				}
 				child.SetID()
 
-				relationship := artifact.Relationship{
-					From: parent,
-					To:   child,
-					Type: artifact.OwnershipByFileOverlapRelationship,
-					Data: ownershipByFilesMetadata{Files: []string{"/opt/bundle.tar"}},
-				}
-
-				return []pkg.Package{parent, child}, []artifact.Relationship{relationship}
+				return []pkg.Package{parent, child}, nil
 			},
 		},
 		{
