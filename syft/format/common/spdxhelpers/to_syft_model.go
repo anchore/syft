@@ -549,7 +549,7 @@ func coordinatesFromFile(name, comment, id string) file.Coordinates {
 	if v, ok := strings.CutPrefix(id, layerIDCommentPrefix); ok {
 		c.FileSystemID = v
 	}
-	return c
+	return internal.NormalizeCoordinates(c)
 }
 
 func toSyftLocation(f *spdx.File) file.Location {
