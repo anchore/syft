@@ -2,7 +2,6 @@ package unknown
 
 import (
 	"regexp"
-	"strings"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
@@ -20,7 +19,9 @@ func ProcessPathErrors(err error) error {
 	if pathErrorRegex.MatchString(errText) {
 		foundPath := pathErrorRegex.ReplaceAllString(err.Error(), "$1")
 		if foundPath != "" {
-			return New(file.NewLocationFromCoordinates(pathCoordinates(foundPath)), err)
+			// a path in an error text is taken as is: nesting is never inferred from "!/" in it, since a real
+			// path can hold one too. A caller with the location in hand should use New instead
+			return New(file.NewLocation(foundPath), err)
 		}
 	}
 	unknowns, remainingErrors := ExtractCoordinateErrors(err)
@@ -31,14 +32,4 @@ func ProcessPathErrors(err error) error {
 		out = append(out, &u)
 	}
 	return Join(out...)
-}
-
-// pathCoordinates names the file at a path from a resolver error, which for a file within an archive is
-// a full path: the real path is what precedes the first archive separator.
-func pathCoordinates(p string) file.Coordinates {
-	realPath, _, nested := strings.Cut(p, file.ArchivePathSeparator)
-	if !nested {
-		return file.NewCoordinates(p, "")
-	}
-	return file.Coordinates{RealPath: realPath, FullPath: p}
 }

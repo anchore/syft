@@ -36,6 +36,13 @@ func Test_ProcessPathErrors(t *testing.T) {
 			},
 		},
 		{
+			errorText: `path="/data/Hello!/world.txt"`,
+			expected: &CoordinateError{
+				Coordinates: file.NewCoordinates("/data/Hello!/world.txt", ""),
+				Reason:      fmt.Errorf(`path="/data/Hello!/world.txt"`),
+			},
+		},
+		{
 			errorText: "all your base are belong to us",
 			expected:  nil,
 		},
