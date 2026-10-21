@@ -20,7 +20,7 @@ import (
 // NewArchiveCataloger returns a new Java archive cataloger object for detecting packages with archives (jar, war, ear, par, sar, jpi, hpi, and native-image formats)
 func NewArchiveCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
 	if a := cfg.ArchiveSearchConfig; a.MaxDepth != 0 || a.MaxMemoryBytes != 0 || a.MaxDiskBytes != 0 {
-		log.Debug("java archive cataloger ignores nested archive depth and limits, set them with syft.CreateSBOMConfig.Archive")
+		log.Warn("java archive cataloger ignores nested archive depth and limits, set them with syft.CreateSBOMConfig.Archive")
 	}
 	gap := newGenericArchiveParserAdapter(cfg)
 

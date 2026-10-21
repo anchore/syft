@@ -11,6 +11,7 @@ type ArchiveCatalogerConfig struct {
 	// Deprecated: use syft.CreateSBOMConfig.Archive. Only the two Include* booleans are read here, and
 	// setting MaxDepth, MaxMemoryBytes or MaxDiskBytes is a configuration error. This will be removed in a
 	// future release.
+	// capabilities-fields: IncludeIndexedArchives, IncludeUnindexedArchives
 	cataloging.ArchiveSearchConfig `yaml:",inline" json:"" mapstructure:",squash"`
 
 	// 	UseNetwork enables network operations for java package metadata enrichment, such as fetching parent POMs and license information.
