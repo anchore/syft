@@ -90,11 +90,14 @@ func (t *Traversal) FullTraversalArchivePath() string {
 // ContainerPath returns the full path of the archive directly holding the file at c, or blank for a
 // file on the scanned filesystem, whether or not its FullPath is set.
 func ContainerPath(c file.Coordinates) string {
-	i := strings.LastIndex(c.FullPath, file.ArchivePathSeparator)
-	if i < 0 {
+	entries, ok := archiveEntries(c)
+	if !ok {
 		return ""
 	}
-	return c.FullPath[:i]
+	if i := strings.LastIndex(entries, file.ArchivePathSeparator); i >= 0 {
+		return c.RealPath + file.ArchivePathSeparator + entries[:i]
+	}
+	return c.RealPath
 }
 
 // archiveEntries is the "!/"-delimited chain of entry paths after RealPath, reporting false for a file

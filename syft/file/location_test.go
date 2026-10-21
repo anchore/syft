@@ -106,4 +106,8 @@ func TestCoordinates_LocalPath(t *testing.T) {
 	assert.Equal(t, "/a.jar", NewCoordinates("/a.jar", "").LocalPath())
 	assert.Equal(t, "/a.jar", Coordinates{RealPath: "/a.jar"}.LocalPath())
 	assert.Equal(t, "/META-INF/MANIFEST.MF", Coordinates{RealPath: "/a.war", FullPath: "/a.war!/lib/b.jar!/META-INF/MANIFEST.MF"}.LocalPath())
+	assert.Equal(t, "/data/Hello!/world.txt", NewCoordinates("/data/Hello!/world.txt", "").LocalPath(), "a separator in a real path is not an archive boundary")
+	assert.Equal(t, "/data/Hello!/world.txt", Coordinates{RealPath: "/data/Hello!/world.txt", FullPath: "/data/Hello!/world.txt"}.LocalPath())
+	assert.Equal(t, "/x.txt", Coordinates{RealPath: "/data/Hello!/a.zip", FullPath: "/data/Hello!/a.zip!/x.txt"}.LocalPath())
+	assert.Equal(t, "/x.txt", Coordinates{RealPath: "/data/Hello!/a.zip", FullPath: "/data/Hello!/a.zip!/b.jar!/x.txt"}.LocalPath())
 }

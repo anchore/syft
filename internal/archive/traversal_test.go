@@ -32,6 +32,9 @@ func TestContainerPath(t *testing.T) {
 	assert.Equal(t, "", ContainerPath(file.NewCoordinates("/app.war", "")))
 	assert.Equal(t, "", ContainerPath(file.Coordinates{RealPath: "/app.war", FullPath: "/app.war"}), "a top-level file whose FullPath is set")
 	assert.Equal(t, "", ContainerPath(file.Coordinates{RealPath: "/odd!/name"}), "a separator in a top-level real path is not an archive boundary")
+	assert.Equal(t, "", ContainerPath(file.Coordinates{RealPath: "/odd!/name", FullPath: "/odd!/name"}), "nor when FullPath is set")
+	assert.Equal(t, "/odd!/name.zip", ContainerPath(locationIn("/odd!/name.zip", "a.txt").Coordinates))
+	assert.Equal(t, "/odd!/name.zip!/b.jar", ContainerPath(locationIn("/odd!/name.zip", "b.jar!/a.txt").Coordinates))
 	assert.Equal(t, "/app.war", ContainerPath(locationIn("/app.war", "WEB-INF/lib/dep.jar").Coordinates))
 	assert.Equal(t, "/app.war!/WEB-INF/lib/dep.jar",
 		ContainerPath(locationIn("/app.war", "WEB-INF/lib/dep.jar!/META-INF/MANIFEST.MF").Coordinates))

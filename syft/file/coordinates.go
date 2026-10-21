@@ -30,14 +30,18 @@ func (c Coordinates) FullNestedPath() string {
 	return c.FullPath
 }
 
-// LocalPath is the rooted path within the resolver holding the file: the segment of FullNestedPath after
-// the last archive separator, keeping the separator's slash, or RealPath for a file not within an archive.
+// LocalPath is the rooted path within the resolver holding the file: the last entry path in FullPath, or
+// RealPath for a file not within an archive. RealPath is cut off before looking for a separator, so a
+// "!/" in a real path is never taken for an archive boundary.
 func (c Coordinates) LocalPath() string {
-	fullPath := c.FullNestedPath()
-	if i := strings.LastIndex(fullPath, ArchivePathSeparator); i >= 0 {
-		return fullPath[i+len(ArchivePathSeparator)-1:]
+	entries, ok := strings.CutPrefix(c.FullPath, c.RealPath+ArchivePathSeparator)
+	if !ok {
+		return c.RealPath
 	}
-	return fullPath
+	if i := strings.LastIndex(entries, ArchivePathSeparator); i >= 0 {
+		entries = entries[i+len(ArchivePathSeparator):]
+	}
+	return "/" + entries
 }
 
 func NewCoordinates(realPath, fsID string) Coordinates {
