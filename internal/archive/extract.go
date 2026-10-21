@@ -140,7 +140,7 @@ func (r *Resolver) extract(ctx context.Context, format archives.Extractor, conte
 		return err
 	}
 	err := format.Extract(ctx, content, func(_ context.Context, f archives.FileInfo) error {
-		hdr, ok := entryHeader(f)
+		hdr, ok := r.entryHeader(f)
 		if !ok || exclusions.Excludes(hdr.Name) {
 			return nil
 		}

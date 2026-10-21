@@ -89,6 +89,7 @@ files. `AllLocations` enumerates every non-directory path, links included. Answe
   archive task is running, so the java cataloger leaves nested archives to the task instead of
   opening them itself.
 - `entryHeader`: keeps regular files, directories and links only (no devices or fifos), cleans entry names to
-  archive-relative paths, refuses names longer than PATH_MAX or containing NUL, and drops header
+  archive-relative paths, refuses names longer than PATH_MAX or containing control characters, line
+  separators or the `!/` archive path separator (marking the resolver truncated), and drops header
   fields nothing reads (PAX records, user and group names, sub-second and access times) since the
   header is held for the life of the archive.

@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/dustin/go-humanize"
 	"github.com/mholt/archives"
@@ -460,21 +461,24 @@ const maxEntryNameBytes = 4096
 
 // entryHeader builds the header stored for one archive entry, or reports false for an entry not worth
 // carrying: device nodes, fifos and sockets, which no cataloger reads, and names that cannot be a path
-// inside the archive.
+// inside the archive. A name refused as unsafe marks the resolver truncated.
 //
 // The name is cleaned to an archive-relative path with no leading slash, so "../x" names x at the
 // archive root rather than anything outside it. Symlinks are stored as headers, never followed on the
 // host; the resolver resolves their targets inside the archive.
-func entryHeader(f archives.FileInfo) (tar.Header, bool) {
+func (r *Resolver) entryHeader(f archives.FileInfo) (tar.Header, bool) {
 	mode := f.Mode()
 	if !mode.IsRegular() && !mode.IsDir() && mode.Type()&fs.ModeSymlink == 0 {
 		log.WithFields("entry", f.NameInArchive, "mode", mode).Debug("skipping non-regular archive entry")
 		return tar.Header{}, false
 	}
 
-	name, ok := entryName(f.NameInArchive)
-	if !ok {
-		log.WithFields("entry-name-bytes", len(f.NameInArchive)).Trace("skipping archive entry with an unusable name")
+	name, err := entryName(f.NameInArchive)
+	if err != nil {
+		r.truncate(fmt.Errorf("an entry was skipped: %w", err))
+		return tar.Header{}, false
+	}
+	if name == "" {
 		return tar.Header{}, false
 	}
 
@@ -495,12 +499,24 @@ func entryHeader(f archives.FileInfo) (tar.Header, bool) {
 	return *hdr, true
 }
 
-// entryName cleans an archive entry's name to a path relative to the archive root, reporting false
-// when it names nothing inside the archive.
-func entryName(name string) (string, bool) {
-	if len(name) > maxEntryNameBytes || strings.ContainsRune(name, 0) {
-		return "", false
+// entryName cleans an archive entry's name to a path relative to the archive root, returning "" when it
+// names nothing inside the archive. This is the trust boundary for names: every one ends up in FullPath
+// and the encoders, so a name that could forge an archive boundary ("!/") or a line in a line-oriented
+// format (control characters, unicode line separators) is refused.
+func entryName(name string) (string, error) {
+	if len(name) > maxEntryNameBytes {
+		return "", fmt.Errorf("entry name of %d bytes exceeds the %d byte cap", len(name), maxEntryNameBytes)
+	}
+	if strings.IndexFunc(name, isUnsafeNameRune) >= 0 {
+		return "", fmt.Errorf("entry name %q contains a control character", name)
 	}
 	cleaned := strings.TrimPrefix(path.Clean("/"+name), "/")
-	return cleaned, cleaned != ""
+	if strings.Contains(cleaned, file.ArchivePathSeparator) {
+		return "", fmt.Errorf("entry name %q contains the archive path separator %q", name, file.ArchivePathSeparator)
+	}
+	return cleaned, nil
+}
+
+func isUnsafeNameRune(c rune) bool {
+	return unicode.IsControl(c) || c == '\u2028' || c == '\u2029'
 }

@@ -225,6 +225,28 @@ func TestResolver_extract_dataEdgeCases(t *testing.T) {
 	})
 }
 
+func TestResolver_extract_unsafeEntryNamesAreRefusedAndReported(t *testing.T) {
+	jar := string(zipBytes(t, map[string]string{"META-INF/MANIFEST.MF": "real"}))
+	tests := []struct {
+		name   string
+		forged string
+	}{
+		{name: "archive path separator", forged: "a.jar!/META-INF/MANIFEST.MF"},
+		{name: "line break", forged: "x\nlayerID: sha256:forged"},
+		{name: "unicode line separator", forged: "x\u2028y"},
+		{name: "C1 control", forged: "x\u0085y"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data := zipBytes(t, map[string]string{"a.jar": jar, tt.forged: "forged"})
+			r, _ := extractBytes(t, data, "outer.zip", nil)
+			assert.Equal(t, []string{"a.jar"}, storedNames(t, r))
+			require.Error(t, r.Truncated)
+			assert.Contains(t, r.Truncated.Error(), fmt.Sprintf("%q", tt.forged))
+		})
+	}
+}
+
 func TestResolver_extract_excludedEntriesAreNeverStored(t *testing.T) {
 	data := zipBytes(t, map[string]string{
 		"keep.txt":          "kept",
