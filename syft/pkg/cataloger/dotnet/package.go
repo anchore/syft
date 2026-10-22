@@ -359,10 +359,18 @@ func findVersionFromVersionResources(versionResources map[string]string) string 
 	productVersion := extractVersionFromResourcesValue(versionResources["ProductVersion"])
 	fileVersion := extractVersionFromResourcesValue(versionResources["FileVersion"])
 
-	// ms file ver is a ci build stamp (major.minor.<buildfate>.<buildyime>) we'll match with fewer segments
+	// For Microsoft PE files, ProductVersion is the authoritative release version.
+	// FileVersion is often a CI build stamp (major.minor.<builddate>.<buildtime>)
+	// which numerically compares greater than the true release version (e.g.
+	// 8.0.324 > 8.0.3). When ProductVersion contains semantic metadata (+),
+	// it is always the preferred version source for release identification.
 	if isMicrosoftVersionResource(versionResources) {
 		if v := preferShorterMajorMinorMatch(productVersion, fileVersion); v != "" {
 			return v
+		}
+		// ProductVersion with + (semantic metadata like 8.0.3+commitHash) is authoritative
+		if strings.Contains(productVersion, "+") {
+			return productVersion
 		}
 	}
 
