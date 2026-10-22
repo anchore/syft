@@ -41,7 +41,10 @@ type pnpmLockfileParser interface {
 }
 
 type pnpmV6PackageEntry struct {
-	Resolution   map[string]string `yaml:"resolution"`
+	// Resolution values are usually strings (integrity, tarball), but pnpm can
+	// also record a nested "variations" object for provisioned runtimes. Keep
+	// this as map[string]any so one unrepresentable entry cannot abort decoding.
+	Resolution   map[string]any    `yaml:"resolution"`
 	Dependencies map[string]string `yaml:"dependencies"`
 	Dev          bool              `yaml:"dev"`
 }
@@ -60,7 +63,9 @@ type pnpmV9SnapshotEntry struct {
 }
 
 type pnpmV9PackageEntry struct {
-	Resolution       map[string]string `yaml:"resolution"`
+	// See pnpmV6PackageEntry.Resolution: nested variation resolutions must not
+	// force the whole lockfile decode to fail (anchore/syft#5241).
+	Resolution       map[string]any    `yaml:"resolution"`
 	PeerDependencies map[string]string `yaml:"peerDependencies"`
 	Dev              bool              `yaml:"dev"`
 }
@@ -88,7 +93,13 @@ func newGenericPnpmLockAdapter(cfg CatalogerConfig) genericPnpmLockAdapter {
 // Parse implements the pnpmLockfileParser interface for v6-v8 lockfiles.
 func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, error) {
 	if err := doc.Decode(p); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal pnpm v6 lockfile: %w", err)
+		// a type error means yaml.v3 filled every field it could and collected the rest,
+		// so keep those packages rather than dropping the document for one bad entry
+		var typeErr *yaml.TypeError
+		if !errors.As(err, &typeErr) {
+			return nil, fmt.Errorf("failed to unmarshal pnpm v6 lockfile: %w", err)
+		}
+		log.WithFields("error", err).Trace("unable to fully decode pnpm lockfile, keeping the entries that decoded")
 	}
 
 	isV5 := version < 6.0
@@ -121,15 +132,16 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 			log.WithFields("key", key).Trace("unable to parse pnpm package key")
 			continue
 		}
+		if isPnpmToolchainEntry(pkgInfo.Resolution) {
+			log.WithFields("key", key, "resolution", pkgInfo.Resolution["type"]).Trace("skipping pnpm toolchain entry")
+			continue
+		}
 		if isV5 {
 			ver = stripPnpmV5PeerSuffix(ver)
 		}
 		pkgKey := name + "@" + ver
 
-		integrity := ""
-		if value, ok := pkgInfo.Resolution["integrity"]; ok {
-			integrity = value
-		}
+		integrity := integrityFromResolution(pkgInfo.Resolution)
 
 		dependencies := make(map[string]string)
 		for depName, depVersion := range sortedIter(pkgInfo.Dependencies) {
@@ -149,7 +161,12 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 // Parse implements the PnpmLockfileParser interface for v9+ lockfiles.
 func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error) {
 	if err := doc.Decode(p); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal pnpm v9 lockfile: %w", err)
+		// see pnpmV6LockYaml.Parse: a type error is a partial decode, not a failed one
+		var typeErr *yaml.TypeError
+		if !errors.As(err, &typeErr) {
+			return nil, fmt.Errorf("failed to unmarshal pnpm v9 lockfile: %w", err)
+		}
+		log.WithFields("error", err).Trace("unable to fully decode pnpm v9 lockfile, keeping the entries that decoded")
 	}
 
 	packages := make(map[string]pnpmPackage)
@@ -163,8 +180,12 @@ func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error)
 			log.WithFields("key", key).Trace("unable to parse pnpm v9 package key")
 			continue
 		}
+		if isPnpmToolchainEntry(entry.Resolution) {
+			log.WithFields("key", key, "resolution", entry.Resolution["type"]).Trace("skipping pnpm v9 toolchain entry")
+			continue
+		}
 		pkgKey := name + "@" + ver
-		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"], Dev: entry.Dev}
+		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: integrityFromResolution(entry.Resolution), Dev: entry.Dev}
 	}
 
 	for key, snapshotInfo := range sortedIter(p.Snapshots) {
@@ -310,6 +331,34 @@ func mergePnpmPackages(into map[string]pnpmPackage, pkgs []pnpmPackage, doc int)
 		}
 		into[key] = p
 	}
+}
+
+// isPnpmToolchainEntry reports whether a lockfile entry describes a toolchain pnpm
+// provisioned for the project (a devEngines.runtime Node, for instance) rather than an
+// npm package. pnpm records these with a "binary" resolution, or a "variations"
+// resolution holding one per-platform binary resolution each. They have no npm
+// coordinates, so cataloging one yields a purl such as pkg:npm/node@runtime%3A26.8.1
+// that identifies nothing.
+func isPnpmToolchainEntry(resolution map[string]any) bool {
+	switch resolution["type"] {
+	case "binary", "variations":
+		return true
+	}
+	return false
+}
+
+// integrityFromResolution reads the integrity string from a pnpm resolution map.
+// A resolution can hold nested values rather than a flat set of strings, so a missing
+// or non-string integrity leaves the package with none rather than failing the entry.
+func integrityFromResolution(resolution map[string]any) string {
+	if resolution == nil {
+		return ""
+	}
+	value, ok := resolution["integrity"].(string)
+	if !ok {
+		return ""
+	}
+	return value
 }
 
 // parseVersionField extracts the version string from a dependency entry.
