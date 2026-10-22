@@ -243,6 +243,7 @@ func newDotnetPackagesLockPackage(name string, dep dotnetPackagesLockDep, locati
 		Version:     dep.Resolved,
 		ContentHash: dep.ContentHash,
 		Type:        dep.Type,
+		Requested:   dep.Requested,
 	}
 
 	p := &pkg.Package{
