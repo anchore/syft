@@ -1828,6 +1828,62 @@ from-images:
     paths:
       - /usr/share/elastic-agent/data/elastic-agent-1c21b0/elastic-agent
 
+  - name: elastic-agent
+    version: 8.19.18
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:8.19.18@sha256:620997895cbf141afb8b53fdd4d16fb554b1214a3fdcde1b9dd064405a70138a
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-81b0bb/elastic-agent
+
+  - name: elastic-agent
+    version: 8.19.10
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:8.19.10@sha256:157a332d4f0754ffa5903f8d7d8cb6110618bd03d50a80a3c8365abb9785e66d
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-b4f34f/elastic-agent
+
+  - name: elastic-agent
+    version: 8.17.10
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:8.17.10@sha256:21c75dc8145f4b056fb483facd9a876a8e816949898f0a134c2774594b28d1ad
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-8ea05b/elastic-agent
+
+  - name: elastic-agent
+    version: 8.10.0
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:8.10.0@sha256:e595bb91033df369bafbdd414aca300baced9040b8411b4f3047b6019177bca5
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-471966/elastic-agent
+
+  - name: elastic-agent
+    version: 8.9.2
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:8.9.2@sha256:188434619cbceef0927726b6631076e38750113829ee513a013997d3e4ce4247
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-162ea9/elastic-agent
+
+  - name: elastic-agent
+    version: 8.2.0
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:8.2.0@sha256:14347d766dbc17c1842c0efe93af8be7d1a360688fafadf8233536c61f8c82c7
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-b9a28a/elastic-agent
+
+  - name: elastic-agent
+    version: 7.17.29
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:7.17.29@sha256:96b88e44033aada96b5036e798e9c2700ef5bcfc6bf780f0e7c4e218b55229fd
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-bb9ad7/elastic-agent
+
   # contrib builds
   - version: 1.22.10
     images:
