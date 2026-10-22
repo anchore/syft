@@ -117,10 +117,7 @@ func archiveEntries(c file.Coordinates) (string, bool) {
 // dropped to match the java cataloger, which joins slash-less zip entry names onto the containing
 // archive's path.
 func VirtualPath(loc file.Location) string {
-	accessPath := loc.AccessPath
-	if accessPath == "" {
-		accessPath = loc.FullNestedPath()
-	}
+	accessPath := loc.Path()
 	entries, ok := archiveEntries(loc.Coordinates)
 	if !ok {
 		return accessPath

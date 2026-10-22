@@ -142,7 +142,7 @@ func (r MockResolver) FileContentsByLocation(location Location) (io.ReadCloser, 
 		}
 	}
 
-	return nil, fmt.Errorf("no file for location: %v", location)
+	return nil, fmt.Errorf("no file for location: %q", location.FullNestedPath())
 }
 
 // FilesByPath returns all Locations that match the given paths.

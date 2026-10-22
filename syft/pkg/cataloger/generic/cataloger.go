@@ -246,7 +246,7 @@ func invokeParser(ctx context.Context, resolver file.Resolver, location file.Loc
 		logger.WithFields("location", location.FullNestedPath(), "error", err).Debug("unable to fetch contents")
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(contentReader, location.AccessPath)
+	defer internal.CloseAndLogError(contentReader, location.FullNestedPath())
 
 	defer func() {
 		if r := recover(); r != nil {

@@ -90,7 +90,7 @@ func tryParseReleaseInfo(resolver file.Resolver, location file.Location, logger 
 		logger.WithFields("error", err, "path", location.FullNestedPath()).Trace("unable to get contents")
 		return nil
 	}
-	defer internal.CloseAndLogError(contentReader, location.AccessPath)
+	defer internal.CloseAndLogError(contentReader, location.FullNestedPath())
 
 	content, err := io.ReadAll(io.LimitReader(contentReader, 5*1024*1024))
 	if err != nil {

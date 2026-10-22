@@ -62,7 +62,7 @@ func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location,
 		if err != nil {
 			return nil, nil, err
 		}
-		defer internal.CloseAndLogError(installedFilesContents, installedFilesPath)
+		defer internal.CloseAndLogError(installedFilesContents, installedFilesRef.FullNestedPath())
 
 		// parse the installed-files contents
 		installedFiles, err := parseInstalledFiles(installedFilesContents, metadataLocation.LocalPath(), sitePackagesRootPath)
@@ -92,7 +92,7 @@ func fetchRecordFiles(resolver file.Resolver, metadataLocation file.Location) (f
 		if err != nil {
 			return nil, nil, err
 		}
-		defer internal.CloseAndLogError(recordContents, recordPath)
+		defer internal.CloseAndLogError(recordContents, recordRef.FullNestedPath())
 
 		// parse the record contents
 		var records []pkg.PythonFileRecord
@@ -120,7 +120,7 @@ func fetchTopLevelPackages(resolver file.Resolver, metadataLocation file.Locatio
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(topLevelContents, topLevelLocation.AccessPath)
+	defer internal.CloseAndLogError(topLevelContents, topLevelLocation.FullNestedPath())
 
 	scanner := bufio.NewScanner(topLevelContents)
 	for scanner.Scan() {
@@ -170,7 +170,7 @@ func fetchDirectURLData(resolver file.Resolver, metadataLocation file.Location) 
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(directURLContents, directURLLocation.AccessPath)
+	defer internal.CloseAndLogError(directURLContents, directURLLocation.FullNestedPath())
 
 	var directURLJson directURLOrigin
 	if err := json.NewDecoder(directURLContents).Decode(&directURLJson); err != nil {
@@ -194,7 +194,7 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(metadataContents, metadataLocation.AccessPath)
+	defer internal.CloseAndLogError(metadataContents, metadataLocation.FullNestedPath())
 
 	pd, err := parseWheelOrEggMetadata(file.NewLocationReadCloser(metadataLocation, metadataContents))
 	if err != nil {
@@ -261,7 +261,7 @@ func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg
 
 	default:
 		// search for known license paths from RECORDS file
-		parent := path.Base(path.Dir(m.DistInfoLocation.Path()))
+		parent := path.Base(path.Dir(m.DistInfoLocation.LocalPath()))
 		candidatePaths := strset.New()
 		for _, f := range m.Files {
 			if !strings.HasPrefix(f.Path, parent) || strings.Count(f.Path, "/") > 1 {

@@ -107,7 +107,7 @@ func readMyMeta(resolver file.Resolver, installJSONLocation file.Location) (*fil
 		return nil, nil
 	}
 
-	p := path.Join(path.Dir(installJSONLocation.Path()), "MYMETA.json")
+	p := path.Join(path.Dir(installJSONLocation.LocalPath()), "MYMETA.json")
 
 	locations, err := resolver.FilesByPath(p)
 	if err != nil || len(locations) == 0 {

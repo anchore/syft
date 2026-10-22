@@ -98,7 +98,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	if err != nil {
 		return "", err
 	}
-	defer internal.CloseAndLogError(contentReader, location.AccessPath)
+	defer internal.CloseAndLogError(contentReader, location.FullNestedPath())
 
 	buf := &bytes.Buffer{}
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)

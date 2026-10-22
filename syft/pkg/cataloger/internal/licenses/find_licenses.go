@@ -71,7 +71,7 @@ func FindInDirs(ctx context.Context, resolver file.Resolver, dirs ...string) []p
 func FindRelativeToLocations(ctx context.Context, resolver file.Resolver, locations ...file.Location) []pkg.License {
 	var out []pkg.License
 	for _, location := range locations {
-		dir := path.Dir(location.AccessPath)
+		dir := path.Dir(location.LocalPath())
 		out = append(out, FindInDirs(ctx, resolver, dir)...)
 	}
 	return out

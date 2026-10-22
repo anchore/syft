@@ -160,7 +160,7 @@ func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
 
 	reposReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		log.Tracef("unable to fetch contents for APK repositories file %q: %+v", reposLocation, err)
+		log.Tracef("unable to fetch contents for APK repositories file %q: %+v", location.FullNestedPath(), err)
 		return nil
 	}
 	defer internal.CloseAndLogError(reposReader, location.FullNestedPath())

@@ -354,7 +354,7 @@ func Test_relativePathParent(t *testing.T) {
 			loc := locs[0]
 			contents, err := resolver.FileContentsByLocation(loc)
 			require.NoError(t, err)
-			defer internal.CloseAndLogError(contents, loc.RealPath)
+			defer internal.CloseAndLogError(contents, loc.FullNestedPath())
 
 			pom, err := ParsePomXML(contents)
 			require.NoError(t, err)

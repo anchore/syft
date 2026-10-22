@@ -192,7 +192,7 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	if err != nil {
 		return err
 	}
-	defer internal.CloseAndLogError(content, location.AccessPath)
+	defer internal.CloseAndLogError(content, location.FullNestedPath())
 
 	var archiveContent io.Reader = content
 	if !candidate.sniffedAsArchive {

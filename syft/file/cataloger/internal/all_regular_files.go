@@ -14,14 +14,14 @@ func AllRegularFiles(ctx context.Context, resolver file.Resolver) (locations []f
 	for location := range resolver.AllLocations(ctx) {
 		resolvedLocations, err := resolver.FilesByPath(location.LocalPath())
 		if err != nil {
-			log.Debugf("unable to resolve %+v: %+v", location, err)
+			log.Debugf("unable to resolve %q: %+v", location.FullNestedPath(), err)
 			continue
 		}
 
 		for _, resolvedLocation := range resolvedLocations {
 			metadata, err := resolver.FileMetadataByLocation(resolvedLocation)
 			if err != nil {
-				log.Debugf("unable to get metadata for %+v: %+v", location, err)
+				log.Debugf("unable to get metadata for %q: %+v", resolvedLocation.FullNestedPath(), err)
 				continue
 			}
 

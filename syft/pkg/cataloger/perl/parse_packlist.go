@@ -40,7 +40,7 @@ var packlistMetadataSuffix = regexp.MustCompile(` \w+=.*$`)
 // parsePacklist catalogs a distribution installed by any ExtUtils::MakeMaker or Module::Build run,
 // which covers CPAN.pm (which writes no .meta) and the perl image's own preinstalled distributions.
 func parsePacklist(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	name := distNameFromPacklistPath(reader.Path())
+	name := distNameFromPacklistPath(reader.LocalPath())
 	if name == "" {
 		// the perl core packlist has no auto/<Dist> segment; it lists thousands of files and describes
 		// no single distribution

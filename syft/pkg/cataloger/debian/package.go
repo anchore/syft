@@ -187,7 +187,7 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 	copyrightReader, copyrightLocation := fetchCopyrightContents(resolver, dbLocation, metadata)
 	var licenseStrs []string
 	if copyrightReader != nil && copyrightLocation != nil {
-		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.AccessPath)
+		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.FullNestedPath())
 		// attach the licenses
 		licenseStrs = parseLicensesFromCopyright(copyrightReader)
 		for _, licenseStr := range licenseStrs {
@@ -200,7 +200,7 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 	if len(licenseStrs) == 0 {
 		sr, sl := fetchCopyrightContents(resolver, dbLocation, metadata)
 		if sr != nil && sl != nil {
-			defer internal.CloseAndLogError(sr, sl.AccessPath)
+			defer internal.CloseAndLogError(sr, sl.FullNestedPath())
 			p.Licenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(*sl, sr))...)
 		}
 	}
@@ -246,7 +246,7 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 	md5Reader, md5Location := fetchMd5Contents(resolver, dbLocation, m)
 
 	if md5Reader != nil && md5Location != nil {
-		defer internal.CloseAndLogError(md5Reader, md5Location.AccessPath)
+		defer internal.CloseAndLogError(md5Reader, md5Location.FullNestedPath())
 		// attach the file list
 		records, err := parseDpkgMD5Info(md5Reader)
 		if err != nil {
@@ -261,7 +261,7 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 	conffilesReader, conffilesLocation := fetchConffileContents(resolver, dbLocation, m)
 
 	if conffilesReader != nil && conffilesLocation != nil {
-		defer internal.CloseAndLogError(conffilesReader, conffilesLocation.AccessPath)
+		defer internal.CloseAndLogError(conffilesReader, conffilesLocation.FullNestedPath())
 		// attach the file list
 		records, err := parseDpkgConffileInfo(conffilesReader)
 		if err != nil {

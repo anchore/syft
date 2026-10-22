@@ -20,7 +20,7 @@ import (
 // 41,008 a MANIFEST (98%). Reading only META.json skips roughly 43% of current releases, skewed toward the
 // old ones where the advisories concentrate.
 func parseReleaseMeta(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	if isBuildLeftover(reader.Path()) || !isUnpackedRelease(resolver, reader.Location) {
+	if isBuildLeftover(reader.LocalPath()) || !isUnpackedRelease(resolver, reader.Location) {
 		return nil, nil, nil
 	}
 
@@ -64,7 +64,7 @@ func parseReleaseMeta(ctx context.Context, resolver file.Resolver, _ *generic.En
 // trusted for version. A sibling MANIFEST is what tells the two apart: release tarballs ship one, while a
 // source checkout does not, since the MANIFEST is generated at build time.
 func isUnpackedRelease(resolver file.Resolver, metaLocation file.Location) bool {
-	_, ok := findFile(resolver, path.Join(path.Dir(metaLocation.Path()), "MANIFEST"))
+	_, ok := findFile(resolver, path.Join(path.Dir(metaLocation.LocalPath()), "MANIFEST"))
 
 	return ok
 }
@@ -94,7 +94,7 @@ func isBuildLeftover(p string) bool {
 }
 
 func hasSiblingMetaJSON(resolver file.Resolver, metaLocation file.Location) bool {
-	_, ok := findFile(resolver, path.Join(path.Dir(metaLocation.Path()), "META.json"))
+	_, ok := findFile(resolver, path.Join(path.Dir(metaLocation.LocalPath()), "META.json"))
 
 	return ok
 }

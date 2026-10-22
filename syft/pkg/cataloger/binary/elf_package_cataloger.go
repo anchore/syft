@@ -101,7 +101,7 @@ func parseElfPackageNotes(resolver file.Resolver, location file.Location, c *elf
 	if err != nil {
 		return nil, elfPackageKey{}, fmt.Errorf("unable to get binary contents %q: %w", location.FullNestedPath(), err)
 	}
-	defer internal.CloseAndLogError(reader, location.AccessPath)
+	defer internal.CloseAndLogError(reader, location.FullNestedPath())
 
 	notes, err := c.parseElfNotes(file.LocationReadCloser{
 		Location:   location,

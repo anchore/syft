@@ -335,7 +335,7 @@ func (c *goModCataloger) parseModFileContents(reader file.LocationReadCloser) (*
 		return nil, fmt.Errorf("failed to read go module: %w", err)
 	}
 
-	f, err := modfile.Parse(reader.LocalPath(), contents, nil)
+	f, err := modfile.Parse(reader.FullNestedPath(), contents, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse go module: %w", err)
 	}
@@ -437,7 +437,7 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(contents, goSumLocation.AccessPath)
+	defer internal.CloseAndLogError(contents, goSumLocation.FullNestedPath())
 
 	// go.sum has the format like:
 	// github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=

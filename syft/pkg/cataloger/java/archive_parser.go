@@ -153,7 +153,7 @@ func newJavaArchiveParser(ctx context.Context, reader file.LocationReadCloser, d
 // recurses: archives nested inside it are the archive cataloger task's to find.
 func newExtractedArchiveParser(trav *archive.Traversal, resolver file.Resolver, cfg ArchiveCatalogerConfig) (*archiveParser, error) {
 	if resolver == nil {
-		return nil, fmt.Errorf("no resolver for the contents of %q", archive.VirtualPath(trav.Location))
+		return nil, fmt.Errorf("no resolver for the contents of %q", trav.Location.FullNestedPath())
 	}
 	return &archiveParser{
 		entries:  &resolverEntries{resolver: resolver},
@@ -179,7 +179,7 @@ func (j *archiveParser) parse(ctx context.Context, parentPkg *pkg.Package) ([]pk
 	// find the parent package from the java manifest
 	mainPkg, err := j.discoverMainPackage(ctx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not generate package from %s: %w", j.location, err)
+		return nil, nil, fmt.Errorf("could not generate package from %s: %w", j.location.FullNestedPath(), err)
 	}
 
 	// find aux packages from pom.properties/pom.xml and potentially modify the existing parentPkg
@@ -274,21 +274,21 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 	// fetch the manifest file
 	contents, err := j.entries.contents(ctx, manifestMatches...)
 	if err != nil {
-		return nil, fmt.Errorf("unable to extract java manifests (%s): %w", j.location, err)
+		return nil, fmt.Errorf("unable to extract java manifests (%s): %w", j.location.FullNestedPath(), err)
 	}
 
 	// parse the manifest file into a rich object
 	manifestContents := contents[manifestMatches[0]]
 	manifest, err := parseJavaManifest(j.virtualPath(), strings.NewReader(manifestContents))
 	if err != nil {
-		log.Debugf("failed to parse java manifest (%s): %+v", j.location, err)
+		log.Debugf("failed to parse java manifest (%s): %+v", j.location.FullNestedPath(), err)
 		return nil, nil
 	}
 
 	// check for existence of Weave-Classes manifest key in order to exclude jars getting misrepresented as
 	// their targeted counterparts, e.g. newrelic spring and tomcat instrumentation
 	if _, ok := manifest.Main.Get("Weave-Classes"); ok {
-		log.Debugf("excluding archive due to Weave-Classes manifest entry: %s", j.location)
+		log.Debugf("excluding archive due to Weave-Classes manifest entry: %s", j.location.FullNestedPath())
 		return nil, nil
 	}
 
@@ -615,7 +615,7 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) []pkg.L
 		if len(licenseMatches) > 0 {
 			contents, err := j.entries.contents(ctx, licenseMatches...)
 			if err != nil {
-				log.Debugf("unable to extract java license (%s): %w", j.location, err)
+				log.Debugf("unable to extract java license (%s): %v", j.location.FullNestedPath(), err)
 				continue
 			}
 
@@ -664,7 +664,7 @@ func (j *archiveParser) versionFromPropertiesFile(ctx context.Context, manifest 
 
 	contents, err := j.entries.contents(ctx, matches...)
 	if err != nil {
-		log.Debugf("unable to extract version.properties (%s): %v", j.location, err)
+		log.Debugf("unable to extract version.properties (%s): %v", j.location.FullNestedPath(), err)
 		return ""
 	}
 

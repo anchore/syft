@@ -316,7 +316,7 @@ func isArchiveMetaPom(ctx context.Context, location file.Location) bool {
 	if trav == nil || !isJavaArchiveName(trav.Location.AccessPath) {
 		return false
 	}
-	return strings.Contains(location.Path(), "META-INF/maven/")
+	return strings.Contains(location.LocalPath(), "META-INF/maven/")
 }
 
 func cleanDescription(original string) (cleaned string) {

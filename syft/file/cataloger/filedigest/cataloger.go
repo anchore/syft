@@ -103,7 +103,7 @@ func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver,
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(contentReader, location.AccessPath)
+	defer internal.CloseAndLogError(contentReader, location.FullNestedPath())
 
 	defer func() {
 		if r := recover(); r != nil {
