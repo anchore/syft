@@ -7,7 +7,7 @@ does everything for a single archive.
 ## Flow
 
 ```
-Extract(ctx, reader, fileSystemID, archivePath, limiter, exclusions) -> *Resolver
+Extract(ctx, reader, archiveCoordinates, limiter, exclusions) -> *Resolver
   acquire          read in place if the reader is already seekable, else hold in memory / spill to disk
   identifyFormat   internal/file.IdentifyArchive first, end-of-central-directory fallback for stub-prefixed zips
   Resolver.extract every entry -> entryHeader -> Resolver.add (excluded entries are never stored)
@@ -23,6 +23,11 @@ own bytes cannot be placed, and otherwise a `Resolver` whose `Cleanup` releases 
 One type does the work: `Resolver` is fed entries by `Extract`, holds their content, indexes them,
 and implements `file.Resolver` over the result. Each entry is a `node` carrying its header and a
 `blob`; the archive's own bytes, when they have to be held at all, are one more blob.
+
+Every location it returns extends the archive's coordinates: `RealPath` and `FileSystemID` stay
+those of the outermost archive on the scanned filesystem, and `FullPath` is the `!/`-delimited
+chain down to the entry (`/app.war!/WEB-INF/lib/dep.jar!/META-INF/MANIFEST.MF`). `LocalPath` is the
+entry's path within this archive.
 
 ## Where bytes live
 
@@ -51,6 +56,9 @@ positive is the bound, zero forbids the resource, negative is unbounded.
   limit, spilling held content to make room; only a zero memory limit lets it fall back to the disk
   budget so that configuration still indexes. An entry whose index cost is refused is dropped like
   one whose content is, and marks the resolver `Truncated`.
+- `Budget` bounds the bytes decompressed under one top-level archive, summed over everything nested
+  in it. Unlike `Limits` it never refills, so a recursive bomb whose every level fits the limits
+  still ends (`errBudgetSpent`, the resolver is `Truncated`).
 - `Limiter.Peak` reports the most held at once over the scan, for reporting.
 
 ## Hostile archives
@@ -58,21 +66,22 @@ positive is the bound, zero forbids the resource, negative is unbounded.
 Nothing an archive declares is trusted. Content is charged chunk by chunk as it decompresses, so a
 deflate or gzip bomb stops at the disk limit with the entry dropped whole. Every node is charged
 against the memory limit, including directories implied by deep paths, so an archive of millions of
-tiny entries or of a few entries with 4 KiB names stops at the memory limit. Names longer than
-PATH_MAX are refused, and nesting stops at the task's
-`MaxDepth`. See the bomb tests in `extract_test.go`.
+tiny entries or of a few entries with 4 KiB names stops at the memory limit. A recursive bomb stops
+at the `Budget`. Names longer than PATH_MAX are refused, and nesting stops at the task's `MaxDepth`.
+See the bomb tests in `extract_test.go`.
 
 ## Lookup
 
 Entries are indexed in a stereoscope `filetree.FileTree` + `filetree.Index` and searched with
-`filetree.SearchContext`, the same index the directory and image resolvers use. Paths are
-archive-relative with no leading slash; a leading slash on a query is tolerated. Directories implied
-by entry paths exist for `HasPath` but are never files. The last entry at a path wins over earlier
+`filetree.SearchContext`, the same index the directory and image resolvers use. A query may name an
+entry by its full path or by its `LocalPath` (leading slash optional); a full path into another
+archive in the scan names nothing. Directories implied by entry paths exist for `HasPath` but are
+never files. The last entry at a path wins over earlier
 duplicates, as it does on extraction; a file and a directory at one path keep the first.
 
 Links resolve inside the archive only, as the file tree resolves them: a hard link names its target
 from the archive root. A lookup matching a link and its target returns one location, with
-`AccessPath` naming the path matched and `RealPath` the file read. Dangling and cyclic links are not
+`AccessPath` the full path matched and `FullPath` that of the file read. Dangling and cyclic links are not
 files. `AllLocations` enumerates every non-directory path, links included. Answers are sorted by path.
 
 ## Other pieces
@@ -81,10 +90,12 @@ files. `AllLocations` enumerates every non-directory path, links included. Answe
   re-rooted at an archive. Matched against each entry path and its parent directories at extraction
   time. `syft.CreateSBOM` passes the source's patterns to the task, which builds one `Exclusions`
   for the scan.
-- `Traversal`: put on the context by the task so a cataloger (java) knows which archive it is inside
-  and what its digests are. `VirtualPath(location)` builds the `outer.war:WEB-INF/lib/inner.jar`
-  style chain from the `ArchivePath` the resolver stamps on every location, escaping colons in entry
-  names.
+- `Traversal`: put on the context by the task so a cataloger (java) knows which archive it is inside,
+  what its digests are, and which packages describe its parent. `VirtualPath(location)` converts a
+  location's `FullPath` to the java cataloger's colon-delimited `app.war:WEB-INF/lib/inner.jar`
+  form, escaping `%` and `:` in entry names. `Container` and `EntryCoordinates` split and build the
+  coordinates of files within archives (the SPDX and CycloneDX formats use them too); `OwnerContainers` and
+  `OwnedCoordinates` map package-owned file paths to coordinates in the right archive.
 - `WithNestedCataloging` / `NestedCatalogingEnabled`: `syft.CreateSBOM` marks the context when the
   archive task is running, so the java cataloger leaves nested archives to the task instead of
   opening them itself.
