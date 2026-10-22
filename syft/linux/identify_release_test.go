@@ -434,6 +434,43 @@ func TestIdentifyRelease(t *testing.T) {
 				HomeURL:    "https://wolfi.dev",
 			},
 		},
+		{
+			fixture: "testdata/os/macos",
+			release: &Release{
+				PrettyName: "macOS 15.5",
+				Name:       "macOS",
+				ID:         "macos",
+				Version:    "15.5",
+				VersionID:  "15.5",
+				BuildID:    "24F74",
+			},
+		},
+		{
+			fixture: "testdata/os/macos-binary-plist",
+			release: &Release{
+				PrettyName: "macOS 14.7.1",
+				Name:       "macOS",
+				ID:         "macos",
+				Version:    "14.7.1",
+				VersionID:  "14.7.1",
+				BuildID:    "23H222",
+			},
+		},
+		{
+			fixture: "testdata/os/mac-os-x",
+			release: &Release{
+				PrettyName: "Mac OS X 10.15.7",
+				Name:       "Mac OS X",
+				ID:         "macos",
+				Version:    "10.15.7",
+				VersionID:  "10.15.7",
+				BuildID:    "19H2",
+			},
+		},
+		{
+			fixture: "testdata/os/macos-no-version",
+			release: nil,
+		},
 	}
 
 	for _, test := range tests {
@@ -631,6 +668,62 @@ func TestParseRedhatRelease(t *testing.T) {
 				return
 			}
 
+			assert.Equal(t, test.release, release)
+		})
+	}
+}
+
+func TestParseSystemVersionPlist(t *testing.T) {
+	tests := []struct {
+		name     string
+		contents string
+		release  *Release
+		wantErr  require.ErrorAssertionFunc
+	}{
+		{
+			name:     "macOS xml plist",
+			contents: retrieveFixtureContentsAsString("testdata/os/macos/System/Library/CoreServices/SystemVersion.plist", t),
+			release: &Release{
+				PrettyName: "macOS 15.5",
+				Name:       "macOS",
+				ID:         "macos",
+				Version:    "15.5",
+				VersionID:  "15.5",
+				BuildID:    "24F74",
+			},
+		},
+		{
+			name:     "other apple platform keeps its own id",
+			contents: `<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict><key>ProductName</key><string>iPhone OS</string><key>ProductVersion</key><string>18.5</string><key>ProductBuildVersion</key><string>22F76</string></dict></plist>`,
+			release: &Release{
+				PrettyName: "iPhone OS 18.5",
+				Name:       "iPhone OS",
+				ID:         "iphoneos",
+				Version:    "18.5",
+				VersionID:  "18.5",
+				BuildID:    "22F76",
+			},
+		},
+		{
+			name:     "missing version is not a release",
+			contents: retrieveFixtureContentsAsString("testdata/os/macos-no-version/System/Library/CoreServices/SystemVersion.plist", t),
+			release:  nil,
+		},
+		{
+			name:     "not a plist",
+			contents: "ProductName: macOS",
+			release:  nil,
+			wantErr:  require.Error,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.wantErr == nil {
+				test.wantErr = require.NoError
+			}
+			release, err := parseSystemVersionPlist(test.contents)
+			test.wantErr(t, err)
 			assert.Equal(t, test.release, release)
 		})
 	}
