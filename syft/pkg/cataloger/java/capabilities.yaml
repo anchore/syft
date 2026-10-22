@@ -25,6 +25,9 @@ configs: # AUTO-GENERATED - config structs and their fields
       - key: ResolveTransitiveDependencies
         description: ResolveTransitiveDependencies enables resolving transitive dependencies for java packages found within archives.
         app_key: java.resolve-transitive-dependencies
+      - key: MavenExcludeScopes
+        description: MavenExcludeScopes lists the Maven dependency scopes (e.g. test, provided) whose dependencies are not cataloged from pom.xml files. Dependencies without an explicit scope are treated as compile scope. When empty, dependencies of every scope are cataloged.
+        app_key: java.maven-exclude-scopes
 catalogers:
   - ecosystem: java # MANUAL
     name: java-archive-cataloger # AUTO-GENERATED

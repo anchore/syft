@@ -6,12 +6,13 @@ import (
 )
 
 type javaConfig struct {
-	UseNetwork                    *bool  `yaml:"use-network" json:"use-network" mapstructure:"use-network"`
-	UseMavenLocalRepository       *bool  `yaml:"use-maven-local-repository" json:"use-maven-local-repository" mapstructure:"use-maven-local-repository"`
-	MavenLocalRepositoryDir       string `yaml:"maven-local-repository-dir" json:"maven-local-repository-dir" mapstructure:"maven-local-repository-dir"`
-	MavenURL                      string `yaml:"maven-url" json:"maven-url" mapstructure:"maven-url"`
-	MaxParentRecursiveDepth       int    `yaml:"max-parent-recursive-depth" json:"max-parent-recursive-depth" mapstructure:"max-parent-recursive-depth"`
-	ResolveTransitiveDependencies bool   `yaml:"resolve-transitive-dependencies" json:"resolve-transitive-dependencies" mapstructure:"resolve-transitive-dependencies"`
+	UseNetwork                    *bool    `yaml:"use-network" json:"use-network" mapstructure:"use-network"`
+	UseMavenLocalRepository       *bool    `yaml:"use-maven-local-repository" json:"use-maven-local-repository" mapstructure:"use-maven-local-repository"`
+	MavenLocalRepositoryDir       string   `yaml:"maven-local-repository-dir" json:"maven-local-repository-dir" mapstructure:"maven-local-repository-dir"`
+	MavenURL                      string   `yaml:"maven-url" json:"maven-url" mapstructure:"maven-url"`
+	MaxParentRecursiveDepth       int      `yaml:"max-parent-recursive-depth" json:"max-parent-recursive-depth" mapstructure:"max-parent-recursive-depth"`
+	ResolveTransitiveDependencies bool     `yaml:"resolve-transitive-dependencies" json:"resolve-transitive-dependencies" mapstructure:"resolve-transitive-dependencies"`
+	MavenExcludeScopes            []string `yaml:"maven-exclude-scopes" json:"maven-exclude-scopes" mapstructure:"maven-exclude-scopes"`
 }
 
 func defaultJavaConfig() javaConfig {
@@ -24,6 +25,7 @@ func defaultJavaConfig() javaConfig {
 		MavenLocalRepositoryDir:       def.MavenLocalRepositoryDir,
 		MavenURL:                      def.MavenBaseURL,
 		ResolveTransitiveDependencies: def.ResolveTransitiveDependencies,
+		MavenExcludeScopes:            def.MavenExcludeScopes,
 	}
 }
 
@@ -46,4 +48,7 @@ build, run 'mvn help:effective-pom' before performing the scan with syft.`)
 	descriptions.Add(&o.MavenLocalRepositoryDir, `override the default location of the local Maven repository. 
 the default is the subdirectory '.m2/repository' in your home directory`)
 	descriptions.Add(&o.ResolveTransitiveDependencies, `resolve transient dependencies such as those defined in a dependency's POM on Maven central`)
+	descriptions.Add(&o.MavenExcludeScopes, `Maven dependency scopes to leave out when cataloging the dependencies declared in pom.xml files
+(e.g. test, provided). dependencies without an explicit scope are treated as 'compile'.
+by default no scopes are excluded`)
 }
