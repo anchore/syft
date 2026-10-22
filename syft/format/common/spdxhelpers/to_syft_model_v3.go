@@ -437,14 +437,15 @@ func v3extractPkgInfo(p spdx.AnyPackage) pkgInfo {
 func v3toSyftPackage(relationships ptrMap[[]spdx.AnyRelationship], p spdx.AnyPackage) pkg.Package {
 	info := v3extractPkgInfo(p)
 	sP := &pkg.Package{
-		Type:     info.typ,
-		Name:     p.GetName(),
-		Version:  p.GetVersion(),
-		Licenses: pkg.NewLicenseSet(v3parseSPDXLicenses(relationships, p)...),
-		CPEs:     v3extractCPEs(p),
-		PURL:     v3purlValue(info.purl),
-		Language: info.lang,
-		Metadata: v3extractMetadata(p, info),
+		Type:      info.typ,
+		Name:      p.GetName(),
+		Version:   p.GetVersion(),
+		Locations: file.NewLocationSet(v3packageLocations(relationships, p)...),
+		Licenses:  pkg.NewLicenseSet(v3parseSPDXLicenses(relationships, p)...),
+		CPEs:      v3extractCPEs(p),
+		PURL:      v3purlValue(info.purl),
+		Language:  info.lang,
+		Metadata:  v3extractMetadata(p, info),
 	}
 
 	internal.Backfill(sP)
@@ -457,6 +458,30 @@ func v3toSyftPackage(relationships ptrMap[[]spdx.AnyRelationship], p spdx.AnyPac
 	}
 
 	return *sP
+}
+
+// v3packageLocations finds the files that show where a package was found. Syft writes these as OTHER relationships
+// with an "evident-by" comment, which are used when present. Otherwise, fall back to the files the package CONTAINS.
+func v3packageLocations(relationships ptrMap[[]spdx.AnyRelationship], p spdx.AnyPackage) []file.Location {
+	var evidentBy, contains []file.Location
+	for _, r := range relationships.Get(p) {
+		switch r.GetType() {
+		case spdx.RelationshipType_Contains:
+			for _, f := range r.GetTo().Files() {
+				contains = append(contains, v3toSyftLocation(f))
+			}
+		case spdx.RelationshipType_Other:
+			if strings.HasPrefix(r.GetComment(), string(artifact.EvidentByRelationship)) {
+				for _, f := range r.GetTo().Files() {
+					evidentBy = append(evidentBy, v3toSyftLocation(f))
+				}
+			}
+		}
+	}
+	if len(evidentBy) > 0 {
+		return evidentBy
+	}
+	return contains
 }
 
 func v3purlValue(purl packageurl.PackageURL) string {
