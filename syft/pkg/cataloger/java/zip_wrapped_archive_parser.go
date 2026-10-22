@@ -52,5 +52,5 @@ func (gzp genericZipWrappedJavaArchiveParser) parseZipWrappedJavaArchive(ctx con
 	}
 
 	// look for java archives within the zip archive
-	return discoverPkgsFromZip(ctx, reader.Location, archivePath, contentPath, fileManifest, nil, gzp.cfg)
+	return discoverPkgsFromZip(ctx, reader.Location, archivePath, contentPath, fileManifest, nil, gzp.cfg, 0, nil)
 }
