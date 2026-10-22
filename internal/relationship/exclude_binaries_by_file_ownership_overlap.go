@@ -3,6 +3,7 @@ package relationship
 import (
 	"reflect"
 	"slices"
+	"strings"
 
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
@@ -31,6 +32,26 @@ var (
 		reflect.TypeFor[pkg.JavaVMInstallation]().Name(),
 	}
 )
+
+// osPackageShipsBinary reports whether an OS package name plausibly ships the
+// given binary. Package names commonly embed the upstream name with prefixes
+// and suffixes ("libopenssl3", "openssl-3.2.3-150700.1.1", "golang-go"), so an
+// exact match is not required; very short binary names only match exactly, to
+// avoid suppressing on incidental substrings.
+func osPackageShipsBinary(pkgName, binaryName string) bool {
+	p := strings.ToLower(pkgName)
+	b := strings.ToLower(binaryName)
+
+	if p == b {
+		return true
+	}
+
+	if len(b) < 3 {
+		return false
+	}
+
+	return strings.Contains(p, b)
+}
 
 func ExcludeBinariesByFileOwnershipOverlap(accessor sbomsync.Accessor) {
 	accessor.WriteToSBOM(func(s *sbom.SBOM) {
@@ -118,6 +139,16 @@ func identifyOverlappingOSRelationship(parent *pkg.Package, child *pkg.Package) 
 	}
 
 	if slices.Contains(binaryCatalogerTypes, child.Type) {
+		// The overlap only means the OS package ships this binary when the
+		// package plausibly relates to it. An unrelated owner (e.g. a vendor
+		// RPM bundling its own copy of a library, with none of the library's
+		// metadata) must not suppress the binary finding — otherwise the
+		// binary's vulnerabilities go entirely unreported
+		// (https://github.com/anchore/grype/issues/3670).
+		if !osPackageShipsBinary(parent.Name, child.Name) {
+			return ""
+		}
+
 		return child.ID()
 	}
 
