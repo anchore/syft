@@ -17,6 +17,7 @@ type configurationAuditTrail struct {
 	Packages       pkgcataloging.Config            `json:"packages" yaml:"packages" mapstructure:"packages"`
 	Files          filecataloging.Config           `json:"files" yaml:"files" mapstructure:"files"`
 	Licenses       cataloging.LicenseConfig        `json:"licenses" yaml:"licenses" mapstructure:"licenses"`
+	Archive        cataloging.ArchiveSearchConfig  `json:"archive" yaml:"archive" mapstructure:"archive"`
 	Catalogers     catalogerManifest               `json:"catalogers" yaml:"catalogers" mapstructure:"catalogers"`
 	ExtraConfigs   any                             `json:"extra,omitempty" yaml:"extra" mapstructure:"extra"`
 }

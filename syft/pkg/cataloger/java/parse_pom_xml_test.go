@@ -690,6 +690,123 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	return expected{pkgs, relationships}
 }
 
+func Test_isArchiveMetaPom(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected bool
+	}{
+		{
+			name:     "META-INF maven pom",
+			path:     "META-INF/maven/com.example/my-lib/pom.xml",
+			expected: true,
+		},
+		{
+			name:     "nested META-INF maven pom",
+			path:     "some/path/META-INF/maven/org.apache/commons/pom.xml",
+			expected: true,
+		},
+		{
+			name:     "project pom.xml",
+			path:     "pom.xml",
+			expected: false,
+		},
+		{
+			name:     "module pom.xml",
+			path:     "submodule/pom.xml",
+			expected: false,
+		},
+		{
+			name:     "META-INF but not maven",
+			path:     "META-INF/pom.xml",
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			loc := file.NewLocation(test.path)
+			assert.Equal(t, test.expected, isArchiveMetaPom(loc))
+		})
+	}
+}
+
+func Test_pomCatalogerSkipsMetaInfPoms(t *testing.T) {
+	// A directory that only contains a pom.xml under META-INF/maven/ should produce
+	// no packages, since these are archive metadata not project files.
+	cat := NewPomCataloger(ArchiveCatalogerConfig{
+		ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+			IncludeIndexedArchives:   true,
+			IncludeUnindexedArchives: true,
+		},
+	})
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/pom/meta-inf-archive").
+		Expects(nil, nil).
+		TestCataloger(t, cat)
+}
+
+func Test_pomCatalogerSkipsMetaInfButKeepsProjectPom(t *testing.T) {
+	// When a directory contains both a project pom.xml and a META-INF/maven pom.xml,
+	// only the project pom.xml should be cataloged. The META-INF pom.xml and its
+	// dependencies should be ignored.
+	pomLocation := file.NewLocationSet(file.NewLocation("pom.xml"))
+
+	myApp := pkg.Package{
+		Name:      "my-app",
+		Version:   "2.0.0",
+		PURL:      "pkg:maven/org.anchore/my-app@2.0.0",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: pomLocation,
+		Metadata: pkg.JavaArchive{
+			PomProject: &pkg.JavaPomProject{
+				GroupID:    "org.anchore",
+				ArtifactID: "my-app",
+				Version:    "2.0.0",
+			},
+		},
+	}
+	finalizePackage(&myApp)
+
+	guava := pkg.Package{
+		Name:      "guava",
+		Version:   "31.1-jre",
+		PURL:      "pkg:maven/com.google.guava/guava@31.1-jre",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: pomLocation,
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "com.google.guava",
+				ArtifactID: "guava",
+			},
+		},
+	}
+	finalizePackage(&guava)
+
+	expectedPkgs := []pkg.Package{myApp, guava}
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: guava,
+			To:   myApp,
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+
+	cat := NewPomCataloger(ArchiveCatalogerConfig{
+		ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+			IncludeIndexedArchives:   true,
+			IncludeUnindexedArchives: true,
+		},
+	})
+
+	pkgtest.TestCataloger(t, "testdata/pom/mixed-meta-inf-and-project", cat, expectedPkgs, expectedRelationships)
+}
+
 func expectedTransientPackageData() expected {
 	epl2 := pkg.NewLicenseSet(pkg.License{
 		Value: "Eclipse Public License v2.0",
