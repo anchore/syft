@@ -1,6 +1,7 @@
 package cyclonedxjson
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/format/internal/testutil"
 )
 
 func TestDecoder_Decode(t *testing.T) {
@@ -132,6 +134,29 @@ func TestDecoder_Identify(t *testing.T) {
 			formatID, formatVersion := dec.Identify(reader)
 			assert.Equal(t, test.id, formatID)
 			assert.Equal(t, test.version, formatVersion)
+		})
+	}
+}
+
+// the source name and version (as set by --source-name and --source-version) are only expressed
+// as the CycloneDX metadata.component name and version, so they must survive an encode-decode
+// round trip. see https://github.com/anchore/grype/issues/2418
+func TestDecoder_SourceNameAndVersionRoundTrip(t *testing.T) {
+	subject := testutil.DirectoryInput(t, t.TempDir())
+	subject.Source.Name = "my-app"
+	subject.Source.Version = "0.1.0"
+
+	for _, enc := range defaultFormatEncoders() {
+		t.Run(enc.Version(), func(t *testing.T) {
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, subject))
+
+			s, _, _, err := NewFormatDecoder().Decode(bytes.NewReader(buf.Bytes()))
+			require.NoError(t, err)
+			require.NotNil(t, s)
+
+			assert.Equal(t, subject.Source.Name, s.Source.Name)
+			assert.Equal(t, subject.Source.Version, s.Source.Version)
 		})
 	}
 }
