@@ -225,6 +225,9 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 			Executables: map[file.Coordinates]file.Executable{
 				c: {
 					Format: file.ELF,
+					Identifiers: []file.ExecutableIdentifier{
+						{Kind: file.ELFGNUBuildID, Value: "0123456789abcdef"},
+					},
 					ELFSecurityFeatures: &file.ELFSecurityFeatures{
 						SymbolTableStripped:           false,
 						StackCanary:                   boolRef(true),
@@ -294,4 +297,11 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 	assert.Equal(t, internal.JSONSchemaVersion, decodedVersion)
 
 	require.Equal(t, s, *got)
+
+	executable := s.Artifacts.Executables[c]
+	executable.Identifiers = nil
+	s.Artifacts.Executables[c] = executable
+	buf.Reset()
+	require.NoError(t, enc.Encode(buf, s))
+	assert.NotContains(t, buf.String(), `"identifiers"`)
 }
