@@ -89,7 +89,7 @@ func (u UnindexedDirectory) FileContentsByLocation(location file.Location) (io.R
 		return nil, err
 	}
 	if fi.IsDir() {
-		return nil, fmt.Errorf("unable to get contents of directory: %s", location.RealPath)
+		return nil, fmt.Errorf("unable to get contents of directory: %s", location.FullNestedPath())
 	}
 	return f, nil
 }

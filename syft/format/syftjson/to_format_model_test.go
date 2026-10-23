@@ -352,10 +352,7 @@ func Test_toFileType(t *testing.T) {
 }
 
 func Test_toFileMetadataEntry(t *testing.T) {
-	coords := file.Coordinates{
-		RealPath:     "/path",
-		FileSystemID: "x",
-	}
+	coords := file.NewCoordinates("/path", "x")
 	tests := []struct {
 		name     string
 		metadata *file.Metadata
@@ -453,41 +450,17 @@ func Test_toPackageModel_layerOrdering(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(pkg.License{
 					Value: "MIT",
 					Locations: file.NewLocationSet(
-						file.NewLocationFromCoordinates(file.Coordinates{
-							RealPath:     "/lic-a",
-							FileSystemID: "fsid-3",
-						}),
-						file.NewLocationFromCoordinates(file.Coordinates{
-							RealPath:     "/lic-a",
-							FileSystemID: "fsid-1",
-						}),
-						file.NewLocationFromCoordinates(file.Coordinates{
-							RealPath:     "/lic-b",
-							FileSystemID: "fsid-0",
-						}),
-						file.NewLocationFromCoordinates(file.Coordinates{
-							RealPath:     "/lic-a",
-							FileSystemID: "fsid-2",
-						}),
+						file.NewLocationFromCoordinates(file.NewCoordinates("/lic-a", "fsid-3")),
+						file.NewLocationFromCoordinates(file.NewCoordinates("/lic-a", "fsid-1")),
+						file.NewLocationFromCoordinates(file.NewCoordinates("/lic-b", "fsid-0")),
+						file.NewLocationFromCoordinates(file.NewCoordinates("/lic-a", "fsid-2")),
 					),
 				}),
 				Locations: file.NewLocationSet(
-					file.NewLocationFromCoordinates(file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-3",
-					}),
-					file.NewLocationFromCoordinates(file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-1",
-					}),
-					file.NewLocationFromCoordinates(file.Coordinates{
-						RealPath:     "/b",
-						FileSystemID: "fsid-0",
-					}),
-					file.NewLocationFromCoordinates(file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-2",
-					}),
+					file.NewLocationFromCoordinates(file.NewCoordinates("/a", "fsid-3")),
+					file.NewLocationFromCoordinates(file.NewCoordinates("/a", "fsid-1")),
+					file.NewLocationFromCoordinates(file.NewCoordinates("/b", "fsid-0")),
+					file.NewLocationFromCoordinates(file.NewCoordinates("/a", "fsid-2")),
 				),
 			},
 			layerOrder: []string{
@@ -505,38 +478,26 @@ func Test_toPackageModel_layerOrdering(t *testing.T) {
 							Locations: []file.Location{
 								{
 									LocationData: file.LocationData{
-										Coordinates: file.Coordinates{
-											RealPath:     "/lic-b",
-											FileSystemID: "fsid-0", // important!
-										},
-										AccessPath: "/lic-b",
+										Coordinates: file.NewCoordinates("/lic-b", "fsid-0"), // important!
+										AccessPath:  "/lic-b",
 									},
 								},
 								{
 									LocationData: file.LocationData{
-										Coordinates: file.Coordinates{
-											RealPath:     "/lic-a",
-											FileSystemID: "fsid-1", // important!
-										},
-										AccessPath: "/lic-a",
+										Coordinates: file.NewCoordinates("/lic-a", "fsid-1"), // important!
+										AccessPath:  "/lic-a",
 									},
 								},
 								{
 									LocationData: file.LocationData{
-										Coordinates: file.Coordinates{
-											RealPath:     "/lic-a",
-											FileSystemID: "fsid-2", // important!
-										},
-										AccessPath: "/lic-a",
+										Coordinates: file.NewCoordinates("/lic-a", "fsid-2"), // important!
+										AccessPath:  "/lic-a",
 									},
 								},
 								{
 									LocationData: file.LocationData{
-										Coordinates: file.Coordinates{
-											RealPath:     "/lic-a",
-											FileSystemID: "fsid-3", // important!
-										},
-										AccessPath: "/lic-a",
+										Coordinates: file.NewCoordinates("/lic-a", "fsid-3"), // important!
+										AccessPath:  "/lic-a",
 									},
 								},
 							},
@@ -545,38 +506,26 @@ func Test_toPackageModel_layerOrdering(t *testing.T) {
 					Locations: []file.Location{
 						{
 							LocationData: file.LocationData{
-								Coordinates: file.Coordinates{
-									RealPath:     "/b",
-									FileSystemID: "fsid-0", // important!
-								},
-								AccessPath: "/b",
+								Coordinates: file.NewCoordinates("/b", "fsid-0"), // important!
+								AccessPath:  "/b",
 							},
 						},
 						{
 							LocationData: file.LocationData{
-								Coordinates: file.Coordinates{
-									RealPath:     "/a",
-									FileSystemID: "fsid-1", // important!
-								},
-								AccessPath: "/a",
+								Coordinates: file.NewCoordinates("/a", "fsid-1"), // important!
+								AccessPath:  "/a",
 							},
 						},
 						{
 							LocationData: file.LocationData{
-								Coordinates: file.Coordinates{
-									RealPath:     "/a",
-									FileSystemID: "fsid-2", // important!
-								},
-								AccessPath: "/a",
+								Coordinates: file.NewCoordinates("/a", "fsid-2"), // important!
+								AccessPath:  "/a",
 							},
 						},
 						{
 							LocationData: file.LocationData{
-								Coordinates: file.Coordinates{
-									RealPath:     "/a",
-									FileSystemID: "fsid-3", // important!
-								},
-								AccessPath: "/a",
+								Coordinates: file.NewCoordinates("/a", "fsid-3"), // important!
+								AccessPath:  "/a",
 							},
 						},
 					},
@@ -609,34 +558,22 @@ func Test_toLocationModel(t *testing.T) {
 		{
 			name: "nil layer order map",
 			locations: file.NewLocationSet(
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/a",
-					FileSystemID: "fsid-1",
-				}),
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/b",
-					FileSystemID: "fsid-2",
-				}),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/a", "fsid-1")),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/b", "fsid-2")),
 			),
 			layers: nil, // please don't panic!
 			want: []file.Location{
 				{
 					LocationData: file.LocationData{
-						Coordinates: file.Coordinates{
-							RealPath:     "/a",
-							FileSystemID: "fsid-1",
-						},
-						AccessPath: "/a",
+						Coordinates: file.NewCoordinates("/a", "fsid-1"),
+						AccessPath:  "/a",
 					},
 					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
-						Coordinates: file.Coordinates{
-							RealPath:     "/b",
-							FileSystemID: "fsid-2",
-						},
-						AccessPath: "/b",
+						Coordinates: file.NewCoordinates("/b", "fsid-2"),
+						AccessPath:  "/b",
 					},
 					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
@@ -645,18 +582,9 @@ func Test_toLocationModel(t *testing.T) {
 		{
 			name: "go case",
 			locations: file.NewLocationSet(
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/a",
-					FileSystemID: "fsid-3",
-				}),
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/b",
-					FileSystemID: "fsid-1",
-				}),
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/c",
-					FileSystemID: "fsid-2",
-				}),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/a", "fsid-3")),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/b", "fsid-1")),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/c", "fsid-2")),
 			),
 			layers: []string{
 				"fsid-1",
@@ -666,31 +594,22 @@ func Test_toLocationModel(t *testing.T) {
 			want: []file.Location{
 				{
 					LocationData: file.LocationData{
-						Coordinates: file.Coordinates{
-							RealPath:     "/b",
-							FileSystemID: "fsid-1",
-						},
-						AccessPath: "/b",
+						Coordinates: file.NewCoordinates("/b", "fsid-1"),
+						AccessPath:  "/b",
 					},
 					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
-						Coordinates: file.Coordinates{
-							RealPath:     "/c",
-							FileSystemID: "fsid-2",
-						},
-						AccessPath: "/c",
+						Coordinates: file.NewCoordinates("/c", "fsid-2"),
+						AccessPath:  "/c",
 					},
 					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
-						Coordinates: file.Coordinates{
-							RealPath:     "/a",
-							FileSystemID: "fsid-3",
-						},
-						AccessPath: "/a",
+						Coordinates: file.NewCoordinates("/a", "fsid-3"),
+						AccessPath:  "/a",
 					},
 					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
@@ -699,18 +618,9 @@ func Test_toLocationModel(t *testing.T) {
 		{
 			name: "same layer different paths", // prove we can sort by path irrespective of layer
 			locations: file.NewLocationSet(
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/c",
-					FileSystemID: "fsid-1",
-				}),
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/a",
-					FileSystemID: "fsid-1",
-				}),
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/b",
-					FileSystemID: "fsid-1",
-				}),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/c", "fsid-1")),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/a", "fsid-1")),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/b", "fsid-1")),
 			),
 			layers: []string{
 				"fsid-1",
@@ -718,31 +628,22 @@ func Test_toLocationModel(t *testing.T) {
 			want: []file.Location{
 				{
 					LocationData: file.LocationData{
-						Coordinates: file.Coordinates{
-							RealPath:     "/a",
-							FileSystemID: "fsid-1",
-						},
-						AccessPath: "/a",
+						Coordinates: file.NewCoordinates("/a", "fsid-1"),
+						AccessPath:  "/a",
 					},
 					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
-						Coordinates: file.Coordinates{
-							RealPath:     "/b",
-							FileSystemID: "fsid-1",
-						},
-						AccessPath: "/b",
+						Coordinates: file.NewCoordinates("/b", "fsid-1"),
+						AccessPath:  "/b",
 					},
 					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
-						Coordinates: file.Coordinates{
-							RealPath:     "/c",
-							FileSystemID: "fsid-1",
-						},
-						AccessPath: "/c",
+						Coordinates: file.NewCoordinates("/c", "fsid-1"),
+						AccessPath:  "/c",
 					},
 					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
@@ -751,22 +652,10 @@ func Test_toLocationModel(t *testing.T) {
 		{
 			name: "mixed layers and paths",
 			locations: file.NewLocationSet(
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/z",
-					FileSystemID: "fsid-3",
-				}),
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/a",
-					FileSystemID: "fsid-2",
-				}),
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/b",
-					FileSystemID: "fsid-1",
-				}),
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/c",
-					FileSystemID: "fsid-2",
-				}),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/z", "fsid-3")),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/a", "fsid-2")),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/b", "fsid-1")),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/c", "fsid-2")),
 			),
 			layers: []string{
 				"fsid-1",
@@ -776,41 +665,29 @@ func Test_toLocationModel(t *testing.T) {
 			want: []file.Location{
 				{
 					LocationData: file.LocationData{
-						Coordinates: file.Coordinates{
-							RealPath:     "/b",
-							FileSystemID: "fsid-1",
-						},
-						AccessPath: "/b",
+						Coordinates: file.NewCoordinates("/b", "fsid-1"),
+						AccessPath:  "/b",
 					},
 					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
-						Coordinates: file.Coordinates{
-							RealPath:     "/a",
-							FileSystemID: "fsid-2",
-						},
-						AccessPath: "/a",
+						Coordinates: file.NewCoordinates("/a", "fsid-2"),
+						AccessPath:  "/a",
 					},
 					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
-						Coordinates: file.Coordinates{
-							RealPath:     "/c",
-							FileSystemID: "fsid-2",
-						},
-						AccessPath: "/c",
+						Coordinates: file.NewCoordinates("/c", "fsid-2"),
+						AccessPath:  "/c",
 					},
 					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
-						Coordinates: file.Coordinates{
-							RealPath:     "/z",
-							FileSystemID: "fsid-3",
-						},
-						AccessPath: "/z",
+						Coordinates: file.NewCoordinates("/z", "fsid-3"),
+						AccessPath:  "/z",
 					},
 					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
@@ -845,35 +722,23 @@ func Test_sortFiles(t *testing.T) {
 			name: "nil layer order map",
 			files: []model.File{
 				{
-					ID: "file-1",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-1",
+					Location: file.NewCoordinates("/a", "fsid-1"),
 				},
 				{
-					ID: "file-2",
-					Location: file.Coordinates{
-						RealPath:     "/b",
-						FileSystemID: "fsid-2",
-					},
+					ID:       "file-2",
+					Location: file.NewCoordinates("/b", "fsid-2"),
 				},
 			},
 			layers: nil,
 			want: []model.File{
 				{
-					ID: "file-1",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-1",
+					Location: file.NewCoordinates("/a", "fsid-1"),
 				},
 				{
-					ID: "file-2",
-					Location: file.Coordinates{
-						RealPath:     "/b",
-						FileSystemID: "fsid-2",
-					},
+					ID:       "file-2",
+					Location: file.NewCoordinates("/b", "fsid-2"),
 				},
 			},
 		},
@@ -881,25 +746,16 @@ func Test_sortFiles(t *testing.T) {
 			name: "layer ordering",
 			files: []model.File{
 				{
-					ID: "file-1",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-3",
-					},
+					ID:       "file-1",
+					Location: file.NewCoordinates("/a", "fsid-3"),
 				},
 				{
-					ID: "file-2",
-					Location: file.Coordinates{
-						RealPath:     "/b",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-2",
+					Location: file.NewCoordinates("/b", "fsid-1"),
 				},
 				{
-					ID: "file-3",
-					Location: file.Coordinates{
-						RealPath:     "/c",
-						FileSystemID: "fsid-2",
-					},
+					ID:       "file-3",
+					Location: file.NewCoordinates("/c", "fsid-2"),
 				},
 			},
 			layers: []string{
@@ -909,25 +765,16 @@ func Test_sortFiles(t *testing.T) {
 			},
 			want: []model.File{
 				{
-					ID: "file-2",
-					Location: file.Coordinates{
-						RealPath:     "/b",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-2",
+					Location: file.NewCoordinates("/b", "fsid-1"),
 				},
 				{
-					ID: "file-3",
-					Location: file.Coordinates{
-						RealPath:     "/c",
-						FileSystemID: "fsid-2",
-					},
+					ID:       "file-3",
+					Location: file.NewCoordinates("/c", "fsid-2"),
 				},
 				{
-					ID: "file-1",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-3",
-					},
+					ID:       "file-1",
+					Location: file.NewCoordinates("/a", "fsid-3"),
 				},
 			},
 		},
@@ -935,25 +782,16 @@ func Test_sortFiles(t *testing.T) {
 			name: "same layer different paths",
 			files: []model.File{
 				{
-					ID: "file-1",
-					Location: file.Coordinates{
-						RealPath:     "/c",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-1",
+					Location: file.NewCoordinates("/c", "fsid-1"),
 				},
 				{
-					ID: "file-2",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-2",
+					Location: file.NewCoordinates("/a", "fsid-1"),
 				},
 				{
-					ID: "file-3",
-					Location: file.Coordinates{
-						RealPath:     "/b",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-3",
+					Location: file.NewCoordinates("/b", "fsid-1"),
 				},
 			},
 			layers: []string{
@@ -961,25 +799,16 @@ func Test_sortFiles(t *testing.T) {
 			},
 			want: []model.File{
 				{
-					ID: "file-2",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-2",
+					Location: file.NewCoordinates("/a", "fsid-1"),
 				},
 				{
-					ID: "file-3",
-					Location: file.Coordinates{
-						RealPath:     "/b",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-3",
+					Location: file.NewCoordinates("/b", "fsid-1"),
 				},
 				{
-					ID: "file-1",
-					Location: file.Coordinates{
-						RealPath:     "/c",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-1",
+					Location: file.NewCoordinates("/c", "fsid-1"),
 				},
 			},
 		},
@@ -987,25 +816,16 @@ func Test_sortFiles(t *testing.T) {
 			name: "stability test - preserve original order for equivalent items",
 			files: []model.File{
 				{
-					ID: "file-1",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-1",
+					Location: file.NewCoordinates("/a", "fsid-1"),
 				},
 				{
-					ID: "file-2",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-2",
+					Location: file.NewCoordinates("/a", "fsid-1"),
 				},
 				{
-					ID: "file-3",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-3",
+					Location: file.NewCoordinates("/a", "fsid-1"),
 				},
 			},
 			layers: []string{
@@ -1013,25 +833,16 @@ func Test_sortFiles(t *testing.T) {
 			},
 			want: []model.File{
 				{
-					ID: "file-1",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-1",
+					Location: file.NewCoordinates("/a", "fsid-1"),
 				},
 				{
-					ID: "file-2",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-2",
+					Location: file.NewCoordinates("/a", "fsid-1"),
 				},
 				{
-					ID: "file-3",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-3",
+					Location: file.NewCoordinates("/a", "fsid-1"),
 				},
 			},
 		},
@@ -1039,11 +850,8 @@ func Test_sortFiles(t *testing.T) {
 			name: "complex file metadata doesn't affect sorting",
 			files: []model.File{
 				{
-					ID: "file-1",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-2",
-					},
+					ID:       "file-1",
+					Location: file.NewCoordinates("/a", "fsid-2"),
 					Metadata: &model.FileMetadataEntry{
 						Mode:     0644,
 						Type:     "file",
@@ -1061,11 +869,8 @@ func Test_sortFiles(t *testing.T) {
 					},
 				},
 				{
-					ID: "file-2",
-					Location: file.Coordinates{
-						RealPath:     "/b",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-2",
+					Location: file.NewCoordinates("/b", "fsid-1"),
 					Metadata: &model.FileMetadataEntry{
 						Mode:     0755,
 						Type:     "directory",
@@ -1082,11 +887,8 @@ func Test_sortFiles(t *testing.T) {
 			},
 			want: []model.File{
 				{
-					ID: "file-2",
-					Location: file.Coordinates{
-						RealPath:     "/b",
-						FileSystemID: "fsid-1",
-					},
+					ID:       "file-2",
+					Location: file.NewCoordinates("/b", "fsid-1"),
 					Metadata: &model.FileMetadataEntry{
 						Mode:     0755,
 						Type:     "directory",
@@ -1097,11 +899,8 @@ func Test_sortFiles(t *testing.T) {
 					},
 				},
 				{
-					ID: "file-1",
-					Location: file.Coordinates{
-						RealPath:     "/a",
-						FileSystemID: "fsid-2",
-					},
+					ID:       "file-1",
+					Location: file.NewCoordinates("/a", "fsid-2"),
 					Metadata: &model.FileMetadataEntry{
 						Mode:     0644,
 						Type:     "file",

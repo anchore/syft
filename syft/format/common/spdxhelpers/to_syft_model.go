@@ -530,23 +530,30 @@ func collectPackageFileRelationships(spdxIDMap map[string]any, doc *spdx.Documen
 }
 
 func toSyftCoordinates(f *spdx.File) file.Coordinates {
-	const layerIDPrefix = "layerID: "
-	var fileSystemID string
-	if strings.HasPrefix(f.FileComment, layerIDPrefix) {
-		fileSystemID = strings.TrimPrefix(f.FileComment, layerIDPrefix)
+	return coordinatesFromFile(f.FileName, f.FileComment, string(f.FileSPDXIdentifier))
+}
+
+// coordinatesFromFile decodes what fileComment encodes.
+func coordinatesFromFile(name, comment, id string) file.Coordinates {
+	c := file.NewCoordinates(name, "")
+	for _, line := range strings.Split(comment, "\n") {
+		if v, ok := strings.CutPrefix(line, layerIDCommentPrefix); ok {
+			c.FileSystemID = v
+		}
+		if v, ok := strings.CutPrefix(line, archivePathCommentPrefix); ok {
+			// the name is the full path; the real path is what precedes the entry chain
+			c.RealPath = strings.TrimSuffix(name, file.ArchivePathSeparator+v)
+			c.FullPath = name
+		}
 	}
-	if strings.HasPrefix(string(f.FileSPDXIdentifier), layerIDPrefix) {
-		fileSystemID = strings.TrimPrefix(string(f.FileSPDXIdentifier), layerIDPrefix)
+	if v, ok := strings.CutPrefix(id, layerIDCommentPrefix); ok {
+		c.FileSystemID = v
 	}
-	return file.Coordinates{
-		RealPath:     f.FileName,
-		FileSystemID: fileSystemID,
-	}
+	return internal.NormalizeCoordinates(c)
 }
 
 func toSyftLocation(f *spdx.File) file.Location {
-	l := file.NewVirtualLocationFromCoordinates(toSyftCoordinates(f), f.FileName)
-	return l
+	return file.NewLocationFromCoordinates(toSyftCoordinates(f))
 }
 
 func requireAndTrimPrefix(val any, prefix string) string {

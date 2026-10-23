@@ -762,10 +762,7 @@ func Test_fileIDsForPackage(t *testing.T) {
 		Name: "bogus",
 	}
 
-	c := file.Coordinates{
-		RealPath:     "/path",
-		FileSystemID: "nowhere",
-	}
+	c := file.NewCoordinates("/path", "nowhere")
 
 	docElementId := func(identifiable artifact.Identifiable) spdx.DocElementID {
 		return spdx.DocElementID{
@@ -824,12 +821,29 @@ func Test_fileIDsForPackage(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name: "ignore file-to-package",
+			name: "include an archive file containing a package",
 			relationships: []artifact.Relationship{
 				{
 					From: c,
 					To:   p,
 					Type: artifact.ContainsRelationship,
+				},
+			},
+			expected: []*spdx.Relationship{
+				{
+					Relationship: "CONTAINS",
+					RefA:         docElementId(c),
+					RefB:         docElementId(p),
+				},
+			},
+		},
+		{
+			name: "ignore other file-to-package",
+			relationships: []artifact.Relationship{
+				{
+					From: c,
+					To:   p,
+					Type: artifact.DependencyOfRelationship,
 				},
 			},
 			expected: nil,
@@ -1010,17 +1024,13 @@ func Test_toSPDXID(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "short filename",
-			it: file.Coordinates{
-				RealPath: "/short/path/file.txt",
-			},
+			name:     "short filename",
+			it:       file.NewCoordinates("/short/path/file.txt", ""),
 			expected: "File-short-path-file.txt",
 		},
 		{
-			name: "long filename",
-			it: file.Coordinates{
-				RealPath: "/some/long/path/with/a/lot/of-text/that-contains-a/file.txt",
-			},
+			name:     "long filename",
+			it:       file.NewCoordinates("/some/long/path/with/a/lot/of-text/that-contains-a/file.txt", ""),
 			expected: "File-...a-lot-of-text-that-contains-a-file.txt",
 		},
 		{
@@ -1144,6 +1154,40 @@ func Test_otherLicenses(t *testing.T) {
 			require.Equal(t, test.expected, got.OtherLicenses)
 		})
 	}
+}
+
+func Test_toFiles_nestedFilesAreNamedByTheirChainAndRoundTrip(t *testing.T) {
+	// two archives' META-INF/MANIFEST.MF must not come out as two files with the same name and nothing
+	// saying which archive each is in
+	root := file.NewCoordinates("/etc/os-release", "sha256:layer")
+	inA := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF", FileSystemID: "sha256:layer"}
+	inB := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/b.jar!/odd:na%me.txt"}
+	s := sbom.SBOM{Artifacts: sbom.Artifacts{FileMetadata: map[file.Coordinates]file.Metadata{root: {}, inA: {}, inB: {}}}}
+
+	byName := map[string]*spdx.File{}
+	for _, f := range toFiles(s) {
+		byName[f.FileName] = f
+	}
+	require.Len(t, byName, 3)
+
+	assert.Equal(t, "layerID: sha256:layer", byName["etc/os-release"].FileComment, "files outside archives are unchanged")
+	assert.Equal(t, file.NewCoordinates("etc/os-release", "sha256:layer"), toSyftCoordinates(byName["etc/os-release"]))
+
+	// the name is made relative like any other file's, so the decoded top path is too
+	a := byName["app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF"]
+	require.NotNil(t, a, "names: %v", byName)
+	assert.Equal(t, "layerID: sha256:layer\narchivePath: WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF", a.FileComment)
+	wantA := inA
+	wantA.RealPath = "app.war"
+	wantA.FullPath = "app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF"
+	assert.Equal(t, wantA, toSyftCoordinates(a))
+
+	b := byName["app.war!/WEB-INF/lib/b.jar!/odd:na%me.txt"]
+	require.NotNil(t, b, "names: %v", byName)
+	wantB := inB
+	wantB.RealPath = "app.war"
+	wantB.FullPath = "app.war!/WEB-INF/lib/b.jar!/odd:na%me.txt"
+	assert.Equal(t, wantB, toSyftCoordinates(b))
 }
 
 func Test_toRootPackage_name(t *testing.T) {

@@ -330,7 +330,7 @@ func Read(f file.LocationReadCloser) (*File, error) {
 
 	parseErr := errors.Join(parseErrs...)
 	if parseErr != nil {
-		log.Tracef("partially parsed PE file %s: %v", f.RealPath, parseErr)
+		log.Tracef("partially parsed PE file %s: %v", f.FullNestedPath(), parseErr)
 	}
 
 	return &File{

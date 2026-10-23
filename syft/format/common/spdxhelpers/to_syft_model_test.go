@@ -344,10 +344,7 @@ func Test_toSyftRelationships(t *testing.T) {
 	}
 	pkg3.SetID()
 
-	loc1 := file.NewLocationFromCoordinates(file.Coordinates{
-		RealPath:     "/somewhere/real",
-		FileSystemID: "abc",
-	})
+	loc1 := file.NewLocationFromCoordinates(file.NewCoordinates("/somewhere/real", "abc"))
 
 	tests := []struct {
 		name string
@@ -694,11 +691,8 @@ func Test_directPackageFiles(t *testing.T) {
 	p.OverrideID("1") // the same as the spdxID on the package element
 	f := file.Location{
 		LocationData: file.LocationData{
-			Coordinates: file.Coordinates{
-				RealPath:     "some-file",
-				FileSystemID: "",
-			},
-			AccessPath: "some-file",
+			Coordinates: file.NewCoordinates("some-file", ""),
+			AccessPath:  "some-file",
 		},
 		LocationMetadata: file.LocationMetadata{
 			Annotations: map[string]string{},
@@ -794,4 +788,13 @@ func Test_skipsPackagesWithGeneratedFromRelationship(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, s.Artifacts.Packages.Package("1"))
 	assert.Nil(t, s.Artifacts.Packages.Package("1-src"))
+}
+
+func Test_coordinatesFromFile_nonCanonicalChainIsDropped(t *testing.T) {
+	// a chain the name doesn't end with leaves FullPath equal to RealPath, which must decode as a plain file
+	got := coordinatesFromFile("/app.jar", "archivePath: other.jar!/x", "")
+	assert.Equal(t, file.NewCoordinates("/app.jar", ""), got)
+
+	nested := coordinatesFromFile("/app.war!/lib/a.jar", "archivePath: lib/a.jar", "")
+	assert.Equal(t, file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/lib/a.jar"}, nested)
 }

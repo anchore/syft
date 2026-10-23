@@ -48,7 +48,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 			HideOnSuccess: true,
 		}
 
-		t := bus.StartCatalogerTask(info, -1, "")
+		t := bus.StartCatalogerTask(ctx, info, -1, "")
 
 		pkgs, relationships, err := c.Catalog(ctx, resolver)
 
@@ -167,7 +167,7 @@ func applyComplianceRules(p *pkg.Package, cfg cataloging.ComplianceConfig) (bool
 		loc := "unknown"
 		locs := p.Locations.ToSlice()
 		if len(locs) > 0 {
-			loc = locs[0].Path()
+			loc = locs[0].FullNestedPath()
 		}
 		switch action {
 		case cataloging.ComplianceActionDrop:
@@ -251,7 +251,7 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver
 
 		for _, ref := range pathRefs {
 			if oldRef, ok := locations[ref.ID()]; ok {
-				log.Debugf("found path duplicate of %s", oldRef.RealPath)
+				log.Debugf("found path duplicate of %s", oldRef.FullNestedPath())
 			}
 			locations[ref.ID()] = ref
 		}

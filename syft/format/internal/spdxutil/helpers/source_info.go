@@ -98,7 +98,7 @@ func SourceInfo(p pkg.Package) string {
 	}
 	var paths []string
 	for _, l := range p.Locations.ToSlice() {
-		paths = append(paths, l.RealPath)
+		paths = append(paths, l.FullNestedPath())
 	}
 
 	return answer + ": " + strings.Join(paths, ", ")

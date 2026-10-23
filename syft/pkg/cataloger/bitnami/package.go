@@ -61,7 +61,7 @@ func packageFiles(relationships []artifact.Relationship, p pkg.Package, baseDire
 					// note: the file.Location is from the SBOM, and all files within the Bitnami SBOM by convention
 					// are relative to the /opt/bitnami/PRODUCT directory, so we need to prepend the base directory
 					// so that it's relative to the path found within the container image.
-					result = append(result, path.Join(baseDirectory, value.RealPath))
+					result = append(result, path.Join(baseDirectory, value.LocalPath()))
 				}
 			}
 		}

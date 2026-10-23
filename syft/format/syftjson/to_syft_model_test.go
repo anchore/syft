@@ -295,10 +295,7 @@ func Test_idsHaveChanged(t *testing.T) {
 }
 
 func Test_toSyftFiles(t *testing.T) {
-	coord := file.Coordinates{
-		RealPath:     "/somerwhere/place",
-		FileSystemID: "abc",
-	}
+	coord := file.NewCoordinates("/somerwhere/place", "abc")
 
 	tests := []struct {
 		name  string
@@ -601,4 +598,36 @@ func Test_safeFileModeConvert(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func Test_toSyftModel_fullPathIsNormalized(t *testing.T) {
+	plain := file.NewCoordinates("/app.jar", "")
+	nested := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/lib/a.jar"}
+	decoded := []file.Coordinates{
+		{RealPath: "/app.jar", FullPath: "/app.jar"},
+		{RealPath: "/app.jar", FullPath: "/elsewhere!/app.jar"},
+		nested,
+	}
+	want := []file.Coordinates{plain, plain, nested}
+
+	var files []model.File
+	for _, c := range decoded {
+		files = append(files, model.File{ID: string(c.ID()), Location: c, Unknowns: []string{"x"}})
+	}
+	got := toSyftFiles(files)
+	for _, c := range want {
+		assert.Contains(t, got.Unknowns, c)
+	}
+	assert.Len(t, got.Unknowns, 2)
+
+	var locations []file.Location
+	for _, c := range decoded {
+		locations = append(locations, file.NewLocationFromCoordinates(c))
+	}
+	p := toSyftPackage(model.Package{PackageBasicData: model.PackageBasicData{Locations: locations}}, nil)
+	var gotCoordinates []file.Coordinates
+	for _, l := range p.Locations.ToSlice() {
+		gotCoordinates = append(gotCoordinates, l.Coordinates)
+	}
+	assert.ElementsMatch(t, []file.Coordinates{plain, plain, nested}, gotCoordinates)
 }

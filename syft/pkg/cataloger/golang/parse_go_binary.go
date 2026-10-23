@@ -119,7 +119,7 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
+	defer internal.CloseAndLogError(reader.ReadCloser, reader.FullNestedPath())
 
 	mods, errs := scanFile(ctx, reader.Location, unionReader, c.symbolSelector.enabled())
 	// scanFile hands back the reconstruction for each binary that turned out to be packed. The readers

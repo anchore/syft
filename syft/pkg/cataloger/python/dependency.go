@@ -287,7 +287,7 @@ func collectPackages(pkgsBySitePackageAndName map[string]map[string]pkg.Package,
 
 func deriveSitePackageDir(p pkg.Package) string {
 	for _, l := range packagePrimaryLocations(p) {
-		sitePackageDir := extractSitePackageDir(l.RealPath)
+		sitePackageDir := extractSitePackageDir(l.LocalPath())
 		if sitePackageDir != "" {
 			return sitePackageDir
 		}

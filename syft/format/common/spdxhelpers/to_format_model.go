@@ -355,7 +355,7 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 			return spdx.ElementID(helpers.SanitizeElementID(id))
 		}
 		p := ""
-		parts := strings.Split(it.RealPath, "/")
+		parts := strings.Split(it.FullNestedPath(), "/")
 		for i := len(parts); i > 0; i-- {
 			part := parts[i-1]
 			if len(part) == 0 {
@@ -663,8 +663,11 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 			continue
 		}
 
-		// FIXME: we are only currently including Package -> * relationships
-		if _, ok := r.From.(pkg.Package); !ok {
+		// FIXME: we are only currently including Package -> * relationships, plus an archive containing a
+		// package found inside it, which is the only structure nested archive cataloging records for
+		// non-java packages. Every file-side From is in the document: toFiles covers every coordinate a
+		// relationship names.
+		if _, ok := r.From.(pkg.Package); !ok && !isFileContainsPackage(r) {
 			log.Debugf("skipping non-package relationship: %+v", r)
 			continue
 		}
@@ -683,6 +686,12 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 	return result
 }
 
+func isFileContainsPackage(r artifact.Relationship) bool {
+	_, fromFile := r.From.(file.Coordinates)
+	_, toPkg := r.To.(pkg.Package)
+	return fromFile && toPkg && r.Type == artifact.ContainsRelationship
+}
+
 func lookupRelationship(ty artifact.RelationshipType) (bool, helpers.RelationshipType, string) {
 	switch ty {
 	case artifact.ContainsRelationship:
@@ -695,6 +704,32 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, helpers.Relationshi
 		return true, helpers.OtherRelationship, fmt.Sprintf("%s: indicates the package's existence is evident by the given file", ty)
 	}
 	return false, "", ""
+}
+
+// file comments carry what an SPDX file has no field for, one "key: value" per line
+const (
+	layerIDCommentPrefix     = "layerID: "
+	archivePathCommentPrefix = "archivePath: "
+)
+
+// fileComment carries the layer ID and, for a file inside an archive, its archive path. Such a file is
+// named by its full path ("/app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF"), so a consumer reading
+// only the name does not mistake it for a file at that path in the scan root; the entry chain after the
+// real path is also kept in the comment so decoding need not guess where it starts.
+func fileComment(c file.Coordinates) string {
+	var entries string
+	if rest, ok := strings.CutPrefix(c.FullPath, c.RealPath); ok {
+		entries, _ = strings.CutPrefix(rest, file.ArchivePathSeparator)
+	}
+	switch {
+	case c.FileSystemID != "" && entries != "":
+		return layerIDCommentPrefix + c.FileSystemID + "\n" + archivePathCommentPrefix + entries
+	case c.FileSystemID != "":
+		return layerIDCommentPrefix + c.FileSystemID
+	case entries != "":
+		return archivePathCommentPrefix + entries
+	}
+	return ""
 }
 
 func toFiles(s sbom.SBOM) (results []*spdx.File) {
@@ -727,20 +762,16 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 
 		// TODO: add file classifications (?) and content as a snippet
 
-		var comment string
-		if c.FileSystemID != "" {
-			comment = fmt.Sprintf("layerID: %s", c.FileSystemID)
-		}
-
-		relativePath, err := convertAbsoluteToRelative(c.RealPath)
+		name := c.FullNestedPath()
+		relativePath, err := convertAbsoluteToRelative(name)
 		if err != nil {
-			log.Debugf("unable to convert relative path '%s' to absolute path: %s", c.RealPath, err)
-			relativePath = c.RealPath
+			log.Debugf("unable to convert relative path '%s' to absolute path: %s", name, err)
+			relativePath = name
 		}
 
 		results = append(results, &spdx.File{
 			FileSPDXIdentifier: toSPDXID(c),
-			FileComment:        comment,
+			FileComment:        fileComment(c),
 			// required, no attempt made to determine license information
 			LicenseConcluded:  noAssertion,
 			FileCopyrightText: noAssertion,

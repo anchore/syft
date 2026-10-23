@@ -393,18 +393,7 @@ func v3collectDocRelationships(spdxMap ptrMap[any], doc *spdx.Document) (out []a
 }
 
 func v3toSyftCoordinates(f spdx.AnyFile) file.Coordinates {
-	const layerIDPrefix = "layerID: "
-	var fileSystemID string
-	if strings.HasPrefix(f.GetComment(), layerIDPrefix) {
-		fileSystemID = strings.TrimPrefix(f.GetComment(), layerIDPrefix)
-	}
-	if strings.HasPrefix(f.GetID(), layerIDPrefix) {
-		fileSystemID = strings.TrimPrefix(f.GetID(), layerIDPrefix)
-	}
-	return file.Coordinates{
-		RealPath:     f.GetName(),
-		FileSystemID: fileSystemID,
-	}
+	return coordinatesFromFile(f.GetName(), f.GetComment(), f.GetID())
 }
 
 func v3toSyftLocation(f spdx.AnyFile) file.Location {

@@ -193,14 +193,14 @@ func TestToSyftModelV3_documentConversion(t *testing.T) {
 	assert.Equal(t, "BSD-3-Clause AND GPL-2.0+", pkg2Concluded[0].Value)
 
 	// Verify files
-	coords1 := file.Coordinates{RealPath: "/src/main.go"}
+	coords1 := file.NewCoordinates("/src/main.go", "")
 	digests, ok := result.Artifacts.FileDigests[coords1]
 	require.True(t, ok, "file1 digests not found")
 	require.Len(t, digests, 1)
 	assert.Equal(t, "sha256", digests[0].Algorithm)
 	assert.Equal(t, "abc123", digests[0].Value)
 
-	coords2 := file.Coordinates{RealPath: "/src/util.go"}
+	coords2 := file.NewCoordinates("/src/util.go", "")
 	_, ok = result.Artifacts.FileMetadata[coords2]
 	assert.True(t, ok, "file2 metadata not found")
 
