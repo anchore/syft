@@ -357,17 +357,12 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 
 func pkgCatalogerNamesWithTagOrName(t *testing.T, token string) []string {
 	var names []string
-	cfg := task.DefaultCatalogingFactoryConfig()
 	for _, factory := range task.DefaultPackageTaskFactories() {
-		cat := factory(cfg)
+		name := factory.Name()
 
-		name := cat.Name()
-
-		if selector, ok := cat.(task.Selector); ok {
-			if selector.HasAllSelectors(token) {
-				names = append(names, name)
-				continue
-			}
+		if strset.New(factory.Selectors()...).Has(token) {
+			names = append(names, name)
+			continue
 		}
 		if name == token {
 			names = append(names, name)
@@ -390,16 +385,9 @@ func pkgCatalogerNamesWithTagOrName(t *testing.T, token string) []string {
 
 func fileCatalogerNames(tokens ...string) []string {
 	var names []string
-	cfg := task.DefaultCatalogingFactoryConfig()
 topLoop:
 	for _, factory := range task.DefaultFileTaskFactories() {
-		cat := factory(cfg)
-
-		if cat == nil {
-			continue
-		}
-
-		name := cat.Name()
+		name := factory.Name()
 
 		if len(tokens) == 0 {
 			names = append(names, name)
@@ -407,12 +395,9 @@ topLoop:
 		}
 
 		for _, token := range tokens {
-			if selector, ok := cat.(task.Selector); ok {
-				if selector.HasAllSelectors(token) {
-					names = append(names, name)
-					continue topLoop
-				}
-
+			if strset.New(factory.Selectors()...).Has(token) {
+				names = append(names, name)
+				continue topLoop
 			}
 			if name == token {
 				names = append(names, name)
