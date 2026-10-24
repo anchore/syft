@@ -20,11 +20,14 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 		// as "external_reference" if the metadata isn't IRI-compliant
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkDBEntry:
-			if metadata.URL != "" && isValidExternalRef(metadata.URL) {
-				refs = append(refs, cyclonedx.ExternalReference{
-					URL:  metadata.URL,
-					Type: cyclonedx.ERTypeDistribution,
-				})
+			// APK URL fields may contain a space-separated list of upstream URLs.
+			for _, upstreamURL := range strings.Fields(metadata.URL) {
+				if isValidExternalRef(upstreamURL) {
+					refs = append(refs, cyclonedx.ExternalReference{
+						URL:  upstreamURL,
+						Type: cyclonedx.ERTypeDistribution,
+					})
+				}
 			}
 		case pkg.RustCargoLockEntry:
 			if metadata.Source != "" {
