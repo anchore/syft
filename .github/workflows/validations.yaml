@@ -99,7 +99,7 @@ jobs:
       # go-make's setup only (not ./.github/actions/bootstrap): binny ships no windows release, so binny tools
       # are unavailable here (`make unit` skips the fixture refresh on windows)
       - name: Setup go + go-make tooling
-        uses: anchore/go-make/.github/actions/setup@abf41688f36f2cbec13105747abbe8e60f5c56ca # v0.9.3
+        uses: anchore/go-make/.github/actions/setup@a174b0b9558406c6f506a0a17e964f866843e964 # v0.9.5
 
       # the binny-free version of `make download-test-fixture-cache` (keep the oras version in sync with .binny.yaml)
       - name: Download test fixture cache
@@ -192,7 +192,7 @@ jobs:
 
       # go-make's setup only (not ./.github/actions/bootstrap): the test only needs make + the snapshot binary
       - name: Setup go + go-make tooling
-        uses: anchore/go-make/.github/actions/setup@abf41688f36f2cbec13105747abbe8e60f5c56ca # v0.9.3
+        uses: anchore/go-make/.github/actions/setup@a174b0b9558406c6f506a0a17e964f866843e964 # v0.9.5
 
       - name: Install Podman
         run: |
@@ -222,7 +222,7 @@ jobs:
 
       # go-make's setup only (not ./.github/actions/bootstrap): the test only needs make + the snapshot binary
       - name: Setup go + go-make tooling
-        uses: anchore/go-make/.github/actions/setup@abf41688f36f2cbec13105747abbe8e60f5c56ca # v0.9.3
+        uses: anchore/go-make/.github/actions/setup@a174b0b9558406c6f506a0a17e964f866843e964 # v0.9.5
 
       - name: Install Buildah
         run: |
