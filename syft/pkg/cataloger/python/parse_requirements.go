@@ -26,7 +26,7 @@ const (
 	//      --hash=sha256:e9535b8c84dc9571a48999094fda7f33e63c3f1b74f3e5f3ac0105a58405bb65  # some comment
 
 	// namePattern matches: requests[security]
-	namePattern = `(?P<name>\w[\w\[\],\s-_\.]+)`
+	namePattern = `(?P<name>\w[\w\[\],\s-_\.]*)`
 
 	// versionConstraintPattern matches: == 2.8.*
 	// the version token accepts every character PEP 440 versions can contain: digits and letters,
