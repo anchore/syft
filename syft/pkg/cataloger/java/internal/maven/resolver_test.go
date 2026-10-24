@@ -41,6 +41,31 @@ func Test_resolveProperty(t *testing.T) {
 			expected: "org.some.group",
 		},
 		{
+			// a child module that omits its own <groupId> inherits it from the parent,
+			// so ${project.groupId} must resolve to the parent's groupId (mirrors the
+			// ${project.version} inheritance handled just above it in resolveProjectProperty)
+			name:     "groupId inherited from parent",
+			property: "${project.groupId}",
+			pom: Project{
+				GroupID: nil,
+				Parent: &Parent{
+					GroupID: ptr("org.some.parent"),
+				},
+			},
+			expected: "org.some.parent",
+		},
+		{
+			name:     "version inherited from parent",
+			property: "${project.version}",
+			pom: Project{
+				Version: nil,
+				Parent: &Parent{
+					Version: ptr("1.2.3"),
+				},
+			},
+			expected: "1.2.3",
+		},
+		{
 			name:     "parent groupId",
 			property: "${project.parent.groupId}",
 			pom: Project{
