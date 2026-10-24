@@ -2,6 +2,7 @@ package options
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -37,6 +38,8 @@ func (o *sourceConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.File.Digests, `the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")`)
 	descriptions.Add(&o.Image.DefaultPullSource, `allows users to specify which image source should be used to generate the sbom
 valid values are: registry, docker, podman, containers-storage`)
+	descriptions.Add(&o.Image.MaxLayerSize, `maximum size of a single entry extracted from an image archive (e.g. "500MB", "10GB")
+an empty value or "0" means there is no limit`)
 }
 
 type imageSource struct {
@@ -64,14 +67,30 @@ func (c *fileSource) PostLoad() error {
 }
 
 func (c *imageSource) PostLoad() error {
-	if c.MaxLayerSize != "" {
-		perFileReadLimit, err := humanize.ParseBytes(c.MaxLayerSize)
-		if err != nil {
-			return err
-		}
-		stereoscopeFile.SetPerFileReadLimit(int64(perFileReadLimit))
+	limit, err := c.perFileReadLimit()
+	if err != nil {
+		return err
 	}
+	stereoscopeFile.SetPerFileReadLimit(limit)
+
 	return checkDefaultSourceValues(c.DefaultPullSource)
+}
+
+func (c *imageSource) perFileReadLimit() (int64, error) {
+	if c.MaxLayerSize == "" {
+		return math.MaxInt64, nil
+	}
+
+	size, err := humanize.ParseBytes(c.MaxLayerSize)
+	if err != nil {
+		return 0, err
+	}
+
+	if size == 0 || size > math.MaxInt64 {
+		return math.MaxInt64, nil
+	}
+
+	return int64(size), nil
 }
 
 var validDefaultSourceValues = []string{"registry", "docker", "podman", "containers-storage", ""}
