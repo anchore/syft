@@ -3,6 +3,9 @@ package javascript
 const npmBaseURL = "https://registry.npmjs.org"
 
 type CatalogerConfig struct {
+	// SearchLocalLicenses searches sibling license files when package.json declares no license.
+	// app-config: javascript.search-local-licenses
+	SearchLocalLicenses bool `json:"search-local-licenses" yaml:"search-local-licenses" mapstructure:"search-local-licenses"`
 	// SearchRemoteLicenses enables querying the NPM registry API to retrieve license information for packages that are missing license data in their local metadata.
 	// app-config: javascript.search-remote-licenses
 	SearchRemoteLicenses bool `json:"search-remote-licenses" yaml:"search-remote-licenses" mapstructure:"search-remote-licenses"`
@@ -16,6 +19,7 @@ type CatalogerConfig struct {
 
 func DefaultCatalogerConfig() CatalogerConfig {
 	return CatalogerConfig{
+		SearchLocalLicenses:  true,
 		SearchRemoteLicenses: false,
 		NPMBaseURL:           npmBaseURL,
 	}
@@ -35,5 +39,10 @@ func (j CatalogerConfig) WithNpmBaseURL(input string) CatalogerConfig {
 
 func (j CatalogerConfig) WithIncludeDevDependencies(input bool) CatalogerConfig {
 	j.IncludeDevDependencies = input
+	return j
+}
+
+func (j CatalogerConfig) WithSearchLocalLicenses(input bool) CatalogerConfig {
+	j.SearchLocalLicenses = input
 	return j
 }
