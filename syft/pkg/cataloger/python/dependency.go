@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
+	pep440 "github.com/aquasecurity/go-pep440-version"
 )
 
 func poetryLockDependencySpecifier(p pkg.Package) dependency.Specification {
@@ -209,6 +210,13 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 		if pkgsBySitePackageAndName[sitePackagesDir] == nil {
 			pkgsBySitePackageAndName[sitePackagesDir] = make(map[string]pkg.Package)
 		}
+		if existing, ok := pkgsBySitePackageAndName[sitePackagesDir][p.Name]; ok && !preferPackageOver(p, existing) {
+			// multiple installed distributions can share a name (e.g. a top-level
+			// package and a vendored copy). Always keep the deterministically
+			// preferred copy so that dependency targets do not depend on the
+			// (unordered) cataloging sequence.
+			continue
+		}
 		pkgsBySitePackageAndName[sitePackagesDir][p.Name] = p
 	}
 
@@ -283,6 +291,35 @@ func collectPackages(pkgsBySitePackageAndName map[string]map[string]pkg.Package,
 	}
 
 	return pkgs
+}
+
+// preferPackageOver reports whether candidate should replace current when two
+// installed distributions share both a site-packages directory key and a name.
+//
+// The choice must be deterministic and independent of cataloging order, since
+// Go map iteration is unordered and the previous "last write wins" behavior
+// made dependency targets change between scans of the same files. Higher
+// versions are preferred; ties (including non-PEP440 versions) are broken by
+// the primary location path so the result is fully determined by the input.
+func preferPackageOver(candidate, current pkg.Package) bool {
+	candidateVersion, candidateErr := pep440.Parse(candidate.Version)
+	currentVersion, currentErr := pep440.Parse(current.Version)
+	if candidateErr == nil && currentErr == nil {
+		if cmp := candidateVersion.Compare(currentVersion); cmp != 0 {
+			return cmp > 0
+		}
+	} else if candidate.Version != current.Version {
+		// deterministic fallback for version strings that are not valid PEP440
+		return candidate.Version > current.Version
+	}
+	return primaryLocationPath(candidate) > primaryLocationPath(current)
+}
+
+func primaryLocationPath(p pkg.Package) string {
+	for _, l := range packagePrimaryLocations(p) {
+		return l.RealPath
+	}
+	return ""
 }
 
 func deriveSitePackageDir(p pkg.Package) string {
