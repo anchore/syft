@@ -88,7 +88,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	}
 	cdxBOM.Components = &components
 
-	dependencies := toDependencies(s.Relationships)
+	dependencies := toDependencies(s.Relationships, s.Artifacts.Packages)
 	if len(dependencies) > 0 {
 		cdxBOM.Dependencies = &dependencies
 	}
@@ -250,7 +250,11 @@ func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 	}
 }
 
-func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {
+func toDependencies(relationships []artifact.Relationship, catalog *pkg.Collection) []cyclonedx.Dependency {
+	if catalog == nil {
+		return nil
+	}
+
 	dependencies := map[string]*cyclonedx.Dependency{}
 	for _, r := range relationships {
 		exists := isExpressiblePackageRelationship(r.Type)
@@ -269,6 +273,14 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 		toPkg, ok := r.To.(pkg.Package)
 		if !ok {
 			log.Tracef("unable to convert relationship toPkg to CycloneDX JSON, dropping: %#v", r)
+			continue
+		}
+
+		// a relationship may reference a package that was filtered out of (or never made it into) the
+		// final catalog. Including it here would create a dependency reference to a component that
+		// does not exist in the BOM, which fails CycloneDX validation.
+		if catalog.Package(fromPkg.ID()) == nil || catalog.Package(toPkg.ID()) == nil {
+			log.Debugf("skipping relationship that references a package not in the catalog: %#v", r)
 			continue
 		}
 
