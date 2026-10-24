@@ -1,6 +1,7 @@
 package snapsource
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/goccy/go-yaml"
@@ -21,6 +22,11 @@ type snapManifest struct {
 
 const manifestLocation = "/meta/snap.yaml"
 
+// errNoManifest means the payload is a readable squashfs that simply does not carry a snap manifest.
+// This is distinct from a manifest that is present but unusable, and callers are expected to treat
+// the two differently.
+var errNoManifest = errors.New("no snap manifest file found")
+
 func parseManifest(resolver file.Resolver) (*snapManifest, error) {
 	locations, err := resolver.FilesByPath(manifestLocation)
 	if err != nil {
@@ -28,7 +34,7 @@ func parseManifest(resolver file.Resolver) (*snapManifest, error) {
 	}
 
 	if len(locations) == 0 {
-		return nil, fmt.Errorf("no snap manifest file found")
+		return nil, errNoManifest
 	}
 
 	if len(locations) > 1 {
@@ -48,9 +54,8 @@ func parseManifest(resolver file.Resolver) (*snapManifest, error) {
 		return nil, fmt.Errorf("unable to decode snap manifest file: %w", err)
 	}
 
-	if manifest.Name == "" || manifest.Version == "" {
-		return nil, fmt.Errorf("invalid snap manifest file: missing name or version")
-	}
-
+	// note: name and version are deliberately not validated here. a manifest that decoded but is
+	// missing them still carries usable fields (summary, base, grade, ...) and throwing it away would
+	// describe less than we know. the caller surfaces the missing identity.
 	return &manifest, nil
 }

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -123,10 +124,10 @@ func TestAllStorePaths(t *testing.T) {
 			},
 			dest: "dest",
 			expected: []string{
-				"dest/test/1.0/platform1/test1",
-				"dest/test/1.0/platform1/test2",
-				"dest/test/1.0/platform2/test1",
-				"dest/test/1.0/platform2/test2",
+				filepath.FromSlash("dest/test/1.0/platform1/test1"),
+				filepath.FromSlash("dest/test/1.0/platform1/test2"),
+				filepath.FromSlash("dest/test/1.0/platform2/test1"),
+				filepath.FromSlash("dest/test/1.0/platform2/test2"),
 			},
 		},
 	}

@@ -21,6 +21,9 @@ func init() {
 
 func Decoders() []sbom.FormatDecoder {
 	return []sbom.FormatDecoder{
+		// syft-json must remain the first decoder tried: it is by far the most common input, and its decoder can
+		// identify a syft document from the tail of the file alone. Trying anything else first would pay for a full
+		// parse of a large document by another decoder before reaching the common path.
 		syftjson.NewFormatDecoder(),
 		cyclonedxxml.NewFormatDecoder(),
 		cyclonedxjson.NewFormatDecoder(),

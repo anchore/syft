@@ -502,6 +502,19 @@ func convertToJSONSchemaTypesFromMetadata(metadataTypes []string) []string {
 	return result
 }
 
+// packageTypeConstName renders a package type using its go constant name, which is what the detector
+// "type" field reports (e.g. "BinaryPkg").
+// a switch rather than a derivation, since pkg.Type values don't reliably map back to their constant
+// names (e.g. "java-archive" is JavaPkg); add an arm when a classifier declares a new type.
+func packageTypeConstName(t pkg.Type) string {
+	switch t {
+	case pkg.CpanPkg:
+		return "CpanPkg"
+	default:
+		return "BinaryPkg"
+	}
+}
+
 // EnrichWithBinaryClassifier enriches an entry with binary classifier detectors if it's the binary-classifier-cataloger
 func (e *EnrichmentData) EnrichWithBinaryClassifier(catalogerName string, entry *capabilities.CatalogerEntry) {
 	// special handling for binary-classifier-cataloger: auto-generate one detector per classifier
@@ -523,7 +536,7 @@ func (e *EnrichmentData) EnrichWithBinaryClassifier(catalogerName string, entry 
 					Name:  classifier.Package,
 					PURL:  purlStr,
 					CPEs:  cpeStrings,
-					Type:  "BinaryPkg",
+					Type:  packageTypeConstName(classifier.PackageType()),
 				},
 			}
 

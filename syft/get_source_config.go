@@ -3,6 +3,7 @@ package syft
 import (
 	"crypto"
 	"fmt"
+	"slices"
 
 	"github.com/anchore/go-collections"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -10,6 +11,11 @@ import (
 	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
+// GetSourceConfig controls which source providers are tried, and in what order, when resolving user input to a source.
+//
+// The "containers-storage" provider (local Buildah / Podman store) is never part of automatic resolution: it is only
+// used when named in Sources or DefaultImagePullSource. It is also only functional when built with the
+// containers_image_openpgp build tag (as syft's Linux release binaries are); otherwise it always returns an error.
 type GetSourceConfig struct {
 	// SourceProviderConfig may optionally be provided to be used when constructing the default set of source providers, unused if All specified
 	SourceProviderConfig *sourceproviders.Config
@@ -64,6 +70,12 @@ func (c *GetSourceConfig) WithDefaultImagePullSource(defaultImagePullSource stri
 func (c *GetSourceConfig) getProviders(userInput string) ([]source.Provider, error) {
 	providers := collections.TaggedValueSet[source.Provider]{}.Join(sourceproviders.All(userInput, c.SourceProviderConfig)...)
 
+	// opening a containers-storage store runs full graph driver init (mounts, locks, possible store writes), which is
+	// too invasive for an "is this image local?" probe on every plain image reference. Only use it when asked by name.
+	if !c.requestsSource(image.ContainersStorageSource) {
+		providers = providers.Remove(image.ContainersStorageSource)
+	}
+
 	// if the "default image pull source" is set, we move this as the first pull source
 	if c.DefaultImagePullSource != "" {
 		base := providers.Remove(sourceproviders.PullTag)
@@ -82,6 +94,10 @@ func (c *GetSourceConfig) getProviders(userInput string) ([]source.Provider, err
 	}
 
 	return providers.Values(), nil
+}
+
+func (c *GetSourceConfig) requestsSource(name string) bool {
+	return c.DefaultImagePullSource == name || slices.Contains(c.Sources, name)
 }
 
 func DefaultGetSourceConfig() *GetSourceConfig {

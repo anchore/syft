@@ -23,6 +23,7 @@ const (
 	JavaScript      Language = "javascript"
 	Lua             Language = "lua"
 	OCaml           Language = "ocaml"
+	Perl            Language = "perl"
 	PHP             Language = "php"
 	Python          Language = "python"
 	R               Language = "R"
@@ -45,6 +46,7 @@ var AllLanguages = []Language{
 	JavaScript,
 	Lua,
 	OCaml,
+	Perl,
 	PHP,
 	Python,
 	R,
@@ -80,6 +82,9 @@ func LanguageByName(name string) Language {
 		return JavaScript
 	case packageurl.TypeLuaRocks, string(Lua):
 		return Lua
+	// note: packageurl.TypeCpan and CpanPkg are the same string, so only one can be listed here
+	case packageurl.TypeCpan, string(Perl):
+		return Perl
 	case packageurl.TypePyPi, string(Python):
 		return Python
 	case packageurl.TypeGem, string(Ruby):

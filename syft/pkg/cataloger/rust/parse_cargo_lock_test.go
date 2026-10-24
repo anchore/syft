@@ -351,7 +351,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 	helloWorld := pkg.Package{
 		Name:      "hello_world",
 		Version:   "0.1.0",
-		PURL:      "pkg:cargo/hello_world@0.1.0",
+		PURL:      "",
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
@@ -669,6 +669,77 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		},
 	}
 	// what I know so far - it's not sorting, it's not
+
+	pkgtest.TestFileParser(t, fixture, parseCargoLock, expectedPkgs, expectedRelationships)
+}
+
+func TestCargoLockWithPathDependencies(t *testing.T) {
+	fixture := "testdata/path-deps/Cargo.lock"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+
+	app := pkg.Package{
+		Name:      "app",
+		Version:   "1.0.0",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:    "app",
+			Version: "1.0.0",
+			Dependencies: []string{
+				"memchr",
+				"telemetry",
+			},
+		},
+	}
+	memchr := pkg.Package{
+		Name:      "memchr",
+		Version:   "2.7.4",
+		PURL:      "pkg:cargo/memchr@2.7.4",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:         "memchr",
+			Version:      "2.7.4",
+			Source:       "registry+https://github.com/rust-lang/crates.io-index",
+			Checksum:     "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3",
+			Dependencies: []string{},
+		},
+	}
+	telemetry := pkg.Package{
+		Name:      "telemetry",
+		Version:   "0.1.0",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:         "telemetry",
+			Version:      "0.1.0",
+			Dependencies: []string{},
+		},
+	}
+
+	expectedPkgs := []pkg.Package{
+		app,
+		memchr,
+		telemetry,
+	}
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: memchr,
+			To:   app,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: telemetry,
+			To:   app,
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
 
 	pkgtest.TestFileParser(t, fixture, parseCargoLock, expectedPkgs, expectedRelationships)
 }

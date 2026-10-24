@@ -53,8 +53,8 @@ func (r *ContainerImageAllLayers) HasPath(path string) bool {
 	return false
 }
 
-func (r *ContainerImageAllLayers) fileByRef(ref stereoscopeFile.Reference, uniqueFileIDs stereoscopeFile.ReferenceSet, layerIdx int) ([]stereoscopeFile.Reference, error) {
-	uniqueFiles := make([]stereoscopeFile.Reference, 0)
+func (r *ContainerImageAllLayers) locationsByRef(ref stereoscopeFile.Reference, accessPath string, uniqueFileIDs stereoscopeFile.ReferenceSet, layerPos int) ([]file.Location, error) {
+	uniqueLocations := make([]file.Location, 0)
 
 	// since there is potentially considerable work for each symlink/hardlink that needs to be resolved, let's check to see if this is a symlink/hardlink first
 	entry, err := r.img.FileCatalog.Get(ref)
@@ -65,22 +65,22 @@ func (r *ContainerImageAllLayers) fileByRef(ref stereoscopeFile.Reference, uniqu
 	if entry.Type == stereoscopeFile.TypeHardLink || entry.Type == stereoscopeFile.TypeSymLink {
 		// a link may resolve in this layer or higher, assuming a squashed tree is used to search
 		// we should search all possible resolutions within the valid source
-		for _, subLayerIdx := range r.layers[layerIdx:] {
+		for _, subLayerIdx := range r.layers[layerPos:] {
 			resolvedRef, err := r.img.ResolveLinkByLayerSquash(ref, subLayerIdx)
 			if err != nil {
 				return nil, fmt.Errorf("failed to resolve link from layer (layer=%d ref=%+v): %w", subLayerIdx, ref, err)
 			}
 			if resolvedRef.HasReference() && !uniqueFileIDs.Contains(*resolvedRef.Reference) {
 				uniqueFileIDs.Add(*resolvedRef.Reference)
-				uniqueFiles = append(uniqueFiles, *resolvedRef.Reference)
+				uniqueLocations = append(uniqueLocations, file.NewLocationFromImage(accessPath, *resolvedRef.Reference, r.img))
 			}
 		}
 	} else if !uniqueFileIDs.Contains(ref) {
 		uniqueFileIDs.Add(ref)
-		uniqueFiles = append(uniqueFiles, ref)
+		uniqueLocations = append(uniqueLocations, file.NewLocationFromImage(accessPath, ref, r.img))
 	}
 
-	return uniqueFiles, nil
+	return uniqueLocations, nil
 }
 
 // FilesByPath returns all file.References that match the given paths from any layer in the image.
@@ -112,14 +112,13 @@ func (r *ContainerImageAllLayers) FilesByPath(paths ...string) ([]file.Location,
 				}
 			}
 
-			results, err := r.fileByRef(*ref.Reference, uniqueFileIDs, idx)
+			locations, err := r.locationsByRef(*ref.Reference, path, uniqueFileIDs, idx)
 			if err != nil {
 				return nil, err
 			}
-			for _, result := range results {
-				l := file.NewLocationFromImage(path, result, r.img)
-				r.annotateLocation(&l)
-				uniqueLocations = append(uniqueLocations, l)
+			for i := range locations {
+				r.annotateLocation(&locations[i])
+				uniqueLocations = append(uniqueLocations, locations[i])
 			}
 		}
 	}
@@ -158,14 +157,13 @@ func (r *ContainerImageAllLayers) FilesByGlob(patterns ...string) ([]file.Locati
 					}
 				}
 
-				refResults, err := r.fileByRef(*result.Reference, uniqueFileIDs, idx)
+				locations, err := r.locationsByRef(*result.Reference, string(result.RequestPath), uniqueFileIDs, idx)
 				if err != nil {
 					return nil, err
 				}
-				for _, refResult := range refResults {
-					l := file.NewLocationFromImage(string(result.RequestPath), refResult, r.img)
-					r.annotateLocation(&l)
-					uniqueLocations = append(uniqueLocations, l)
+				for i := range locations {
+					r.annotateLocation(&locations[i])
+					uniqueLocations = append(uniqueLocations, locations[i])
 				}
 			}
 		}
@@ -233,14 +231,13 @@ func (r *ContainerImageAllLayers) FilesByMIMEType(types ...string) ([]file.Locat
 				continue
 			}
 
-			refResults, err := r.fileByRef(*ref.Reference, uniqueFileIDs, idx)
+			locations, err := r.locationsByRef(*ref.Reference, string(ref.RequestPath), uniqueFileIDs, idx)
 			if err != nil {
 				return nil, err
 			}
-			for _, refResult := range refResults {
-				l := file.NewLocationFromImage(string(ref.RequestPath), refResult, r.img)
-				r.annotateLocation(&l)
-				uniqueLocations = append(uniqueLocations, l)
+			for i := range locations {
+				r.annotateLocation(&locations[i])
+				uniqueLocations = append(uniqueLocations, locations[i])
 			}
 		}
 	}
@@ -282,26 +279,22 @@ func (r *ContainerImageAllLayers) annotateLocation(l *file.Location) {
 	annotation := file.VisibleAnnotation
 
 	// if we find a location for a path that matches the query (e.g. **/node_modules) but is not present in the squashed tree, skip it
-	ref, err := r.img.SquashedSearchContext.SearchByPath(l.RealPath, filetree.DoNotFollowDeadBasenameLinks)
-	if err != nil || !ref.HasReference() {
-		annotation = file.HiddenAnnotation
-	} else if ref.ID() != givenRef.ID() {
-		// we may have the path in the squashed tree, but this must not be in the same layer
+	if !r.pathResolvesToRef(l.RealPath, givenRef) {
 		annotation = file.HiddenAnnotation
 	}
 
 	// not only should the real path to the file exist, but the way we took to get there should also exist
 	// (e.g. if we are looking for /etc/passwd, but the real path is /etc/passwd -> /etc/passwd-1, then we should
 	// make certain that /etc/passwd-1 exists)
-	if annotation == file.VisibleAnnotation && l.AccessPath != "" {
-		ref, err := r.img.SquashedSearchContext.SearchByPath(l.AccessPath, filetree.DoNotFollowDeadBasenameLinks)
-		if err != nil || !ref.HasReference() {
-			annotation = file.HiddenAnnotation
-		} else if ref.ID() != givenRef.ID() {
-			// we may have the path in the squashed tree, but this must not be in the same layer
-			annotation = file.HiddenAnnotation
-		}
+	if annotation == file.VisibleAnnotation && l.AccessPath != "" && !r.pathResolvesToRef(l.AccessPath, givenRef) {
+		annotation = file.HiddenAnnotation
 	}
 
 	l.Annotations[file.VisibleAnnotationKey] = annotation
+}
+
+// pathResolvesToRef reports whether the given path in the squashed tree resolves to the given reference.
+func (r *ContainerImageAllLayers) pathResolvesToRef(path string, target stereoscopeFile.Reference) bool {
+	ref, err := r.img.SquashedSearchContext.SearchByPath(path, filetree.DoNotFollowDeadBasenameLinks)
+	return err == nil && ref.HasReference() && ref.ID() == target.ID()
 }

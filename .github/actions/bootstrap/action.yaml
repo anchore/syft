@@ -6,10 +6,6 @@ description: "Bootstrap all syft tools and dependencies on top of go-make's setu
 # We add the syft-specific extras here: apt packages and the test fixture cache.
 
 inputs:
-  go-version:
-    description: "Go version to install (passed to go-make/setup)"
-    required: true
-    default: "1.26.2"
   cache-key-prefix:
     description: "Prefix all cache keys with this value (passed to go-make/setup)"
     required: true
@@ -30,9 +26,8 @@ runs:
   using: "composite"
   steps:
     - name: Setup go + go-make tooling
-      uses: anchore/go-make/.github/actions/setup@430e2175bb166bfd138ef75466adbcc8ddab875f # v0.8.0
+      uses: anchore/go-make/.github/actions/setup@a174b0b9558406c6f506a0a17e964f866843e964 # v0.9.5
       with:
-        go-version: ${{ inputs.go-version }}
         cache-key-prefix: ${{ inputs.cache-key-prefix }}
         cache-enabled: ${{ inputs.cache-enabled }}
 
@@ -47,7 +42,17 @@ runs:
         APT_PACKAGES: ${{ inputs.bootstrap-apt-packages }}
       run: |
         IFS=' ' read -ra packages <<< "$APT_PACKAGES"
-        DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y "${packages[@]}"
+        # the AMI already ships most of these, and `apt update` costs ~40MB of index (minutes,
+        # when archive.ubuntu.com throttles us) to find that out. only touch apt if we must.
+        missing=()
+        for pkg in "${packages[@]}"; do
+          dpkg -s "$pkg" >/dev/null 2>&1 || missing+=("$pkg")
+        done
+        if [ ${#missing[@]} -eq 0 ]; then
+          echo "all apt packages already present: ${packages[*]}"
+          exit 0
+        fi
+        DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y "${missing[@]}"
 
     # ORAS cache: restore-only on non-default branches / forks
     - name: Restore ORAS cache from github actions

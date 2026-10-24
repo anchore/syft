@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -103,6 +104,7 @@ func TestNewGGUFPackage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			actual := newGGUFPackage(
+				context.Background(),
 				tt.metadata,
 				tt.input.modelName,
 				tt.input.version,

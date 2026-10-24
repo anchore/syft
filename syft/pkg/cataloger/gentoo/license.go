@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"slices"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
@@ -35,7 +34,7 @@ import (
 func extractLicenses(resolver file.Resolver, closestLocation *file.Location, reader io.Reader) (string, string) {
 	findings := strset.New()
 	contentsWriter := bytes.Buffer{}
-	scanner := bufio.NewScanner(io.TeeReader(reader, &contentsWriter))
+	scanner := internal.NewLineScanner(io.TeeReader(reader, &contentsWriter))
 	scanner.Split(bufio.ScanWords)
 	var (
 		mandatoryLicenses, conditionalLicenses, useflagLicenses []string
@@ -69,6 +68,13 @@ func extractLicenses(resolver file.Resolver, closestLocation *file.Location, rea
 			}
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		fields := []any{"error", err}
+		if closestLocation != nil {
+			fields = append(fields, "path", closestLocation.RealPath)
+		}
+		log.WithFields(fields...).Debug("failed to fully read portage LICENSE")
+	}
 
 	var licenseGroups map[string][]string
 	if usesGroups {
@@ -80,31 +86,22 @@ func extractLicenses(resolver file.Resolver, closestLocation *file.Location, rea
 	findings.Add(conditionalLicenses...)
 	findings.Add(useflagLicenses...)
 
-	var mandatoryStatement, conditionalStatement string
+	return strings.TrimSpace(contentsWriter.String()), licenseExpression(mandatoryLicenses, conditionalLicenses)
+}
 
-	// attempt to build valid SPDX license expression
-	if len(mandatoryLicenses) > 0 {
-		mandatoryStatement = strings.Join(mandatoryLicenses, " AND ")
+// licenseExpression attempts to build a valid SPDX license expression
+func licenseExpression(mandatoryLicenses, conditionalLicenses []string) string {
+	mandatoryStatement := strings.Join(mandatoryLicenses, " AND ")
+	conditionalStatement := strings.Join(conditionalLicenses, " OR ")
+
+	switch {
+	case mandatoryStatement != "" && conditionalStatement != "":
+		return mandatoryStatement + " AND (" + conditionalStatement + ")"
+	case mandatoryStatement != "":
+		return mandatoryStatement
+	default:
+		return conditionalStatement
 	}
-	if len(conditionalLicenses) > 0 {
-		conditionalStatement = strings.Join(conditionalLicenses, " OR ")
-	}
-
-	contents := strings.TrimSpace(contentsWriter.String())
-
-	if mandatoryStatement != "" && conditionalStatement != "" {
-		return contents, mandatoryStatement + " AND (" + conditionalStatement + ")"
-	}
-
-	if mandatoryStatement != "" {
-		return contents, mandatoryStatement
-	}
-
-	if conditionalStatement != "" {
-		return contents, conditionalStatement
-	}
-
-	return contents, ""
 }
 
 func readLicenseGroups(resolver file.Resolver, closestLocation *file.Location) map[string][]string {
@@ -161,10 +158,9 @@ func replaceLicenseGroups(licenses []string, groups map[string][]string) []strin
 }
 
 func parseLicenseGroups(reader io.Reader) (map[string][]string, error) {
-	result := make(map[string][]string)
 	rawGroups := make(map[string][]string)
 
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 
 	// first collect all raw groups
 	for scanner.Scan() {
@@ -191,58 +187,69 @@ func parseLicenseGroups(reader io.Reader) (map[string][]string, error) {
 	}
 
 	// next process each group to expand nested references
-	for groupName, licenses := range rawGroups {
-		expanded, err := expandLicenses(groupName, licenses, rawGroups, make(map[string]bool))
+	expanded := make(map[string][]string)
+	for groupName := range rawGroups {
+		if _, err := expandLicenses(groupName, rawGroups, expanded, make(map[string]bool)); err != nil {
+			return nil, err
+		}
+	}
+
+	return expanded, nil
+}
+
+// expandLicenses handles the recursive expansion of license groups. Each group is expanded once and memoized in
+// 'expanded' (the file is untrusted, so re-expanding on every reference would be exponential), and 'visiting' holds
+// the groups on the current path to detect cycles. We are always in terms of slices instead of sets to ensure
+// original ordering is preserved.
+func expandLicenses(currentGroup string, rawGroups, expanded map[string][]string, visiting map[string]bool) ([]string, error) {
+	if result, ok := expanded[currentGroup]; ok {
+		return result, nil
+	}
+	if visiting[currentGroup] {
+		return nil, fmt.Errorf("cycle detected in license group definitions for group: %s", currentGroup)
+	}
+	visiting[currentGroup] = true
+	defer delete(visiting, currentGroup)
+
+	result := make([]string, 0)
+	// sets keep dedup linear, since a single group line can hold hundreds of thousands of tokens
+	seen := strset.New()
+	seenRefs := strset.New()
+
+	for _, item := range rawGroups[currentGroup] {
+		refGroupName, isRef := strings.CutPrefix(item, "@")
+		if !isRef {
+			// this is a regular license
+			if !seen.Has(item) {
+				seen.Add(item)
+				result = append(result, item)
+			}
+			continue
+		}
+
+		// this is a reference to another group
+		if seenRefs.Has(refGroupName) {
+			continue
+		}
+		seenRefs.Add(refGroupName)
+
+		if _, exists := rawGroups[refGroupName]; !exists {
+			return nil, fmt.Errorf("referenced group not found: %s", refGroupName)
+		}
+
+		refLicenses, err := expandLicenses(refGroupName, rawGroups, expanded, visiting)
 		if err != nil {
 			return nil, err
 		}
-		result[groupName] = expanded
-	}
 
-	return result, nil
-}
-
-// expandLicenses handles the recursive expansion of license groups, 'visited' is used to detect cycles. We are always
-// in terms of slices instead of sets to ensure original ordering is preserved.
-func expandLicenses(currentGroup string, licenses []string, rawGroups map[string][]string, visited map[string]bool) ([]string, error) {
-	if visited[currentGroup] {
-		return nil, fmt.Errorf("cycle detected in license group definitions for group: %s", currentGroup)
-	}
-
-	visited[currentGroup] = true
-
-	result := make([]string, 0)
-
-	for _, item := range licenses {
-		if strings.HasPrefix(item, "@") {
-			// this is a reference to another group
-			refGroupName := item[1:] // remove '@' prefix
-
-			refLicenses, exists := rawGroups[refGroupName]
-			if !exists {
-				return nil, fmt.Errorf("referenced group not found: %s", refGroupName)
+		for _, license := range refLicenses {
+			if !seen.Has(license) {
+				seen.Add(license)
+				result = append(result, license)
 			}
-
-			newVisited := make(map[string]bool)
-			for k, v := range visited {
-				newVisited[k] = v
-			}
-
-			expanded, err := expandLicenses(refGroupName, refLicenses, rawGroups, newVisited)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, license := range expanded {
-				if !slices.Contains(result, license) {
-					result = append(result, license)
-				}
-			}
-		} else if !slices.Contains(result, item) {
-			// ...this is a regular license
-			result = append(result, item)
 		}
 	}
 
+	expanded[currentGroup] = result
 	return result, nil
 }

@@ -1,0 +1,8 @@
+lockfileVersion: '9.0'
+packages:
+  /a@1.0.0: &p
+    resolution: {integrity: sha512-x}
+  /b@1.0.0:
+    <<: *p
+  /c@1.0.0:
+    <<: [*p, {<<: *p}]

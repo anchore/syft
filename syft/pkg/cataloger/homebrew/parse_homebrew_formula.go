@@ -1,11 +1,11 @@
 package homebrew
 
 import (
-	"bufio"
 	"context"
 	"path"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -46,7 +46,7 @@ func parseHomebrewFormula(ctx context.Context, resolver file.Resolver, _ *generi
 func parseFormulaFile(reader file.LocationReadCloser) (*parsedHomebrewData, error) {
 	pd := parsedHomebrewData{}
 
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if strings.Contains(line, "class ") && strings.Contains(line, " < Formula") {

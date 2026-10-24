@@ -1,0 +1,7 @@
+# check out text files with lf on every platform (regardless of core.autocrlf), letting git detect binary files
+* text=auto eol=lf
+
+# fixtures that must keep their crlf line endings byte for byte
+syft/linux/testdata/unprintable -text
+syft/pkg/cataloger/bitnami/testdata/no-rel/opt/bitnami/redis/.spdx-redis.spdx -text
+syft/pkg/cataloger/java/testdata/jar-metadata/**/META-INF/MANIFEST.MF -text

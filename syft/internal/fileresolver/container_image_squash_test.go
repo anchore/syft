@@ -14,7 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -74,6 +76,7 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageSquash(img)
@@ -183,6 +186,7 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageSquash(img)
@@ -240,6 +244,7 @@ func Test_imageSquashResolver_FilesByMIMEType(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixtureName, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureName)
 
 			resolver, err := NewFromContainerImageSquash(img)
@@ -257,6 +262,7 @@ func Test_imageSquashResolver_FilesByMIMEType(t *testing.T) {
 }
 
 func Test_imageSquashResolver_hasFilesystemIDInLocation(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-duplicate-path")
 
 	resolver, err := NewFromContainerImageSquash(img)
@@ -315,6 +321,7 @@ func TestSquashImageResolver_FilesContents(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageSquash(img)
@@ -340,6 +347,7 @@ func TestSquashImageResolver_FilesContents(t *testing.T) {
 
 func TestSquashImageResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 	resolver, err := NewFromContainerImageSquash(img)
@@ -498,6 +506,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageSquash(img)
@@ -544,6 +553,7 @@ func locationSorter(a, b file.Location) int {
 }
 
 func TestSquashResolver_AllLocations(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-files-deleted")
 
 	resolver, err := NewFromContainerImageSquash(img)
@@ -573,4 +583,107 @@ func TestSquashResolver_AllLocations(t *testing.T) {
 	sort.Strings(pathsList)
 
 	assert.ElementsMatchf(t, expected, pathsList, "expected all paths to be indexed, but found different paths: \n%s", cmp.Diff(expected, paths.List()))
+}
+
+// a hardlink should be surfaced at its own path as the underlying type it points to (a regular file with the target's
+// content and metadata), so that image results are in parity with directory results (which cannot distinguish a
+// hardlink from a regular file). this must hold for both the squashed and all-layers resolvers.
+func TestImageResolvers_Hardlinks(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
+	img := imagetest.GetFixtureImage(t, "docker-archive", "image-hardlinks")
+
+	resolvers := map[string]file.Resolver{}
+	squash, err := NewFromContainerImageSquash(img)
+	require.NoError(t, err)
+	resolvers["squashed"] = squash
+
+	allLayers, err := NewFromContainerImageAllLayers(img)
+	require.NoError(t, err)
+	resolvers["all-layers"] = allLayers
+
+	const wantContents = "hardlinked contents\n"
+
+	// asserts a location surfaces the hardlink at its own path as a regular file with the target's content, and is
+	// not marked hidden (all-layers annotates visibility; squash leaves the annotation unset, which must not read as
+	// hidden either).
+	assertHardlink := func(t *testing.T, resolver file.Resolver, wantPath string, loc file.Location) {
+		t.Helper()
+		assert.Equal(t, wantPath, loc.RealPath, "expected the hardlink's own path, not the target's")
+		assert.NotEqual(t, file.HiddenAnnotation, loc.Annotations[file.VisibleAnnotationKey], "path=%s should not be hidden", wantPath)
+
+		meta, err := resolver.FileMetadataByLocation(loc)
+		require.NoError(t, err)
+		assert.Equal(t, stereoscopeFile.TypeRegular, meta.Type, "path=%s", wantPath)
+
+		reader, err := resolver.FileContentsByLocation(loc)
+		require.NoError(t, err)
+		actual, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, wantContents, string(actual), "path=%s", wantPath)
+	}
+
+	for name, resolver := range resolvers {
+		t.Run(name, func(t *testing.T) {
+			t.Run("FilesByPath surfaces a hardlink at its own path with the target's content", func(t *testing.T) {
+				for _, path := range []string{"/hardlink-a", "/hardlink-b", "/file.txt"} {
+					locs, err := resolver.FilesByPath(path)
+					require.NoError(t, err)
+					require.Len(t, locs, 1, "path=%s", path)
+					assertHardlink(t, resolver, path, locs[0])
+				}
+			})
+
+			t.Run("FilesByGlob surfaces every hardlink in a matched set, not just one", func(t *testing.T) {
+				// the whole point of #5019: a glob that matches multiple hardlinks to the same target must return
+				// all of them (each at its own path), not collapse them onto a single entry.
+				locs, err := resolver.FilesByGlob("**/hardlink-*")
+				require.NoError(t, err)
+
+				byPath := map[string]file.Location{}
+				for _, loc := range locs {
+					_, dup := byPath[loc.RealPath]
+					assert.Falsef(t, dup, "path %s emitted more than once", loc.RealPath)
+					byPath[loc.RealPath] = loc
+				}
+				for _, path := range []string{"/hardlink-a", "/hardlink-b"} {
+					loc, ok := byPath[path]
+					require.Truef(t, ok, "expected glob to surface %s", path)
+					assertHardlink(t, resolver, path, loc)
+				}
+			})
+
+			t.Run("FilesByMIMEType surfaces every hardlink name", func(t *testing.T) {
+				// this is the surface #5029 could not fix and stereoscope's index-time adoption does: MIME-driven
+				// catalogers see each name. it also pins that the names are separately addressable (distinct
+				// references), since this resolver dedups on reference and would return one entry if they shared it.
+				locs, err := resolver.FilesByMIMEType("text/plain")
+				require.NoError(t, err)
+
+				byPath := map[string]file.Location{}
+				for _, loc := range locs {
+					byPath[loc.RealPath] = loc
+				}
+				for _, path := range []string{"/file.txt", "/hardlink-a", "/hardlink-b"} {
+					loc, ok := byPath[path]
+					require.Truef(t, ok, "expected MIME search to surface %s (got %v)", path, byPath)
+					assertHardlink(t, resolver, path, loc)
+				}
+			})
+
+			t.Run("AllLocations includes every hardlink path as a regular file exactly once", func(t *testing.T) {
+				counts := map[string]int{}
+				locsByPath := map[string]file.Location{}
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				for loc := range resolver.AllLocations(ctx) {
+					counts[loc.RealPath]++
+					locsByPath[loc.RealPath] = loc
+				}
+				for _, path := range []string{"/file.txt", "/hardlink-a", "/hardlink-b"} {
+					require.Equalf(t, 1, counts[path], "expected %s to be reported exactly once by AllLocations", path)
+					assertHardlink(t, resolver, path, locsByPath[path])
+				}
+			})
+		})
+	}
 }

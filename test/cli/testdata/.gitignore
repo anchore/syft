@@ -1,3 +1,4 @@
 # negate jar and zip exclusions for test fixtures that need these file types
 !image-unknowns/*.jar
 !image-unknowns/*.zip
+!malformed/**/*.jar

@@ -1,6 +1,6 @@
 # Syft Contributors
 
-The following Syft components were contributed by external authors/organizations.
+This file credits notable contributions from external authors and organizations; see `git log` for everyone who has contributed to Syft.
 
 ## GraalVM Native Image
 
