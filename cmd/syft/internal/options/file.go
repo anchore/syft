@@ -12,9 +12,10 @@ import (
 )
 
 type fileConfig struct {
-	Metadata   fileMetadata   `yaml:"metadata" json:"metadata" mapstructure:"metadata"`
-	Content    fileContent    `yaml:"content" json:"content" mapstructure:"content"`
-	Executable fileExecutable `yaml:"executable" json:"executable" mapstructure:"executable"`
+	Metadata     fileMetadata     `yaml:"metadata" json:"metadata" mapstructure:"metadata"`
+	Content      fileContent      `yaml:"content" json:"content" mapstructure:"content"`
+	Executable   fileExecutable   `yaml:"executable" json:"executable" mapstructure:"executable"`
+	Certificates fileCertificates `yaml:"certificates" json:"certificates" mapstructure:"certificates"`
 }
 
 type fileMetadata struct {
@@ -31,6 +32,11 @@ type fileExecutable struct {
 	Globs []string `yaml:"globs" json:"globs" mapstructure:"globs"`
 }
 
+type fileCertificates struct {
+	Enabled bool     `yaml:"enabled" json:"enabled" mapstructure:"enabled"`
+	Globs   []string `yaml:"globs" json:"globs" mapstructure:"globs"`
+}
+
 func defaultFileConfig() fileConfig {
 	return fileConfig{
 		Metadata: fileMetadata{
@@ -43,6 +49,7 @@ func defaultFileConfig() fileConfig {
 		Executable: fileExecutable{
 			Globs: nil,
 		},
+		Certificates: fileCertificates{},
 	}
 }
 
@@ -75,4 +82,6 @@ Options include:
 	descriptions.Add(&c.Content.Globs, `file globs for the cataloger to match on`)
 
 	descriptions.Add(&c.Executable.Globs, `file globs for the cataloger to match on`)
+	descriptions.Add(&c.Certificates.Enabled, `discover public X.509 certificates and include them as cryptographic assets in supported formats`)
+	descriptions.Add(&c.Certificates.Globs, `file globs used to discover X.509 certificate candidates`)
 }
