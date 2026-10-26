@@ -99,6 +99,7 @@ func NewCatalogTester() *CatalogTester {
 				"/usr/lib/os-release",
 				"/etc/system-release-cpe",
 				"/etc/redhat-release",
+				"/System/Library/CoreServices/SystemVersion.plist",
 				"/bin/busybox",
 			},
 		},
