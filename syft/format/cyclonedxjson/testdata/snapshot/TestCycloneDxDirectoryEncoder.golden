@@ -10,7 +10,11 @@
       "components": [
         {
           "type": "application",
-          "author": "anchore",
+          "authors": [
+            {
+              "name": "anchore"
+            }
+          ],
           "name": "syft",
           "version": "v0.42.0-bogus"
         }
