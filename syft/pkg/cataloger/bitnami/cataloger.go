@@ -58,11 +58,7 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 
 		p.FoundBy = catalogerName
 		p.Type = pkg.BitnamiPkg
-		for i := range p.CPEs {
-			if p.CPEs[i].Attributes.Part == cpe.Any {
-				p.CPEs[i].Attributes.Part = "a"
-			}
-		}
+		setApplicationPart(p.CPEs)
 		// replace all locations on the package with the location of the SBOM file.
 		// Why not keep the original list of locations? Since the "locations" field is meant to capture
 		// where there is evidence of this file, and the catalogers have not run against any file other than,
@@ -183,4 +179,14 @@ func findMainPkgID(relationships []artifact.Relationship) artifact.ID {
 	}
 
 	return ""
+}
+
+// setApplicationPart marks CPEs with an unspecified part as applications, since Bitnami SBOMs
+// describe application packages but leave the CPE part as a wildcard.
+func setApplicationPart(cpes []cpe.CPE) {
+	for i := range cpes {
+		if cpes[i].Attributes.Part == cpe.Any {
+			cpes[i].Attributes.Part = "a"
+		}
+	}
 }
