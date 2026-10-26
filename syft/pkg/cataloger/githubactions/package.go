@@ -73,7 +73,6 @@ func parseStepUsageStatement(use, comment string) (string, string) {
 
 	// if version looks like a commit hash and we have a comment, try to extract version from comment
 	if version != "" && regexp.MustCompile(`^[0-9a-f]{7,}$`).MatchString(version) && comment != "" {
-		versionRegex := regexp.MustCompile(`v?\d+\.\d+\.\d+`)
 		matches := versionRegex.FindStringSubmatch(comment)
 
 		if len(matches) >= 1 {
@@ -88,6 +87,13 @@ func packageURL(name, version string) string {
 	var qualifiers packageurl.Qualifiers
 	var subPath string
 	var namespace string
+
+	// docker:// references are OCI images, not GitHub repos.
+	// They don't fit the pkg:github PURL shape, so skip them entirely
+	// (same treatment as local composite actions below).
+	if strings.HasPrefix(name, "docker:") {
+		return ""
+	}
 
 	fields := strings.SplitN(name, "/", 3)
 	switch len(fields) {

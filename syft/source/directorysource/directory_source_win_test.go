@@ -56,8 +56,9 @@ func Test_DirectorySource_crossPlatformExclusions(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, f := range fns {
-				result := f(test.path, nil, nil)
-				require.Equal(t, test.match, result)
+				// a matched exclusion is signaled by a skip error
+				err := f("", test.path, nil, nil)
+				require.Equal(t, test.match, err != nil)
 			}
 		})
 	}

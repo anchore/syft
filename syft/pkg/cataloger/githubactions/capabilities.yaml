@@ -24,6 +24,8 @@ catalogers:
           - pkg.GitHubActionsUseStatement
         package_types: # AUTO-GENERATED
           - github-action-workflow
+        purl_types: # AUTO-GENERATED
+          - github
         json_schema_types: # AUTO-GENERATED
           - GithubActionsUseStatement
         capabilities: # MANUAL - preserved across regeneration
@@ -64,6 +66,8 @@ catalogers:
           - pkg.GitHubActionsUseStatement
         package_types: # AUTO-GENERATED
           - github-action
+        purl_types: # AUTO-GENERATED
+          - github
         json_schema_types: # AUTO-GENERATED
           - GithubActionsUseStatement
         capabilities: # MANUAL - preserved across regeneration
@@ -91,6 +95,8 @@ catalogers:
           - pkg.GitHubActionsUseStatement
         package_types: # AUTO-GENERATED
           - github-action
+        purl_types: # AUTO-GENERATED
+          - github
         json_schema_types: # AUTO-GENERATED
           - GithubActionsUseStatement
         capabilities: # MANUAL - preserved across regeneration

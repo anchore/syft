@@ -45,6 +45,9 @@ catalogers:
     package_types: # AUTO-GENERATED
       - linux-kernel
       - linux-kernel-module
+    purl_types: # AUTO-GENERATED
+      - generic
+      - generic/linux-kernel
     json_schema_types: # AUTO-GENERATED
       - LinuxKernelArchive
       - LinuxKernelModule

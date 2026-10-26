@@ -58,10 +58,11 @@ func TestDecoder_Decode(t *testing.T) {
 			purl: "pkg:deb/debian/sysv-rc@2.88dsf-59?arch=all&distro=debian-jessie&upstream=sysvinit",
 			expected: []pkg.Package{
 				{
-					Name:    "sysv-rc",
-					Version: "2.88dsf-59",
-					Type:    pkg.DebPkg,
-					PURL:    "pkg:deb/debian/sysv-rc@2.88dsf-59?arch=all&distro=debian-jessie&upstream=sysvinit",
+					Name:     "sysv-rc",
+					Version:  "2.88dsf-59",
+					Type:     pkg.DebPkg,
+					PURL:     "pkg:deb/debian/sysv-rc@2.88dsf-59?arch=all&distro=debian-jessie&upstream=sysvinit",
+					Metadata: pkg.DpkgDBEntry{Architecture: "all"},
 				},
 			},
 		},
@@ -91,10 +92,11 @@ func TestDecoder_Decode(t *testing.T) {
 			purl: "pkg:rpm/redhat/systemd-x@239-82.el8_10.2?arch=aarch64&distro=rhel-8.10&upstream=systemd-239-82.el8_10.2.src.rpm",
 			expected: []pkg.Package{
 				{
-					Name:    "systemd-x",
-					Version: "239-82.el8_10.2",
-					Type:    pkg.RpmPkg,
-					PURL:    "pkg:rpm/redhat/systemd-x@239-82.el8_10.2?arch=aarch64&distro=rhel-8.10&upstream=systemd-239-82.el8_10.2.src.rpm",
+					Name:     "systemd-x",
+					Version:  "239-82.el8_10.2",
+					Type:     pkg.RpmPkg,
+					PURL:     "pkg:rpm/redhat/systemd-x@239-82.el8_10.2?arch=aarch64&distro=rhel-8.10&upstream=systemd-239-82.el8_10.2.src.rpm",
+					Metadata: pkg.RpmDBEntry{Arch: "aarch64"},
 				},
 			},
 		},
@@ -102,10 +104,11 @@ func TestDecoder_Decode(t *testing.T) {
 			purl: "pkg:rpm/redhat/dbus-common@1.12.8-26.el8?arch=noarch&distro=rhel-8.10&epoch=1&upstream=dbus-1.12.8-26.el8.src.rpm",
 			expected: []pkg.Package{
 				{
-					Name:    "dbus-common",
-					Version: "1:1.12.8-26.el8",
-					Type:    pkg.RpmPkg,
-					PURL:    "pkg:rpm/redhat/dbus-common@1.12.8-26.el8?arch=noarch&distro=rhel-8.10&epoch=1&upstream=dbus-1.12.8-26.el8.src.rpm",
+					Name:     "dbus-common",
+					Version:  "1:1.12.8-26.el8",
+					Type:     pkg.RpmPkg,
+					PURL:     "pkg:rpm/redhat/dbus-common@1.12.8-26.el8?arch=noarch&distro=rhel-8.10&epoch=1&upstream=dbus-1.12.8-26.el8.src.rpm",
+					Metadata: pkg.RpmDBEntry{Arch: "noarch"},
 				},
 			},
 		},
@@ -113,10 +116,11 @@ func TestDecoder_Decode(t *testing.T) {
 			purl: "pkg:apk/curl@7.61.1?arch=aarch64&distro=alpine-3.20.3",
 			expected: []pkg.Package{
 				{
-					Name:    "curl",
-					Version: "7.61.1",
-					Type:    pkg.ApkPkg,
-					PURL:    "pkg:apk/curl@7.61.1?arch=aarch64&distro=alpine-3.20.3",
+					Name:     "curl",
+					Version:  "7.61.1",
+					Type:     pkg.ApkPkg,
+					PURL:     "pkg:apk/curl@7.61.1?arch=aarch64&distro=alpine-3.20.3",
+					Metadata: pkg.ApkDBEntry{Architecture: "aarch64"},
 				},
 			},
 		},

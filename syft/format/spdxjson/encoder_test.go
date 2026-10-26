@@ -216,6 +216,10 @@ func redactor(values ...string) testutil.Redactor {
 				// each SBOM reports a unique documentNamespace when generated, this is not useful for snapshot testing
 				`"documentNamespace":\s+"[^"]*"`: `"documentNamespace":"redacted"`,
 
+				// spdx3 IDs are URI with the documentnamespace spdxId containing a UID; namespace is the equivalent documentNamespace with the same value
+				`"spdxId":\s+"[^"]*"`:    `"spdxId":"https://redacted"`,
+				`"namespace":\s+"[^"]*"`: `"namespace":"https://redacted/"`,
+
 				// the license list will be updated periodically, the value here should not be directly tested in snapshot tests
 				`"licenseListVersion":\s+"[^"]*"`: `"licenseListVersion":"redacted"`,
 			},
@@ -231,21 +235,6 @@ func TestSupportedVersions(t *testing.T) {
 
 	subject := testutil.DirectoryInput(t, t.TempDir())
 	dec := NewFormatDecoder()
-
-	relationshipOffsetPerVersion := map[string]int{
-		// the package representing the source gets a relationship from the source package to all other packages found
-		// these relationships cannot be removed until the primaryPackagePurpose info is available in 2.3
-		"2.1": 2,
-		"2.2": 2,
-		// the source-to-package relationships can be removed since the primaryPackagePurpose info is available in 2.3
-		"2.3": 0,
-	}
-
-	pkgCountOffsetPerVersion := map[string]int{
-		"2.1": 1, // the source is mapped as a package, but cannot distinguish it since the primaryPackagePurpose info is not available until 2.3
-		"2.2": 1, // the source is mapped as a package, but cannot distinguish it since the primaryPackagePurpose info is not available until 2.3
-		"2.3": 0, // the source package can be removed since the primaryPackagePurpose info is available
-	}
 
 	for _, enc := range encs {
 		t.Run(enc.Version(), func(t *testing.T) {
@@ -268,13 +257,9 @@ func TestSupportedVersions(t *testing.T) {
 
 			require.NotEmpty(t, s.Artifacts.Packages.PackageCount())
 
-			offset := relationshipOffsetPerVersion[enc.Version()]
+			assert.Equal(t, len(subject.Relationships), len(s.Relationships), "mismatched relationship count")
 
-			assert.Equal(t, len(subject.Relationships)+offset, len(s.Relationships), "mismatched relationship count")
-
-			offset = pkgCountOffsetPerVersion[enc.Version()]
-
-			if !assert.Equal(t, subject.Artifacts.Packages.PackageCount()+offset, s.Artifacts.Packages.PackageCount(), "mismatched package count") {
+			if !assert.Equal(t, subject.Artifacts.Packages.PackageCount(), s.Artifacts.Packages.PackageCount(), "mismatched package count") {
 				t.Logf("expected: %d", subject.Artifacts.Packages.PackageCount())
 				for _, p := range subject.Artifacts.Packages.Sorted() {
 					t.Logf("  - %s", p.String())

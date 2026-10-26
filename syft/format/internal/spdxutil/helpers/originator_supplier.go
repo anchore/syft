@@ -138,6 +138,11 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: gocyclo,f
 
 	case pkg.SwiplPackEntry:
 		author = formatPersonOrOrg(metadata.Author, metadata.AuthorEmail)
+
+	case pkg.VcpkgManifest:
+		if len(metadata.Maintainers) > 0 {
+			author = metadata.Maintainers[0]
+		}
 	}
 
 	if typ == "" && author != "" {

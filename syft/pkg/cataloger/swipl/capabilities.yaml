@@ -24,6 +24,8 @@ catalogers:
           - pkg.SwiplPackEntry
         package_types: # AUTO-GENERATED
           - swiplpack
+        purl_types: # AUTO-GENERATED
+          - swiplpack
         json_schema_types: # AUTO-GENERATED
           - SwiplpackPackage
         capabilities: # MANUAL - preserved across regeneration

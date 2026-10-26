@@ -32,12 +32,15 @@ type parsedData struct {
 	pkg.ApkDBEntry
 }
 
+const maxApkDBFieldSize = 10 * 1024 * 1024
+
 // parseApkDB parses packages from a given APK "installed" flat-file DB. For more
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
 //nolint:funlen
 func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
+	scanner.Buffer(nil, maxApkDBFieldSize)
 
 	var errs error
 	var apks []parsedData
@@ -267,6 +270,10 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		ctx.indexOfLatestDirectory = len(ctx.files) - 1
 	case "M":
 		i := ctx.indexOfLatestDirectory
+		if i < 0 {
+			log.Debugf("APK field %q appears before any directory entry", f.name)
+			return
+		}
 		latest := ctx.files[i]
 
 		var ok bool
@@ -293,6 +300,10 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		ctx.indexOfLatestRegularFile = len(ctx.files) - 1
 	case "a":
 		i := ctx.indexOfLatestRegularFile
+		if i < 0 {
+			log.Debugf("APK field %q appears before any file entry", f.name)
+			return
+		}
 		latest := ctx.files[i]
 
 		var ok bool
@@ -306,6 +317,10 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		ctx.files[i] = latest
 	case "Z":
 		i := ctx.indexOfLatestRegularFile
+		if i < 0 {
+			log.Debugf("APK field %q appears before any file entry", f.name)
+			return
+		}
 		latest := ctx.files[i]
 		latest.Digest = processChecksum(f.value)
 

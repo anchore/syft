@@ -1,0 +1,141 @@
+{
+  "@context" : "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+  "@graph" : [ {
+    "@id" : "_:creationInfo_0",
+    "type" : "CreationInfo",
+    "specVersion" : "3.0.1",
+    "createdBy" : [ "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd0" ],
+    "createdUsing" : [ "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/additionalToolSPDXRef-gnrtd2", "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/additionalToolSPDXRef-gnrtd1" ],
+    "created" : "2021-08-26T01:46:00Z"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd23",
+    "type" : "Relationship",
+    "relationshipType" : "hasDeclaredLicense",
+    "to" : [ "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd8" ],
+    "from" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd4",
+    "creationInfo" : "_:creationInfo_0"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/document0",
+    "type" : "SpdxDocument",
+    "dataLicense" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd24",
+    "rootElement" : [ "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd4" ],
+    "name" : "hello",
+    "creationInfo" : "_:creationInfo_0"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/additionalToolSPDXRef-gnrtd1",
+    "type" : "Tool",
+    "name" : "github.com/spdx/tools-golang/builder",
+    "creationInfo" : "_:creationInfo_0"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/additionalToolSPDXRef-gnrtd2",
+    "type" : "Tool",
+    "name" : "github.com/spdx/tools-golang/idsearcher",
+    "creationInfo" : "_:creationInfo_0"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd8",
+    "type" : "simplelicensing_LicenseExpression",
+    "simplelicensing_licenseExpression" : "GPL-3.0-or-later",
+    "creationInfo" : "_:creationInfo_0"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd20",
+    "type" : "simplelicensing_LicenseExpression",
+    "simplelicensing_licenseExpression" : "NOASSERTION",
+    "creationInfo" : "_:creationInfo_0"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd24",
+    "type" : "simplelicensing_LicenseExpression",
+    "simplelicensing_licenseExpression" : "CC0-1.0",
+    "creationInfo" : "_:creationInfo_0"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd14",
+    "type" : "LifecycleScopedRelationship",
+    "relationshipType" : "usesTool",
+    "scope" : "build",
+    "to" : [ "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd13" ],
+    "completeness" : "noAssertion",
+    "from" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd4",
+    "creationInfo" : "_:creationInfo_0"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd0",
+    "type" : "Person",
+    "externalIdentifier" : [ {
+      "type" : "ExternalIdentifier",
+      "identifier" : "steve@swinslow.net",
+      "externalIdentifierType" : "email"
+    } ],
+    "name" : "Steve Winslow",
+    "creationInfo" : "_:creationInfo_0"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd6",
+    "type" : "software_File",
+    "software_copyrightText" : "Copyright Contributors to the spdx-examples project.",
+    "verifiedUsing" : [ {
+      "type" : "Hash",
+      "algorithm" : "md5",
+      "hashValue" : "935054fe899ca782e11003bbae5e166c"
+    }, {
+      "type" : "Hash",
+      "algorithm" : "sha1",
+      "hashValue" : "20862a6d08391d07d09344029533ec644fac6b21"
+    }, {
+      "type" : "Hash",
+      "algorithm" : "sha256",
+      "hashValue" : "b4e5ca56d1f9110ca94ed0bf4e6d9ac11c2186eb7cd95159c6fdb50e8db5a823"
+    } ],
+    "name" : "./src/hello.c",
+    "software_primaryPurpose" : "source",
+    "creationInfo" : "_:creationInfo_0"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd11",
+    "type" : "software_File",
+    "software_copyrightText" : "NOASSERTION",
+    "verifiedUsing" : [ {
+      "type" : "Hash",
+      "algorithm" : "sha1",
+      "hashValue" : "20291a81ef065ff891b537b64d4fdccaf6f5ac02"
+    }, {
+      "type" : "Hash",
+      "algorithm" : "sha256",
+      "hashValue" : "83a33ff09648bb5fc5272baca88cf2b59fd81ac4cc6817b86998136af368708e"
+    }, {
+      "type" : "Hash",
+      "algorithm" : "md5",
+      "hashValue" : "08a12c966d776864cc1eb41fd03c3c3d"
+    } ],
+    "name" : "./build/hello",
+    "contentType" : "application/octet-stream",
+    "creationInfo" : "_:creationInfo_0"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd13",
+    "type" : "software_File",
+    "software_copyrightText" : "NOASSERTION",
+    "verifiedUsing" : [ {
+      "type" : "Hash",
+      "algorithm" : "sha1",
+      "hashValue" : "69a2e85696fff1865c3f0686d6c3824b59915c80"
+    }, {
+      "type" : "Hash",
+      "algorithm" : "sha256",
+      "hashValue" : "5da19033ba058e322e21c90e6d6d859c90b1b544e7840859c12cae5da005e79c"
+    }, {
+      "type" : "Hash",
+      "algorithm" : "md5",
+      "hashValue" : "559424589a4f3f75fd542810473d8bc1"
+    } ],
+    "name" : "./src/Makefile",
+    "software_primaryPurpose" : "source",
+    "creationInfo" : "_:creationInfo_0"
+  }, {
+    "spdxId" : "https://swinslow.net/spdx-examples/example1/hello-v3-specv3/SPDXRef-gnrtd4",
+    "type" : "software_Package",
+    "software_copyrightText" : "NOASSERTION",
+    "software_downloadLocation" : "git+https://github.com/swinslow/spdx-examples.git#example1/content",
+    "verifiedUsing" : [ {
+      "type" : "PackageVerificationCode",
+      "algorithm" : "sha1",
+      "hashValue" : "9d20237bb72087e87069f96afb41c6ca2fa2a342"
+    } ],
+    "name" : "hello",
+    "creationInfo" : "_:creationInfo_0"
+  } ]
+}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cataloging"
 )
 
 const (
@@ -49,6 +50,21 @@ type CatalogerConfig struct {
 
 	MainModuleVersion MainModuleVersionConfig `yaml:"main-module-version" json:"main-module-version" mapstructure:"main-module-version"`
 
+	// CaptureSymbols controls extracting function symbols from the binary symbol table (pclntab). Valid values are
+	// "none" (disabled), "stdlib" (only the synthetic stdlib package), "extended-stdlib" (stdlib plus every module
+	// under golang.org/x/), and "all" (all module packages plus stdlib).
+	// app-config: golang.capture-symbols
+	CaptureSymbols cataloging.SymbolScope `yaml:"capture-symbols" json:"capture-symbols" mapstructure:"capture-symbols"`
+
+	// CaptureSymbolsModules is a list of glob patterns (doublestar syntax, where ** crosses path separators
+	// and * does not) matched against go module paths. Matching modules get symbols in addition to whatever
+	// CaptureSymbols selects, so this can only widen the selection and never narrow it. It has no effect
+	// under the "none" scope. A trailing major version suffix is not part of a module's identity, so a
+	// pattern matches with or without it: both "github.com/foo/bar" and "github.com/foo/*" select
+	// "github.com/foo/bar/v2". A pattern that spells out a suffix selects only that major version.
+	// app-config: golang.capture-symbols-modules
+	CaptureSymbolsModules []string `yaml:"capture-symbols-modules,omitempty" json:"capture-symbols-modules,omitempty" mapstructure:"capture-symbols-modules"`
+
 	// Whether to use the golang.org/x/tools/go/packages, which executes golang tooling found on the path in addition to potential network access
 	UsePackagesLib bool `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
 }
@@ -76,6 +92,7 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		UsePackagesLib:    true,
 		MainModuleVersion: DefaultMainModuleVersionConfig(),
 		LocalModCacheDir:  defaultGoModDir(),
+		CaptureSymbols:    cataloging.SymbolScopeNone,
 	}
 
 	// first process the proxy settings
@@ -181,6 +198,16 @@ func (g CatalogerConfig) WithNoProxy(input string) CatalogerConfig {
 
 func (g CatalogerConfig) WithMainModuleVersion(input MainModuleVersionConfig) CatalogerConfig {
 	g.MainModuleVersion = input
+	return g
+}
+
+func (g CatalogerConfig) WithCaptureSymbols(input cataloging.SymbolScope) CatalogerConfig {
+	g.CaptureSymbols = input
+	return g
+}
+
+func (g CatalogerConfig) WithCaptureSymbolsModules(input []string) CatalogerConfig {
+	g.CaptureSymbolsModules = input
 	return g
 }
 

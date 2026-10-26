@@ -8,10 +8,9 @@
 
 <p align="center">
  &nbsp;<a href="https://github.com/anchore/syft/actions/workflows/validations.yaml" target="_blank"><img alt="Validations" src="https://github.com/anchore/syft/actions/workflows/validations.yaml/badge.svg"></a>&nbsp;
- &nbsp;<a href="https://goreportcard.com/report/github.com/anchore/syft" target="_blank"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/anchore/syft"></a>&nbsp;
  &nbsp;<a href="https://github.com/anchore/syft/releases/latest" target="_blank"><img alt="GitHub release" src="https://img.shields.io/github/release/anchore/syft.svg"></a>&nbsp;
  &nbsp;<a href="https://github.com/anchore/syft" target="_blank"><img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/anchore/syft.svg"></a>&nbsp;
- &nbsp;<a href="" target="_blank"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"></a>&nbsp;
+ &nbsp;<a href="https://github.com/anchore/syft/blob/main/LICENSE" target="_blank"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"></a>&nbsp;
  &nbsp;<a href="https://anchore.com/discourse" target="_blank"><img alt="Join our Discourse" src="https://img.shields.io/badge/Discourse-Join-blue?logo=discourse"/></a>&nbsp;
  &nbsp;<a rel="me" href="https://fosstodon.org/@syft"><img alt="Follow on Mastodon" src="https://img.shields.io/badge/Mastodon-Follow-blue?logoColor=white&logo=mastodon"/></a>&nbsp;
 </p>
@@ -62,6 +61,18 @@ syft <image> -o cyclonedx-json
 syft <image> -o spdx-json=./spdx.json -o cyclonedx-json=./cdx.json
 ```
 
+### Local containers-storage images
+
+On Linux, syft can scan images from a local containers-storage store (e.g. built with Buildah or Podman) when asked explicitly; plain image references never look there:
+
+```bash
+syft --from containers-storage localhost/myimage:latest
+
+# rootless stores must be read from inside the builder's user namespace
+podman unshare syft --from containers-storage localhost/myimage:latest
+```
+
+This is included in the Linux release binaries. When building from source, add `-tags containers_image_openpgp,exclude_graphdriver_btrfs`.
 
 > [!TIP]
 > **Check out the [Getting Started guide](https://oss.anchore.com/docs/guides/sbom/getting-started/)** to explore all of the capabilities and features.

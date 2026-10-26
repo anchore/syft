@@ -8,8 +8,6 @@ RUN mkdir tmp
 
 WORKDIR /usr/share/jenkins/tmp
 
-RUN apt-get update 2>&1 > /dev/null && apt-get install -y less zip 2>&1 > /dev/null
-
 RUN unzip ../jenkins.war 2>&1 > /dev/null
 
 RUN rm -rf ./META-INF/MANIFEST.MF ./WEB-INF ./jsbundles ./scripts ./css
@@ -18,7 +16,8 @@ WORKDIR /usr/share/jenkins
 
 RUN rm -rf jenkins.war
 
-RUN cd ./tmp && zip -r ../jenkins.war . && cd ..
+# use jar (from the JDK in the base image) to rezip -- M keeps it manifest-less, which is the point of this fixture
+RUN cd ./tmp && jar cfM ../jenkins.war . && cd ..
 
 RUN rm -rf ./tmp
 

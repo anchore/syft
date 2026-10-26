@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -144,12 +145,56 @@ func TestParseRockspec(t *testing.T) {
 				},
 			},
 		},
+		{
+			// a build block before the package/version fields must not truncate the parse
+			Fixture: "testdata/rockspec/build-first-1.0-1.rockspec",
+			ExpectedPkg: pkg.Package{
+				Name:     "foo",
+				Version:  "1.0-1",
+				PURL:     "pkg:luarocks/foo@1.0-1",
+				Type:     pkg.LuaRocksPkg,
+				Language: pkg.Lua,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("testdata/rockspec/build-first-1.0-1.rockspec")),
+				),
+				Metadata: pkg.LuaRocksPackage{
+					Name:        "foo",
+					Version:     "1.0-1",
+					License:     "MIT",
+					Homepage:    "https://github.com/example/foo",
+					Description: "an example rock",
+					URL:         "git+https://github.com/example/foo.git",
+					Dependencies: map[string]string{
+						"lua": ">= 5.1",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Fixture, func(t *testing.T) {
 			test.ExpectedPkg.Locations.Add(file.NewLocation(test.Fixture))
 			pkgtest.TestFileParser(t, test.Fixture, parseRockspec, []pkg.Package{test.ExpectedPkg}, nil)
+		})
+	}
+}
+
+func TestParseRockspec_noPackageName(t *testing.T) {
+	// an empty or whitespace-only rockspec has no package name, so it should
+	// yield no packages and no error rather than a nameless package
+	fixtures := []string{
+		"testdata/rockspec/empty.rockspec",
+		"testdata/rockspec/whitespace-only.rockspec",
+	}
+
+	for _, fixture := range fixtures {
+		t.Run(fixture, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromFile(t, fixture).
+				WithErrorAssertion(require.NoError).
+				Expects(nil, nil).
+				TestParser(t, parseRockspec)
 		})
 	}
 }

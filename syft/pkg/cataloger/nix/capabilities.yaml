@@ -30,6 +30,8 @@ catalogers:
       - pkg.NixStoreEntry
     package_types: # AUTO-GENERATED
       - nix
+    purl_types: # AUTO-GENERATED
+      - nix
     json_schema_types: # AUTO-GENERATED
       - NixStoreEntry
     capabilities: # MANUAL - edit capabilities here
@@ -70,6 +72,8 @@ catalogers:
     metadata_types: # AUTO-GENERATED
       - pkg.NixStoreEntry
     package_types: # AUTO-GENERATED
+      - nix
+    purl_types: # AUTO-GENERATED
       - nix
     json_schema_types: # AUTO-GENERATED
       - NixStoreEntry

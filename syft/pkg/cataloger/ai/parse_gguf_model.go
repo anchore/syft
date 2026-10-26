@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -15,7 +16,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/tmpdir"
-	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -24,7 +24,7 @@ import (
 
 // parseGGUFModel parses a GGUF model file and returns the discovered package.
 // This implementation only reads the header portion of the file, not the entire model.
-func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGGUFModel(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	defer internal.CloseAndLogError(reader, reader.Path())
 
 	td := tmpdir.FromContext(ctx)
@@ -36,19 +36,28 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 		return nil, nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer cleanup()
-	tempPath := tempFile.Name()
 
-	// Copy and validate the GGUF file header using LimitedReader to prevent OOM
-	// We use LimitedReader to cap reads at maxHeaderSize (50MB)
-	limitedReader := &io.LimitedReader{R: reader, N: maxHeaderSize}
-	if err := copyHeader(tempFile, limitedReader); err != nil {
+	// copy and validate the GGUF file header (bounded to maxHeaderSize)
+	if err := copyHeader(tempFile, reader); err != nil {
 		tempFile.Close()
 		return nil, nil, fmt.Errorf("failed to copy GGUF header: %w", err)
 	}
+	if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
+		tempFile.Close()
+		return nil, nil, fmt.Errorf("failed to rewind GGUF header: %w", err)
+	}
+	if err := validateGGUFHeader(tempFile); err != nil {
+		tempFile.Close()
+		return nil, nil, fmt.Errorf("invalid GGUF header: %w", err)
+	}
+	err = extendToModelSize(tempFile, modelSize(resolver, reader.Location))
 	tempFile.Close()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to extend GGUF header copy: %w", err)
+	}
 
 	// Parse using gguf-parser-go with options to skip unnecessary data
-	ggufFile, err := gguf_parser.ParseGGUFFile(tempPath,
+	ggufFile, err := gguf_parser.ParseGGUFFile(tempFile.Name(),
 		gguf_parser.SkipLargeMetadata(),
 	)
 	if err != nil {
@@ -61,6 +70,11 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 	// Extract version separately (will be set on Package.Version)
 	modelVersion := extractVersion(ggufFile.Header.MetadataKV)
 
+	metadataHash, err := computeKVMetadataHash(ggufFile.Header.MetadataKV)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	// Convert to syft metadata structure
 	syftMetadata := &pkg.GGUFFileHeader{
 		Architecture:          metadata.Architecture,
@@ -69,7 +83,7 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 		GGUFVersion:           uint32(ggufFile.Header.Version),
 		TensorCount:           ggufFile.Header.TensorCount,
 		RemainingKeyValues:    convertGGUFMetadataKVs(ggufFile.Header.MetadataKV),
-		MetadataKeyValuesHash: computeKVMetadataHash(ggufFile.Header.MetadataKV),
+		MetadataKeyValuesHash: metadataHash,
 	}
 
 	// If model name is not in metadata, use filename
@@ -79,6 +93,7 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 
 	// Create package from metadata
 	p := newGGUFPackage(
+		ctx,
 		syftMetadata,
 		metadata.Name,
 		modelVersion,
@@ -86,14 +101,44 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 
-	return []pkg.Package{p}, nil, unknown.IfEmptyf([]pkg.Package{p}, "unable to parse GGUF file")
+	return []pkg.Package{p}, nil, nil
 }
 
-// computeKVMetadataHash computes a stable hash of the KV metadata for use as a global identifier
-func computeKVMetadataHash(metadata gguf_parser.GGUFMetadataKVs) string {
+// modelSize returns the size of the model file, or 0 when the resolver can't say.
+func modelSize(resolver file.Resolver, loc file.Location) int64 {
+	if resolver == nil {
+		return 0
+	}
+	m, err := resolver.FileMetadataByLocation(loc)
+	if err != nil || m.FileInfo == nil {
+		return 0
+	}
+	return m.Size()
+}
+
+// extendToModelSize grows the header copy to the model's real size, since the parser checks the tensor data
+// the header declares against the file size. It must run after validation so the header itself never reads
+// from the hole. The file is marked sparse first so the hole takes no disk space; where that isn't possible
+// the copy is left as is, and the parser rejects models larger than it.
+func extendToModelSize(f *os.File, size int64) error {
+	if size <= maxHeaderSize {
+		return nil
+	}
+	if err := markSparse(f); err != nil {
+		log.Debugf("unable to mark GGUF header copy sparse, not extending it: %v", err)
+		return nil
+	}
+	return f.Truncate(size)
+}
+
+// computeKVMetadataHash computes a stable hash of the sanitized KV metadata for use as a global identifier
+func computeKVMetadataHash(metadata gguf_parser.GGUFMetadataKVs) (string, error) {
 	// Sort the KV pairs by key for stable hashing
 	sortedKVs := make([]gguf_parser.GGUFMetadataKV, len(metadata))
-	copy(sortedKVs, metadata)
+	for i, kv := range metadata {
+		kv.Value = sanitizeGGUFValue(kv.Value)
+		sortedKVs[i] = kv
+	}
 	sort.Slice(sortedKVs, func(i, j int) bool {
 		return sortedKVs[i].Key < sortedKVs[j].Key
 	})
@@ -101,13 +146,12 @@ func computeKVMetadataHash(metadata gguf_parser.GGUFMetadataKVs) string {
 	// Marshal sorted KVs to JSON for stable hashing
 	jsonBytes, err := json.Marshal(sortedKVs)
 	if err != nil {
-		log.Debugf("failed to marshal metadata for hashing: %v", err)
-		return ""
+		return "", fmt.Errorf("failed to marshal GGUF metadata for hashing: %w", err)
 	}
 
 	// Compute xxhash
 	hash := xxhash.Sum64(jsonBytes)
-	return fmt.Sprintf("%016x", hash) // 16 hex chars (64 bits)
+	return fmt.Sprintf("%016x", hash), nil // 16 hex chars (64 bits)
 }
 
 // extractVersion attempts to extract version from metadata KV pairs

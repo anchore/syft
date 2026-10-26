@@ -9,14 +9,14 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/pe"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dotnet/pe"
 )
 
 // NewPEPackageCataloger returns a cataloger that interprets packages from DLL, EXE, and BPL files.
 // BPL (Borland Package Library) files are PE-format binaries used by Delphi and C++Builder.
 func NewPEPackageCataloger() pkg.Cataloger {
 	return generic.NewCataloger("pe-binary-package-cataloger").
-		WithParserByGlobs(parsePE, "**/*.dll", "**/*.exe", "**/*.bpl")
+		WithParserByGlobs(parsePE, "**/*.DLL", "**/*.EXE", "**/*.BPL", "**/*.dll", "**/*.exe", "**/*.bpl")
 }
 
 func parsePE(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -35,6 +35,12 @@ func parsePE(_ context.Context, _ file.Resolver, _ *generic.Environment, reader 
 	}
 
 	p := newPEPackage(f.VersionResources, f.Location)
+
+	// the file was usable but not fully parsed, which for this cataloger means the package name and version
+	// may have come from the filename rather than from version resources. Worth reporting alongside it.
+	if f.ParseErr != nil {
+		return []pkg.Package{p}, nil, unknown.New(reader, f.ParseErr)
+	}
 
 	return []pkg.Package{p}, nil, nil
 }

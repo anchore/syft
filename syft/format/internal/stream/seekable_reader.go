@@ -72,8 +72,21 @@ func (o *offsetReadSeeker) Seek(offset int64, whence int) (int64, error) {
 		}
 		newOffset, err := o.rdr.Seek(offset, io.SeekCurrent)
 		return newOffset - o.offset, err
+	case io.SeekEnd:
+		newOffset, err := o.rdr.Seek(offset, io.SeekEnd)
+		if err != nil {
+			return 0, fmt.Errorf("cannot seek end: %w", err)
+		}
+		if newOffset < o.offset {
+			// landed before the start of this view; move back to the start so the position stays valid
+			if _, err := o.rdr.Seek(o.offset, io.SeekStart); err != nil {
+				return 0, fmt.Errorf("cannot seek end: %w", err)
+			}
+			return 0, fmt.Errorf("cannot seek < 0")
+		}
+		return newOffset - o.offset, nil
 	}
-	return 0, fmt.Errorf("only SeekStart and SeekCurrent supported")
+	return 0, fmt.Errorf("only SeekStart, SeekCurrent, and SeekEnd supported")
 }
 
 var _ io.ReadSeeker = (*offsetReadSeeker)(nil)

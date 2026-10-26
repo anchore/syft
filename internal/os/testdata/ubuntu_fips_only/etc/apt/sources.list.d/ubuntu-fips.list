@@ -1,0 +1,3 @@
+# Written by ubuntu-pro-client
+deb https://esm.ubuntu.com/fips/ubuntu focal main
+# deb-src https://esm.ubuntu.com/fips/ubuntu focal main

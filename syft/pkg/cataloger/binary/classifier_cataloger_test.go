@@ -1,6 +1,7 @@
 package binary
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"flag"
@@ -17,8 +18,10 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/testutil"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
@@ -408,6 +411,30 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// regression test: big-endian architectures (e.g. s390x) previously matched an unrelated
+			// single-NUL-terminated numeric string elsewhere in the binary instead of the real version
+			logicalFixture: "traefik/3.6.8/linux-s390x",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "3.6.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@3.6.8",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			logicalFixture: "traefik/2.11.1/linux-arm",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "2.11.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@2.11.1",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
 			logicalFixture: "memcached/1.6.18/linux-amd64",
 			expected: pkg.Package{
 				Name:      "memcached",
@@ -436,8 +463,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "perl",
 				Version:   "5.12.5",
-				Type:      "binary",
-				PURL:      "pkg:generic/perl@5.12.5",
+				Type:      "cpan",
+				PURL:      "pkg:cpan/perl@5.12.5",
 				Locations: locations("perl"),
 				Metadata:  metadata("perl-binary"),
 			},
@@ -449,8 +476,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "perl",
 				Version:   "5.20.0",
-				Type:      "binary",
-				PURL:      "pkg:generic/perl@5.20.0",
+				Type:      "cpan",
+				PURL:      "pkg:cpan/perl@5.20.0",
 				Locations: locations("perl"),
 				Metadata:  metadata("perl-binary"),
 			},
@@ -462,8 +489,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "perl",
 				Version:   "5.37.8",
-				Type:      "binary",
-				PURL:      "pkg:generic/perl@5.37.8",
+				Type:      "cpan",
+				PURL:      "pkg:cpan/perl@5.37.8",
 				Locations: locations("perl"),
 				Metadata:  metadata("perl-binary"),
 			},
@@ -1500,6 +1527,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "deno/1.11.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.11.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.11.3",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/1.11.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.11.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.11.4",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
 			logicalFixture: "deno/1.16.4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "deno",
@@ -1566,6 +1615,61 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "deno/2.9.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "2.9.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@2.9.2",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "bun/0.5.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "0.5.9",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@0.5.9",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		{
+			logicalFixture: "bun/1.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@1.0.0",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		{
+			logicalFixture: "bun/1.1.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.1.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@1.1.0",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		{
+			logicalFixture: "bun/1.3.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.3.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@1.3.5",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		{
 			logicalFixture: "haskell-ghc/7.10.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haskell/ghc",
@@ -1618,6 +1722,40 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/haskell/cabal@3.10.3.0",
 				Locations: locations("cabal"),
 				Metadata:  metadata("haskell-cabal-binary"),
+			},
+		},
+		{
+			logicalFixture: "krb5/1.18.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "krb5",
+				Version:   "1.18.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/krb5@1.18.4",
+				Locations: locations("libkrb5.so.3.3"),
+				Metadata:  metadata("krb5-library"),
+			},
+		},
+		{
+			// base releases brand with a 2-component version (e.g. "krb5-1.17-final 1.17")
+			logicalFixture: "krb5/1.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "krb5",
+				Version:   "1.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/krb5@1.17",
+				Locations: locations("libkrb5.so.3.3"),
+				Metadata:  metadata("krb5-library"),
+			},
+		},
+		{
+			logicalFixture: "heimdal-krb5/7.8.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "heimdal-krb5",
+				Version:   "7.8.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/heimdal-krb5@7.8.0",
+				Locations: locations("libkrb5.so.26.0.0"),
+				Metadata:  metadata("heimdal-krb5-library"),
 			},
 		},
 		{
@@ -1918,6 +2056,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "firefox/151.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "firefox",
+				Version:   "151.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/firefox@151.0",
+				Locations: locations("firefox", "application.ini"),
+				Metadata:  metadata("firefox-binary"),
+			},
+		},
+		{
 			logicalFixture: "ffmpeg/7.1.1/darwin-arm64",
 			expected: pkg.Package{
 				Name:      "ffmpeg",
@@ -2168,6 +2317,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "12.3.2",
 				Type:      "binary",
 				PURL:      "pkg:generic/grafana@12.3.2",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/12.4.3-security-02/linux-arm",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "12.4.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@12.4.3",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/12.0.0-security-01/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "12.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@12.0.0",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/11.0.5-security-01/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "11.0.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@11.0.5",
 				Locations: locations("grafana"),
 				Metadata:  metadata("grafana-binary"),
 			},
@@ -2492,6 +2674,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "nginx-ingress-controller/1.9.6/linux-arm64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.9.6",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.9.6/linux-arm",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.9.6",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.9.6/linux-s390x",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.9.6",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
 			logicalFixture: "nginx-ingress-controller/1.7.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "nginx-ingress-controller",
@@ -2555,6 +2770,127 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/nginx-ingress-controller@0.33.0",
 				Locations: locations("nginx-ingress-controller"),
 				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "filebeat/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "filebeat",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/filebeat@9.4.2",
+				Locations: locations("filebeat"),
+				Metadata:  metadata("filebeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "filebeat/8.18.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "filebeat",
+				Version:   "8.18.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/filebeat@8.18.4",
+				Locations: locations("filebeat"),
+				Metadata:  metadata("filebeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "filebeat/8.11.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "filebeat",
+				Version:   "8.11.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/filebeat@8.11.2",
+				Locations: locations("filebeat"),
+				Metadata:  metadata("filebeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "metricbeat/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "metricbeat",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/metricbeat@9.4.2",
+				Locations: locations("metricbeat"),
+				Metadata:  metadata("metricbeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "heartbeat/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "heartbeat",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/heartbeat@9.4.2",
+				Locations: locations("heartbeat"),
+				Metadata:  metadata("heartbeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "packetbeat/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "packetbeat",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/packetbeat@9.4.2",
+				Locations: locations("packetbeat"),
+				Metadata:  metadata("packetbeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "auditbeat/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "auditbeat",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/auditbeat@9.4.2",
+				Locations: locations("auditbeat"),
+				Metadata:  metadata("auditbeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "elastic-agent/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elastic-agent",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/elastic-agent@9.4.2",
+				Locations: locations("elastic-agent"),
+				Metadata:  metadata("elastic-agent-binary"),
+			},
+		},
+		{
+			logicalFixture: "elastic-agent/9.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elastic-agent",
+				Version:   "9.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/elastic-agent@9.0.0",
+				Locations: locations("elastic-agent"),
+				Metadata:  metadata("elastic-agent-binary"),
+			},
+		},
+		{
+			logicalFixture: "elastic-agent/8.19.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elastic-agent",
+				Version:   "8.19.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/elastic-agent@8.19.4",
+				Locations: locations("elastic-agent"),
+				Metadata:  metadata("elastic-agent-binary"),
+			},
+		},
+		{
+			logicalFixture: "elastic-agent/8.11.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elastic-agent",
+				Version:   "8.11.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/elastic-agent@8.11.2",
+				Locations: locations("elastic-agent"),
+				Metadata:  metadata("elastic-agent-binary"),
 			},
 		},
 		{
@@ -2657,6 +2993,127 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				},
 			},
 		},
+		{
+			logicalFixture: "envoy/1.22.10/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.22.10",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.22.10",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.24.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.24.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.24.5",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.30.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.30.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.30.2",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.31.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.31.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.31.2",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.34.12/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.34.12",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.34.12",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.35.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.35.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.35.4",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.23.7/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.23.7",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.23.7",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.24.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.24.9",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.24.9",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.30.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.30.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.30.1",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.30.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.30.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.30.6",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.36.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.36.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.36.1",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -2705,8 +3162,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 				Name:      "busybox",
 				Version:   "1.35.0",
 				PURL:      "pkg:generic/busybox@1.35.0",
-				Locations: locations("/bin/["),
-				Metadata:  metadata("busybox-binary", "/bin/[", "/bin/busybox"),
+				Locations: locations("/bin/busybox"),
+				Metadata:  metadata("busybox-binary", "/bin/busybox"),
 			},
 		},
 	}
@@ -2715,6 +3172,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
 			src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
 				Reference: test.fixtureImage,
@@ -2729,6 +3187,186 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			for _, p := range packages {
 				assertPackagesAreEqual(t, test.expected, p)
 			}
+		})
+	}
+}
+
+// Test_Cataloger_PackageTypes covers what assertPackagesAreEqual deliberately ignores: the package type and CPEs.
+// The perl interpreter is reported as cpan so it lines up with the rest of the CPAN ecosystem, everything else
+// keeps the default binary type.
+// Test_Cataloger_ffmpeg_versionSuffix verifies the ffmpeg classifiers no longer
+// unconditionally truncate the embedded "FFmpeg version <ver>" string to X.Y[.Z].
+// Semver build metadata (a backported-patch stamp such as
+// "9.0.3+dev.9.0.2.p1.eb9cef3") must be preserved in the reported version, because
+// it compares equal to its core version and so does not disturb vulnerability
+// matching. A "-" pre-release suffix (a distro revision such as "6.1.1-3ubuntu5")
+// must stay truncated: it sorts below the release in semver and would corrupt
+// version-range matching. Suffix-free binaries match exactly as before, and
+// trailing non-version text (or NUL padding) is never absorbed into the version.
+func Test_Cataloger_ffmpeg_versionSuffix(t *testing.T) {
+	// collect the ffmpeg classifiers under test, keyed by their FileGlob
+	classifiers := map[string]binutils.Classifier{}
+	for _, c := range DefaultClassifiers() {
+		if c.Package == "ffmpeg" {
+			classifiers[c.FileGlob] = c
+		}
+	}
+	require.NotEmpty(t, classifiers, "expected to find ffmpeg classifiers")
+
+	tests := []struct {
+		name     string
+		fileGlob string // which classifier to run
+		data     string // simulated binary contents
+		want     string // expected reported version ("" = no match expected)
+	}{
+		{
+			name:     "library bare version unchanged",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 7.1.1",
+			want:     "7.1.1",
+		},
+		{
+			name:     "library two-component version unchanged",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 6.0",
+			want:     "6.0",
+		},
+		{
+			name:     "library build metadata with patch provenance preserved",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 9.0.3+dev.9.0.2.p1.eb9cef3",
+			want:     "9.0.3+dev.9.0.2.p1.eb9cef3",
+		},
+		{
+			name:     "library build metadata short sha preserved",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 9.0.2+eb9cef3",
+			want:     "9.0.2+eb9cef3",
+		},
+		{
+			// a "-" pre-release suffix is intentionally NOT captured: it sorts below
+			// the release in semver and would corrupt version-range vulnerability
+			// matching, so distro revisions stay truncated exactly as before
+			name:     "library distro hyphen revision truncated",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 6.1.1-3ubuntu5",
+			want:     "6.1.1",
+		},
+		{
+			name:     "library distro dotted hyphen revision truncated",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 4.4.2-0ubuntu0.22.04.1",
+			want:     "4.4.2",
+		},
+		{
+			name:     "library trailing text not captured",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 6.1.1 Copyright (c) 2000-2023 the FFmpeg developers",
+			want:     "6.1.1",
+		},
+		{
+			name:     "library NUL-padded version not over-captured",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 9.0.3\x00libavformat.so",
+			want:     "9.0.3",
+		},
+		{
+			name:     "libswresample build metadata preserved",
+			fileGlob: "**/libswresample*",
+			data:     "FFmpeg version 9.0.3+dev.9.0.2.p1.eb9cef3",
+			want:     "9.0.3+dev.9.0.2.p1.eb9cef3",
+		},
+		{
+			// the compiled-in printf format string in the ffmpeg binary is the
+			// literal "%s version <ver>" (the program name is substituted at runtime)
+			name:     "binary build metadata preserved",
+			fileGlob: "**/ffmpeg",
+			data:     "%s version 9.0.3+dev.9.0.2.p1.eb9cef3",
+			want:     "9.0.3+dev.9.0.2.p1.eb9cef3",
+		},
+		{
+			name:     "binary bare version unchanged",
+			fileGlob: "**/ffmpeg",
+			data:     "%s version 7.1.1",
+			want:     "7.1.1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cls, ok := classifiers[tt.fileGlob]
+			require.Truef(t, ok, "no ffmpeg classifier for glob %q", tt.fileGlob)
+
+			ctx := binutils.MatcherContext{
+				GetReader: func(binutils.MatcherContext) (unionreader.UnionReader, error) {
+					return unionreader.GetUnionReader(io.NopCloser(bytes.NewBufferString(tt.data)))
+				},
+			}
+
+			pkgs, err := cls.EvidenceMatcher(cls, ctx)
+			require.NoError(t, err)
+
+			if tt.want == "" {
+				require.Empty(t, pkgs, "expected no package match")
+				return
+			}
+			require.Len(t, pkgs, 1, "expected exactly one package")
+			assert.Equal(t, tt.want, pkgs[0].Version)
+			// the fuller version must also flow into the PURL so the SBOM is not lossy;
+			// compare the decoded PURL version, since packageurl-go percent-encodes
+			// reserved characters (e.g. '+' -> %2B) in the serialized form
+			parsed, err := packageurl.FromString(pkgs[0].PURL)
+			require.NoError(t, err, "PURL should parse")
+			assert.Equal(t, tt.want, parsed.Version)
+		})
+	}
+}
+
+func Test_Cataloger_PackageTypes(t *testing.T) {
+	tests := []struct {
+		logicalFixture string
+		wantType       pkg.Type
+		wantPURL       string
+		wantCPEs       []string
+	}{
+		{
+			logicalFixture: "perl/5.20.0/linux-amd64",
+			wantType:       pkg.CpanPkg,
+			wantPURL:       "pkg:cpan/perl@5.20.0",
+			wantCPEs:       []string{"cpe:2.3:a:perl:perl:5.20.0:*:*:*:*:*:*:*"},
+		},
+		{
+			logicalFixture: "haproxy/1.5.14/linux-amd64",
+			wantType:       pkg.BinaryPkg,
+			wantPURL:       "pkg:generic/haproxy@1.5.14",
+			wantCPEs:       []string{"cpe:2.3:a:haproxy:haproxy:1.5.14:*:*:*:*:*:*:*"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.logicalFixture, func(t *testing.T) {
+			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
+
+			path := testutil.SnippetOrBinary(t, test.logicalFixture, *mustUseOriginalBinaries)
+
+			src, err := directorysource.NewFromPath(path)
+			require.NoError(t, err)
+
+			resolver, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+
+			packages, _, err := c.Catalog(context.Background(), resolver)
+			require.NoError(t, err)
+			require.Len(t, packages, 1)
+
+			var cpes []string
+			for _, c := range packages[0].CPEs {
+				cpes = append(cpes, c.Attributes.BindToFmtString())
+			}
+
+			assert.Equal(t, test.wantType, packages[0].Type)
+			assert.Equal(t, test.wantPURL, packages[0].PURL)
+			assert.Equal(t, test.wantCPEs, cpes)
 		})
 	}
 }

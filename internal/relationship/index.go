@@ -65,6 +65,30 @@ func (i *Index) Add(relationships ...artifact.Relationship) {
 }
 
 func (i *Index) Remove(id artifact.ID) {
+	// scrub this node's edges from the adjacent nodes' maps before dropping the node itself. without this, the
+	// edges live on as dangling pointers inside the other endpoints' mappedRelationships, so query methods
+	// (From/To/References/Coordinates/Contains) would keep returning relationships that have been removed.
+	if mapped := i.fromID[id]; mapped != nil {
+		for _, sr := range mapped.allRelated {
+			if sr.to == id {
+				continue // self-edge: this node's own maps are deleted below
+			}
+			if other := i.toID[sr.to]; other != nil {
+				other.remove(id, sr)
+			}
+		}
+	}
+	if mapped := i.toID[id]; mapped != nil {
+		for _, sr := range mapped.allRelated {
+			if sr.from == id {
+				continue // self-edge: this node's own maps are deleted below
+			}
+			if other := i.fromID[sr.from]; other != nil {
+				other.remove(id, sr)
+			}
+		}
+	}
+
 	delete(i.fromID, id)
 	delete(i.toID, id)
 
@@ -78,6 +102,12 @@ func (i *Index) Remove(id artifact.ID) {
 }
 
 func (i *Index) Replace(ogID artifact.ID, replacement artifact.Identifiable) {
+	if replacement == nil || replacement.ID() == ogID {
+		// replacing a node with one that has the same ID would re-add the (deduped) edges and then the trailing
+		// Remove(ogID) would delete them, silently wiping all of the node's relationships. treat it as a no-op.
+		return
+	}
+
 	for _, mapped := range fromMappedByID(i.fromID, ogID) {
 		// the stale relationship(i.e. if there's an elder ID in either side) should be discarded
 		if len(fromMappedByID(i.toID, mapped.relationship.To.ID())) == 0 {
@@ -91,8 +121,10 @@ func (i *Index) Replace(ogID artifact.ID, replacement artifact.Identifiable) {
 	}
 
 	for _, mapped := range fromMappedByID(i.toID, ogID) {
-		// same as the above
-		if len(fromMappedByID(i.fromID, mapped.relationship.To.ID())) == 0 {
+		// same as the above, but check the surviving other endpoint (the From side, since these are edges TO ogID).
+		// note: this must reference From (not To, which is ogID itself) so that nodes appearing only on the To side
+		// of relationships (e.g. a go main module that nothing depends on) keep their edges after an ID change.
+		if len(fromMappedByID(i.fromID, mapped.relationship.From.ID())) == 0 {
 			continue
 		}
 		i.Add(artifact.Relationship{
@@ -204,6 +236,22 @@ func (m *mappedRelationships) add(id artifact.ID, newRelationship *sortableRelat
 		m.typeMap[newRelationship.relationship.Type] = typeMap
 	}
 	typeMap[id] = newRelationship
+}
+
+// remove deletes a single relationship (the other endpoint keyed by id) from this node's maps. it is the inverse
+// of add and is used to keep adjacent nodes consistent when a node is removed from the index.
+func (m *mappedRelationships) remove(id artifact.ID, target *sortableRelationship) {
+	filtered := m.allRelated[:0]
+	for _, r := range m.allRelated {
+		if r != target {
+			filtered = append(filtered, r)
+		}
+	}
+	m.allRelated = filtered
+
+	if typeMap := m.typeMap[target.relationship.Type]; typeMap != nil && typeMap[id] == target {
+		delete(typeMap, id)
+	}
 }
 
 type sortableRelationship struct {

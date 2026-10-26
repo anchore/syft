@@ -20,6 +20,7 @@ import (
 	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
+	"github.com/anchore/syft/syft/pkg/cataloger/cpp"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -44,6 +45,7 @@ type Catalog struct {
 	Enrich        []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
 
 	// ecosystem-specific cataloger configuration
+	Cpp         cppConfig         `yaml:"cpp" json:"cpp" mapstructure:"cpp"`
 	Dotnet      dotnetConfig      `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
 	Java        javaConfig        `yaml:"java" json:"java" mapstructure:"java"`
@@ -80,6 +82,7 @@ func DefaultCatalog() Catalog {
 		JavaScript:    defaultJavaScriptConfig(),
 		Python:        defaultPythonConfig(),
 		Nix:           defaultNixConfig(),
+		Cpp:           defaultCppConfig(),
 		Dotnet:        defaultDotnetConfig(),
 		Golang:        defaultGolangConfig(),
 		Java:          defaultJavaConfig(),
@@ -172,11 +175,15 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	}
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
+		Cpp: cpp.DefaultCatalogerConfig().
+			WithVcpkgAllowGitClone(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Cpp, task.Vcpkg), cfg.Cpp.VcpkgAllowGitClone)),
 		Dotnet: dotnet.DefaultCatalogerConfig().
 			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
 			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).
 			WithPropagateDLLClaimsToParents(cfg.Dotnet.PropagateDLLClaimsToParents).
-			WithRelaxDLLClaimsWhenBundlingDetected(cfg.Dotnet.RelaxDLLClaimsWhenBundlingDetected),
+			WithRelaxDLLClaimsWhenBundlingDetected(cfg.Dotnet.RelaxDLLClaimsWhenBundlingDetected).
+			WithExcludeProjectReferences(cfg.Dotnet.ExcludeProjectReferences),
+
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchLocalModCacheLicenses)).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
@@ -191,7 +198,9 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 					WithFromBuildSettings(cfg.Golang.MainModuleVersion.FromBuildSettings).
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
 			).
-			WithUsePackagesLib(*multiLevelOption(true, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.UsePackagesLib)),
+			WithUsePackagesLib(*multiLevelOption(true, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.UsePackagesLib)).
+			WithCaptureSymbols(cfg.Golang.CaptureSymbols).
+			WithCaptureSymbolsModules(cfg.Golang.CaptureSymbolsModules),
 		JavaScript: javascript.DefaultCatalogerConfig().
 			WithIncludeDevDependencies(*multiLevelOption(false, cfg.JavaScript.IncludeDevDependencies)).
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).
@@ -299,6 +308,7 @@ var publicisedEnrichmentOptions = []string{
 	task.Java,
 	task.JavaScript,
 	task.Python,
+	task.Vcpkg,
 }
 
 func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {

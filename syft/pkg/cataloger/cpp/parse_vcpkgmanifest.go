@@ -1,0 +1,182 @@
+package cpp
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/cpp/internal/vcpkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+)
+
+// vcpkg manifests are small JSON files; cap reads to guard against pathological inputs
+const maxVcpkgManifestSize = 5 * 1024 * 1024
+
+type vcpkgCataloger struct {
+	allowGitClone bool
+}
+
+func newVcpkgCataloger(allowGitClone bool) *vcpkgCataloger {
+	return &vcpkgCataloger{
+		allowGitClone: allowGitClone,
+	}
+}
+
+// parser is for vcpkg in "Manifest" mode. This is opposed to "Classic" mode which or is more akin to a system package manager. (https://learn.microsoft.com/en-us/vcpkg/concepts/classic-mode)
+func (v *vcpkgCataloger) parseVcpkgManifest(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	conf, err := findVcpkgConfig(resolver)
+	if err != nil {
+		return nil, nil, fmt.Errorf("something went wrong parsing vcpkg-configuration.json file: %w", err)
+	}
+
+	var toplevelVcpkg vcpkg.Vcpkg
+	dec := json.NewDecoder(reader)
+	err = dec.Decode(&toplevelVcpkg)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse vcpkg.json file: %w", err)
+	}
+
+	var vcpkgs []vcpkg.Vcpkg
+	vcpkgs = append(vcpkgs, toplevelVcpkg)
+	overlayVcpkgs, err := findOverlayManifests(resolver, conf.OverlayPorts)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not get overlay port manifests: %w", err)
+	}
+	vcpkgs = append(vcpkgs, overlayVcpkgs...)
+	var pkgs []pkg.Package
+	var relationships []artifact.Relationship
+	for _, parentVcpkg := range vcpkgs {
+		pv := parentVcpkg
+		// the top-level project manifest has no registry (it is the thing being scanned, not a resolved dep)
+		parentMan := &vcpkg.ResolvedManifest{Vcpkg: &pv, Registry: nil}
+		pPkg := newVcpkgPackage(ctx, parentMan, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+		pkgs = append(
+			pkgs,
+			pPkg)
+
+		r := vcpkg.NewResolver(
+			ctx,
+			conf,
+			v.allowGitClone,
+		)
+		for _, dep := range parentVcpkg.Dependencies {
+			cMans, fetchErr := r.FindManifests(dep, true, toplevelVcpkg.BuiltinBaseline, toplevelVcpkg.Overrides, parentMan)
+			if fetchErr != nil {
+				// best-effort: a single unresolvable dependency shouldn't discard packages already found
+				log.Debugf("vcpkg: unable to resolve dependency in %q: %v", parentVcpkg.Name, fetchErr)
+				continue
+			}
+			pkgs, relationships = appendPkgsAndRelationships(ctx, cMans, overlayVcpkgs, reader, relationships, pkgs)
+		}
+	}
+	pkg.Sort(pkgs)
+	return pkgs, relationships, nil
+}
+
+func appendPkgsAndRelationships(ctx context.Context, cMans []vcpkg.ManifestNode, overlayVcpkgs []vcpkg.Vcpkg, reader file.LocationReadCloser, relationships []artifact.Relationship, pkgs []pkg.Package) ([]pkg.Package, []artifact.Relationship) {
+	p := pkgs
+	r := relationships
+	for _, c := range cMans {
+		if c.Child != nil && !hasBeenOverlayed(c.Child.Vcpkg.Name, overlayVcpkgs) {
+			cPkg := newVcpkgPackage(ctx, c.Child, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+			if c.Parent != nil {
+				pPkg := newVcpkgPackage(ctx, c.Parent, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+				pPkg.FoundBy = "vcpkg-manifest-cataloger"
+				cPkg.FoundBy = "vcpkg-manifest-cataloger"
+				rship := artifact.Relationship{
+					// From is the dependency, To is the dependent (syft convention)
+					From: cPkg,
+					To:   pPkg,
+					Type: artifact.DependencyOfRelationship,
+				}
+				r = append(
+					r,
+					rship)
+			}
+			p = append(
+				p,
+				cPkg)
+		}
+	}
+	return p, r
+}
+
+// These are to be used in place of dependencies with the same name
+func findOverlayManifests(resolver file.Resolver, overlayPorts []string) ([]vcpkg.Vcpkg, error) {
+	var manifests []vcpkg.Vcpkg
+	for _, op := range overlayPorts {
+		// overlay port path is relative to location of vcpkg-configuration.json file
+		locs, err := resolver.FilesByGlob(op + "/**/vcpkg.json")
+		if err != nil {
+			return nil, err
+		}
+		for _, loc := range locs {
+			man, err := findManAtLoc(loc, resolver)
+			if err != nil {
+				return nil, err
+			}
+			manifests = append(manifests, *man)
+		}
+	}
+	return manifests, nil
+}
+
+func findManAtLoc(loc file.Location, resolver file.Resolver) (*vcpkg.Vcpkg, error) {
+	manCont, err := resolver.FileContentsByLocation(loc)
+	if err != nil {
+		return nil, err
+	}
+	defer internal.CloseAndLogError(manCont, loc.RealPath)
+	manBytes, err := io.ReadAll(io.LimitReader(manCont, maxVcpkgManifestSize))
+	if err != nil {
+		return nil, err
+	}
+	var man vcpkg.Vcpkg
+	err = json.Unmarshal(manBytes, &man)
+	if err != nil {
+		return nil, err
+	}
+	return &man, nil
+}
+
+// check to see if a package is not going to get pulled in because it's apart of the overlay-ports in vcpkg-configuration.json file
+func hasBeenOverlayed(pkgName string, overlayMans []vcpkg.Vcpkg) bool {
+	for _, om := range overlayMans {
+		if om.Name == pkgName {
+			return true
+		}
+	}
+	return false
+}
+
+// needed to know what vcpkg registries to use for what packages when looking for manifest files
+func findVcpkgConfig(resolver file.Resolver) (*vcpkg.Config, error) {
+	locs, err := resolver.FilesByGlob("**/vcpkg-configuration.json")
+	if err != nil {
+		return nil, err
+	}
+	if len(locs) != 0 {
+		cfgCont, err := resolver.FileContentsByLocation(locs[0])
+		if err != nil {
+			return nil, err
+		}
+		defer internal.CloseAndLogError(cfgCont, locs[0].RealPath)
+		cfgBytes, err := io.ReadAll(io.LimitReader(cfgCont, maxVcpkgManifestSize))
+		if err != nil {
+			return nil, err
+		}
+		var vcpkgConf vcpkg.Config
+		err = json.Unmarshal(cfgBytes, &vcpkgConf)
+		if err != nil {
+			return nil, err
+		}
+		return &vcpkgConf, err
+	}
+	return &vcpkg.Config{}, nil
+}

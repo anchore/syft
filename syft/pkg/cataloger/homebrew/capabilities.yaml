@@ -24,6 +24,8 @@ catalogers:
           - pkg.HomebrewFormula
         package_types: # AUTO-GENERATED
           - homebrew
+        purl_types: # AUTO-GENERATED
+          - homebrew
         json_schema_types: # AUTO-GENERATED
           - HomebrewFormula
         capabilities: # MANUAL - preserved across regeneration

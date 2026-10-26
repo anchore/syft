@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -325,6 +326,9 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 }
 
 func Test_getDirectoryExclusionFunctions_crossPlatform(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("emulates windows paths on a posix host, see directory_source_win_test.go for the windows equivalent")
+	}
 	testCases := []struct {
 		desc     string
 		root     string
@@ -465,10 +469,11 @@ func Test_DirectorySource_ID(t *testing.T) {
 	testutil.Chdir(t, "..") // run with source/testdata
 
 	tests := []struct {
-		name    string
-		cfg     Config
-		want    artifact.ID
-		wantErr require.ErrorAssertionFunc
+		name          string
+		cfg           Config
+		want          artifact.ID
+		wantErr       require.ErrorAssertionFunc
+		skipOnWindows bool
 	}{
 		{
 			name:    "empty",
@@ -486,6 +491,8 @@ func Test_DirectorySource_ID(t *testing.T) {
 			name:    "with odd unclean path through non-existent directory",
 			cfg:     Config{Path: "testdata/does-not-exist/../"},
 			wantErr: require.Error,
+			// windows cleans the path lexically, so the non-existent directory is never visited
+			skipOnWindows: true,
 		},
 		{
 			name: "to a file (not a directory)",
@@ -543,6 +550,9 @@ func Test_DirectorySource_ID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.skipOnWindows && runtime.GOOS == "windows" {
+				t.Skip("posix-specific path behavior")
+			}
 			if tt.wantErr == nil {
 				tt.wantErr = require.NoError
 			}

@@ -180,10 +180,24 @@ func Test_offsetReadSeeker(t *testing.T) {
 			expected: "4",
 		},
 		{
+			name:     "seek end",
+			input:    abcd1234offset(2),
+			seek:     -4,
+			whence:   io.SeekEnd,
+			expected: "1234",
+		},
+		{
+			name:    "seek end before the start of the view",
+			input:   abcd1234offset(2),
+			seek:    -7,
+			whence:  io.SeekEnd,
+			wantErr: require.Error, // would be < offset, which is an error
+		},
+		{
 			name:    "bad whence",
 			input:   abcd1234,
 			seek:    1,
-			whence:  io.SeekEnd,
+			whence:  99,
 			wantErr: require.Error,
 		},
 	}

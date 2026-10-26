@@ -44,6 +44,10 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 		return nil, "", "", fmt.Errorf("unable to seek to start of SPDX JSON SBOM: %+v", err)
 	}
 
+	if strings.HasPrefix(version, "3") {
+		return decodeSpdx3(version, reader)
+	}
+
 	doc, err := spdxJson.Read(reader)
 	if err != nil {
 		return nil, id, version, fmt.Errorf("unable to decode spdx json: %w", err)
@@ -59,11 +63,6 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 func (d decoder) Identify(r io.Reader) (sbom.FormatID, string) {
 	reader, err := stream.SeekableReader(r)
 	if err != nil {
-		return "", ""
-	}
-
-	if _, err := reader.Seek(0, io.SeekStart); err != nil {
-		log.Debugf("unable to seek to start of SPDX JSON SBOM: %+v", err)
 		return "", ""
 	}
 
@@ -85,7 +84,18 @@ func (d decoder) Identify(r io.Reader) (sbom.FormatID, string) {
 
 	id, version := getFormatInfo(doc.SPDXVersion)
 	if version == "" || id != ID {
-		// not a spdx json document that we support
+		// not a spdx 2 json document that we support, check for v3
+
+		if _, err = reader.Seek(0, io.SeekStart); err != nil {
+			log.Debugf("unable to seek to start of SPDX JSON SBOM: %+v", err)
+			return "", ""
+		}
+
+		id3, version3 := identifySpdx3(reader)
+		if id3 != "" && version3 != "" {
+			return id3, version3
+		}
+
 		return "", ""
 	}
 

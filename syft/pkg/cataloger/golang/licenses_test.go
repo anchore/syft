@@ -12,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -231,6 +232,35 @@ func Test_LicenseSearch(t *testing.T) {
 			l := newGoLicenseResolver("", test.config)
 			lics := l.getLicenses(ctx, fileresolver.Empty{}, test.name, test.version)
 			require.EqualValues(t, test.expected, lics)
+		})
+	}
+}
+
+func Test_remoteLicenseSearchSkipsStandardLibrary(t *testing.T) {
+	ctx := pkgtest.Context(t)
+
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	// module paths whose first element carries no dot are never publishable, so there is
+	// nothing for a proxy or a repository to resolve
+	for _, moduleName := range []string{"cmd/cgo", "std", "runtime", "internal/abi", "command-line-arguments"} {
+		t.Run(moduleName, func(t *testing.T) {
+			requests.Store(0)
+
+			l := newGoLicenseResolver("", CatalogerConfig{
+				SearchRemoteLicenses: true,
+				Proxies:              []string{server.URL},
+			})
+
+			lics := l.getLicenses(ctx, fileresolver.Empty{}, moduleName, "(devel)")
+
+			require.Empty(t, lics)
+			require.Zero(t, requests.Load(), "expected no remote lookup for a standard library module path")
 		})
 	}
 }

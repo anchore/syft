@@ -1,0 +1,7 @@
+{
+    "default-registry": {
+        "kind": "git",
+        "baseline": "fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3",
+        "repository": "https://github.com/anchore/vcpkg-test-fixture"
+    }
+}

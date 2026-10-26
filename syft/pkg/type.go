@@ -21,6 +21,7 @@ const (
 	CocoapodsPkg            Type = "pod"
 	ConanPkg                Type = "conan"
 	CondaPkg                Type = "conda"
+	CpanPkg                 Type = "cpan"
 	DartPubPkg              Type = "dart-pub"
 	DebPkg                  Type = "deb"
 	DotnetPkg               Type = "dotnet"
@@ -52,8 +53,10 @@ const (
 	SwiftPkg                Type = "swift"
 	SwiplPackPkg            Type = "swiplpack"
 	TerraformPkg            Type = "terraform"
+	VcpkgPkg                Type = "vcpkg"
 	WordpressPluginPkg      Type = "wordpress-plugin"
 	HomebrewPkg             Type = "homebrew"
+	AppleAppBundlePkg       Type = "apple-app-bundle"
 	ModelPkg                Type = "model"
 )
 
@@ -66,6 +69,7 @@ var AllPkgs = []Type{
 	CocoapodsPkg,
 	ConanPkg,
 	CondaPkg,
+	CpanPkg,
 	DartPubPkg,
 	DebPkg,
 	DotnetPkg,
@@ -97,8 +101,10 @@ var AllPkgs = []Type{
 	SwiftPkg,
 	SwiplPackPkg,
 	TerraformPkg,
+	VcpkgPkg,
 	WordpressPluginPkg,
 	HomebrewPkg,
+	AppleAppBundlePkg,
 	ModelPkg,
 }
 
@@ -119,12 +125,14 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeConan
 	case CondaPkg:
 		return packageurl.TypeGeneric
+	case CpanPkg:
+		return packageurl.TypeCpan
 	case DartPubPkg:
 		return packageurl.TypePub
 	case DebPkg:
 		return "deb"
 	case DotnetPkg:
-		return "dotnet"
+		return packageurl.TypeNuget
 	case ErlangOTPPkg:
 		return packageurl.TypeOTP
 	case GemPkg:
@@ -172,6 +180,8 @@ func (t Type) PackageURLType() string {
 		return "swiplpack"
 	case TerraformPkg:
 		return "terraform"
+	case VcpkgPkg:
+		return "vcpkg"
 	case WordpressPluginPkg:
 		return "wordpress-plugin"
 	case HomebrewPkg:
@@ -218,6 +228,8 @@ func TypeByName(name string) Type {
 		return RustPkg
 	case "conda":
 		return CondaPkg
+	case packageurl.TypeCpan:
+		return CpanPkg
 	case packageurl.TypePub:
 		return DartPubPkg
 	case "dotnet", packageurl.TypeNuget: // "dotnet" is here to support legacy use cases; "nuget" is the canonical purl type
@@ -260,6 +272,8 @@ func TypeByName(name string) Type {
 		return SwiplPackPkg
 	case "terraform":
 		return TerraformPkg
+	case "vcpkg":
+		return VcpkgPkg
 	case "wordpress-plugin":
 		return WordpressPluginPkg
 	case "homebrew":

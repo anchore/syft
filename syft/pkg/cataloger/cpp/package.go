@@ -1,11 +1,15 @@
 package cpp
 
 import (
+	"context"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/cpp/internal/vcpkg"
 )
 
 type conanRef struct {
@@ -92,7 +96,7 @@ func newConanPackage(refStr string, metadata any, locations ...file.Location) *p
 		Name:      ref.Name,
 		Version:   ref.Version,
 		Locations: file.NewLocationSet(locations...),
-		PURL:      packageURL(ref),
+		PURL:      packageURLFromConanRef(ref),
 		Language:  pkg.CPP,
 		Type:      pkg.ConanPkg,
 		Metadata:  metadata,
@@ -103,7 +107,7 @@ func newConanPackage(refStr string, metadata any, locations ...file.Location) *p
 	return &p
 }
 
-func packageURL(ref *conanRef) string {
+func packageURLFromConanRef(ref *conanRef) string {
 	qualifiers := packageurl.Qualifiers{}
 	if ref.Channel != "" {
 		qualifiers = append(qualifiers, packageurl.Qualifier{
@@ -116,6 +120,66 @@ func packageURL(ref *conanRef) string {
 		ref.User,
 		ref.Name,
 		ref.Version,
+		qualifiers,
+		"",
+	).ToString()
+}
+
+func newVcpkgPackage(ctx context.Context, rm *vcpkg.ResolvedManifest, l file.Location) pkg.Package {
+	// build the SBOM metadata from the source manifest; license is a package-level field (pkg.Package),
+	// not metadata, so it is read off the source manifest here rather than carried in pkg.VcpkgManifest
+	man := rm.Vcpkg.BuildManifest(rm.Registry, "")
+	p := pkg.Package{
+		Name:      man.Name,
+		Version:   man.FullVersion,
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, rm.Vcpkg.License, l)),
+		Locations: file.NewLocationSet(l),
+		PURL:      packageURLFromVcpkgManifest(man),
+		Language:  pkg.CPP,
+		Type:      pkg.VcpkgPkg,
+		Metadata:  man,
+	}
+
+	p.SetID()
+	return p
+}
+
+func packageURLFromVcpkgManifest(v *pkg.VcpkgManifest) string {
+	qualifiers := packageurl.Qualifiers{}
+	//
+	if v.Triplet != "" {
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "triplet",
+			Value: v.Triplet,
+		})
+	}
+	if v.PortVersion != 0 {
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "port_revision",
+			Value: strconv.Itoa(v.PortVersion),
+		})
+	}
+	if v.Registry != nil && v.Registry.Repository != "" {
+		unescRepoURL, err := url.PathUnescape(v.Registry.Repository)
+		if err == nil {
+			qualifiers = append(qualifiers, packageurl.Qualifier{
+				Key:   "repository_url",
+				Value: unescRepoURL,
+			})
+		}
+	}
+	if v.Registry != nil && v.Registry.Baseline != "" {
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "repository_revision",
+			Value: v.Registry.Baseline,
+		})
+	}
+	return packageurl.NewPackageURL(
+		// https://github.com/package-url/purl-spec/pull/245
+		"vcpkg",
+		"",
+		v.Name,
+		v.Version,
 		qualifiers,
 		"",
 	).ToString()

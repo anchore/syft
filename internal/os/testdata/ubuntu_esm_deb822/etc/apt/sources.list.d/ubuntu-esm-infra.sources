@@ -1,0 +1,5 @@
+Types: deb
+URIs: https://esm.ubuntu.com/infra/ubuntu
+Suites: noble-infra-security noble-infra-updates
+Components: main
+Signed-By: /usr/share/keyrings/ubuntu-pro-esm-infra-keyring.gpg

@@ -24,6 +24,8 @@ catalogers:
           - pkg.PhpComposerInstalledEntry
         package_types: # AUTO-GENERATED
           - php-composer
+        purl_types: # AUTO-GENERATED
+          - composer
         json_schema_types: # AUTO-GENERATED
           - PhpComposerInstalledEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -68,6 +70,8 @@ catalogers:
           - pkg.PhpComposerLockEntry
         package_types: # AUTO-GENERATED
           - php-composer
+        purl_types: # AUTO-GENERATED
+          - composer
         json_schema_types: # AUTO-GENERATED
           - PhpComposerLockEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -156,6 +160,8 @@ catalogers:
           - pkg.PhpPearEntry
         package_types: # AUTO-GENERATED
           - php-pear
+        purl_types: # AUTO-GENERATED
+          - pear
         json_schema_types: # AUTO-GENERATED
           - PhpPearEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -194,6 +200,8 @@ catalogers:
           - pkg.PhpPeclEntry
         package_types: # AUTO-GENERATED
           - php-pecl
+        purl_types: # AUTO-GENERATED
+          - pear
         json_schema_types: # AUTO-GENERATED
           - PhpPeclEntry
         capabilities: # MANUAL - preserved across regeneration

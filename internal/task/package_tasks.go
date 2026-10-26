@@ -5,6 +5,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/ai"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpine"
+	"github.com/anchore/syft/syft/pkg/cataloger/apple"
 	"github.com/anchore/syft/syft/pkg/cataloger/arch"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	bitnamiSbomCataloger "github.com/anchore/syft/syft/pkg/cataloger/bitnami"
@@ -26,6 +27,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/lua"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/ocaml"
+	"github.com/anchore/syft/syft/pkg/cataloger/perl"
 	"github.com/anchore/syft/syft/pkg/cataloger/php"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
 	"github.com/anchore/syft/syft/pkg/cataloger/r"
@@ -56,6 +58,10 @@ const (
 
 	// Python ecosystem labels
 	Python = "python"
+
+	// C/C++ ecosystem labels
+	Cpp   = "cpp"
+	Vcpkg = "vcpkg"
 )
 
 //nolint:funlen
@@ -82,6 +88,11 @@ func DefaultPackageTaskFactories() Factories {
 
 		// language-specific package declared catalogers ///////////////////////////////////////////////////////////////////////////
 		newSimplePackageTaskFactory(cpp.NewConanCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "cpp", "conan"),
+		newPackageTaskFactory(
+			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				return cpp.NewVcpkgManifestCataloger(cfg.PackagesConfig.Cpp)
+			},
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, Cpp, Vcpkg),
 		newSimplePackageTaskFactory(dart.NewPubspecLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dart"),
 		newSimplePackageTaskFactory(dart.NewPubspecCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dart"),
 		newSimplePackageTaskFactory(elixir.NewMixLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "elixir"),
@@ -105,7 +116,7 @@ func DefaultPackageTaskFactories() Factories {
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return javascript.NewLockCataloger(cfg.PackagesConfig.JavaScript)
 			},
-			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, JavaScript, Node, NPM,
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, JavaScript, Node, NPM, "deno",
 		),
 		newSimplePackageTaskFactory(php.NewComposerLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "php", "composer"),
 		newSimplePackageTaskFactory(php.NewPearCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, pkgcataloging.ImageTag, "php", "pear"),
@@ -122,6 +133,10 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(swift.NewSwiftPackageManagerCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "swift", "spm"),
 		newSimplePackageTaskFactory(swipl.NewSwiplPackCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "swipl", "pack"),
 		newSimplePackageTaskFactory(ocaml.NewOpamPackageManagerCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "ocaml", "opam"),
+		// note: no image tag -- an unpacked release's own META.json describes a distribution present on
+		// disk but not installed into the interpreter's @INC, and declared information is not cataloged
+		// inside container images
+		newSimplePackageTaskFactory(perl.NewCpanMetaCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "perl", "cpan"),
 
 		// language-specific package for both image and directory scans (but not necessarily declared) ////////////////////////////////////////
 		newPackageTaskFactory(
@@ -152,6 +167,7 @@ func DefaultPackageTaskFactories() Factories {
 			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "nix",
 		),
 		newSimplePackageTaskFactory(lua.NewPackageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "lua"),
+		newSimplePackageTaskFactory(perl.NewCpanInstalledCataloger, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "perl", "cpan"),
 
 		// other package catalogers ///////////////////////////////////////////////////////////////////////////
 		newPackageTaskFactory(
@@ -177,9 +193,11 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(wordpress.NewWordpressPluginCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "wordpress"),
 		newSimplePackageTaskFactory(terraform.NewLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "terraform"),
 		newSimplePackageTaskFactory(homebrew.NewCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "homebrew"),
+		newSimplePackageTaskFactory(apple.NewAppBundleCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "apple"),
 		newSimplePackageTaskFactory(conda.NewCondaMetaCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.PackageTag, "conda"),
 		newSimplePackageTaskFactory(snap.NewCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "snap"),
 		newSimplePackageTaskFactory(ai.NewGGUFCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "ai", "model", "gguf", "ml"),
+		newSimplePackageTaskFactory(ai.NewSafeTensorsCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "ai", "model", "safetensors", "ml"),
 
 		// deprecated catalogers ////////////////////////////////////////
 		// these are catalogers that should not be selectable other than specific inclusion via name or "deprecated" tag (to remain backwards compatible)

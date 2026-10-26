@@ -71,8 +71,12 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.ConanV2LockEntry{}, "c-conan-lock-v2-entry"),
 	jsonNames(pkg.ConanfileEntry{}, "c-conan-file-entry", "ConanMetadataType"),
 	jsonNames(pkg.ConaninfoEntry{}, "c-conan-info-entry"),
+	jsonNames(pkg.CpanDistribution{}, "cpan-distribution"),
+	jsonNames(pkg.CpanUnpackedRelease{}, "cpan-unpacked-release"),
 	jsonNames(pkg.DartPubspecLockEntry{}, "dart-pubspec-lock-entry", "DartPubMetadata"),
 	jsonNames(pkg.DartPubspec{}, "dart-pubspec"),
+	jsonNames(pkg.DenoLockEntry{}, "deno-lock-entry"),
+	jsonNames(pkg.DenoRemoteLockEntry{}, "deno-remote-lock-entry"),
 	jsonNames(pkg.DotnetDepsEntry{}, "dotnet-deps-entry", "DotnetDepsMetadata"),
 	jsonNames(pkg.DotnetPortableExecutableEntry{}, "dotnet-portable-executable-entry"),
 	jsonNames(pkg.DpkgArchiveEntry{}, "dpkg-archive-entry"),
@@ -122,11 +126,14 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.SnapEntry{}, "snap-entry"),
 	jsonNames(pkg.WordpressPluginEntry{}, "wordpress-plugin-entry", "WordpressMetadata"),
 	jsonNames(pkg.HomebrewFormula{}, "homebrew-formula"),
+	jsonNames(pkg.AppleAppBundleEntry{}, "apple-app-bundle-entry"),
 	jsonNames(pkg.LuaRocksPackage{}, "luarocks-package"),
 	jsonNames(pkg.TerraformLockProviderEntry{}, "terraform-lock-provider-entry"),
 	jsonNames(pkg.DotnetPackagesLockEntry{}, "dotnet-packages-lock-entry"),
 	jsonNames(pkg.CondaMetaPackage{}, "conda-metadata-entry", "CondaPackageMetadata"),
 	jsonNames(pkg.GGUFFileHeader{}, "gguf-file-header"),
+	jsonNames(pkg.SafeTensorsModelInfo{}, "safetensors-model-info"),
+	jsonNames(pkg.VcpkgManifest{}, "vcpkg-manifest"),
 )
 
 func expandLegacyNameVariants(names ...string) []string {

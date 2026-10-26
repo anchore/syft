@@ -1,0 +1,8 @@
+name: auditbeat
+offset: 106492476
+length: 100
+snippetSha256: 7cfca991c6d073690c48c9489a6929009b866e78d266ecb6f6f2b6f04d9f592f
+fileSha256: 81ac1f3ab45bb7b3211cf26f94660ae73fdd257bb4890bdf8e71ecddb5afce10
+
+### byte snippet to follow ###
+rulesforcestdinsetupTest 9.4.2%s %windexeventint16int32int64uint8arraysliceInts:Ptrs:sse41sse42ssse3

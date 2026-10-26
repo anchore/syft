@@ -9,6 +9,7 @@ import (
 	"iter"
 	"os"
 	"path"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -301,6 +302,9 @@ func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest
 	if version == "" {
 		version = selectVersion(manifest, j.fileInfo)
 	}
+	if version == "" {
+		version = j.versionFromPropertiesFile(ctx, manifest)
+	}
 
 	if len(lics) == 0 {
 		fileLicenses := j.getLicenseFromFileInArchive(ctx)
@@ -323,7 +327,7 @@ func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest
 // findLicenseFromJavaMetadata attempts to find license information from all available maven metadata properties and pom info
 func (j *archiveParser) findLicenseFromJavaMetadata(ctx context.Context, groupID, artifactID, version string, parsedPom *parsedPomProject, manifest *pkg.JavaManifest) []pkg.License {
 	if groupID == "" {
-		if gID := groupIDFromJavaMetadata(artifactID, pkg.JavaArchive{Manifest: manifest}); gID != "" {
+		if gID := groupIDFromJavaMetadata(artifactID, version, pkg.JavaArchive{Manifest: manifest}); gID != "" {
 			groupID = gID
 		}
 	}
@@ -609,6 +613,44 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) []pkg.L
 	return identified
 }
 
+// optional "v" + leading digit + version-ish chars; rejects placeholders like "${revision}"
+var releaseVersionPattern = regexp.MustCompile(`^v?(\d[0-9A-Za-z.\-_+]*)$`)
+
+// versionFromPropertiesFile: last-resort ver from root version.properties for uber-jars built
+// outside maven/gradle e.g. metabase, "tag=v0.63.5", shading can land a deps file at t same
+// path, so be conservative => Main-Class jars only, "version"/"tag" keys only, version shaped values only
+func (j *archiveParser) versionFromPropertiesFile(ctx context.Context, manifest *pkg.JavaManifest) string {
+	if manifest == nil || manifest.Main.MustGet("Main-Class") == "" {
+		return ""
+	}
+
+	matches := j.fileManifest.GlobMatch(true, "/version.properties")
+	if len(matches) != 1 {
+		return ""
+	}
+
+	contents, err := intFile.ContentsFromZip(ctx, j.archivePath, matches...)
+	if err != nil {
+		log.Debugf("unable to extract version.properties (%s): %v", j.location, err)
+		return ""
+	}
+
+	props := map[string]string{}
+	for line := range strings.Lines(contents[matches[0]]) {
+		if k, v, ok := strings.Cut(line, "="); ok {
+			props[strings.ToLower(strings.TrimSpace(k))] = strings.TrimSpace(v)
+		}
+	}
+
+	for _, key := range []string{"version", "tag"} {
+		if m := releaseVersionPattern.FindStringSubmatch(props[key]); m != nil {
+			return m[1]
+		}
+	}
+
+	return ""
+}
+
 func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
 	// we know that all java archives are zip formatted files, so we can use the shared zip helper
 	return discoverPkgsFromZip(ctx, j.location, j.archivePath, j.contentPath, j.fileManifest, parentPkg, j.cfg)
@@ -744,7 +786,7 @@ func newPackageFromMavenData(ctx context.Context, r *maven.Resolver, pomProperti
 	vPathSuffix := ""
 	groupID := ""
 	if parentMetadata, ok := parentPkg.Metadata.(pkg.JavaArchive); ok {
-		groupID = groupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
+		groupID = groupIDFromJavaMetadata(parentPkg.Name, parentPkg.Version, parentMetadata)
 	}
 
 	parentKey := fmt.Sprintf("%s:%s:%s", groupID, parentPkg.Name, parentPkg.Version)
@@ -821,8 +863,8 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	}
 
 	// try to determine identity with the metadata
-	groupID := groupIDFromJavaMetadata(p.Name, metadata)
-	parentGroupID := groupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
+	groupID := groupIDFromJavaMetadata(p.Name, p.Version, metadata)
+	parentGroupID := groupIDFromJavaMetadata(parentPkg.Name, parentPkg.Version, parentMetadata)
 	if uniquePkgKey(groupID, &p) == uniquePkgKey(parentGroupID, parentPkg) {
 		return true
 	}
