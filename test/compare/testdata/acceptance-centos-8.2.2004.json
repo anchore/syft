@@ -35830,6 +35830,37 @@
    }
   },
   {
+   "id": "2e9f6639443d528c",
+   "name": "krb5",
+   "version": "1.17",
+   "type": "binary",
+   "foundBy": "binary-classifier-cataloger",
+   "locations": [
+    {
+     "path": "/usr/lib64/libkrb5.so.3.3",
+     "layerID": "sha256:eb29745b8228e1e97c01b1d5c2554a319c00a94d8dd5746a3904222ad65a13f8"
+    }
+   ],
+   "licenses": [],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:mit:kerberos_5:1.17:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:generic/krb5@1.17",
+   "metadataType": "BinaryMetadata",
+   "metadata": {
+    "matches": [
+     {
+      "classifier": "krb5-library",
+      "location": {
+       "path": "/usr/lib64/libkrb5.so.3.3",
+       "layerID": "sha256:eb29745b8228e1e97c01b1d5c2554a319c00a94d8dd5746a3904222ad65a13f8"
+      }
+     }
+    ]
+   }
+  },
+  {
    "id": "d96caf89f9a4dff",
    "name": "krb5-libs",
    "version": "1.17-18.el8",
@@ -56876,6 +56907,38 @@
       "userName": "root",
       "groupName": "root",
       "flags": "l"
+     }
+    ]
+   }
+  },
+  {
+   "id": "4600a5f26944d138",
+   "name": "python",
+   "version": "3.6.8",
+   "type": "binary",
+   "foundBy": "binary-classifier-cataloger",
+   "locations": [
+    {
+     "path": "/usr/lib64/libpython3.6m.so.1.0",
+     "layerID": "sha256:eb29745b8228e1e97c01b1d5c2554a319c00a94d8dd5746a3904222ad65a13f8"
+    }
+   ],
+   "licenses": [],
+   "language": "",
+   "cpes": [
+    "cpe:2.3:a:python_software_foundation:python:3.6.8:*:*:*:*:*:*:*",
+    "cpe:2.3:a:python:python:3.6.8:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:generic/python@3.6.8",
+   "metadataType": "BinaryMetadata",
+   "metadata": {
+    "matches": [
+     {
+      "classifier": "python-binary-lib",
+      "location": {
+       "path": "/usr/lib64/libpython3.6m.so.1.0",
+       "layerID": "sha256:eb29745b8228e1e97c01b1d5c2554a319c00a94d8dd5746a3904222ad65a13f8"
+      }
      }
     ]
    }
