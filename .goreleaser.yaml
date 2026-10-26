@@ -4,6 +4,17 @@ project_name: syft
 release:
   prerelease: auto
   draft: false
+  # attach a vendored-source archive (source tree + vendor/) so downstream
+  # packagers can build syft offline. produced by the before-hook below.
+  extra_files:
+    - glob: ./dist/syft_*_vendored-source.tar.gz
+
+# produce a vendored-source archive at release time. the hook vendors deps, tars
+# the source + vendor/ tree into dist/, then removes vendor/ so the goreleaser
+# build itself is unchanged. skipped for snapshot builds to keep snapshot CI fast.
+before:
+  hooks:
+    - ./.github/scripts/create-vendored-source-archive.sh {{ .Version }} {{ .IsSnapshot }}
 
 env:
   - DOCKER_CLI_EXPERIMENTAL=enabled
