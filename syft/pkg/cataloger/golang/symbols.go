@@ -2,7 +2,6 @@ package golang
 
 import (
 	"bytes"
-	"debug/elf"
 	"debug/gosym"
 	"debug/macho"
 	"encoding/binary"
@@ -11,6 +10,8 @@ import (
 	"runtime/debug"
 	"slices"
 	"strings"
+
+	"github.com/anchore/syft/syft/internal/elfutil"
 )
 
 // mainPackage is the import path the linker assigns to the binary's main package.
@@ -274,7 +275,7 @@ func readPclntab(r io.ReaderAt) (pclntab []byte, textStart uint64, err error) {
 
 	switch {
 	case strings.HasPrefix(string(ident), "\x7FELF"):
-		f, err := elf.NewFile(r)
+		f, err := elfutil.NewFile(r)
 		if err != nil {
 			return nil, 0, fmt.Errorf("unable to parse ELF binary: %w", err)
 		}

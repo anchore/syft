@@ -869,3 +869,29 @@ https://foo.them.org/alpine/v3.14/community`,
 		})
 	}
 }
+
+func TestParseApkDB_attributeBeforeItsEntry(t *testing.T) {
+	// ACL (M:, a:) and checksum (Z:) lines describe the most recent directory or file entry, and used to index
+	// files[-1] when no entry had been seen yet
+	tests := []struct {
+		name string
+		line string
+	}{
+		{name: "directory ACL before any directory", line: "M:0:0:755"},
+		{name: "file ACL before any file", line: "a:0:0:755"},
+		{name: "checksum before any file", line: "Z:Q1Kz6TXnPVJeDQUfO0IJVxD3HnYmU="},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			contents := strings.Join([]string{"P:foo", "V:1.0-r0", tt.line, ""}, "\n")
+			reader := file.NewLocationReadCloser(file.NewLocation("installed"), io.NopCloser(strings.NewReader(contents)))
+
+			pkgs, _, err := parseApkDB(context.Background(), nil, new(generic.Environment), reader)
+
+			require.NoError(t, err)
+			require.Len(t, pkgs, 1)
+			assert.Equal(t, "foo", pkgs[0].Name)
+			assert.Empty(t, pkgs[0].Metadata.(pkg.ApkDBEntry).Files, "an orphaned attribute line should not invent a file")
+		})
+	}
+}

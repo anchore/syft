@@ -314,19 +314,7 @@ func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *i
 
 		prog.AtomicStage.Set(path)
 
-		var f filesystem.File
 		var mimeType string
-		var err error
-
-		if !d.IsDir() {
-			f, err = fsys.OpenFile(intFile.ToFSPath(path), os.O_RDONLY)
-			if err != nil {
-				log.WithFields("error", err, "path", path).Trace("unable to open squash file path")
-			} else {
-				defer f.Close()
-				mimeType = stereoFile.MIMEType(f)
-			}
-		}
 
 		var ty stereoFile.Type
 		var linkPath string
@@ -335,11 +323,21 @@ func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *i
 			// in some implementations, the mode does not indicate a directory, so we check the FileInfo type explicitly
 			ty = stereoFile.TypeDirectory
 		default:
+			f, err := fsys.OpenFile(intFile.ToFSPath(path), os.O_RDONLY)
+			if err != nil {
+				log.WithFields("error", err, "path", path).Trace("unable to open squash file path")
+			}
+			if f != nil {
+				defer f.Close()
+			}
+
 			ty = stereoFile.TypeFromMode(d.Mode())
 			if ty == stereoFile.TypeSymLink && f != nil {
 				if l, ok := f.(linker); ok {
 					linkPath, _ = l.Readlink()
 				}
+			} else {
+				mimeType = stereoFile.MIMEType(f)
 			}
 		}
 

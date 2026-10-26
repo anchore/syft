@@ -299,19 +299,56 @@ func (c *Collection) Sorted(types ...Type) (pkgs []Package) {
 	return pkgs
 }
 
+// orderedIDSetIndexThreshold is the number of elements beyond which an orderedIDSet maintains a hash
+// index for membership checks. Below this size a linear scan of the contiguous slice is competitive
+// with a map lookup and avoids allocating a map for the many small (often single-element) sets held
+// by the name and path indexes. Above it, the linear scan is what makes bulk insertion quadratic.
+const orderedIDSetIndexThreshold = 16
+
 type orderedIDSet struct {
 	slice []artifact.ID
+
+	// index is nil until the set grows beyond orderedIDSetIndexThreshold, after which it is kept in
+	// sync with slice and used to answer membership checks in constant time.
+	index map[artifact.ID]struct{}
+}
+
+func (s *orderedIDSet) contains(id artifact.ID) bool {
+	if s.index != nil {
+		_, exists := s.index[id]
+		return exists
+	}
+
+	for _, existingID := range s.slice {
+		if existingID == id {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *orderedIDSet) add(ids ...artifact.ID) {
-loopNewIDs:
 	for _, newID := range ids {
-		for _, existingID := range s.slice {
-			if existingID == newID {
-				continue loopNewIDs
-			}
+		if s.contains(newID) {
+			continue
 		}
+
 		s.slice = append(s.slice, newID)
+
+		switch {
+		case s.index != nil:
+			s.index[newID] = struct{}{}
+		case len(s.slice) > orderedIDSetIndexThreshold:
+			s.buildIndex()
+		}
+	}
+}
+
+func (s *orderedIDSet) buildIndex() {
+	s.index = make(map[artifact.ID]struct{}, len(s.slice))
+	for _, id := range s.slice {
+		s.index[id] = struct{}{}
 	}
 }
 
@@ -319,6 +356,7 @@ func (s *orderedIDSet) delete(id artifact.ID) {
 	for i, existingID := range s.slice {
 		if existingID == id {
 			s.slice = append(s.slice[:i], s.slice[i+1:]...)
+			delete(s.index, id) // no-op when the index has not been built
 			return
 		}
 	}

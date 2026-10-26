@@ -270,6 +270,10 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		ctx.indexOfLatestDirectory = len(ctx.files) - 1
 	case "M":
 		i := ctx.indexOfLatestDirectory
+		if i < 0 {
+			log.Debugf("APK field %q appears before any directory entry", f.name)
+			return
+		}
 		latest := ctx.files[i]
 
 		var ok bool
@@ -296,6 +300,10 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		ctx.indexOfLatestRegularFile = len(ctx.files) - 1
 	case "a":
 		i := ctx.indexOfLatestRegularFile
+		if i < 0 {
+			log.Debugf("APK field %q appears before any file entry", f.name)
+			return
+		}
 		latest := ctx.files[i]
 
 		var ok bool
@@ -309,6 +317,10 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		ctx.files[i] = latest
 	case "Z":
 		i := ctx.indexOfLatestRegularFile
+		if i < 0 {
+			log.Debugf("APK field %q appears before any file entry", f.name)
+			return
+		}
 		latest := ctx.files[i]
 		latest.Digest = processChecksum(f.value)
 

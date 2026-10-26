@@ -210,11 +210,19 @@ func (r ChrootContext) ToChrootPath(nativePath string) string {
 			prefix = r.base
 		} else {
 			// we need to account for the cwd relative to the running process and the given root for the directory resolver
-			prefix = filepath.Clean(filepath.Join(r.cwd, r.cwdRelativeToRoot))
-			prefix += string(filepath.Separator)
+			prefix = r.cwdRelativeToRoot
+			// on windows an absolute root stays absolute here (see ChangeDirectory), and joining it onto the cwd
+			// would nest one volume inside another (D:\cwd\C:\root)
+			if !filepath.IsAbs(prefix) {
+				prefix = filepath.Join(r.cwd, prefix)
+			}
+			prefix = filepath.Clean(prefix) + string(filepath.Separator)
 		}
 		responsePath = strings.TrimPrefix(responsePath, prefix)
 	}
 
-	return responsePath
+	// chroot paths are posix regardless of host (these end up as location paths in the SBOM). This uses
+	// filepath (not path) since responsePath is native here (FromPosix above, then trimmed of a native prefix),
+	// and only filepath.ToSlash knows the host separator to convert.
+	return filepath.ToSlash(responsePath)
 }

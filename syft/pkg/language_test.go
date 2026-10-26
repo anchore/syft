@@ -90,6 +90,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			purl: "pkg:opam/ocaml-base-compiler@5.2.0",
 			want: OCaml,
 		},
+		{
+			purl: "pkg:cpan/URI@5.35?author=OALDERS",
+			want: Perl,
+		},
 	}
 
 	var languages = strset.New()

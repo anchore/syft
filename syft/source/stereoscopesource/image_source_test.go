@@ -10,6 +10,7 @@ import (
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/internal/testutil"
 	"github.com/anchore/syft/syft/source"
 )
@@ -78,6 +79,7 @@ func Test_StereoscopeImage_Exclusions(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			imageName := strings.SplitN(imagetest.PrepareFixtureImage(t, "docker-archive", test.input), ":", 2)[1]
 
 			img, err := stereoscope.GetImage(context.TODO(), imageName)

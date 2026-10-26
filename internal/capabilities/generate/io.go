@@ -1,4 +1,4 @@
-// this file handles YAML file reading and writing with comment preservation, using gopkg.in/yaml.v3's node tree to maintain all existing comments during regeneration.
+// this file handles YAML file reading and writing with comment preservation, using go.yaml.in/yaml/v3's node tree to maintain all existing comments during regeneration.
 package main
 
 import (
@@ -6,7 +6,7 @@ import (
 	"os"
 	"regexp"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/anchore/syft/internal/capabilities"
 	"github.com/anchore/syft/internal/capabilities/internal"

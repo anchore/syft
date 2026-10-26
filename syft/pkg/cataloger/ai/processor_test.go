@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -60,4 +61,21 @@ func Test_ggufMergeProcessor(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_ggufMergeProcessor_mergesDespiteError(t *testing.T) {
+	// one layer failing to parse must not drop the rest of the model
+	parseErr := errors.New("one layer failed to parse")
+	pkgs := []pkg.Package{
+		{Name: "model", Metadata: pkg.GGUFFileHeader{MetadataKeyValuesHash: "abc"}},
+		{Name: "", Metadata: pkg.GGUFFileHeader{MetadataKeyValuesHash: "part1"}},
+	}
+
+	got, _, err := ggufMergeProcessor(pkgs, nil, parseErr)
+	require.ErrorIs(t, err, parseErr)
+	require.Len(t, got, 1)
+	assert.Equal(t, "model", got[0].Name)
+	header, ok := got[0].Metadata.(pkg.GGUFFileHeader)
+	require.True(t, ok)
+	assert.Len(t, header.Parts, 1)
 }

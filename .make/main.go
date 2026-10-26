@@ -3,8 +3,10 @@ package main
 import (
 	"path/filepath"
 	"runtime"
+	"strconv"
 
 	. "github.com/anchore/go-make"
+	"github.com/anchore/go-make/config"
 	"github.com/anchore/go-make/file"
 	"github.com/anchore/go-make/lang"
 	"github.com/anchore/go-make/run"
@@ -13,6 +15,12 @@ import (
 	"github.com/anchore/go-make/tasks/gotask"
 	"github.com/anchore/go-make/tasks/gotest"
 )
+
+// buildTags must match the linux build in .goreleaser.yaml so tests and lint compile the same code that ships
+// (containers_image_openpgp compiles in stereoscope's real containers-storage provider instead of its stub).
+// exclude_graphdriver_btrfs drops the cgo-only btrfs driver, which needs libbtrfs headers whenever cgo is on (e.g.
+// under -race); release builds are CGO_ENABLED=0 and never include it anyway.
+const buildTags = "containers_image_openpgp,exclude_graphdriver_btrfs"
 
 func main() {
 	Makefile(
@@ -27,23 +35,45 @@ func main() {
 			gotest.Name("unit"),
 			gotest.ExcludeGlob("**/test/**"),
 			gotest.CoverageThreshold(62),
+			gotest.Tags(buildTags),
+			race(),
 		),
 
-		// integration tests: native go-make Task. The race-detector smoke against a
-		// real image stays bundled here (RunsOn integration) so `make integration`
-		// behaves like the Taskfile version did.
-		gotest.Tasks(
-			gotest.Name("integration"),
-			gotest.IncludeGlob("./cmd/syft/internal/test/integration/..."),
-			gotest.Verbose(),
-			gotest.NoCoverage(),
-		),
+		// integration tests: run `go test` directly instead of via gotest.Tasks(), which
+		// has no way to set a timeout. The suite is a single package of ~36 sequential
+		// tests over 18 docker fixture images, so with a cold fixture cache (every image
+		// built + saved inline, under -race) it runs well past `go test`'s default 10m
+		// timeout -- which is exactly the case when regenerating the fixture cache from
+		// scratch. -count=1 keeps the go test cache from short-circuiting a run whose
+		// side effect (the built fixtures) is the thing we're after.
+		//
+		// The race-detector smoke against a real image stays bundled here (RunsOn
+		// integration) so `make integration` behaves like the Taskfile version did.
+		Task{
+			Name:        "integration",
+			Description: "run integration tests",
+			RunsOn:      lang.List("test"),
+			Run: func() {
+				raceFlag := ""
+				if raceEnabled() {
+					raceFlag = " -race"
+				}
+				Run(
+					"go test -count=1 -timeout=30m -tags="+buildTags+raceFlag+" ./cmd/syft/internal/test/integration/...",
+					run.Env("GODEBUG", "dontfreezetheworld=1"),
+				)
+			},
+		},
 		Task{
 			Name:        "integration:race-smoke",
 			Description: "exercise the CLI with the race detector",
 			RunsOn:      lang.List("integration"),
 			Run: func() {
-				Run("go run -race cmd/syft/main.go anchore/test_images:grype-quality-dotnet-69f15d2")
+				if !raceEnabled() {
+					Log("race detector disabled (RACE=false); skipping race smoke")
+					return
+				}
+				Run("go run -race -tags="+buildTags+" cmd/syft/main.go anchore/test_images:grype-quality-dotnet-69f15d2")
 			},
 		},
 
@@ -68,6 +98,24 @@ func main() {
 				Log("testing binary: %s", bin)
 				Run(
 					"go test -count=1 -timeout=15m -v ./test/cli",
+					run.Env("SYFT_BINARY_LOCATION", bin),
+				)
+			},
+		},
+
+		// containers-storage tests: build a fixture image with BUILDER (podman or buildah) into an isolated local store
+		// and scan it with the snapshot binary. Linux only, and not hooked into "test" since it needs the builder installed.
+		Task{
+			Name:        "containers-storage-test",
+			Description: "Run containers-storage tests (BUILDER=podman|buildah)",
+			Run: func() {
+				bin := snapshotBinPath()
+				if !file.Exists(bin) {
+					Log("snapshot binary not found at %s; building single-target snapshot", bin)
+					Run("make snapshot:single-target")
+				}
+				Run(
+					"bash test/containers-storage/source-test.sh "+config.Env("BUILDER", "podman"),
 					run.Env("SYFT_BINARY_LOCATION", bin),
 				)
 			},
@@ -116,7 +164,7 @@ func main() {
 		Task{
 			Name:         "unit:syft",
 			RunsOn:       lang.List("unit"),
-			Dependencies: Deps("refresh-fixtures"),
+			Dependencies: unitFixtureDeps(),
 		},
 		Task{
 			Name:   "clean:syft",
@@ -130,6 +178,35 @@ func main() {
 			),
 		},
 	)
+}
+
+// raceEnabled is the single switch for the race detector across every test suite.
+// Unset it and we keep go-make's behavior (on in CI, off locally and on windows);
+// set RACE=false to turn it off everywhere -- worth doing when rebuilding the test
+// fixture cache from scratch, where every suite is dominated by building docker
+// fixtures and the race detector only adds wall clock. RACE=true forces it on.
+func raceEnabled() bool {
+	if enabled, err := strconv.ParseBool(config.Env("RACE", "")); err == nil {
+		return enabled
+	}
+	return config.CI && !config.Windows
+}
+
+// unitFixtureDeps skips the fixture cache refresh on windows: it needs binny-managed tools (binny ships
+// no windows release) and linux docker, so fixture-backed tests there have to skip themselves instead.
+func unitFixtureDeps() []string {
+	if config.Windows {
+		return nil
+	}
+	return Deps("refresh-fixtures")
+}
+
+// race applies raceEnabled() to a gotest suite. gotest exposes no functional option
+// for the race detector, but gotest.Config.Race is exported.
+func race() gotest.Option {
+	return func(c *gotest.Config) {
+		c.Race = raceEnabled()
+	}
 }
 
 // snapshotBinPath replicates the SNAPSHOT_BIN computation from the prior Taskfile:

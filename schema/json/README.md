@@ -35,3 +35,24 @@ Create the new schema by running `make generate-json-schema` from the root of th
 - If there is an existing schema for the given version and the new schema **does not** match the existing schema, an error is shown indicating to increment the version appropriately (see the "Versioning" section)
 
 ***Note: never delete a JSON schema and never change an existing JSON schema once it has been published in a release!*** Only add new schemas with a newly incremented version. All previous schema files must be stored in the `schema/json/` directory.
+
+### Exception: `description`-only corrections
+
+A published schema may be amended in place for one narrow case: the change touches only `description` text and leaves the data shape identical. Descriptions are documentation carried alongside the schema rather than constraints a validator evaluates, so correcting one cannot invalidate a document that already validated against that version. Minting a new version instead would leave the old one permanently describing the tool incorrectly, and spend a version number on no semantic change.
+
+This applies when **every** one of the following holds:
+
+- the only differences are `description` values
+- no field, type, enum, `required` entry, or `$ref` is added, removed, or altered
+- the `$id` version is unchanged
+
+Anything else, including adding a field that happens to be optional, is a schema change and needs a version bump per the "Versioning" section above.
+
+The generator blocks an in-place edit by design, since it refuses to overwrite a file that differs from what it would produce. To amend one, delete the schema file and regenerate so it is rewritten from the current Go doc comments:
+
+```bash
+rm schema/json/schema-$VERSION.json
+make generate-json-schema
+```
+
+The result is byte-identical to what the generator produces, so do not hand-edit the JSON. Re-running `make generate-json-schema` afterwards should report `No change to the existing schema!`, and `make check-json-schema-drift` should pass. Confirm with `git diff` that the only changes are the intended description lines.

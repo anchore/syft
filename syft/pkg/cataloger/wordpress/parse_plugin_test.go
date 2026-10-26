@@ -2,9 +2,13 @@ package wordpress
 
 import (
 	"context"
+	"io"
+	"os"
 	"testing"
+	"testing/iotest"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -57,4 +61,19 @@ func Test_extractFields(t *testing.T) {
 			assert.Equal(t, tt.want, extractFields(tt.in))
 		})
 	}
+}
+
+func TestParseWordpressPluginFiles_shortReads(t *testing.T) {
+	// a reader that returns one byte per Read must still yield the full header
+	fixture := "testdata/glob-paths/wp-content/plugins/akismet/akismet.php"
+	f, err := os.Open(fixture)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = f.Close() })
+	reader := file.NewLocationReadCloser(file.NewLocation(fixture), io.NopCloser(iotest.OneByteReader(f)))
+
+	pkgs, _, err := parseWordpressPluginFiles(context.Background(), nil, nil, reader)
+	require.NoError(t, err)
+	require.Len(t, pkgs, 1)
+	assert.Equal(t, "Akismet Anti-spam: Spam Protection", pkgs[0].Name)
+	assert.Equal(t, "5.3", pkgs[0].Version)
 }

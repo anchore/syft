@@ -30,6 +30,13 @@ type testGGUFBuilder struct {
 	version     uint32
 	tensorCount uint64
 	kvPairs     []testKVPair
+	tensors     []testTensorInfo
+}
+
+type testTensorInfo struct {
+	name     string
+	dims     []uint64
+	ggmlType uint32
 }
 
 type testKVPair struct {
@@ -72,8 +79,39 @@ func (b *testGGUFBuilder) withUint32KV(key string, value uint32) *testGGUFBuilde
 	return b
 }
 
+// withTensor adds a tensor info and counts it in the header tensor count.
+func (b *testGGUFBuilder) withTensor(name string, ggmlType uint32, dims ...uint64) *testGGUFBuilder {
+	b.tensors = append(b.tensors, testTensorInfo{name: name, dims: dims, ggmlType: ggmlType})
+	b.tensorCount++
+	return b
+}
+
+// withRawKV adds a KV whose value bytes are written verbatim, for arrays and malformed values.
+func (b *testGGUFBuilder) withRawKV(key string, valueType uint32, raw []byte) *testGGUFBuilder {
+	b.kvPairs = append(b.kvPairs, testKVPair{key: key, valueType: valueType, value: raw})
+	return b
+}
+
+// ggufArray encodes an array value: item type, length, then the already encoded items.
+func ggufArray(itemType uint32, n uint64, items []byte) []byte {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, itemType)
+	binary.Write(buf, binary.LittleEndian, n)
+	buf.Write(items)
+	return buf.Bytes()
+}
+
+// writeLen writes a count or length, which is 32-bit in GGUF v1 and 64-bit after.
+func (b *testGGUFBuilder) writeLen(n uint64) {
+	if b.version <= 1 {
+		binary.Write(b.buf, binary.LittleEndian, uint32(n))
+		return
+	}
+	binary.Write(b.buf, binary.LittleEndian, n)
+}
+
 func (b *testGGUFBuilder) writeString(s string) {
-	binary.Write(b.buf, binary.LittleEndian, uint64(len(s)))
+	b.writeLen(uint64(len(s)))
 	b.buf.WriteString(s)
 }
 
@@ -85,10 +123,10 @@ func (b *testGGUFBuilder) build() []byte {
 	binary.Write(b.buf, binary.LittleEndian, b.version)
 
 	// Write tensor count
-	binary.Write(b.buf, binary.LittleEndian, b.tensorCount)
+	b.writeLen(b.tensorCount)
 
 	// Write KV count
-	binary.Write(b.buf, binary.LittleEndian, uint64(len(b.kvPairs)))
+	b.writeLen(uint64(len(b.kvPairs)))
 
 	// Write KV pairs
 	for _, kv := range b.kvPairs {
@@ -97,6 +135,10 @@ func (b *testGGUFBuilder) build() []byte {
 		// Write value type
 		binary.Write(b.buf, binary.LittleEndian, kv.valueType)
 		// Write value based on type
+		if raw, ok := kv.value.([]byte); ok {
+			b.buf.Write(raw)
+			continue
+		}
 		switch kv.valueType {
 		case ggufTypeString:
 			b.writeString(kv.value.(string))
@@ -117,6 +159,19 @@ func (b *testGGUFBuilder) build() []byte {
 		}
 	}
 
+	// Write tensor infos: name, dimension count, dimensions, type, data offset
+	var offset uint64
+	for _, ti := range b.tensors {
+		b.writeString(ti.name)
+		binary.Write(b.buf, binary.LittleEndian, uint32(len(ti.dims)))
+		for _, d := range ti.dims {
+			b.writeLen(d)
+		}
+		binary.Write(b.buf, binary.LittleEndian, ti.ggmlType)
+		binary.Write(b.buf, binary.LittleEndian, offset)
+		offset += 32
+	}
+
 	return b.buf.Bytes()
 }
 
@@ -126,3 +181,14 @@ func (b *testGGUFBuilder) buildInvalidMagic() []byte {
 	binary.Write(buf, binary.LittleEndian, uint32(0x12345678))
 	return buf.Bytes()
 }
+
+// GGML tensor types used by the test builder
+const (
+	ggmlTypeF32  = 0
+	ggmlTypeF16  = 1
+	ggmlTypeQ4_0 = 2
+	ggmlTypeQ8_0 = 8
+	ggmlTypeQ2_K = 10
+	ggmlTypeQ4_K = 12
+	ggmlTypeQ6_K = 14
+)

@@ -1,9 +1,16 @@
 package ai
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal/tmpdir"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -122,6 +129,45 @@ func TestGGUFCataloger(t *testing.T) {
 			},
 			expectedRelationships: nil,
 		},
+		{
+			// syft copies at most maxHeaderSize bytes of a model to parse, so in any model larger than that the
+			// tensors declare far more data than the copy holds
+			name: "catalog GGUF file larger than the header copy",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				data := newTestGGUFBuilder().
+					withStringKV("general.architecture", "qwen2").
+					withUint32KV("general.file_type", 0).                       // ALL_F32
+					withTensor("token_embd.weight", ggmlTypeF32, 1024, 8192).   // 32 MiB
+					withTensor("blk.0.ffn_up.weight", ggmlTypeF32, 1024, 8192). // 32 MiB
+					build()
+
+				path := filepath.Join(dir, "qwen2.5-0.5b-instruct-f32.gguf")
+				require.NoError(t, os.WriteFile(path, data, 0644))
+				// the tensor data is never read, so it is left as a sparse range: alignment padding, then 64 MiB
+				require.NoError(t, os.Truncate(path, int64(len(data))+32+64<<20))
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "qwen2.5-0.5b-instruct-f32",
+					Type:     pkg.ModelPkg,
+					Licenses: pkg.NewLicenseSet(),
+					Metadata: pkg.GGUFFileHeader{
+						Architecture:          "qwen2",
+						Quantization:          "F32",
+						Parameters:            2 * 1024 * 8192,
+						GGUFVersion:           3,
+						TensorCount:           2,
+						MetadataKeyValuesHash: "fddec34fd07b3547",
+						RemainingKeyValues: map[string]any{
+							"general.file_type": uint32(0),
+						},
+					},
+				},
+			},
+			expectedRelationships: nil,
+		},
 	}
 
 	for _, tt := range tests {
@@ -137,4 +183,43 @@ func TestGGUFCataloger(t *testing.T) {
 				TestCataloger(t, NewGGUFCataloger())
 		})
 	}
+}
+
+func TestGGUFCataloger_ociLayers(t *testing.T) {
+	// a GGUF OCI artifact is merged into one named package, while the other
+	// application/vnd.docker.ai.* layers (config, model.file, license and
+	// safetensors weights) never reach the GGUF parser.
+	named := newTestGGUFBuilder().
+		withStringKV("general.architecture", "llama").
+		withStringKV("general.name", "llama3-8b").
+		build()
+	part := newTestGGUFBuilder().withStringKV("general.architecture", "llama").build()
+
+	dir := t.TempDir()
+	layers := map[string]fileresolver.LayerInfo{}
+	for digest, l := range map[string]struct {
+		mediaType string
+		content   []byte
+	}{
+		"sha256:named":   {dockerAIGGUFMediaType, named},
+		"sha256:part":    {dockerAIGGUFMediaType, part},
+		"sha256:config":  {dockerAIModelConfigMediaTypes[0], []byte("not a gguf file")},
+		"sha256:file":    {dockerAIModelFileMediaType, []byte("not a gguf file")},
+		"sha256:license": {dockerAILicenseMediaType, []byte("not a gguf file")},
+		"sha256:weights": {dockerAISafeTensorsMediaType, []byte("not a gguf file")},
+	} {
+		p := filepath.Join(dir, digest[len("sha256:"):])
+		require.NoError(t, os.WriteFile(p, l.content, 0o600))
+		layers[digest] = fileresolver.LayerInfo{TempPath: p, MediaType: l.mediaType}
+	}
+	resolver := fileresolver.NewContainerImageModel(dir, layers, "example/model:latest")
+	ctx := tmpdir.WithValue(context.Background(), tmpdir.FromPath(t.TempDir()))
+
+	pkgs, _, err := NewGGUFCataloger().Catalog(ctx, resolver)
+	require.NoError(t, err)
+	require.Len(t, pkgs, 1)
+	assert.Equal(t, "llama3-8b", pkgs[0].Name)
+	header, ok := pkgs[0].Metadata.(pkg.GGUFFileHeader)
+	require.True(t, ok)
+	assert.Len(t, header.Parts, 1)
 }

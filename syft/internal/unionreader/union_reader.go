@@ -120,9 +120,19 @@ func (r *readerAtAdapter) ReadAt(p []byte, off int64) (n int, err error) {
 		return 0, err
 	}
 
-	n, err = r.ReadSeekCloser.Read(p) // read from that absolute position
+	// io.ReaderAt requires len(p) bytes or a non-nil error, and the underlying reader honors neither half of
+	// that: a squashfs block that decompresses short returns fewer bytes with err == nil, and a read landing
+	// exactly on the end of the file returns a full buffer alongside io.EOF. io.ReadFull normalizes both.
+	n, err = io.ReadFull(r.ReadSeekCloser, p)
+	// ReadAt reports a short read at the end of the file as io.EOF. compared by identity on purpose:
+	// io.ReadFull returns this sentinel bare, and errors.Is would also downgrade a wrapped one from the
+	// underlying reader, turning genuine stream corruption into a benign end of file
+	if err == io.ErrUnexpectedEOF {
+		err = io.EOF
+	}
 
-	// restore the position for the stateful read/seek operations
+	// restore the position for the stateful read/seek operations. a read error wins over a restore failure:
+	// callers compare against io.EOF, and masking it would strand them without the data they did get
 	if restoreErr := r.restorePosition(currentPos); restoreErr != nil {
 		if err == nil {
 			err = restoreErr
