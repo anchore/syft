@@ -120,6 +120,113 @@ func Test_parsePomXML(t *testing.T) {
 	}
 }
 
+func Test_parsePomXML_mavenExcludeScopes(t *testing.T) {
+	pomLocation := file.NewLocationSet(file.NewLocation("pom.xml"))
+
+	mainPkg := pkg.Package{
+		Name:      "example-scopes",
+		Version:   "0.1.0",
+		PURL:      "pkg:maven/org.anchore/example-scopes@0.1.0",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: pomLocation,
+		Metadata: pkg.JavaArchive{
+			PomProject: &pkg.JavaPomProject{
+				GroupID:    "org.anchore",
+				ArtifactID: "example-scopes",
+				Version:    "0.1.0",
+			},
+		},
+	}
+	finalizePackage(&mainPkg)
+
+	dependency := func(groupID, artifactID, version, scope string) pkg.Package {
+		p := pkg.Package{
+			Name:      artifactID,
+			Version:   version,
+			PURL:      "pkg:maven/" + groupID + "/" + artifactID + "@" + version,
+			Language:  pkg.Java,
+			Type:      pkg.JavaPkg,
+			FoundBy:   pomCatalogerName,
+			Locations: pomLocation,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    groupID,
+					ArtifactID: artifactID,
+					Scope:      scope,
+				},
+			},
+		}
+		finalizePackage(&p)
+		return p
+	}
+
+	// the scope is recorded as declared in the pom: a dependency without a <scope> keeps an empty scope,
+	// even though maven (and the exclusion) treat it as "compile"
+	jodaTime := dependency("com.joda", "joda-time", "2.9.2", "")
+	commonsLang3 := dependency("org.apache.commons", "commons-lang3", "3.12.0", "compile")
+	servletAPI := dependency("javax.servlet", "javax.servlet-api", "4.0.1", "provided") // scope set through a property
+	slf4jSimple := dependency("org.slf4j", "slf4j-simple", "2.0.9", "runtime")
+	junit := dependency("junit", "junit", "4.12", "test")
+
+	tests := []struct {
+		name          string
+		excludeScopes []string
+		expected      []pkg.Package
+	}{
+		{
+			name:     "no exclusions keeps every scope",
+			expected: []pkg.Package{jodaTime, commonsLang3, servletAPI, slf4jSimple, junit},
+		},
+		{
+			name:          "exclude test",
+			excludeScopes: []string{"test"},
+			expected:      []pkg.Package{jodaTime, commonsLang3, servletAPI, slf4jSimple},
+		},
+		{
+			name:          "exclude test and provided",
+			excludeScopes: []string{"test", "provided"},
+			expected:      []pkg.Package{jodaTime, commonsLang3, slf4jSimple},
+		},
+		{
+			name:          "exclude compile drops dependencies without an explicit scope",
+			excludeScopes: []string{"compile"},
+			expected:      []pkg.Package{servletAPI, slf4jSimple, junit},
+		},
+		{
+			name:          "scopes are matched ignoring case and surrounding whitespace",
+			excludeScopes: []string{" Test ", "RUNTIME", ""},
+			expected:      []pkg.Package{jodaTime, commonsLang3, servletAPI},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			expectedPkgs := []pkg.Package{mainPkg}
+			var expectedRelationships []artifact.Relationship
+			for _, dep := range test.expected {
+				expectedPkgs = append(expectedPkgs, dep)
+				expectedRelationships = append(expectedRelationships, artifact.Relationship{
+					From: dep,
+					To:   mainPkg,
+					Type: artifact.DependencyOfRelationship,
+				})
+			}
+
+			cat := NewPomCataloger(ArchiveCatalogerConfig{
+				ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+					IncludeIndexedArchives:   true,
+					IncludeUnindexedArchives: true,
+				},
+				MavenExcludeScopes: test.excludeScopes,
+			})
+
+			pkgtest.TestCataloger(t, "testdata/pom/scopes", cat, expectedPkgs, expectedRelationships)
+		})
+	}
+}
+
 func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 	mavenLocalRepoDir := "internal/maven/testdata/maven-repo"
 	mavenBaseURL := maventest.MockRepo(t, "internal/maven/testdata/maven-repo")
@@ -170,6 +277,19 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 			},
 			expected: expectedTransientPackageData(),
 		},
+		{
+			// child-two is a test-scoped dependency, so neither it nor the dependencies found through its pom are cataloged
+			name: "transitive dependencies excluding test scope",
+			dir:  "testdata/pom/transitive-top-level",
+			config: ArchiveCatalogerConfig{
+				UseNetwork:                    false,
+				UseMavenLocalRepository:       true,
+				MavenLocalRepositoryDir:       mavenLocalRepoDir,
+				ResolveTransitiveDependencies: true,
+				MavenExcludeScopes:            []string{"test"},
+			},
+			expected: expectedTransientPackageData().without("child-two", "commons-math3.11.0", "commons-exec", "commons-lang3@3.113.7.8.0"),
+		},
 	}
 
 	for _, test := range tests {
@@ -184,6 +304,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 				UseMavenLocalRepository:       test.config.UseMavenLocalRepository,
 				MavenLocalRepositoryDir:       test.config.MavenLocalRepositoryDir,
 				ResolveTransitiveDependencies: test.config.ResolveTransitiveDependencies,
+				MavenExcludeScopes:            test.config.MavenExcludeScopes,
 			})
 			pkgtest.TestCataloger(t, test.dir, cat, test.expected.packages, test.expected.relationships)
 		})
@@ -466,6 +587,34 @@ func Test_corruptPomXml(t *testing.T) {
 type expected struct {
 	packages      []pkg.Package
 	relationships []artifact.Relationship
+}
+
+// without drops the packages matching the given "name" or "name@version" keys, and every relationship that references them
+func (e expected) without(keys ...string) expected {
+	dropped := func(p pkg.Package) bool {
+		for _, key := range keys {
+			if key == p.Name || key == p.Name+"@"+p.Version {
+				return true
+			}
+		}
+		return false
+	}
+
+	var out expected
+	for _, p := range e.packages {
+		if !dropped(p) {
+			out.packages = append(out.packages, p)
+		}
+	}
+	for _, r := range e.relationships {
+		from, fromOk := r.From.(pkg.Package)
+		to, toOk := r.To.(pkg.Package)
+		if (fromOk && dropped(from)) || (toOk && dropped(to)) {
+			continue
+		}
+		out.relationships = append(out.relationships, r)
+	}
+	return out
 }
 
 func getCommonsTextExpectedPackages(resolved bool) expected {
