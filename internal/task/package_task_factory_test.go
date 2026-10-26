@@ -1,16 +1,20 @@
 package task
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 func Test_hasAuthoritativeCPE(t *testing.T) {
@@ -87,7 +91,8 @@ func TestApplyCompliance(t *testing.T) {
 		MissingVersion: cataloging.ComplianceActionStub,
 	}
 
-	remainingPkgs, remainingRels := applyCompliance(cfg, []pkg.Package{p1, p2, p3, p4}, []artifact.Relationship{r1, r2})
+	remainingPkgs, remainingRels, err := applyCompliance(cfg, []pkg.Package{p1, p2, p3, p4}, []artifact.Relationship{r1, r2})
+	require.NoError(t, err)
 
 	// p2 should be dropped because it has a missing name, p3 and p4 should pass with a warning for the missing version
 	assert.Len(t, remainingPkgs, 3) // p1, p3, p4 should remain
@@ -108,7 +113,8 @@ func TestFilterNonCompliantPackages(t *testing.T) {
 		MissingVersion: cataloging.ComplianceActionKeep,
 	}
 
-	remainingPkgs, droppedPkgs, replacement := filterNonCompliantPackages([]pkg.Package{p1, p2, p3}, cfg)
+	remainingPkgs, droppedPkgs, replacement, err := filterNonCompliantPackages([]pkg.Package{p1, p2, p3}, cfg)
+	require.NoError(t, err)
 	require.Nil(t, replacement)
 
 	// p2 should be dropped because it has a missing name
@@ -270,7 +276,8 @@ func TestApplyComplianceRules_DropAndStub(t *testing.T) {
 		MissingVersion: cataloging.ComplianceActionStub,
 	}
 
-	isCompliant, replacement := applyComplianceRules(&p, cfg)
+	isCompliant, replacement, err := applyComplianceRules(&p, cfg)
+	require.NoError(t, err)
 	require.NotNil(t, replacement)
 	assert.Equal(t, packageReplacement{
 		original: ogID,
@@ -280,4 +287,92 @@ func TestApplyComplianceRules_DropAndStub(t *testing.T) {
 	// the package should be dropped due to missing name (drop action) and its version should be stubbed
 	assert.False(t, isCompliant)
 	assert.Equal(t, cataloging.UnknownStubValue, p.Version)
+}
+
+func TestApplyComplianceRules_Fail(t *testing.T) {
+	p := pkg.Package{Name: "dep", Version: ""}
+	p.SetID()
+
+	cfg := cataloging.ComplianceConfig{
+		MissingName:    cataloging.ComplianceActionKeep,
+		MissingVersion: cataloging.ComplianceActionFail,
+	}
+
+	isCompliant, replacement, err := applyComplianceRules(&p, cfg)
+	require.Error(t, err)
+	assert.True(t, isCompliant)
+	assert.Nil(t, replacement)
+}
+
+func TestNewPackageTask_ComplianceFail(t *testing.T) {
+	p := pkg.Package{
+		Name:      "dep",
+		Type:      pkg.PythonPkg,
+		Locations: file.NewLocationSet(file.NewLocation("requirements.txt")),
+	}
+	p.SetID()
+
+	cfg := DefaultCatalogingFactoryConfig()
+	cfg.ComplianceConfig = cataloging.ComplianceConfig{
+		MissingName:    cataloging.ComplianceActionKeep,
+		MissingVersion: cataloging.ComplianceActionFail,
+	}
+
+	s := sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			Packages: pkg.NewCollection(),
+		},
+	}
+	task := NewPackageTask(cfg, testPackageCataloger{
+		name: "python-package-cataloger",
+		pkgs: []pkg.Package{p},
+	})
+
+	err := task.Execute(context.Background(), file.NewMockResolverForPaths(), sbomsync.NewBuilder(&s))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "missing version")
+	assert.Contains(t, err.Error(), "requirements.txt")
+}
+
+type testPackageCataloger struct {
+	name string
+	pkgs []pkg.Package
+	rels []artifact.Relationship
+	err  error
+}
+
+func (c testPackageCataloger) Name() string {
+	return c.name
+}
+
+func (c testPackageCataloger) Catalog(context.Context, file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+	return c.pkgs, c.rels, c.err
+}
+
+func TestNewPackageTask_ComplianceFailJoinsCatalogerError(t *testing.T) {
+	catalogerErr := errors.New("cataloger failed")
+	p := pkg.Package{Name: "dep", Type: pkg.PythonPkg}
+	p.SetID()
+
+	cfg := DefaultCatalogingFactoryConfig()
+	cfg.ComplianceConfig = cataloging.ComplianceConfig{
+		MissingName:    cataloging.ComplianceActionKeep,
+		MissingVersion: cataloging.ComplianceActionFail,
+	}
+
+	s := sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			Packages: pkg.NewCollection(),
+		},
+	}
+	task := NewPackageTask(cfg, testPackageCataloger{
+		name: "python-package-cataloger",
+		pkgs: []pkg.Package{p},
+		err:  catalogerErr,
+	})
+
+	err := task.Execute(context.Background(), file.NewMockResolverForPaths(), sbomsync.NewBuilder(&s))
+	require.Error(t, err)
+	assert.ErrorIs(t, err, catalogerErr)
+	assert.Contains(t, err.Error(), "missing version")
 }

@@ -8,6 +8,7 @@ const (
 	ComplianceActionKeep ComplianceAction = "keep"
 	ComplianceActionDrop ComplianceAction = "drop"
 	ComplianceActionStub ComplianceAction = "stub"
+	ComplianceActionFail ComplianceAction = "fail"
 )
 
 const UnknownStubValue = "UNKNOWN"
@@ -42,6 +43,8 @@ func (c ComplianceAction) Parse() ComplianceAction {
 		return ComplianceActionDrop
 	case string(ComplianceActionStub), "replace":
 		return ComplianceActionStub
+	case string(ComplianceActionFail), "error":
+		return ComplianceActionFail
 	}
 	return ComplianceActionKeep
 }

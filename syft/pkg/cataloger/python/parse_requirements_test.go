@@ -154,6 +154,102 @@ func TestParseRequirementsTxt(t *testing.T) {
 		},
 	}
 
+	unpinnedPkgs := []pkg.Package{
+		{
+			Name:      "bar",
+			PURL:      "pkg:pypi/bar",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "bar",
+				VersionConstraint: ">= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0",
+			},
+		},
+		{
+			Name:      "coverage",
+			PURL:      "pkg:pypi/coverage",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "coverage",
+				VersionConstraint: "!= 3.5",
+			},
+		},
+		{
+			Name:      "mopidy-dirble",
+			PURL:      "pkg:pypi/mopidy-dirble",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "Mopidy-Dirble",
+				VersionConstraint: "~= 1.1",
+			},
+		},
+		{
+			Name:      "numpy",
+			PURL:      "pkg:pypi/numpy",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "numpy",
+				VersionConstraint: ">= 3.4.1",
+				Markers:           `sys_platform == 'win32'`,
+			},
+		},
+		{
+			Name:      "numpynew",
+			PURL:      "pkg:pypi/numpynew",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:    "numpyNew",
+				Markers: `sys_platform == 'win32'`,
+			},
+		},
+		{
+			Name:      "requests",
+			PURL:      "pkg:pypi/requests",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "requests",
+				Extras:            []string{"security"},
+				VersionConstraint: "== 2.8.*",
+				Markers:           `python_version < "2.7" and sys_platform == "linux"`,
+			},
+		},
+		{
+			Name:      "sqlalchemy",
+			PURL:      "pkg:pypi/sqlalchemy",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "sqlalchemy",
+				VersionConstraint: ">= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0",
+			},
+		},
+	}
+
+	unguessablePkgs := []pkg.Package{
+		unpinnedPkgs[1], // coverage
+		unpinnedPkgs[4], // numpyNew
+	}
+
+	mergePkgs := func(groups ...[]pkg.Package) []pkg.Package {
+		var out []pkg.Package
+		for _, group := range groups {
+			out = append(out, group...)
+		}
+		return out
+	}
+
 	var testCases = []struct {
 		name                  string
 		fixture               string
@@ -167,7 +263,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			cfg: CatalogerConfig{
 				GuessUnpinnedRequirements: false,
 			},
-			expectedPkgs: pinnedPkgs,
+			expectedPkgs: mergePkgs(pinnedPkgs, unpinnedPkgs),
 		},
 		{
 			name:    "guess unpinned requirements (lowest version)",
@@ -175,7 +271,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			cfg: CatalogerConfig{
 				GuessUnpinnedRequirements: true,
 			},
-			expectedPkgs: append([]pkg.Package{
+			expectedPkgs: mergePkgs([]pkg.Package{
 				{
 					Name:      "mopidy-dirble",
 					Version:   "1.1",
@@ -239,7 +335,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 						Markers:           `python_version < "2.7" and sys_platform == "linux"`,
 					},
 				},
-			}, pinnedPkgs...),
+			}, pinnedPkgs, unguessablePkgs),
 		},
 	}
 
@@ -368,6 +464,10 @@ func Test_newRequirement(t *testing.T) {
 				VersionConstraint: ">= 3.4.1",
 				Markers:           "sys_platform == 'win32'",
 			},
+		},
+		{
+			name: "invalid package name with spaces",
+			raw:  "example archive",
 		},
 		{
 			name: "local version identifier",
