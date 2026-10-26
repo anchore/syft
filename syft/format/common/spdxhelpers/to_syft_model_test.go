@@ -772,8 +772,8 @@ func Test_skipsPackagesWithGeneratedFromRelationship(t *testing.T) {
 				PackageVersion:        "1.0.5",
 			},
 			{
-				PackageName:           "package-1-src",
-				PackageSPDXIdentifier: "1-src",
+				PackageName:           "package-2",
+				PackageSPDXIdentifier: "2",
 				PackageVersion:        "1.0.5-src",
 			},
 		},
@@ -783,15 +783,54 @@ func Test_skipsPackagesWithGeneratedFromRelationship(t *testing.T) {
 				RefA: common.DocElementID{ // package 1
 					ElementRefID: spdx.ElementID("1"),
 				},
-				RefB: common.DocElementID{ // generated from package 1-src
-					ElementRefID: spdx.ElementID("1-src"),
+				RefB: common.DocElementID{ // generated from package 2
+					ElementRefID: spdx.ElementID("2"),
 				},
 			},
 		},
 	}
-	s, err := ToSyftModel(doc)
 
-	assert.Nil(t, err)
-	assert.NotNil(t, s.Artifacts.Packages.Package("1"))
-	assert.Nil(t, s.Artifacts.Packages.Package("1-src"))
+	tests := []struct {
+		name             string
+		doc              *spdx.Document
+		relationshipType string
+		expected         []string
+	}{
+		{
+			relationshipType: spdx.RelationshipGeneratedFrom,
+			expected:         []string{"1"},
+		},
+		{
+			relationshipType: spdx.RelationshipDescribedBy,
+			expected:         []string{"1"},
+		},
+		{
+			relationshipType: spdx.RelationshipGenerates,
+			expected:         []string{"2"},
+		},
+		{
+			relationshipType: spdx.RelationshipDescribes,
+			expected:         []string{"2"},
+		},
+		{
+			relationshipType: spdx.RelationshipDependsOn, // no filtering
+			expected:         []string{"1", "2"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			doc.Relationships[0].Relationship = test.relationshipType
+
+			s, err := ToSyftModel(doc)
+
+			assert.Nil(t, err)
+			for _, expected := range test.expected {
+				assert.NotNil(t, s.Artifacts.Packages.Package(artifact.ID(expected)))
+			}
+			for _, got := range s.Artifacts.Packages.Sorted() {
+				assert.Contains(t, test.expected, string(got.ID()))
+			}
+		})
+	}
 }
