@@ -21,6 +21,10 @@ func candidateProductForGo(name string) string {
 	case "golang.org", "gopkg.in":
 		return cleanPath
 	case "google.golang.org":
+		// genproto submodules are released separately, keep the sub-path
+		if pathElements[0] == "genproto" {
+			return cleanPath
+		}
 		return pathElements[0]
 	}
 
