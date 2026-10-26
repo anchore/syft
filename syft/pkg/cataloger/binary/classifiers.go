@@ -1129,9 +1129,12 @@ func DefaultClassifiers() []binutils.Classifier {
 			FileGlob: "**/envoy",
 			EvidenceMatcher: binutils.MatchAny(
 				// 1.3x [NUL]1.36.4[NUL]...envoy_reloadable_features
+				// 1.4x [NUL]1.40.1[NUL]...envoy_reloadable_features
 				// 1.34.5 [NUL]1.34.5[NUL]...envoy.reloadable_features
-				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.3[0-9]\.[0-9]+(-dev)?)\x00.{0,1000}envoy_reloadable_features`),
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.[34][0-9]\.[0-9]+(-dev)?)\x00.{0,1000}envoy_reloadable_features`),
 				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.34\.5)\x00.{0,200}envoy\.reloadable_features`),
+				// 1.37.1 DeltaDiscoveryResponse.removed_resources[NUL]1.37.1[NUL]the default now-
+				m.FileContentsVersionMatcher(`(?s)DeltaDiscoveryResponse\.removed_resources\x00(?P<version>1\.[34][0-9]\.[0-9]+(-dev)?)\x00`),
 				// 1.2x envoy_quic_...[NUL]1.28.7[NUL]
 				m.FileContentsVersionMatcher(`(?s)envoy_quic_.{0,1000}\x00(?P<version>1\.2[0-9]\.[0-9]+(-dev)?)\x00`),
 				// 1.2x [NUL]1.20.7[NUL]Unable to
