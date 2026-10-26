@@ -37,7 +37,7 @@ func TestBitnamiCataloger(t *testing.T) {
 		FoundBy: catalogerName,
 		PURL:    "pkg:bitnami/postgresql@17.2.0-8?arch=arm64&distro=debian-12",
 		CPEs: mustCPEs(
-			"cpe:2.3:*:postgresql:postgresql:17.2.0:*:*:*:*:*:*:*",
+			"cpe:2.3:a:postgresql:postgresql:17.2.0:*:*:*:*:*:*:*",
 		),
 		Metadata: &pkg.BitnamiSBOMEntry{
 			Name:         "postgresql",
@@ -64,7 +64,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/geos@3.13.0?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:libgeos:geos:3.13.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libgeos:geos:3.13.0:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "geos",
@@ -86,7 +86,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/proj@6.3.2?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:proj:proj:6.3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:proj:proj:6.3.2:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "proj",
@@ -108,7 +108,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/gdal@3.10.1?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:osgeo:gdal:3.10.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:osgeo:gdal:3.10.1:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "gdal",
@@ -130,7 +130,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/json-c@0.16.20220414?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:json-c_project:json-c:0.16.20220414:*:*:*:*:*:*:*",
+				"cpe:2.3:a:json-c_project:json-c:0.16.20220414:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "json-c",
@@ -152,7 +152,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/orafce@4.14.1?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:orafce:orafce:4.14.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:orafce:orafce:4.14.1:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "orafce",
@@ -174,7 +174,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/pljava@1.6.8?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:pl/java_project:pl/java:1.6.8:*:*:*:*:*:*:*",
+				"cpe:2.3:a:pl/java_project:pl/java:1.6.8:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "pljava",
@@ -201,7 +201,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/unixodbc@2.3.12?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:unixodbc:unixodbc:2.3.12:*:*:*:*:*:*:*",
+				"cpe:2.3:a:unixodbc:unixodbc:2.3.12:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "unixodbc",
@@ -223,7 +223,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/psqlodbc@16.0.0?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:postgresql:psqlodbc:16.0.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:postgresql:psqlodbc:16.0.0:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "psqlodbc",
@@ -245,7 +245,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/protobuf@3.21.12?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:golang:protobuf:3.21.12:*:*:*:*:*:*:*",
+				"cpe:2.3:a:golang:protobuf:3.21.12:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "protobuf",
@@ -267,7 +267,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/protobuf-c@1.5.1?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:protobuf-c:protobuf-c:1.5.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:protobuf-c:protobuf-c:1.5.1:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "protobuf-c",
@@ -289,7 +289,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/postgis@3.4.4?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:postgis:postgis:3.4.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:postgis:postgis:3.4.4:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "postgis",
@@ -330,7 +330,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/pgbackrest@2.54.2?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:pgbackrest:pgbackrest:2.54.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:pgbackrest:pgbackrest:2.54.2:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "pgbackrest",
@@ -352,7 +352,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/wal2json@2.6.0?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:wal2json:wal2json:2.6.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wal2json:wal2json:2.6.0:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "wal2json",
@@ -374,7 +374,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/nss_wrapper@1.1.16?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:nss_wrapper:nss_wrapper:1.1.16:*:*:*:*:*:*:*",
+				"cpe:2.3:a:nss_wrapper:nss_wrapper:1.1.16:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "nss_wrapper",
@@ -410,7 +410,7 @@ func TestBitnamiCataloger(t *testing.T) {
 		FoundBy: catalogerName,
 		PURL:    "pkg:bitnami/render-template@1.0.7-4?arch=arm64&distro=debian-12",
 		CPEs: mustCPEs(
-			"cpe:2.3:*:render-template:render-template:1.0.7:*:*:*:*:*:*:*",
+			"cpe:2.3:a:render-template:render-template:1.0.7:*:*:*:*:*:*:*",
 		),
 		Metadata: &pkg.BitnamiSBOMEntry{
 			Name:         "render-template",
@@ -435,7 +435,7 @@ func TestBitnamiCataloger(t *testing.T) {
 		FoundBy: catalogerName,
 		PURL:    "pkg:bitnami/redis@7.4.0-0?arch=arm64&distro=debian-12",
 		CPEs: mustCPEs(
-			"cpe:2.3:*:redis:redis:7.4.0:*:*:*:*:*:*:*",
+			"cpe:2.3:a:redis:redis:7.4.0:*:*:*:*:*:*:*",
 		),
 		Metadata: &pkg.BitnamiSBOMEntry{
 			Name:         "redis",
