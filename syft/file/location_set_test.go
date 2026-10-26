@@ -349,6 +349,15 @@ func TestLocationSet_Add_DoesNotMutateCallerAnnotations(t *testing.T) {
 	assert.Equal(t, map[string]string{"evidence": "primary", "visible": "true"}, s.ToSlice()[0].Annotations)
 }
 
+func TestLocationSet_Add_DoesNotAliasCallerAnnotationsOnInsert(t *testing.T) {
+	loc := NewLocation("/a").WithAnnotation("evidence", "primary")
+
+	s := NewLocationSet(loc)
+	s.ToSlice()[0].Annotations["visible"] = "true"
+
+	assert.Equal(t, map[string]string{"evidence": "primary"}, loc.Annotations)
+}
+
 func TestLocationSet_Add_MergesIntoNilAnnotations(t *testing.T) {
 	s := NewLocationSet(Location{LocationData: LocationData{Coordinates: Coordinates{RealPath: "/a"}, AccessPath: "/a"}})
 
@@ -358,7 +367,8 @@ func TestLocationSet_Add_MergesIntoNilAnnotations(t *testing.T) {
 }
 
 func TestLocationSet_Add_SharedLocationAcrossGoroutines(t *testing.T) {
-	// mirrors catalogers that hand one annotated location to every package parsed in parallel
+	// mirrors catalogers that hand one annotated location to every package parsed in parallel;
+	// no assertions, it fails only under -race (on in CI, or RACE=true locally)
 	shared := NewLocation("/var/lib/dpkg/status").WithAnnotation("evidence", "primary")
 
 	var wg sync.WaitGroup
