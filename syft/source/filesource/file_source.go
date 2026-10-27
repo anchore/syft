@@ -133,7 +133,7 @@ func (s fileSource) Describe() source.Description {
 	}
 }
 
-func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
+func (s *fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
