@@ -2,10 +2,12 @@ package helpers
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -32,9 +34,60 @@ func ToSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 		return nil, err
 	}
 
+	if bom.Components != nil {
+		collectFiles(*bom.Components, nil, s)
+	}
+
 	collectRelationships(bom, s, idMap)
 
 	return s, nil
+}
+
+// collectFiles decodes file components, named relative to the scan root; a file component nested in
+// another is an entry of that archive.
+func collectFiles(components []cyclonedx.Component, container *file.Coordinates, s *sbom.SBOM) {
+	for i := range components {
+		component := &components[i]
+		var coordinates *file.Coordinates
+		if component.Type == cyclonedx.ComponentTypeFile {
+			c := file.NewCoordinates("/"+strings.TrimPrefix(component.Name, "/"), "")
+			if container != nil {
+				c = file.Coordinates{
+					RealPath:     container.RealPath,
+					FileSystemID: container.FileSystemID,
+					FullPath:     container.FullNestedPath() + file.ArchivePathSeparator + strings.TrimPrefix(component.Name, "/"),
+				}
+			}
+			coordinates = &c
+			if s.Artifacts.FileMetadata == nil {
+				s.Artifacts.FileMetadata = map[file.Coordinates]file.Metadata{}
+			}
+			s.Artifacts.FileMetadata[c] = file.Metadata{}
+			if digests := toDigests(component.Hashes); len(digests) > 0 {
+				if s.Artifacts.FileDigests == nil {
+					s.Artifacts.FileDigests = map[file.Coordinates][]file.Digest{}
+				}
+				s.Artifacts.FileDigests[c] = digests
+			}
+		}
+		if component.Components != nil {
+			collectFiles(*component.Components, coordinates, s)
+		}
+	}
+}
+
+func toDigests(hashes *[]cyclonedx.Hash) []file.Digest {
+	if hashes == nil {
+		return nil
+	}
+	var digests []file.Digest
+	for _, h := range *hashes {
+		digests = append(digests, file.Digest{
+			Algorithm: strings.ReplaceAll(strings.ToLower(string(h.Algorithm)), "-", ""),
+			Value:     h.Value,
+		})
+	}
+	return digests
 }
 
 func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]any) error {

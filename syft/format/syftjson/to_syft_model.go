@@ -80,7 +80,7 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 	}
 
 	for _, f := range files {
-		coord := internal.NormalizeCoordinates(f.Location)
+		coord := f.Location
 		if f.Metadata != nil {
 			fm, err := safeFileModeConvert(f.Metadata.Mode)
 			if err != nil {
@@ -163,7 +163,7 @@ func toSyftLicenses(m []model.License) (p []pkg.License) {
 			SPDXExpression: l.SPDXExpression,
 			Type:           l.Type,
 			URLs:           l.URLs,
-			Locations:      file.NewLocationSet(internal.NormalizeLocations(l.Locations)...),
+			Locations:      file.NewLocationSet(l.Locations...),
 			Contents:       l.Contents,
 		})
 	}
@@ -239,7 +239,7 @@ func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relations
 	idMap[doc.Source.ID] = toSyftSource(doc.Source)
 
 	for _, f := range doc.Files {
-		idMap[f.ID] = internal.NormalizeCoordinates(f.Location)
+		idMap[f.ID] = f.Location
 	}
 
 	var out []artifact.Relationship
@@ -346,7 +346,7 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		Name:      p.Name,
 		Version:   p.Version,
 		FoundBy:   p.FoundBy,
-		Locations: file.NewLocationSet(internal.NormalizeLocations(p.Locations)...),
+		Locations: file.NewLocationSet(p.Locations...),
 		Licenses:  pkg.NewLicenseSet(toSyftLicenses(p.Licenses)...),
 		Language:  p.Language,
 		Type:      p.Type,

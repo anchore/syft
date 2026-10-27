@@ -38,11 +38,8 @@ func FullPathIn(containerPath, entryPath string) string {
 	if containerPath == "" {
 		return entryPath
 	}
-	if !strings.HasPrefix(entryPath, "/") {
-		entryPath = "/" + entryPath
-	}
 	// cleaning an already clean path allocates nothing
-	return containerPath + file.ArchivePathSeparator + path.Clean(entryPath)[1:]
+	return containerPath + file.ArchivePathSeparator + strings.TrimPrefix(path.Clean(entryPath), "/")
 }
 
 // OwnerContainers are the containers a package owns files within: the container of each of its
@@ -98,6 +95,20 @@ func ContainerPath(c file.Coordinates) string {
 		return c.RealPath + file.ArchivePathSeparator + entries[:i]
 	}
 	return c.RealPath
+}
+
+// ContainingArchive returns the coordinates of the archive directly holding the file at c, reporting false
+// for a file on the scanned filesystem.
+func ContainingArchive(c file.Coordinates) (file.Coordinates, bool) {
+	containerPath := ContainerPath(c)
+	if containerPath == "" {
+		return file.Coordinates{}, false
+	}
+	container := file.Coordinates{RealPath: c.RealPath, FileSystemID: c.FileSystemID}
+	if containerPath != c.RealPath {
+		container.FullPath = containerPath
+	}
+	return container, true
 }
 
 // archiveEntries is the "!/"-delimited chain of entry paths after RealPath, reporting false for a file

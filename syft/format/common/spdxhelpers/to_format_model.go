@@ -6,7 +6,6 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"path"
-	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -53,7 +52,8 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	rels := relationship.NewIndex(s.Relationships...)
 	packages, otherLicenses := toPackages(rels, s.Artifacts.Packages, s)
 
-	allRelationships := toRelationships(rels.All())
+	files, archiveRelationships := toFiles(s)
+	allRelationships := append(toRelationships(rels.All()), archiveRelationships...)
 
 	// for valid SPDX we need a document describes relationship
 	describesID := spdx.ElementID("DOCUMENT")
@@ -62,8 +62,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	if rootPackage != nil {
 		describesID = rootPackage.PackageSPDXIdentifier
 
-		// add all relationships from the document root to all other packages
-		allRelationships = append(allRelationships, toRootRelationships(rootPackage, packages)...)
+		allRelationships = append(allRelationships, toRootRelationships(rootPackage, packages, files, allRelationships)...)
 
 		// append the root package
 		packages = append(packages, rootPackage)
@@ -155,21 +154,40 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 			CreatorComment: "",
 		},
 		Packages:      packages,
-		Files:         toFiles(s),
+		Files:         files,
 		Relationships: allRelationships,
 		OtherLicenses: convertOtherLicense(otherLicenses),
 	}
 }
 
-func toRootRelationships(rootPackage *spdx.Package, packages []*spdx.Package) (out []*spdx.Relationship) {
+// toRootRelationships relates the root package to each package and file nothing else CONTAINS: what is
+// within an archive is reached only through the archive's file, and an owned file through its package.
+func toRootRelationships(rootPackage *spdx.Package, packages []*spdx.Package, files []*spdx.File, relationships []*spdx.Relationship) (out []*spdx.Relationship) {
+	contained := map[spdx.ElementID]bool{}
+	for _, r := range relationships {
+		if r.Relationship == string(helpers.ContainsRelationship) {
+			contained[r.RefB.ElementRefID] = true
+		}
+	}
+
+	var ids []spdx.ElementID
 	for _, p := range packages {
+		ids = append(ids, p.PackageSPDXIdentifier)
+	}
+	for _, f := range files {
+		ids = append(ids, f.FileSPDXIdentifier)
+	}
+	for _, id := range ids {
+		if contained[id] {
+			continue
+		}
 		out = append(out, &spdx.Relationship{
 			RefA: spdx.DocElementID{
 				ElementRefID: rootPackage.PackageSPDXIdentifier,
 			},
 			Relationship: string(helpers.ContainsRelationship),
 			RefB: spdx.DocElementID{
-				ElementRefID: p.PackageSPDXIdentifier,
+				ElementRefID: id,
 			},
 		})
 	}
@@ -666,7 +684,7 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 		// FIXME: we are only currently including Package -> * relationships, plus an archive containing a
 		// package found inside it, which is the only structure nested archive cataloging records for
 		// non-java packages. Every file-side From is in the document: toFiles covers every coordinate a
-		// relationship names.
+		// relationship names, and itself relates each archive to the files within it.
 		if _, ok := r.From.(pkg.Package); !ok && !isFileContainsPackage(r) {
 			log.Debugf("skipping non-package relationship: %+v", r)
 			continue
@@ -706,82 +724,34 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, helpers.Relationshi
 	return false, "", ""
 }
 
-// file comments carry what an SPDX file has no field for, one "key: value" per line
-const (
-	layerIDCommentPrefix     = "layerID: "
-	archivePathCommentPrefix = "archivePath: "
-)
+const layerIDCommentPrefix = "layerID: "
 
-// fileComment carries the layer ID and, for a file inside an archive, its archive path. Such a file is
-// named by its full path ("/app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF"), so a consumer reading
-// only the name does not mistake it for a file at that path in the scan root; the entry chain after the
-// real path is also kept in the comment so decoding need not guess where it starts.
-func fileComment(c file.Coordinates) string {
-	var entries string
-	if rest, ok := strings.CutPrefix(c.FullPath, c.RealPath); ok {
-		entries, _ = strings.CutPrefix(rest, file.ArchivePathSeparator)
-	}
-	switch {
-	case c.FileSystemID != "" && entries != "":
-		return layerIDCommentPrefix + c.FileSystemID + "\n" + archivePathCommentPrefix + entries
-	case c.FileSystemID != "":
-		return layerIDCommentPrefix + c.FileSystemID
-	case entries != "":
-		return archivePathCommentPrefix + entries
-	}
-	return ""
-}
-
-func toFiles(s sbom.SBOM) (results []*spdx.File) {
-	artifacts := s.Artifacts
-
+// toFiles describes every file, including each archive holding one. A file within an archive is named by
+// its path in that archive, and the archive CONTAINS it.
+func toFiles(s sbom.SBOM) (results []*spdx.File, archiveRelationships []*spdx.Relationship) {
 	_, coordinateSorter := formatInternal.GetLocationSorters(s)
+	top, entries := formatInternal.ArchiveEntries(s.AllCoordinates(), coordinateSorter)
 
-	coordinates := s.AllCoordinates()
-	slices.SortFunc(coordinates, coordinateSorter)
-
-	for _, c := range coordinates {
-		var metadata *file.Metadata
-		if metadataForLocation, exists := artifacts.FileMetadata[c]; exists {
-			metadata = &metadataForLocation
+	var addEntries func(archive file.Coordinates)
+	addEntries = func(archive file.Coordinates) {
+		for _, c := range entries[archive] {
+			archiveRelationships = append(archiveRelationships, &spdx.Relationship{
+				RefA:         spdx.DocElementID{ElementRefID: toSPDXID(archive)},
+				Relationship: string(helpers.ContainsRelationship),
+				RefB:         spdx.DocElementID{ElementRefID: toSPDXID(c)},
+			})
+			results = append(results, toFile(s.Artifacts, c, strings.TrimPrefix(c.LocalPath(), "/")))
+			addEntries(c)
 		}
-
-		var digests []file.Digest
-		if digestsForLocation, exists := artifacts.FileDigests[c]; exists {
-			digests = digestsForLocation
-		}
-
-		// if we don't have any metadata or digests for this location
-		// then the file is most likely a symlink or non-regular file
-		// for now we include a 0 sha1 digest as requested by the spdx spec
-		// TODO: update location code in core SBOM so that we can map complex links
-		// back to their real file digest location.
-		if len(digests) == 0 {
-			digests = append(digests, file.Digest{Algorithm: "sha1", Value: "0000000000000000000000000000000000000000"})
-		}
-
-		// TODO: add file classifications (?) and content as a snippet
-
-		name := c.FullNestedPath()
-		relativePath, err := convertAbsoluteToRelative(name)
+	}
+	for _, c := range top {
+		name, err := convertAbsoluteToRelative(c.RealPath)
 		if err != nil {
-			log.Debugf("unable to convert relative path '%s' to absolute path: %s", name, err)
-			relativePath = name
+			log.Debugf("unable to convert relative path '%s' to absolute path: %s", c.RealPath, err)
+			name = c.RealPath
 		}
-
-		results = append(results, &spdx.File{
-			FileSPDXIdentifier: toSPDXID(c),
-			FileComment:        fileComment(c),
-			// required, no attempt made to determine license information
-			LicenseConcluded:  noAssertion,
-			FileCopyrightText: noAssertion,
-			Checksums:         toFileChecksums(digests),
-			FileName:          relativePath,
-			FileTypes:         toFileTypes(metadata),
-			LicenseInfoInFiles: []string{ // required in SPDX 2.2
-				helpers.NOASSERTION,
-			},
-		})
+		results = append(results, toFile(s.Artifacts, c, name))
+		addEntries(c)
 	}
 
 	// sort by real path then virtual path to ensure the result is stable across multiple runs
@@ -791,7 +761,49 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 		}
 		return results[i].FileName < results[j].FileName
 	})
-	return results
+	return results, archiveRelationships
+}
+
+func toFile(artifacts sbom.Artifacts, c file.Coordinates, name string) *spdx.File {
+	var metadata *file.Metadata
+	if metadataForLocation, exists := artifacts.FileMetadata[c]; exists {
+		metadata = &metadataForLocation
+	}
+
+	var digests []file.Digest
+	if digestsForLocation, exists := artifacts.FileDigests[c]; exists {
+		digests = digestsForLocation
+	}
+
+	// if we don't have any metadata or digests for this location
+	// then the file is most likely a symlink or non-regular file
+	// for now we include a 0 sha1 digest as requested by the spdx spec
+	// TODO: update location code in core SBOM so that we can map complex links
+	// back to their real file digest location.
+	if len(digests) == 0 {
+		digests = append(digests, file.Digest{Algorithm: "sha1", Value: "0000000000000000000000000000000000000000"})
+	}
+
+	// TODO: add file classifications (?) and content as a snippet
+
+	var comment string
+	if c.FileSystemID != "" {
+		comment = layerIDCommentPrefix + c.FileSystemID
+	}
+
+	return &spdx.File{
+		FileSPDXIdentifier: toSPDXID(c),
+		FileComment:        comment,
+		// required, no attempt made to determine license information
+		LicenseConcluded:  noAssertion,
+		FileCopyrightText: noAssertion,
+		Checksums:         toFileChecksums(digests),
+		FileName:          name,
+		FileTypes:         toFileTypes(metadata),
+		LicenseInfoInFiles: []string{ // required in SPDX 2.2
+			helpers.NOASSERTION,
+		},
+	}
 }
 
 func toFileChecksums(digests []file.Digest) (checksums []spdx.Checksum) {
@@ -922,6 +934,10 @@ func trimPatchVersion(semver string) string {
 // spdx requires that the file name field is a relative filename
 // with the root of the package archive or directory
 func convertAbsoluteToRelative(absPath string) (string, error) {
+	// the root itself; an empty file name is not valid SPDX (tag-value omits it and cannot read it back)
+	if absPath == "" || absPath == "/" {
+		return ".", nil
+	}
 	// Ensure the absolute path is absolute (although it should already be)
 	if !path.IsAbs(absPath) {
 		// already relative

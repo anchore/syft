@@ -254,6 +254,11 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description, exclusions []s
 		taskGroups = append(taskGroups, osFeatureDetectionTasks)
 	}
 
+	// archives are related to the files within them only once every task has decided which files are described
+	if archiveTask != nil {
+		taskGroups = append(taskGroups, []task.Task{task.NewArchiveContainsTask()})
+	}
+
 	// identifying the environment (i.e. the linux release) must be done first as this is required for package cataloging
 	taskGroups = append(
 		[][]task.Task{

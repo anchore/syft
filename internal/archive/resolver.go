@@ -273,8 +273,8 @@ func (r *Resolver) fullPath(rooted string) string {
 }
 
 // rootedPath is the tree path a query names, which is either form a path takes: a full path is trimmed to
-// the entry path within this archive, and anything else (a LocalPath) is taken as archive-relative
-// already. The archive's full path with a trailing "!" (what path.Dir gives for an entry at the root)
+// the entry path within this archive, and anything else (a LocalPath, with or without its leading slash)
+// is taken as archive-relative already, since the tree looks a relative path up from its root. The archive's full path with a trailing "!" (what path.Dir gives for an entry at the root)
 // names the root. A full path into another archive in the scan names nothing here and reports false.
 func (r *Resolver) rootedPath(userPath string) (string, bool) {
 	if rest, ok := strings.CutPrefix(userPath, r.archiveCoordinates.FullNestedPath()); ok {
@@ -288,9 +288,6 @@ func (r *Resolver) rootedPath(userPath string) (string, bool) {
 	}
 	if r.outside(userPath) {
 		return "", false
-	}
-	if !strings.HasPrefix(userPath, "/") {
-		userPath = "/" + userPath
 	}
 	return path.Clean(userPath), true
 }
@@ -420,10 +417,10 @@ func (r *Resolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
 }
 
 // searchByGlob is the index search, except that stereoscope answers "<dir>/*" by looking the directory
-// up by name and the root has none, so "/*" walks the tree instead.
+// up by name and the root has none, so "/*" (or "*") walks the tree instead.
 func (r *Resolver) searchByGlob(pattern string) ([]stereoscopeFile.Resolution, error) {
-	if pattern == "/*" {
-		return r.tree.FilesByGlob(pattern, filetree.FollowBasenameLinks)
+	if strings.TrimPrefix(pattern, "/") == "*" {
+		return r.tree.FilesByGlob("/*", filetree.FollowBasenameLinks)
 	}
 	return r.search.SearchByGlob(pattern, filetree.FollowBasenameLinks)
 }

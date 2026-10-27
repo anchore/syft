@@ -337,6 +337,7 @@ func Test_archiveCataloger_noSelfContainsEdge(t *testing.T) {
 	s := newTestSBOM()
 	s.Artifacts.FileMetadata = map[file.Coordinates]file.Metadata{}
 	_ = tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s))
+	withArchiveContains(t, s)
 
 	require.Contains(t, s.Artifacts.Unknowns, file.NewCoordinates("/x.jar", ""), "the fixture must reproduce the unknown")
 	var contains int
@@ -348,6 +349,37 @@ func Test_archiveCataloger_noSelfContainsEdge(t *testing.T) {
 		assert.NotEqual(t, rel.From.ID(), rel.To.ID(), "self-referential CONTAINS edge: %+v", rel)
 	}
 	assert.Positive(t, contains, "the archive still contains its files")
+}
+
+func Test_NewArchiveContainsTask(t *testing.T) {
+	// a file within an archive is contained only when the SBOM describes it, as a file at the scan root is
+	// listed only then; an executable no package owns is recorded whatever the file selection
+	in := func(fullPath string) file.Coordinates {
+		return file.Coordinates{RealPath: "/outer.tar", FileSystemID: "layer", FullPath: fullPath}
+	}
+	outer := file.NewCoordinates("/outer.tar", "layer")
+	jar := in("/outer.tar!/lib/app.jar")
+	manifest := in("/outer.tar!/lib/app.jar!/META-INF/MANIFEST.MF")
+	unknownExe := in("/outer.tar!/bin/setup.exe")
+
+	s := newTestSBOM()
+	s.Artifacts.FileMetadata = map[file.Coordinates]file.Metadata{manifest: {}, file.NewCoordinates("/loose.txt", "layer"): {}}
+	s.Artifacts.Executables = map[file.Coordinates]file.Executable{in("/outer.tar!/bin/tool"): {}}
+	s.Artifacts.Unknowns = map[file.Coordinates][]string{unknownExe: {"no package identified in executable file"}}
+
+	withArchiveContains(t, s)
+
+	type edge struct{ from, to file.Coordinates }
+	var edges []edge
+	for _, r := range s.Relationships {
+		assert.Equal(t, artifact.ContainsRelationship, r.Type)
+		edges = append(edges, edge{r.From.(file.Coordinates), r.To.(file.Coordinates)})
+	}
+	assert.ElementsMatch(t, []edge{
+		{jar, manifest},
+		{outer, jar}, // the jar is not described itself, but is on the way to what is
+		{outer, unknownExe},
+	}, edges)
 }
 
 func Test_NewArchiveCatalogerTask_dropsItselfFromSubPipeline(t *testing.T) {

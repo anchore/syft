@@ -380,23 +380,72 @@ func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Docum
 }
 
 func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document) {
+	files := map[spdx.ElementID]*spdx.File{}
 	for _, p := range doc.Packages {
 		for _, f := range p.Files {
-			l := toSyftLocation(f)
-			spdxIDMap[string(f.FileSPDXIdentifier)] = l
+			files[f.FileSPDXIdentifier] = f
+		}
+	}
+	for _, f := range doc.Files {
+		files[f.FileSPDXIdentifier] = f
+	}
 
-			s.Artifacts.FileMetadata[l.Coordinates] = toFileMetadata(f)
-			s.Artifacts.FileDigests[l.Coordinates] = toFileDigests(f)
+	nested := newNestedFiles[spdx.ElementID]()
+	for id, f := range files {
+		nested.own[id] = toSyftCoordinates(f)
+	}
+	for _, r := range doc.Relationships {
+		container, entry := r.RefA.ElementRefID, r.RefB.ElementRefID
+		switch helpers.RelationshipType(r.Relationship) {
+		case helpers.ContainsRelationship:
+		case helpers.ContainedByRelationship:
+			container, entry = entry, container
+		default:
+			continue
+		}
+		if files[container] != nil && files[entry] != nil {
+			nested.container[entry] = container
 		}
 	}
 
-	for _, f := range doc.Files {
-		l := toSyftLocation(f)
-		spdxIDMap[string(f.FileSPDXIdentifier)] = l
+	for id, f := range files {
+		l := file.NewLocationFromCoordinates(nested.coordinates(id))
+		spdxIDMap[string(id)] = l
 
 		s.Artifacts.FileMetadata[l.Coordinates] = toFileMetadata(f)
 		s.Artifacts.FileDigests[l.Coordinates] = toFileDigests(f)
 	}
+}
+
+// nestedFiles resolves the coordinates of files within archives, where an archive file CONTAINS a file
+// named by its path within the archive.
+type nestedFiles[K comparable] struct {
+	own       map[K]file.Coordinates
+	container map[K]K
+	resolved  map[K]file.Coordinates
+}
+
+func newNestedFiles[K comparable]() nestedFiles[K] {
+	return nestedFiles[K]{own: map[K]file.Coordinates{}, container: map[K]K{}, resolved: map[K]file.Coordinates{}}
+}
+
+func (n nestedFiles[K]) coordinates(id K) file.Coordinates {
+	if c, ok := n.resolved[id]; ok {
+		return c
+	}
+	c := n.own[id]
+	if container, ok := n.container[id]; ok {
+		// a containment cycle ends where it started
+		delete(n.container, id)
+		archive := n.coordinates(container)
+		c = file.Coordinates{
+			RealPath:     archive.RealPath,
+			FileSystemID: archive.FileSystemID,
+			FullPath:     archive.FullNestedPath() + file.ArchivePathSeparator + strings.TrimPrefix(c.RealPath, "/"),
+		}
+	}
+	n.resolved[id] = c
+	return c
 }
 
 func toFileDigests(f *spdx.File) (digests []file.Digest) {
@@ -452,6 +501,10 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 		}
 		a := spdxIDMap[string(r.RefA.ElementRefID)]
 		b := spdxIDMap[string(r.RefB.ElementRefID)]
+		if rel, ok := fileContainsRelationship(helpers.RelationshipType(r.Relationship), a, b); ok {
+			out = append(out, rel)
+			continue
+		}
 		from, fromOk := a.(pkg.Package)
 		toPackage, toPackageOk := b.(pkg.Package)
 		toLocation, toLocationOk := b.(file.Location)
@@ -505,6 +558,31 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 	return out
 }
 
+// fileContainsRelationship decodes an archive file containing a file or package within it.
+func fileContainsRelationship(typ helpers.RelationshipType, a, b any) (artifact.Relationship, bool) {
+	switch typ {
+	case helpers.ContainsRelationship:
+	case helpers.ContainedByRelationship:
+		a, b = b, a
+	default:
+		return artifact.Relationship{}, false
+	}
+	container, ok := a.(file.Location)
+	if !ok {
+		return artifact.Relationship{}, false
+	}
+	var entry artifact.Identifiable
+	switch to := b.(type) {
+	case file.Location:
+		entry = to.Coordinates
+	case pkg.Package:
+		entry = to
+	default:
+		return artifact.Relationship{}, false
+	}
+	return artifact.Relationship{From: container.Coordinates, To: entry, Type: artifact.ContainsRelationship}, true
+}
+
 // collectPackageFileRelationships add relationships for direct files
 func collectPackageFileRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out []artifact.Relationship) {
 	for _, p := range doc.Packages {
@@ -533,27 +611,15 @@ func toSyftCoordinates(f *spdx.File) file.Coordinates {
 	return coordinatesFromFile(f.FileName, f.FileComment, string(f.FileSPDXIdentifier))
 }
 
-// coordinatesFromFile decodes what fileComment encodes.
 func coordinatesFromFile(name, comment, id string) file.Coordinates {
 	c := file.NewCoordinates(name, "")
-	for _, line := range strings.Split(comment, "\n") {
-		if v, ok := strings.CutPrefix(line, layerIDCommentPrefix); ok {
-			c.FileSystemID = v
-		}
-		if v, ok := strings.CutPrefix(line, archivePathCommentPrefix); ok {
-			// the name is the full path; the real path is what precedes the entry chain
-			c.RealPath = strings.TrimSuffix(name, file.ArchivePathSeparator+v)
-			c.FullPath = name
-		}
+	if v, ok := strings.CutPrefix(comment, layerIDCommentPrefix); ok {
+		c.FileSystemID = v
 	}
 	if v, ok := strings.CutPrefix(id, layerIDCommentPrefix); ok {
 		c.FileSystemID = v
 	}
-	return internal.NormalizeCoordinates(c)
-}
-
-func toSyftLocation(f *spdx.File) file.Location {
-	return file.NewLocationFromCoordinates(toSyftCoordinates(f))
+	return c
 }
 
 func requireAndTrimPrefix(val any, prefix string) string {

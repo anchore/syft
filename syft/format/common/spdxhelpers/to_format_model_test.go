@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	stfile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/artifact"
@@ -588,12 +589,28 @@ func Test_toFiles(t *testing.T) {
 				FileName: "some/path",
 			},
 		},
+		{
+			name: "the scanned root has a name",
+			in: sbom.SBOM{Artifacts: sbom.Artifacts{FileMetadata: map[file.Coordinates]file.Metadata{
+				{RealPath: ""}: {Type: stfile.TypeDirectory},
+			}}},
+			want: spdx.File{FileName: "."},
+		},
+		{
+			name: "the absolute root has a name",
+			in: sbom.SBOM{Artifacts: sbom.Artifacts{FileMetadata: map[file.Coordinates]file.Metadata{
+				{RealPath: "/"}: {Type: stfile.TypeDirectory},
+			}}},
+			want: spdx.File{FileName: "."},
+		},
 	}
 
 	for _, test := range tests {
-		files := toFiles(test.in)
-		got := files[0]
-		assert.Equal(t, test.want.FileName, got.FileName)
+		t.Run(test.name, func(t *testing.T) {
+			files, _ := toFiles(test.in)
+			require.Len(t, files, 1)
+			assert.Equal(t, test.want.FileName, files[0].FileName)
+		})
 	}
 }
 
@@ -1156,38 +1173,99 @@ func Test_otherLicenses(t *testing.T) {
 	}
 }
 
-func Test_toFiles_nestedFilesAreNamedByTheirChainAndRoundTrip(t *testing.T) {
-	// two archives' META-INF/MANIFEST.MF must not come out as two files with the same name and nothing
-	// saying which archive each is in
-	root := file.NewCoordinates("/etc/os-release", "sha256:layer")
+func Test_nestedArchiveFiles(t *testing.T) {
+	top := file.NewCoordinates("/etc/os-release", "sha256:layer")
 	inA := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF", FileSystemID: "sha256:layer"}
-	inB := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/b.jar!/odd:na%me.txt"}
-	s := sbom.SBOM{Artifacts: sbom.Artifacts{FileMetadata: map[file.Coordinates]file.Metadata{root: {}, inA: {}, inB: {}}}}
-
-	byName := map[string]*spdx.File{}
-	for _, f := range toFiles(s) {
-		byName[f.FileName] = f
+	inB := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/b.jar!/odd:na%me.txt", FileSystemID: "sha256:layer"}
+	owned := file.NewCoordinates("/usr/bin/tool", "sha256:layer")
+	a := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/a.jar", FileSystemID: "sha256:layer"}
+	topPkg := pkg.Package{Name: "top"}
+	topPkg.SetID()
+	nestedPkg := pkg.Package{Name: "nested"}
+	nestedPkg.SetID()
+	s := sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			Packages:     pkg.NewCollection(topPkg, nestedPkg),
+			FileMetadata: map[file.Coordinates]file.Metadata{top: {}, inA: {}, inB: {}, owned: {}},
+		},
+		Relationships: []artifact.Relationship{
+			{From: topPkg, To: owned, Type: artifact.ContainsRelationship},
+			{From: a, To: nestedPkg, Type: artifact.ContainsRelationship},
+		},
 	}
-	require.Len(t, byName, 3)
 
-	assert.Equal(t, "layerID: sha256:layer", byName["etc/os-release"].FileComment, "files outside archives are unchanged")
-	assert.Equal(t, file.NewCoordinates("etc/os-release", "sha256:layer"), toSyftCoordinates(byName["etc/os-release"]))
+	doc := ToFormatModel(s)
 
-	// the name is made relative like any other file's, so the decoded top path is too
-	a := byName["app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF"]
-	require.NotNil(t, a, "names: %v", byName)
-	assert.Equal(t, "layerID: sha256:layer\narchivePath: WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF", a.FileComment)
-	wantA := inA
-	wantA.RealPath = "app.war"
-	wantA.FullPath = "app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF"
-	assert.Equal(t, wantA, toSyftCoordinates(a))
+	// each archive holding a described file is described too, named by its path in its own container
+	war := file.NewCoordinates("/app.war", "sha256:layer")
+	b := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/b.jar", FileSystemID: "sha256:layer"}
+	names := map[spdx.ElementID]string{}
+	for _, f := range doc.Files {
+		names[f.FileSPDXIdentifier] = f.FileName
+		assert.Equal(t, "layerID: sha256:layer", f.FileComment)
+	}
+	assert.Equal(t, map[spdx.ElementID]string{
+		toSPDXID(top):   "etc/os-release",
+		toSPDXID(owned): "usr/bin/tool",
+		toSPDXID(war):   "app.war",
+		toSPDXID(a):     "WEB-INF/lib/a.jar",
+		toSPDXID(b):     "WEB-INF/lib/b.jar",
+		toSPDXID(inA):   "META-INF/MANIFEST.MF",
+		toSPDXID(inB):   "odd:na%me.txt",
+	}, names)
 
-	b := byName["app.war!/WEB-INF/lib/b.jar!/odd:na%me.txt"]
-	require.NotNil(t, b, "names: %v", byName)
-	wantB := inB
-	wantB.RealPath = "app.war"
-	wantB.FullPath = "app.war!/WEB-INF/lib/b.jar!/odd:na%me.txt"
-	assert.Equal(t, wantB, toSyftCoordinates(b))
+	var root spdx.ElementID
+	var contains [][2]spdx.ElementID
+	for _, r := range doc.Relationships {
+		switch r.Relationship {
+		case string(helpers.DescribesRelationship):
+			root = r.RefB.ElementRefID
+		case string(helpers.ContainsRelationship):
+			contains = append(contains, [2]spdx.ElementID{r.RefA.ElementRefID, r.RefB.ElementRefID})
+		}
+	}
+	// the root contains only what nothing else does: not what is within an archive, nor an owned file
+	assert.ElementsMatch(t, [][2]spdx.ElementID{
+		{root, toSPDXID(topPkg)},
+		{root, toSPDXID(top)},
+		{root, toSPDXID(war)},
+		{toSPDXID(topPkg), toSPDXID(owned)},
+		{toSPDXID(a), toSPDXID(nestedPkg)},
+		{toSPDXID(war), toSPDXID(a)},
+		{toSPDXID(war), toSPDXID(b)},
+		{toSPDXID(a), toSPDXID(inA)},
+		{toSPDXID(b), toSPDXID(inB)},
+	}, contains)
+
+	decoded, err := ToSyftModel(doc)
+	require.NoError(t, err)
+
+	// decoded paths are relative, as SPDX names are
+	relative := func(c file.Coordinates) file.Coordinates {
+		c.RealPath = strings.TrimPrefix(c.RealPath, "/")
+		c.FullPath = strings.TrimPrefix(c.FullPath, "/")
+		return c
+	}
+	var got []file.Coordinates
+	for c := range decoded.Artifacts.FileMetadata {
+		got = append(got, c)
+	}
+	assert.ElementsMatch(t, []file.Coordinates{relative(top), relative(owned), relative(war), relative(a), relative(b), relative(inA), relative(inB)}, got)
+
+	var gotContains []artifact.Relationship
+	for _, r := range decoded.Relationships {
+		_, fromFile := r.From.(file.Coordinates)
+		_, toFile := r.To.(file.Coordinates)
+		if fromFile && toFile {
+			gotContains = append(gotContains, r)
+		}
+	}
+	assert.ElementsMatch(t, []artifact.Relationship{
+		{From: relative(war), To: relative(a), Type: artifact.ContainsRelationship},
+		{From: relative(war), To: relative(b), Type: artifact.ContainsRelationship},
+		{From: relative(a), To: relative(inA), Type: artifact.ContainsRelationship},
+		{From: relative(b), To: relative(inB), Type: artifact.ContainsRelationship},
+	}, gotContains)
 }
 
 func Test_toRootPackage_name(t *testing.T) {

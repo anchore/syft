@@ -184,6 +184,13 @@ func TestArchiveCataloger(t *testing.T) {
 		}, containers, "the archive file, named in its own parent, contains the package")
 	})
 
+	t.Run("each file within an archive is contained by that archive", func(t *testing.T) {
+		containers := fileContainers(s)
+		assert.Equal(t, "app.zip", containers["app.zip!/nested/keep.txt"])
+		assert.Equal(t, "outer.zip!/deeper/inner.zip", containers["outer.zip!/deeper/inner.zip!/nested/marker.txt"])
+		assert.Equal(t, "outer.zip", containers["outer.zip!/deeper/inner.zip"])
+	})
+
 	t.Run("exclusions are the scan's own", func(t *testing.T) {
 		// there is no archive-specific exclusion setting: a scan pattern's shape decides whether it
 		// reaches inside an archive, and an excluded entry is absent from the archive's filesystem
@@ -389,6 +396,8 @@ func TestArchiveCataloger_defaultFileSelectionCoversNestedJars(t *testing.T) {
 	dir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "outer.zip"), testutils.Zip(t, map[string][]byte{
 		"lib/inner.jar": testutils.Jar(t, "inner", "1.0", nil),
+		"readme.txt":    []byte("hello"),
+		"empty.zip":     testutils.Zip(t, map[string]string{"a.txt": "hello"}),
 	}), 0o644))
 
 	cfg := DefaultCreateSBOMConfig().
@@ -400,6 +409,16 @@ func TestArchiveCataloger_defaultFileSelectionCoversNestedJars(t *testing.T) {
 	jar := file.Coordinates{RealPath: "outer.zip", FullPath: "outer.zip!/lib/inner.jar"}
 	assert.Contains(t, s.Artifacts.FileMetadata, jar)
 	assert.Contains(t, s.Artifacts.FileDigests, jar)
+	assert.Equal(t, "outer.zip", fileContainers(s)["outer.zip!/lib/inner.jar"])
+
+	// as at the root, a file no package owns is not described, nor is an archive in which nothing was found
+	var described []string
+	for _, c := range s.AllCoordinates() {
+		described = append(described, c.FullNestedPath())
+	}
+	assert.NotContains(t, described, "outer.zip!/readme.txt")
+	assert.NotContains(t, described, "outer.zip!/empty.zip")
+	assert.NotContains(t, described, "outer.zip!/empty.zip!/a.txt")
 }
 
 func TestArchiveCataloger_archiveUnknowns(t *testing.T) {
@@ -627,6 +646,19 @@ func (p *recordingBus) Publish(e partybus.Event) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.events = append(p.events, e)
+}
+
+// fileContainers maps the full path of each file an archive CONTAINS to the archive's full path.
+func fileContainers(s *sbom.SBOM) map[string]string {
+	out := map[string]string{}
+	for _, r := range s.Relationships {
+		from, fromFile := r.From.(file.Coordinates)
+		to, toFile := r.To.(file.Coordinates)
+		if r.Type == artifact.ContainsRelationship && fromFile && toFile {
+			out[to.FullNestedPath()] = from.FullNestedPath()
+		}
+	}
+	return out
 }
 
 // scanDirWithExclusions scans with the given exclusion patterns configured on the source, where

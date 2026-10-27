@@ -283,19 +283,41 @@ func v3collectSyftPackages(s *sbom.SBOM, spdxMap ptrMap[any], relationships ptrM
 }
 
 func v3collectSyftFiles(s *sbom.SBOM, spdxMap ptrMap[any], doc *spdx.Document) {
-	found := ptrMap[struct{}]{}
+	nested := newNestedFiles[reflect.Value]()
+	var files []spdx.AnyFile
 	for _, elementList := range []spdx.ElementList{doc.Elements, doc.RootElements} {
 		for _, f := range elementList.Files() {
-			if found.Has(f) {
+			if _, found := nested.own[ptrTo(f)]; found {
 				continue
 			}
-			found.Set(f, struct{}{})
-			l := v3toSyftLocation(f)
-			spdxMap.Set(f, l)
-
-			s.Artifacts.FileMetadata[l.Coordinates] = v3toFileMetadata(f)
-			s.Artifacts.FileDigests[l.Coordinates] = v3toFileDigests(f)
+			nested.own[ptrTo(f)] = v3toSyftCoordinates(f)
+			files = append(files, f)
 		}
+	}
+	for _, r := range doc.Elements.Relationships() {
+		container, ok := r.GetFrom().(spdx.AnyFile)
+		if !ok || r.GetType() != spdx.RelationshipType_Contains {
+			continue
+		}
+		for _, to := range r.GetTo() {
+			entry, ok := to.(spdx.AnyFile)
+			if !ok {
+				continue
+			}
+			_, knownContainer := nested.own[ptrTo(container)]
+			_, knownEntry := nested.own[ptrTo(entry)]
+			if knownContainer && knownEntry {
+				nested.container[ptrTo(entry)] = ptrTo(container)
+			}
+		}
+	}
+
+	for _, f := range files {
+		l := file.NewLocationFromCoordinates(nested.coordinates(ptrTo(f)))
+		spdxMap.Set(f, l)
+
+		s.Artifacts.FileMetadata[l.Coordinates] = v3toFileMetadata(f)
+		s.Artifacts.FileDigests[l.Coordinates] = v3toFileDigests(f)
 	}
 }
 
@@ -341,6 +363,12 @@ func v3collectDocRelationships(spdxMap ptrMap[any], doc *spdx.Document) (out []a
 
 		for _, to := range r.GetTo() {
 			b := spdxMap.Get(to)
+			if r.GetType() == spdx.RelationshipType_Contains {
+				if rel, ok := fileContainsRelationship(helpers.ContainsRelationship, a, b); ok {
+					out = append(out, rel)
+					continue
+				}
+			}
 			from, fromOk := a.(pkg.Package)
 			toPackage, toPackageOk := b.(pkg.Package)
 			toLocation, toLocationOk := b.(file.Location)
@@ -394,11 +422,6 @@ func v3collectDocRelationships(spdxMap ptrMap[any], doc *spdx.Document) (out []a
 
 func v3toSyftCoordinates(f spdx.AnyFile) file.Coordinates {
 	return coordinatesFromFile(f.GetName(), f.GetComment(), f.GetID())
-}
-
-func v3toSyftLocation(f spdx.AnyFile) file.Location {
-	l := file.NewVirtualLocationFromCoordinates(v3toSyftCoordinates(f), f.GetName())
-	return l
 }
 
 func v3findQualifierValue(purl packageurl.PackageURL, qualifier string) string {

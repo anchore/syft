@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	stfile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/testutil"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -225,5 +227,32 @@ func TestEncodeDecodeSourceWithoutName(t *testing.T) {
 				assert.Equal(t, []string{"left-pad"}, names)
 			})
 		}
+	}
+}
+
+func TestEncodeDecodeRootDirectoryFile(t *testing.T) {
+	// a directory scan with all file metadata describes the scanned root, whose relative path is empty
+	root := file.NewCoordinates("", "")
+	etc := file.NewCoordinates("/etc", "")
+	for _, enc := range defaultFormatEncoders() {
+		t.Run(enc.Version(), func(t *testing.T) {
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, sbom.SBOM{
+				Source: source.Description{Metadata: source.DirectoryMetadata{Path: "src"}},
+				Artifacts: sbom.Artifacts{FileMetadata: map[file.Coordinates]file.Metadata{
+					root: {Type: stfile.TypeDirectory},
+					etc:  {Type: stfile.TypeDirectory},
+				}},
+			}))
+
+			s, _, _, err := NewFormatDecoder().Decode(bytes.NewReader(buf.Bytes()))
+			require.NoError(t, err, "encoded document:\n%s", buf.String())
+
+			var names []string
+			for c := range s.Artifacts.FileMetadata {
+				names = append(names, c.RealPath)
+			}
+			assert.ElementsMatch(t, []string{".", "etc"}, names)
+		})
 	}
 }

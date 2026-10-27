@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"path"
 	"slices"
 	"strings"
 
@@ -106,9 +107,12 @@ func coordinateReferenceLookup(resolver file.Resolver, s *sbom.SBOM) func(coords
 				}
 			}
 			for _, ownedFilePath := range f.OwnedFiles() {
-				for _, container := range archives {
-					// an archive's contents are not in this resolver to follow links in
-					allPackageCoords.Add(archive.OwnedCoordinates(container, ownedFilePath))
+				// an archive's contents are not in this resolver to follow links in, and only an absolute owned
+				// path names a file in one (see packageFileOwnershipRelationships)
+				if path.IsAbs(ownedFilePath) {
+					for _, container := range archives {
+						allPackageCoords.Add(archive.OwnedCoordinates(container, ownedFilePath))
+					}
 				}
 				if !atRoot {
 					continue

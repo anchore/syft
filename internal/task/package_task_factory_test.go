@@ -1,11 +1,15 @@
 package task
 
 import (
+	"bytes"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/archive"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cpe"
@@ -280,4 +284,29 @@ func TestApplyComplianceRules_DropAndStub(t *testing.T) {
 	// the package should be dropped due to missing name (drop action) and its version should be stubbed
 	assert.False(t, isCompliant)
 	assert.Equal(t, cataloging.UnknownStubValue, p.Version)
+}
+
+func Test_packageFileOwnershipRelationships_exactPathsWithinAnArchive(t *testing.T) {
+	// a wheel's RECORD is relative to site-packages: looked up from the wheel's root it finds the file, but
+	// only an exact path owns one, as at the scan root
+	data := testutils.Zip(t, map[string]string{"pip/__init__.py": "", "bin/tool": ""})
+	whl, err := archive.Extract(context.Background(), bytes.NewReader(data), file.NewCoordinates("/pip.whl", ""),
+		archive.NewLimiter(archive.Limits{MaxMemoryBytes: 1 << 20}), archive.NewExclusions(nil))
+	require.NoError(t, err)
+	t.Cleanup(whl.Cleanup)
+
+	found, err := whl.FilesByPath("pip/__init__.py")
+	require.NoError(t, err)
+	require.Len(t, found, 1, "a relative path still finds the file")
+
+	p := pkg.Package{Name: "pip", Metadata: pkg.PythonPackage{Files: []pkg.PythonFileRecord{{Path: "pip/__init__.py"}, {Path: "/bin/tool"}}}}
+	p.SetID()
+	rels, err := packageFileOwnershipRelationships(p, whl)
+	require.NoError(t, err)
+
+	var owned []string
+	for _, r := range rels {
+		owned = append(owned, r.To.(file.Coordinates).FullNestedPath())
+	}
+	assert.Equal(t, []string{"/pip.whl!/bin/tool"}, owned)
 }

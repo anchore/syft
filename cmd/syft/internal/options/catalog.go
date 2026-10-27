@@ -146,6 +146,7 @@ func (cfg Catalog) ToComplianceConfig() cataloging.ComplianceConfig {
 
 func (cfg Catalog) ToUnknownsConfig() cataloging.UnknownsConfig {
 	return cataloging.UnknownsConfig{
+		RemoveWhenPackagesDefined:         cfg.Unknowns.RemoveWhenPackagesDefined,
 		IncludeExecutablesWithoutPackages: cfg.Unknowns.ExecutablesWithoutPackages,
 		IncludeUnexpandedArchives:         cfg.Unknowns.UnexpandedArchives,
 	}

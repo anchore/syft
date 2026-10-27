@@ -141,7 +141,7 @@ func Test_mixedFamilyNesting_containsEdgesChainAtEveryLevel(t *testing.T) {
 			scanDir := t.TempDir()
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
-			s := runNesting(t, scanDir, 3, defaultLimits(), markerTask())
+			s := withArchiveContains(t, runNesting(t, scanDir, 3, defaultLimits(), markerTask()))
 
 			// each archive's coordinates as seen in its parent; the outermost sits in the scanned
 			// directory, so it carries no filesystem id of its own
@@ -178,7 +178,7 @@ func Test_mixedFamilyNesting_containsEdgesChainAtEveryLevel(t *testing.T) {
 				"expected a CONTAINS edge from %s to the leaf package", nested.paths[len(nested.paths)-1])
 
 			// with file cataloging on, files inside an archive get an edge from it too
-			s = runNesting(t, scanDir, 3, defaultLimits(), markerTask(), fileMetadataTask())
+			s = withArchiveContains(t, runNesting(t, scanDir, 3, defaultLimits(), markerTask(), fileMetadataTask()))
 			var leafEdge bool
 			for _, rel := range s.Relationships {
 				from, _ := rel.From.(file.Coordinates)
@@ -377,6 +377,13 @@ func runNesting(t *testing.T, scanDir string, depth int, bounds archive.Limits, 
 			"reached it, never wait for capacity that nothing in the chain will release")
 		return nil
 	}
+}
+
+// withArchiveContains runs the task that follows every scan with archive cataloging on.
+func withArchiveContains(t *testing.T, s *sbom.SBOM) *sbom.SBOM {
+	t.Helper()
+	require.NoError(t, NewArchiveContainsTask().Execute(context.Background(), nil, sbomsync.NewBuilder(s)))
+	return s
 }
 
 // markerTask emits one package per "marker.txt" found, so the matrix asserts behavior without

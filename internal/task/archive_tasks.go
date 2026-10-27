@@ -32,7 +32,7 @@ const ArchiveCatalogerTaskName = "archive-cataloger"
 
 // NewArchiveCatalogerTask returns a task that extracts every archive it finds, runs the same tasks
 // against the archive's contents as a standalone filesystem, and records
-// CONTAINS relationships from the archive to what was found inside it. It recurses into the archives
+// CONTAINS relationships from the archive to the packages found directly inside it. It recurses into the archives
 // it extracts up to cfg.MaxDepth; the task drops itself from the tasks so that is the only recursion.
 //
 // Each archive is handled as the scan root is: pkgTasks, then the archives nested in it, then fileTasks,
@@ -267,12 +267,14 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 
 	// as at the scan root, nested archives are cataloged before this archive's files, so the packages
 	// describing them (located in this archive) select their files here
-	children := c.discoverArchives(extracted)
-	errs := c.catalogCandidates(ctx, extracted, children, depth+1, foundBuilder)
+	errs := c.catalogCandidates(ctx, extracted, c.discoverArchives(extracted), depth+1, foundBuilder)
 
 	started = time.Now()
 	runArchiveTasks(ctx, c.fileTasks, extracted, location.Coordinates, foundBuilder)
-	addContains(location.Coordinates, archivePath, direct, children, found)
+	// the files within it are related once the scan has decided which it describes (see NewArchiveContainsTask)
+	for _, p := range direct {
+		found.Relationships = append(found.Relationships, artifact.Relationship{From: location.Coordinates, To: p, Type: artifact.ContainsRelationship})
+	}
 	mergeArchiveResults(found, builder)
 	c.progress.AtomicStage.Set(humanize.Comma(c.progress.Current()) + " archives (" + archivePath + ")")
 
@@ -440,64 +442,41 @@ func mergeArchiveResults(found *sbom.SBOM, builder sbomsync.Builder) {
 	}
 }
 
-// addContains adds a CONTAINS relationship from the archive to each package found directly in it, each
-// file directly in it that the SBOM describes, and each nested archive, so the hierarchy is navigable
-// whatever file selection is configured.
-//
-// Files directly in the archive are those whose container is the archive's own full path, which leaves
-// out the archive itself (a java package or an unknown recorded at its coordinates would otherwise
-// become a self-loop) and the files of nested archives, contained by those.
-func addContains(archiveCoordinates file.Coordinates, archivePath string, direct []pkg.Package, children []archiveCandidate, found *sbom.SBOM) {
-	contained := file.NewCoordinateSet()
-	for _, child := range children {
-		contained.Add(child.location.Coordinates)
+// NewArchiveContainsTask relates each archive to every file the SBOM describes directly within it. It must
+// run after every other task, so the files within archives are those the scan root's configuration
+// selects (file selection, unknowns, package evidence) and no others.
+func NewArchiveContainsTask() Task {
+	fn := func(_ context.Context, _ file.Resolver, builder sbomsync.Builder) error {
+		var rels []artifact.Relationship
+		builder.(sbomsync.Accessor).ReadFromSBOM(func(s *sbom.SBOM) {
+			rels = archiveContains(s.AllCoordinates())
+		})
+		builder.AddRelationships(rels...)
+		return nil
 	}
-	addInside := func(coordinates file.Coordinates) {
-		if archive.ContainerPath(coordinates) == archivePath {
-			contained.Add(coordinates)
-		}
-	}
-	eachFileArtifactCoordinates(&found.Artifacts, addInside)
-	for _, r := range found.Relationships {
-		if c, ok := r.From.(file.Coordinates); ok {
-			addInside(c)
-		}
-		if c, ok := r.To.(file.Coordinates); ok {
-			addInside(c)
-		}
-	}
-
-	var rels []artifact.Relationship
-	for _, p := range direct {
-		rels = append(rels, artifact.Relationship{From: archiveCoordinates, To: p, Type: artifact.ContainsRelationship})
-	}
-	for _, coordinates := range contained.ToSlice() {
-		rels = append(rels, artifact.Relationship{From: archiveCoordinates, To: coordinates, Type: artifact.ContainsRelationship})
-	}
-	found.Relationships = append(found.Relationships, rels...)
+	return NewTask("archive-contains", fn)
 }
 
-// eachFileArtifactCoordinates calls fn with the coordinates of every file artifact, once per artifact
-// kind describing it.
-func eachFileArtifactCoordinates(a *sbom.Artifacts, fn func(file.Coordinates)) {
-	for c := range a.FileMetadata {
-		fn(c)
+// archiveContains relates the archive holding each file within one to that file, and each such archive to
+// the archive holding it, so an archive the SBOM does not otherwise describe still links what is within it.
+func archiveContains(coordinates []file.Coordinates) []artifact.Relationship {
+	related := file.NewCoordinateSet(coordinates...)
+	var rels []artifact.Relationship
+	for _, c := range coordinates {
+		for {
+			container, ok := archive.ContainingArchive(c)
+			if !ok {
+				break
+			}
+			rels = append(rels, artifact.Relationship{From: container, To: c, Type: artifact.ContainsRelationship})
+			if related.Contains(container) {
+				break
+			}
+			related.Add(container)
+			c = container
+		}
 	}
-	for c := range a.FileDigests {
-		fn(c)
-	}
-	for c := range a.FileContents {
-		fn(c)
-	}
-	for c := range a.FileLicenses {
-		fn(c)
-	}
-	for c := range a.Executables {
-		fn(c)
-	}
-	for c := range a.Unknowns {
-		fn(c)
-	}
+	return rels
 }
 
 func mergeFileArtifacts(dst, src *sbom.Artifacts) {
