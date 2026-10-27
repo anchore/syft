@@ -149,6 +149,27 @@ func Test_encodeComponentProperties(t *testing.T) {
 				{Name: "syft:metadata:sourceRpm", Value: "dive-0.9.2-1.src.rpm"},
 			},
 		},
+		{
+			// resolved and integrity are the lockfile's provenance: which registry served the
+			// tarball, and the SRI hash npm itself checks it against. Both are carried only
+			// because the fields are tagged, so removing either tag silently drops it here.
+			name: "from npm package-lock",
+			input: pkg.Package{
+				Name:    "lodash",
+				Version: "4.17.21",
+				Type:    pkg.NpmPkg,
+				Metadata: pkg.NpmPackageLockEntry{
+					Resolved:  "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz",
+					Integrity: "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==",
+				},
+			},
+			expected: []cyclonedx.Property{
+				{Name: "syft:package:metadataType", Value: "javascript-npm-package-lock-entry"},
+				{Name: "syft:package:type", Value: "npm"},
+				{Name: "syft:metadata:integrity", Value: "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="},
+				{Name: "syft:metadata:resolved", Value: "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz"},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
