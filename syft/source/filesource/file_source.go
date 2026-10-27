@@ -141,7 +141,7 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 		return s.resolver, nil
 	}
 
-	exclusionFunctions, err := directorysource.GetDirectoryExclusionFunctions(s.analysisPath, s.config.Exclude.Paths)
+	exclusionFunctions, err := directorysource.GetDirectoryExclusionFunctionsFromConfig(s.analysisPath, s.config.Exclude)
 	if err != nil {
 		return nil, err
 	}
