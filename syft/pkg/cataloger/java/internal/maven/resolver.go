@@ -704,11 +704,17 @@ func (r *Resolver) AddPom(ctx context.Context, pom *Project, location file.Locat
 	}
 }
 
-// DirectPomDependencies returns all dependencies directly defined in a project, including all defined in profiles.
+// DirectPomDependencies returns all dependencies directly defined in a project, including those defined
+// in profiles that could be active in some build (a profile with no activation, with a satisfiable <jdk>
+// requirement, or with an environment-dependent activator). Dependencies from profiles that cannot be
+// active in any build are excluded, see profileCanBeActive.
 // This does not resolve any parent or transitive dependencies
 func DirectPomDependencies(pom *Project) []Dependency {
 	dependencies := deref(pom.Dependencies)
 	for _, profile := range deref(pom.Profiles) {
+		if !profileCanBeActive(profile) {
+			continue
+		}
 		dependencies = append(dependencies, deref(profile.Dependencies)...)
 	}
 	return dependencies
