@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/internal/windows"
@@ -81,6 +82,30 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 	c.applyExcludeDirectives(modFile, goModPackages)
 
 	pkgs = c.assembleResults(catalogedModules, goModPackages)
+
+	// The go directive is the module's declared minimum language version. It is
+	// independent of required modules and of any toolchain actually used to compile.
+	if modFile.Go != nil && modFile.Go.Version != "" {
+		version := modFile.Go.Version
+		stdlibPkg := pkg.Package{
+			Name:      "stdlib",
+			Version:   version,
+			PURL:      packageURL("stdlib", version),
+			Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "BSD-3-Clause")),
+			Language:  pkg.Go,
+			Type:      pkg.GoModulePkg,
+			Metadata:  pkg.GolangModuleEntry{},
+		}
+		if stdlibCpe, cpeErr := generateStdlibCpe(version); cpeErr != nil {
+			log.Debugf("unable to generate stdlib CPE for declared go version %q: %v", version, cpeErr)
+		} else {
+			stdlibPkg.CPEs = []cpe.CPE{stdlibCpe}
+		}
+		stdlibPkg.SetID()
+		pkgs = append(pkgs, stdlibPkg)
+		pkg.Sort(pkgs)
+	}
 
 	return pkgs, relationships, err
 }
