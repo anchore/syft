@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -23,13 +24,16 @@ func (s sourceIdentifierAdapter) ID() artifact.ID {
 	return artifact.ID(s.desc.ID)
 }
 
-func NewRelationshipsTask(cfg cataloging.RelationshipsConfig, src source.Description) Task {
+func NewRelationshipsTask(cfg cataloging.RelationshipsConfig, javaCfg java.ArchiveCatalogerConfig, src source.Description) Task {
 	fn := func(_ context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		finalizeRelationships(
 			resolver,
 			builder,
 			cfg,
 			&sourceIdentifierAdapter{desc: src})
+
+		accessor := builder.(sbomsync.Accessor)
+		java.ResolveHierarchicalDependencies(accessor, javaCfg)
 
 		return nil
 	}
