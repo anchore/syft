@@ -84,6 +84,7 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 	}
 
 	if lock.LockfileVersion == 2 || lock.LockfileVersion == 3 {
+		pairs := make([][2]string, 0, len(lock.Packages))
 		for name, pkgMeta := range lock.Packages {
 			if name == "" {
 				if pkgMeta.Name == "" {
@@ -91,19 +92,32 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 				}
 				name = pkgMeta.Name
 			}
-
-			// skip packages that are only present as a dev dependency
 			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
 				continue
 			}
-
-			// handles alias names
 			if pkgMeta.Name != "" {
 				name = pkgMeta.Name
 			}
+			if pkgMeta.License == nil {
+				pairs = append(pairs, [2]string{getNameFromPath(name), pkgMeta.Version})
+			}
+		}
+		prefetchNpmLicenses(ctx, a.licenseResolver, pairs)
 
-			newPkg := newPackageLockV2Package(ctx, a.licenseResolver, resolver, reader.Location, getNameFromPath(name), pkgMeta)
-			pkgs = append(pkgs, newPkg)
+		for name, pkgMeta := range lock.Packages {
+			if name == "" {
+				if pkgMeta.Name == "" {
+					continue
+				}
+				name = pkgMeta.Name
+			}
+			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
+				continue
+			}
+			if pkgMeta.Name != "" {
+				name = pkgMeta.Name
+			}
+			pkgs = append(pkgs, newPackageLockV2Package(ctx, a.licenseResolver, resolver, reader.Location, getNameFromPath(name), pkgMeta))
 		}
 	}
 

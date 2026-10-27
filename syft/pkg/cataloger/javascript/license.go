@@ -3,6 +3,7 @@ package javascript
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/anchore/syft/internal/cache"
 	"github.com/anchore/syft/internal/log"
@@ -22,12 +23,14 @@ import (
 type javascriptLicenseResolver struct {
 	catalogerConfig CatalogerConfig
 	licenseCache    cache.Resolver[string]
+	prefetchCache   *sync.Map
 }
 
 func newJavascriptLicenseResolver(config CatalogerConfig) javascriptLicenseResolver {
 	return javascriptLicenseResolver{
 		licenseCache:    cache.GetResolver[string]("javascript", "v1"),
 		catalogerConfig: config,
+		prefetchCache:   &sync.Map{},
 	}
 }
 
@@ -47,7 +50,16 @@ func (lr *javascriptLicenseResolver) getLicenses(ctx context.Context, packageNam
 }
 
 func (lr *javascriptLicenseResolver) getLicensesFromRemote(packageName string, packageVersion string) (string, error) {
-	return lr.licenseCache.Resolve(fmt.Sprintf("%s/%s", packageName, packageVersion), func() (string, error) {
+	key := fmt.Sprintf("%s/%s", packageName, packageVersion)
+	if value, ok := lr.prefetchCache.Load(key); ok {
+		return value.(string), nil
+	}
+
+	license, err := lr.licenseCache.Resolve(key, func() (string, error) {
 		return getLicenseFromNpmRegistry(lr.catalogerConfig.NPMBaseURL, packageName, packageVersion)
 	})
+	if err == nil {
+		lr.prefetchCache.Store(key, license)
+	}
+	return license, err
 }
