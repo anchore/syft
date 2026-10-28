@@ -1579,6 +1579,27 @@ from-images:
     paths:
       - /usr/lib/x86_64-linux-gnu/libkrb5.so.26.0.0
 
+  - version: 1.40.1
+    images:
+      - ref: envoyproxy/envoy:v1.40.1@sha256:713bb146f1a7c97ebc70e13d259f77ff36f2c5d00f3145677816af5af9bd1530
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.40.0
+    images:
+      - ref: envoyproxy/envoy:v1.40.0@sha256:459f2a6404c340fe6afccd69d85527012d47f3c036765493e6f8f3113fa384de
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.37.1
+    images:
+      - ref: envoyproxy/envoy:v1.37.1@sha256:29496a88fba9c4c9cdef4afe8fec70f536c5ba111b1c2bddbc5436b091ceca33
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
   - version: 1.36.4
     images:
       - ref: envoyproxy/envoy:v1.36.4@sha256:ae31562b8cede20913a2d3d6a4f44c8479a50551e033cb8ef7bb8e38cec4b573

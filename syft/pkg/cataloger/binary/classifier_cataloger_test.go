@@ -2630,6 +2630,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "envoy/1.40.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.40.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.40.1",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.40.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.40.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.40.0",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.37.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.37.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.37.1",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
 			logicalFixture: "envoy/1.36.4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "envoy",
