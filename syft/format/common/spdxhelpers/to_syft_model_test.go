@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -704,6 +705,8 @@ func Test_directPackageFiles(t *testing.T) {
 			Annotations: map[string]string{},
 		},
 	}
+	// with no evident-by relationships, the files the package contains are used as its locations
+	p.Locations = file.NewLocationSet(f)
 	s := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			Packages: pkg.NewCollection(p),
@@ -794,4 +797,156 @@ func Test_skipsPackagesWithGeneratedFromRelationship(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, s.Artifacts.Packages.Package("1"))
 	assert.Nil(t, s.Artifacts.Packages.Package("1-src"))
+}
+
+func Test_packageLocations(t *testing.T) {
+	evidentByComment := "evident-by: indicates the package's existence is evident by the given file"
+	files := []*spdx.File{
+		{FileName: "/lib/apk/db/installed", FileSPDXIdentifier: "File-db"},
+		{FileName: "/usr/lib/libz.so.1", FileSPDXIdentifier: "File-lib"},
+		{FileName: "/usr/share/licenses/zlib/LICENSE", FileSPDXIdentifier: "File-license"},
+	}
+	rel := func(from, relType, to, comment string) *spdx.Relationship {
+		return &spdx.Relationship{
+			RefA:                common.DocElementID{ElementRefID: common.ElementID(from)},
+			Relationship:        relType,
+			RefB:                common.DocElementID{ElementRefID: common.ElementID(to)},
+			RelationshipComment: comment,
+		}
+	}
+
+	tests := []struct {
+		name          string
+		pkgFiles      []*spdx.File
+		relationships []*spdx.Relationship
+		expected      []string
+	}{
+		{
+			name: "evident-by relationship",
+			relationships: []*spdx.Relationship{
+				rel("Package-zlib", "OTHER", "File-db", evidentByComment),
+			},
+			expected: []string{"/lib/apk/db/installed"},
+		},
+		{
+			name: "evident-by is preferred over contains",
+			relationships: []*spdx.Relationship{
+				rel("Package-zlib", "CONTAINS", "File-lib", ""),
+				rel("Package-zlib", "OTHER", "File-db", evidentByComment),
+				rel("Package-zlib", "CONTAINS", "File-license", ""),
+			},
+			expected: []string{"/lib/apk/db/installed"},
+		},
+		{
+			name: "contains relationships are used without evident-by",
+			relationships: []*spdx.Relationship{
+				rel("Package-zlib", "CONTAINS", "File-lib", ""),
+				rel("Package-zlib", "CONTAINS", "File-license", ""),
+			},
+			expected: []string{"/usr/lib/libz.so.1", "/usr/share/licenses/zlib/LICENSE"},
+		},
+		{
+			name:     "package hasFiles are used without evident-by",
+			pkgFiles: []*spdx.File{{FileName: "/usr/lib/libz.so.1.3", FileSPDXIdentifier: "File-pkg-lib"}},
+			expected: []string{"/usr/lib/libz.so.1.3"},
+		},
+		{
+			name: "other relationship without the evident-by comment is ignored",
+			relationships: []*spdx.Relationship{
+				rel("Package-zlib", "OTHER", "File-db", "some other note"),
+			},
+		},
+		{
+			name: "relationships of other kinds are ignored",
+			relationships: []*spdx.Relationship{
+				rel("Package-zlib", "GENERATED_FROM", "File-lib", ""),
+				rel("File-lib", "CONTAINS", "File-db", ""),
+			},
+		},
+		{
+			name: "relationship to an unknown element is ignored",
+			relationships: []*spdx.Relationship{
+				rel("Package-zlib", "OTHER", "File-missing", evidentByComment),
+			},
+		},
+		{
+			name: "relationship from an external document is ignored",
+			relationships: []*spdx.Relationship{
+				{
+					RefA:                common.DocElementID{DocumentRefID: "DocumentRef-other", ElementRefID: "Package-zlib"},
+					Relationship:        "OTHER",
+					RefB:                common.DocElementID{ElementRefID: "File-db"},
+					RelationshipComment: evidentByComment,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			doc := &spdx.Document{
+				SPDXVersion:    "SPDX-2.3",
+				SPDXIdentifier: "DOCUMENT",
+				Packages: []*spdx.Package{
+					{
+						PackageName:           "zlib",
+						PackageVersion:        "1.3.1-r2",
+						PackageSPDXIdentifier: "Package-zlib",
+						Files:                 test.pkgFiles,
+					},
+				},
+				Files:         files,
+				Relationships: test.relationships,
+			}
+
+			got, err := ToSyftModel(doc)
+			require.NoError(t, err)
+
+			packages := got.Artifacts.Packages.Sorted()
+			require.Len(t, packages, 1)
+
+			var paths []string
+			for _, l := range packages[0].Locations.ToSlice() {
+				paths = append(paths, l.RealPath)
+			}
+			assert.ElementsMatch(t, test.expected, paths)
+		})
+	}
+}
+
+func Test_packageLocationsRoundTrip(t *testing.T) {
+	p := pkg.Package{
+		Name:    "zlib",
+		Version: "1.3.1-r2",
+		Type:    pkg.ApkPkg,
+		Locations: file.NewLocationSet(
+			file.NewLocation("/lib/apk/db/installed").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		),
+	}
+	p.SetID()
+
+	packages := pkg.NewCollection(p)
+	s := sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			Packages: packages,
+		},
+		Relationships: relationship.EvidentBy(packages),
+		Source: source.Description{
+			ID:       "DocumentRoot-Directory-.",
+			Name:     ".",
+			Metadata: source.DirectoryMetadata{Path: "."},
+		},
+	}
+
+	got, err := ToSyftModel(ToFormatModel(s))
+	require.NoError(t, err)
+
+	decoded := got.Artifacts.Packages.Sorted()
+	require.Len(t, decoded, 1)
+	locations := decoded[0].Locations.ToSlice()
+	require.Len(t, locations, 1)
+	// SPDX file names are written without the leading slash, the same as the decoded file coordinates
+	assert.Equal(t, "lib/apk/db/installed", locations[0].RealPath)
+	_, ok := got.Artifacts.FileMetadata[locations[0].Coordinates]
+	assert.True(t, ok, "package location should match a decoded file")
 }

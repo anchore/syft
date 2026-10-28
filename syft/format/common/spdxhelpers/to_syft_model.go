@@ -369,14 +369,60 @@ func findLinuxReleaseByPURL(doc *spdx.Document) *linux.Release {
 
 func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document) {
 	skipIDs := packageIDsToSkip(doc)
+	locations := packageLocations(doc)
 	for _, p := range doc.Packages {
 		if p == nil || skipIDs.Has(string(p.PackageSPDXIdentifier)) {
 			continue
 		}
-		syftPkg := toSyftPackage(p)
+		syftPkg := toSyftPackage(p, locations[p.PackageSPDXIdentifier]...)
 		spdxIDMap[string(p.PackageSPDXIdentifier)] = syftPkg
 		s.Artifacts.Packages.Add(syftPkg)
 	}
+}
+
+// packageLocations finds the files that show where each package was found, so decoded packages get Locations.
+// Syft writes these as OTHER relationships with an "evident-by" comment, which are used when present. Otherwise,
+// fall back to the files the package contains, from CONTAINS relationships and the package's hasFiles.
+func packageLocations(doc *spdx.Document) map[spdx.ElementID][]file.Location {
+	files := make(map[spdx.ElementID]*spdx.File)
+	for _, f := range doc.Files {
+		files[f.FileSPDXIdentifier] = f
+	}
+
+	evidentBy := make(map[spdx.ElementID][]file.Location)
+	contains := make(map[spdx.ElementID][]file.Location)
+	for _, p := range doc.Packages {
+		for _, f := range p.Files {
+			files[f.FileSPDXIdentifier] = f
+			contains[p.PackageSPDXIdentifier] = append(contains[p.PackageSPDXIdentifier], toSyftLocation(f))
+		}
+	}
+
+	for _, r := range doc.Relationships {
+		if r.RefA.DocumentRefID != "" && requireAndTrimPrefix(r.RefA.DocumentRefID, "DocumentRef-") != string(doc.SPDXIdentifier) {
+			continue
+		}
+		f, ok := files[r.RefB.ElementRefID]
+		if !ok {
+			continue
+		}
+		id := r.RefA.ElementRefID
+		switch helpers.RelationshipType(r.Relationship) {
+		case helpers.ContainsRelationship:
+			contains[id] = append(contains[id], toSyftLocation(f))
+		case helpers.OtherRelationship:
+			if strings.HasPrefix(r.RelationshipComment, string(artifact.EvidentByRelationship)) {
+				evidentBy[id] = append(evidentBy[id], toSyftLocation(f))
+			}
+		}
+	}
+
+	for id, locations := range contains {
+		if _, ok := evidentBy[id]; !ok {
+			evidentBy[id] = locations
+		}
+	}
+	return evidentBy
 }
 
 func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document) {
@@ -590,17 +636,18 @@ func extractPkgInfo(p *spdx.Package) pkgInfo {
 	}
 }
 
-func toSyftPackage(p *spdx.Package) pkg.Package {
+func toSyftPackage(p *spdx.Package, locations ...file.Location) pkg.Package {
 	info := extractPkgInfo(p)
 	sP := &pkg.Package{
-		Type:     info.typ,
-		Name:     p.PackageName,
-		Version:  p.PackageVersion,
-		Licenses: pkg.NewLicenseSet(parseSPDXLicenses(p)...),
-		CPEs:     extractCPEs(p),
-		PURL:     purlValue(info.purl),
-		Language: info.lang,
-		Metadata: extractMetadata(p, info),
+		Type:      info.typ,
+		Name:      p.PackageName,
+		Version:   p.PackageVersion,
+		Locations: file.NewLocationSet(locations...),
+		Licenses:  pkg.NewLicenseSet(parseSPDXLicenses(p)...),
+		CPEs:      extractCPEs(p),
+		PURL:      purlValue(info.purl),
+		Language:  info.lang,
+		Metadata:  extractMetadata(p, info),
 	}
 
 	internal.Backfill(sP)
