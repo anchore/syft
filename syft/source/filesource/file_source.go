@@ -157,7 +157,7 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 
 	if isArchiveAnalysis := fi.IsDir(); isArchiveAnalysis {
 		// this is an analysis of an archive file... we should scan the directory where the archive contents
-		res, err := fileresolver.NewFromDirectory(s.analysisPath, "", exclusionFunctions...)
+		res, err := fileresolver.NewFromDirectory(s.analysisPath, s.analysisPath, exclusionFunctions...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 		}
