@@ -133,6 +133,25 @@ func Test_packageURL(t *testing.T) {
 			expect: "pkg:maven/parent/example-java-app-maven@0.1.0",
 		},
 		{
+			name: "kotlin-stdlib without pom metadata",
+			pkg: pkg.Package{
+				Name:     "kotlin-stdlib",
+				Version:  "2.2.20",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
+					VirtualPath: "kotlin-stdlib-2.2.20.jar",
+					Manifest: &pkg.JavaManifest{
+						Main: []pkg.KeyValue{
+							{Key: "Implementation-Title", Value: "kotlin-stdlib"},
+							{Key: "Implementation-Vendor", Value: "JetBrains"},
+						},
+					},
+				},
+			},
+			expect: "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@2.2.20",
+		},
+		{
 			// regression for github.com/anchore/syft/issues/5311
 			name: "groovy 4 without pom metadata",
 			pkg: pkg.Package{
