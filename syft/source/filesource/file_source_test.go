@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"crypto"
 	"io"
 	"os"
 	"os/exec"
@@ -241,6 +242,22 @@ func TestNewFromFile_RarExtension(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewFromFile_MIMETypeWithDigests(t *testing.T) {
+	// the digests read the whole file, which must not leave the MIME type to be read from its end
+	archivePath := filepath.Join(t.TempDir(), "example.zip")
+	require.NoError(t, os.WriteFile(archivePath, zipBytes(t, [][2]string{{"a.txt", "a"}}), 0o600))
+
+	src, err := New(Config{Path: archivePath, DigestAlgorithms: []crypto.Hash{crypto.SHA256}})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, src.Close())
+	})
+
+	m := src.Describe().Metadata.(source.FileMetadata)
+	assert.Equal(t, "application/zip", m.MIMEType)
+	assert.Len(t, m.Digests, 1)
 }
 
 func TestNewFromFile_ArchivePathsAreRootedAtTheArchive(t *testing.T) {

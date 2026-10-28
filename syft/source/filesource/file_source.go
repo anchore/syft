@@ -70,8 +70,14 @@ func New(cfg Config) (source.Source, error) {
 		return nil, fmt.Errorf("given path is a directory: %q", cfg.Path)
 	}
 
+	mimeType := stereoFile.MIMEType(f)
+
 	var digests []file.Digest
 	if len(cfg.DigestAlgorithms) > 0 {
+		// reading the MIME type moved past the start of the file
+		if _, err := f.Seek(0, io.SeekStart); err != nil {
+			return nil, fmt.Errorf("unable to seek file=%q: %w", cfg.Path, err)
+		}
 		digests, err = intFile.NewDigestsFromFile(context.TODO(), f, cfg.DigestAlgorithms)
 		if err != nil {
 			return nil, fmt.Errorf("unable to calculate digests for file=%q: %w", cfg.Path, err)
@@ -98,7 +104,7 @@ func New(cfg Config) (source.Source, error) {
 		analysisPath:     analysisPath,
 		digestForVersion: versionDigest,
 		digests:          digests,
-		mimeType:         stereoFile.MIMEType(f),
+		mimeType:         mimeType,
 	}, nil
 }
 
