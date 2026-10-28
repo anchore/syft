@@ -202,6 +202,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithCaptureSymbols(cfg.Golang.CaptureSymbols).
 			WithCaptureSymbolsModules(cfg.Golang.CaptureSymbolsModules),
 		JavaScript: javascript.DefaultCatalogerConfig().
+			WithSearchLocalLicenses(cfg.JavaScript.SearchLocalLicenses).
 			WithIncludeDevDependencies(*multiLevelOption(false, cfg.JavaScript.IncludeDevDependencies)).
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).
 			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),
