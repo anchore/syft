@@ -88,10 +88,16 @@ func defaultJavaClassifiers() []binutils.Classifier {
 				},
 				{
 					Class: "java-binary-openjdk-fallthrough",
-					EvidenceMatcher: m.FileContentsVersionMatcher(
-						"openjdk",
-						// [NUL]19.0.1+10-21[NUL]
-						`(?m)\x00(?P<version>[0-9]+[.0-9]+[+][-0-9]+)\x00`,
+					EvidenceMatcher: binutils.MatchAll(
+						binutils.MatchNone(
+							binutils.MatchPath(`**/mise/shims/**`),
+							binutils.MatchPath(`**/.local/share/mise/shims/**`),
+						),
+						m.FileContentsVersionMatcher(
+							"openjdk",
+							// [NUL]19.0.1+10-21[NUL]
+							`(?m)\x00(?P<version>[0-9]+[.0-9]+[+][-0-9]+)\x00`,
+						),
 					),
 					Package: "jre",
 					PURL:    mustPURL("pkg:generic/oracle/jre@version"),
@@ -99,10 +105,16 @@ func defaultJavaClassifiers() []binutils.Classifier {
 				},
 				{
 					Class: "java-binary-oracle",
-					EvidenceMatcher: m.FileContentsVersionMatcher(
-						// [NUL]19.0.1+10-21[NUL]
-						// java[NUL]1.8[NUL]1.8.0_451-b10
-						`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[-._+a-zA-Z0-9]+)\x00`,
+					EvidenceMatcher: binutils.MatchAll(
+						binutils.MatchNone(
+							binutils.MatchPath(`**/mise/shims/**`),
+							binutils.MatchPath(`**/.local/share/mise/shims/**`),
+						),
+						m.FileContentsVersionMatcher(
+							// [NUL]19.0.1+10-21[NUL]
+							// java[NUL]1.8[NUL]1.8.0_451-b10
+							`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[-._+a-zA-Z0-9]+)\x00`,
+						),
 					),
 					Package: "jre",
 					PURL:    mustPURL("pkg:generic/oracle/jre@version"),
@@ -174,6 +186,10 @@ func defaultJavaClassifiers() []binutils.Classifier {
 				{
 					Class: "java-binary-openjdk-fallthrough",
 					EvidenceMatcher: binutils.MatchAll(
+						binutils.MatchNone(
+							binutils.MatchPath(`**/mise/shims/**`),
+							binutils.MatchPath(`**/.local/share/mise/shims/**`),
+						),
 						m.FileContentsVersionMatcher(
 							"openjdk",
 							`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?([-._a-zA-Z0-9]+)?)\x00`),
@@ -184,8 +200,14 @@ func defaultJavaClassifiers() []binutils.Classifier {
 				},
 				{
 					Class: "java-binary-jdk",
-					EvidenceMatcher: m.FileContentsVersionMatcher(
-						`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?([-._a-zA-Z0-9]+)?)\x00`),
+					EvidenceMatcher: binutils.MatchAll(
+						binutils.MatchNone(
+							binutils.MatchPath(`**/mise/shims/**`),
+							binutils.MatchPath(`**/.local/share/mise/shims/**`),
+						),
+						m.FileContentsVersionMatcher(
+							`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?([-._a-zA-Z0-9]+)?)\x00`),
+					),
 					Package: "jdk",
 					PURL:    mustPURL("pkg:generic/oracle/jdk@version"),
 					CPEs:    singleCPE("cpe:2.3:a:oracle:jdk:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
