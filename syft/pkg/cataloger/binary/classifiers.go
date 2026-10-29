@@ -972,7 +972,10 @@ func DefaultClassifiers() []binutils.Classifier {
 			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// Pattern found in the binary: "%s version 7.1.1" or "%s version 6.0"
 				// When executed outputs: "ffmpeg version 7.1.1" or "ffmpeg version 6.0"
-				`(?m)%s version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?)`,
+				// The optional "+" suffix preserves semver build metadata (e.g. a
+				// backported-patch stamp like "9.0.3+dev.9.0.2.p1.eb9cef3"); see the
+				// ffmpeg-library classifier for why "-" pre-release suffixes stay truncated.
+				`(?m)%s version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)`,
 			),
 			Package: "ffmpeg",
 			PURL:    mustPURL("pkg:generic/ffmpeg@version"),
@@ -982,8 +985,15 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "ffmpeg-library",
 			FileGlob: "**/libav*",
 			EvidenceMatcher: binutils.MatchAny(
-				// Primary pattern: FFmpeg version found in most libraries
-				m.FileContentsVersionMatcher(`(?m)FFmpeg version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?)`),
+				// Primary pattern: FFmpeg version found in most libraries.
+				// The optional "+" suffix preserves semver build metadata (e.g. a
+				// backported-patch stamp like "9.0.3+dev.9.0.2.p1.eb9cef3") instead of
+				// truncating to X.Y[.Z]. Build metadata compares equal to its core
+				// version, so this does not change vulnerability matching. A "-"
+				// pre-release suffix (e.g. a distro revision "6.1.1-3ubuntu5") is
+				// deliberately NOT captured: it sorts below the release in semver and
+				// would corrupt version-range matching, so it stays truncated as before.
+				m.FileContentsVersionMatcher(`(?m)FFmpeg version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)`),
 				// Fallback: library-specific version patterns for libavcodec and libavformat
 				m.FileContentsVersionMatcher(`(?m)Lavc(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 				m.FileContentsVersionMatcher(`(?m)Lavf(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
@@ -996,8 +1006,9 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "ffmpeg-library",
 			FileGlob: "**/libswresample*",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// FFmpeg version pattern for libswresample
-				`(?m)FFmpeg version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?)`),
+				// FFmpeg version pattern for libswresample. Same optional "+" build
+				// metadata handling as the ffmpeg-library classifier above.
+				`(?m)FFmpeg version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)`),
 			Package: "ffmpeg",
 			PURL:    mustPURL("pkg:generic/ffmpeg@version"),
 			CPEs:    singleCPE("cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -1031,13 +1042,16 @@ func DefaultClassifiers() []binutils.Classifier {
 			EvidenceMatcher: binutils.MatchAny(
 				// [NUL]1.26.8[NUL][NUL]1.26.8[NUL]
 				// [NUL]1.3.7[NUL][NUL][NUL]1.3.8[NUL]
-				m.FileContentsVersionMatcher(`[0-9]+\.[0-9]+\.[0-9]+\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+`),
+				// [NUL]1.15.0-beta.0[NUL][NUL][NUL]1.15.0-beta.0[NUL]  (pre-release builds repeat the full version, suffix included)
+				m.FileContentsVersionMatcher(`[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-snapshot\.[0-9]+|-dev)?\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-snapshot\.[0-9]+|-dev)?)\x00+`),
+				// [NUL][NUL][NUL]1.0.0-snapshot.0[NUL][NUL][NUL] (snapshot builds record the version only once)
+				m.FileContentsVersionMatcher(`\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+-snapshot\.[0-9]+)\x00+`),
 				// Clean[NUL][NUL][NUL]1.8.0[NUL]
-				m.FileContentsVersionMatcher(`Clean\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+`),
+				m.FileContentsVersionMatcher(`Clean\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-snapshot\.[0-9]+|-dev)?)\x00+`),
 				// Modified[NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL]1.10-dev[NUL][NUL][NUL]
 				m.FileContentsVersionMatcher(`Modified\x00+(?P<version>[0-9]+\.[0-9]+-dev)\x00+`),
 				// 1.1.17[NUL]...S=v<y5
-				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+.{1,100}S?=v<y5`),
+				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-snapshot\.[0-9]+|-dev)?)\x00+.{1,100}S?=v<y5`),
 			),
 			Package: "pilot-discovery",
 			PURL:    mustPURL("pkg:generic/istio@version"),
@@ -1048,13 +1062,16 @@ func DefaultClassifiers() []binutils.Classifier {
 			FileGlob: "**/pilot-agent",
 			EvidenceMatcher: binutils.MatchAny(
 				// [NUL]1.26.8[NUL][NUL]1.26.8[NUL]
-				m.FileContentsVersionMatcher(`[0-9]+\.[0-9]+\.[0-9]+\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+`),
+				// [NUL]1.15.0-beta.0[NUL][NUL][NUL]1.15.0-beta.0[NUL]  (pre-release builds repeat the full version, suffix included)
+				m.FileContentsVersionMatcher(`[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-snapshot\.[0-9]+|-dev)?\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-snapshot\.[0-9]+|-dev)?)\x00+`),
+				// [NUL][NUL][NUL]1.0.0-snapshot.0[NUL][NUL][NUL] (snapshot builds record the version only once)
+				m.FileContentsVersionMatcher(`\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+-snapshot\.[0-9]+)\x00+`),
 				// Clean[NUL][NUL][NUL]1.8.0[NUL]
-				m.FileContentsVersionMatcher(`Clean\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+`),
+				m.FileContentsVersionMatcher(`Clean\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-snapshot\.[0-9]+|-dev)?)\x00+`),
 				// Modified[NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL]1.10-dev[NUL][NUL][NUL]
 				m.FileContentsVersionMatcher(`Modified\x00+(?P<version>[0-9]+\.[0-9]+-dev)\x00+`),
 				// 1.1.17[NUL]...S=v<y5
-				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+.{1,100}S?=v<y5`),
+				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-snapshot\.[0-9]+|-dev)?)\x00+.{1,100}S?=v<y5`),
 			),
 			Package: "pilot-agent",
 			PURL:    mustPURL("pkg:generic/istio@version"),
@@ -1118,9 +1135,12 @@ func DefaultClassifiers() []binutils.Classifier {
 			FileGlob: "**/envoy",
 			EvidenceMatcher: binutils.MatchAny(
 				// 1.3x [NUL]1.36.4[NUL]...envoy_reloadable_features
+				// 1.4x [NUL]1.40.1[NUL]...envoy_reloadable_features
 				// 1.34.5 [NUL]1.34.5[NUL]...envoy.reloadable_features
-				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.3[0-9]\.[0-9]+(-dev)?)\x00.{0,1000}envoy_reloadable_features`),
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.[34][0-9]\.[0-9]+(-dev)?)\x00.{0,1000}envoy_reloadable_features`),
 				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.34\.5)\x00.{0,200}envoy\.reloadable_features`),
+				// 1.37.1 DeltaDiscoveryResponse.removed_resources[NUL]1.37.1[NUL]the default now-
+				m.FileContentsVersionMatcher(`(?s)DeltaDiscoveryResponse\.removed_resources\x00(?P<version>1\.[34][0-9]\.[0-9]+(-dev)?)\x00`),
 				// 1.2x envoy_quic_...[NUL]1.28.7[NUL]
 				m.FileContentsVersionMatcher(`(?s)envoy_quic_.{0,1000}\x00(?P<version>1\.2[0-9]\.[0-9]+(-dev)?)\x00`),
 				// 1.2x [NUL]1.20.7[NUL]Unable to

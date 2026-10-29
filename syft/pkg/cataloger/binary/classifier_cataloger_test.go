@@ -1,6 +1,7 @@
 package binary
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"flag"
@@ -20,6 +21,7 @@ import (
 	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/testutil"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
@@ -2177,6 +2179,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "istio_pilot-discovery/1.19.0-rc.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.19.0-rc.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.19.0-rc.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.15.0-beta.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.15.0-beta.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.15.0-beta.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
 			logicalFixture: "istio_pilot-discovery/1.10-dev/linux-amd64",
 			expected: pkg.Package{
 				Name:      "pilot-discovery",
@@ -2199,6 +2223,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "istio_pilot-discovery/1.5.0-alpha.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.5.0-alpha.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.5.0-alpha.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
 			logicalFixture: "istio_pilot-discovery/1.3.8/linux-amd64",
 			expected: pkg.Package{
 				Name:      "pilot-discovery",
@@ -2216,6 +2251,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "1.1.17",
 				Type:      "binary",
 				PURL:      "pkg:generic/istio@1.1.17",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.0.0-snapshot.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.0.0-snapshot.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.0.0-snapshot.0",
 				Locations: locations("pilot-discovery"),
 				Metadata:  metadata("istio-binary"),
 			},
@@ -2265,6 +2311,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "istio_pilot-agent/1.19.0-rc.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.19.0-rc.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.19.0-rc.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.15.0-beta.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.15.0-beta.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.15.0-beta.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
 			logicalFixture: "istio_pilot-agent/1.10-dev/linux-amd64",
 			expected: pkg.Package{
 				Name:      "pilot-agent",
@@ -2287,12 +2355,34 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "istio_pilot-agent/1.5.0-alpha.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.5.0-alpha.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.5.0-alpha.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
 			logicalFixture: "istio_pilot-agent/1.1.17/linux-amd64",
 			expected: pkg.Package{
 				Name:      "pilot-agent",
 				Version:   "1.1.17",
 				Type:      "binary",
 				PURL:      "pkg:generic/istio@1.1.17",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.0.0-snapshot.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.0.0-snapshot.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.0.0-snapshot.0",
 				Locations: locations("pilot-agent"),
 				Metadata:  metadata("istio-binary"),
 			},
@@ -2537,6 +2627,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/grafana@6.0.0-beta1",
 				Locations: locations("grafana-server"),
 				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.40.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.40.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.40.1",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.40.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.40.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.40.0",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.37.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.37.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.37.1",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
 			},
 		},
 		{
@@ -3192,6 +3315,134 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 // Test_Cataloger_PackageTypes covers what assertPackagesAreEqual deliberately ignores: the package type and CPEs.
 // The perl interpreter is reported as cpan so it lines up with the rest of the CPAN ecosystem, everything else
 // keeps the default binary type.
+// Test_Cataloger_ffmpeg_versionSuffix verifies the ffmpeg classifiers no longer
+// unconditionally truncate the embedded "FFmpeg version <ver>" string to X.Y[.Z].
+// Semver build metadata (a backported-patch stamp such as
+// "9.0.3+dev.9.0.2.p1.eb9cef3") must be preserved in the reported version, because
+// it compares equal to its core version and so does not disturb vulnerability
+// matching. A "-" pre-release suffix (a distro revision such as "6.1.1-3ubuntu5")
+// must stay truncated: it sorts below the release in semver and would corrupt
+// version-range matching. Suffix-free binaries match exactly as before, and
+// trailing non-version text (or NUL padding) is never absorbed into the version.
+func Test_Cataloger_ffmpeg_versionSuffix(t *testing.T) {
+	// collect the ffmpeg classifiers under test, keyed by their FileGlob
+	classifiers := map[string]binutils.Classifier{}
+	for _, c := range DefaultClassifiers() {
+		if c.Package == "ffmpeg" {
+			classifiers[c.FileGlob] = c
+		}
+	}
+	require.NotEmpty(t, classifiers, "expected to find ffmpeg classifiers")
+
+	tests := []struct {
+		name     string
+		fileGlob string // which classifier to run
+		data     string // simulated binary contents
+		want     string // expected reported version ("" = no match expected)
+	}{
+		{
+			name:     "library bare version unchanged",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 7.1.1",
+			want:     "7.1.1",
+		},
+		{
+			name:     "library two-component version unchanged",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 6.0",
+			want:     "6.0",
+		},
+		{
+			name:     "library build metadata with patch provenance preserved",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 9.0.3+dev.9.0.2.p1.eb9cef3",
+			want:     "9.0.3+dev.9.0.2.p1.eb9cef3",
+		},
+		{
+			name:     "library build metadata short sha preserved",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 9.0.2+eb9cef3",
+			want:     "9.0.2+eb9cef3",
+		},
+		{
+			// a "-" pre-release suffix is intentionally NOT captured: it sorts below
+			// the release in semver and would corrupt version-range vulnerability
+			// matching, so distro revisions stay truncated exactly as before
+			name:     "library distro hyphen revision truncated",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 6.1.1-3ubuntu5",
+			want:     "6.1.1",
+		},
+		{
+			name:     "library distro dotted hyphen revision truncated",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 4.4.2-0ubuntu0.22.04.1",
+			want:     "4.4.2",
+		},
+		{
+			name:     "library trailing text not captured",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 6.1.1 Copyright (c) 2000-2023 the FFmpeg developers",
+			want:     "6.1.1",
+		},
+		{
+			name:     "library NUL-padded version not over-captured",
+			fileGlob: "**/libav*",
+			data:     "FFmpeg version 9.0.3\x00libavformat.so",
+			want:     "9.0.3",
+		},
+		{
+			name:     "libswresample build metadata preserved",
+			fileGlob: "**/libswresample*",
+			data:     "FFmpeg version 9.0.3+dev.9.0.2.p1.eb9cef3",
+			want:     "9.0.3+dev.9.0.2.p1.eb9cef3",
+		},
+		{
+			// the compiled-in printf format string in the ffmpeg binary is the
+			// literal "%s version <ver>" (the program name is substituted at runtime)
+			name:     "binary build metadata preserved",
+			fileGlob: "**/ffmpeg",
+			data:     "%s version 9.0.3+dev.9.0.2.p1.eb9cef3",
+			want:     "9.0.3+dev.9.0.2.p1.eb9cef3",
+		},
+		{
+			name:     "binary bare version unchanged",
+			fileGlob: "**/ffmpeg",
+			data:     "%s version 7.1.1",
+			want:     "7.1.1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cls, ok := classifiers[tt.fileGlob]
+			require.Truef(t, ok, "no ffmpeg classifier for glob %q", tt.fileGlob)
+
+			ctx := binutils.MatcherContext{
+				GetReader: func(binutils.MatcherContext) (unionreader.UnionReader, error) {
+					return unionreader.GetUnionReader(io.NopCloser(bytes.NewBufferString(tt.data)))
+				},
+			}
+
+			pkgs, err := cls.EvidenceMatcher(cls, ctx)
+			require.NoError(t, err)
+
+			if tt.want == "" {
+				require.Empty(t, pkgs, "expected no package match")
+				return
+			}
+			require.Len(t, pkgs, 1, "expected exactly one package")
+			assert.Equal(t, tt.want, pkgs[0].Version)
+			// the fuller version must also flow into the PURL so the SBOM is not lossy;
+			// compare the decoded PURL version, since packageurl-go percent-encodes
+			// reserved characters (e.g. '+' -> %2B) in the serialized form
+			parsed, err := packageurl.FromString(pkgs[0].PURL)
+			require.NoError(t, err, "PURL should parse")
+			assert.Equal(t, tt.want, parsed.Version)
+		})
+	}
+}
+
 func Test_Cataloger_PackageTypes(t *testing.T) {
 	tests := []struct {
 		logicalFixture string
