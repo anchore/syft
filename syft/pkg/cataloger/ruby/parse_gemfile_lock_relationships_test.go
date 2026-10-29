@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -129,5 +131,24 @@ func TestCataloger_Relationships(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "testdata/relationships").
 		ExpectsRelationshipStrings(expectedRelationships).
+		TestCataloger(t, NewGemFileLockCataloger())
+}
+
+func TestCataloger_DirectDependencies(t *testing.T) {
+	// cowboy is listed under DEPENDENCIES; cowlib and ranch are only required by
+	// it. Direct must survive the full cataloger, not just the parser.
+	want := map[string]bool{"cowboy": true, "cowlib": false, "ranch": false}
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/relationships").
+		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
+			got := map[string]bool{}
+			for _, p := range pkgs {
+				metadata, ok := p.Metadata.(pkg.RubyGemfileLockEntry)
+				require.True(t, ok, "%s has metadata %T", p.Name, p.Metadata)
+				got[p.Name] = metadata.Direct
+			}
+			assert.Equal(t, want, got)
+		}).
 		TestCataloger(t, NewGemFileLockCataloger())
 }

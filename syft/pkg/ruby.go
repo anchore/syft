@@ -34,5 +34,5 @@ type RubyGemfileLockEntry struct {
 	// Direct is true when the project itself declares this gem, i.e. it is listed in
 	// the Gemfile.lock DEPENDENCIES section (the gems named in the Gemfile), rather
 	// than only being required by another locked gem.
-	Direct bool `mapstructure:"direct" json:"direct,omitempty"`
+	Direct bool `mapstructure:"direct" json:"direct,omitempty" cyclonedx:"direct"`
 }

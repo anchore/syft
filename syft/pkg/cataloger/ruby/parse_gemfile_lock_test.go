@@ -1,9 +1,14 @@
 package ruby
 
 import (
+	"context"
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -128,4 +133,157 @@ func TestParseGemfileLockEntries(t *testing.T) {
 		FromFile(t, fixture).
 		Expects(expectedPkgs, nil).
 		TestParser(t, parseGemFileLockEntries)
+}
+
+func TestParseGemfileLockEntries_Direct(t *testing.T) {
+	tests := []struct {
+		name     string
+		lockfile string
+		want     map[string]bool
+	}{
+		{
+			name: "every platform variant of a declared gem is direct",
+			lockfile: `GEM
+  remote: https://rubygems.org/
+  specs:
+    nokogiri (1.16.0-arm64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.16.0-x86_64-linux)
+      racc (~> 1.4)
+    racc (1.7.3)
+
+PLATFORMS
+  arm64-darwin
+  x86_64-linux
+
+DEPENDENCIES
+  nokogiri (~> 1.16)
+
+BUNDLED WITH
+   2.5.6
+`,
+			want: map[string]bool{
+				"nokogiri@1.16.0-arm64-darwin": true,
+				"nokogiri@1.16.0-x86_64-linux": true,
+				"racc@1.7.3":                   false,
+			},
+		},
+		{
+			name: "git and path sources are written with a trailing bang",
+			lockfile: `GIT
+  remote: https://github.com/rails/turbolinks.git
+  revision: 0123456789abcdef
+  specs:
+    turbolinks (3.0.0)
+      coffee-rails
+
+PATH
+  remote: engines/billing
+  specs:
+    billing (0.1.0)
+      rails (>= 7.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    coffee-rails (4.0.1)
+    rails (7.1.3)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  billing!
+  rails (~> 7.1)
+  turbolinks!
+`,
+			want: map[string]bool{
+				"turbolinks@3.0.0":   true,
+				"billing@0.1.0":      true,
+				"coffee-rails@4.0.1": false,
+				"rails@7.1.3":        true,
+			},
+		},
+		{
+			name: "checksum, ruby version and bundled-with lines are not dependencies",
+			lockfile: `GEM
+  remote: https://rubygems.org/
+  specs:
+    rack (3.0.9)
+    rake (13.1.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  rake
+
+CHECKSUMS
+  rack (3.0.9) sha256=abc
+  rake (13.1.0) sha256=def
+
+RUBY VERSION
+   ruby 3.3.0p0
+
+BUNDLED WITH
+   2.5.6
+`,
+			want: map[string]bool{
+				"rack@3.0.9":  false,
+				"rake@13.1.0": true,
+			},
+		},
+		{
+			name: "a declared gem with no locked spec adds no package",
+			lockfile: `GEM
+  remote: https://rubygems.org/
+  specs:
+    rake (13.1.0)
+
+DEPENDENCIES
+  ghost
+  rake
+`,
+			want: map[string]bool{
+				"rake@13.1.0": true,
+			},
+		},
+		{
+			name: "no dependencies section marks nothing direct",
+			lockfile: `GEM
+  remote: https://rubygems.org/
+  specs:
+    rack (3.0.9)
+    rake (13.1.0)
+`,
+			want: map[string]bool{
+				"rack@3.0.9":  false,
+				"rake@13.1.0": false,
+			},
+		},
+		{
+			name:     "windows line endings",
+			lockfile: "GEM\r\n  remote: https://rubygems.org/\r\n  specs:\r\n    rack (3.0.9)\r\n    rake (13.1.0)\r\n      rack (>= 3)\r\n\r\nDEPENDENCIES\r\n  rake\r\n",
+			want: map[string]bool{
+				"rack@3.0.9":  false,
+				"rake@13.1.0": true,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := file.NewLocationReadCloser(file.NewLocation("Gemfile.lock"), io.NopCloser(strings.NewReader(tt.lockfile)))
+
+			pkgs, _, err := parseGemFileLockEntries(context.Background(), nil, nil, reader)
+
+			require.NoError(t, err)
+			got := map[string]bool{}
+			for _, p := range pkgs {
+				metadata, ok := p.Metadata.(pkg.RubyGemfileLockEntry)
+				require.True(t, ok, "%s has metadata %T", p.Name, p.Metadata)
+				got[p.Name+"@"+p.Version] = metadata.Direct
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
