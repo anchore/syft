@@ -31,6 +31,9 @@ func ToSyftModelV3(doc *spdx.Document) (*sbom.SBOM, error) {
 
 	spdxMap := ptrMap[any]{}
 
+	// found before the root package and its relationships are removed
+	sourceFile := v3findSourceFile(doc)
+
 	s := &sbom.SBOM{
 		Source: v3extractSource(spdxMap, doc),
 		Artifacts: sbom.Artifacts{
@@ -45,7 +48,7 @@ func ToSyftModelV3(doc *spdx.Document) (*sbom.SBOM, error) {
 
 	v3collectSyftPackages(s, spdxMap, relationships, doc)
 
-	v3collectSyftFiles(s, spdxMap, doc)
+	v3collectSyftFiles(s, spdxMap, doc, sourceFile)
 
 	s.Relationships = v3toSyftRelationships(spdxMap, doc)
 
@@ -282,7 +285,40 @@ func v3collectSyftPackages(s *sbom.SBOM, spdxMap ptrMap[any], relationships ptrM
 	}
 }
 
-func v3collectSyftFiles(s *sbom.SBOM, spdxMap ptrMap[any], doc *spdx.Document) {
+// v3findSourceFile returns the file the root package DESCRIBES when it CONTAINS files: an archive scanned as the
+// source is the scanned root, so what it contains is at the root rather than within an archive.
+func v3findSourceFile(doc *spdx.Document) spdx.AnyFile {
+	roots := v3findRootPackages(doc)
+	if len(roots) != 1 {
+		return nil
+	}
+	var described spdx.AnyFile
+	containers := ptrMap[bool]{}
+	for _, r := range doc.Elements.Relationships() {
+		from := r.GetFrom()
+		if from == nil {
+			continue
+		}
+		switch r.GetType() {
+		case spdx.RelationshipType_Describes:
+			if from == spdx.AnyElement(roots[0]) {
+				for _, to := range r.GetTo() {
+					if f, ok := to.(spdx.AnyFile); ok {
+						described = f
+					}
+				}
+			}
+		case spdx.RelationshipType_Contains:
+			containers.Set(from, true)
+		}
+	}
+	if described == nil || !containers.Get(described) {
+		return nil
+	}
+	return described
+}
+
+func v3collectSyftFiles(s *sbom.SBOM, spdxMap ptrMap[any], doc *spdx.Document, sourceFile spdx.AnyFile) {
 	nested := newNestedFiles[reflect.Value]()
 	var files []spdx.AnyFile
 	for _, elementList := range []spdx.ElementList{doc.Elements, doc.RootElements} {
@@ -292,6 +328,13 @@ func v3collectSyftFiles(s *sbom.SBOM, spdxMap ptrMap[any], doc *spdx.Document) {
 			}
 			nested.own[ptrTo(f)] = v3toSyftCoordinates(f)
 			files = append(files, f)
+		}
+	}
+	if sourceFile != nil {
+		if c, ok := nested.own[ptrTo(sourceFile)]; ok {
+			// the scanned root
+			c.RealPath = ""
+			nested.own[ptrTo(sourceFile)] = c
 		}
 	}
 	for _, r := range doc.Elements.Relationships() {
@@ -306,7 +349,7 @@ func v3collectSyftFiles(s *sbom.SBOM, spdxMap ptrMap[any], doc *spdx.Document) {
 			}
 			_, knownContainer := nested.own[ptrTo(container)]
 			_, knownEntry := nested.own[ptrTo(entry)]
-			if knownContainer && knownEntry {
+			if knownContainer && knownEntry && !isScanRoot(nested.own[ptrTo(container)]) {
 				nested.container[ptrTo(entry)] = ptrTo(container)
 			}
 		}

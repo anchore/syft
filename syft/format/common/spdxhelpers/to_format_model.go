@@ -6,6 +6,8 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"path"
+	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -52,7 +54,8 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	rels := relationship.NewIndex(s.Relationships...)
 	packages, otherLicenses := toPackages(rels, s.Artifacts.Packages, s)
 
-	files, archiveRelationships := toFiles(s)
+	sourceFile := toSourceFile(s)
+	files, archiveRelationships := toFiles(s, sourceFile)
 	allRelationships := append(toRelationships(rels.All()), archiveRelationships...)
 
 	// for valid SPDX we need a document describes relationship
@@ -62,7 +65,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	if rootPackage != nil {
 		describesID = rootPackage.PackageSPDXIdentifier
 
-		allRelationships = append(allRelationships, toRootRelationships(rootPackage, packages, files, allRelationships)...)
+		allRelationships = append(allRelationships, toRootRelationships(rootPackage, sourceFile, packages, files, allRelationships)...)
 
 		// append the root package
 		packages = append(packages, rootPackage)
@@ -160,38 +163,58 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	}
 }
 
-// toRootRelationships relates the root package to each package and file nothing else CONTAINS: what is
-// within an archive is reached only through the archive's file, and an owned file through its package.
-func toRootRelationships(rootPackage *spdx.Package, packages []*spdx.Package, files []*spdx.File, relationships []*spdx.Relationship) (out []*spdx.Relationship) {
-	contained := map[spdx.ElementID]bool{}
+// toRootRelationships relates the root package to every package, and to each file nothing else CONTAINS: what is
+// within an archive is reached only through the archive's file, and an owned file through its package. When the
+// source is itself a file, the root package DESCRIBES it, and a scanned directory CONTAINS those files instead. A
+// package containing files must have analyzed them, so the root package then gets a verification code over them.
+func toRootRelationships(rootPackage *spdx.Package, sourceFile *file.Coordinates, packages []*spdx.Package, files []*spdx.File, relationships []*spdx.Relationship) (out []*spdx.Relationship) {
+	contained := map[spdx.ElementID]struct{}{}
 	for _, r := range relationships {
 		if r.Relationship == string(helpers.ContainsRelationship) {
-			contained[r.RefB.ElementRefID] = true
+			contained[r.RefB.ElementRefID] = struct{}{}
+		}
+	}
+	relate := func(a spdx.ElementID, typ helpers.RelationshipType, b spdx.ElementID) {
+		out = append(out, &spdx.Relationship{
+			RefA:         spdx.DocElementID{ElementRefID: a},
+			Relationship: string(typ),
+			RefB:         spdx.DocElementID{ElementRefID: b},
+		})
+	}
+
+	fileContainer := rootPackage.PackageSPDXIdentifier
+	if sourceFile != nil {
+		id := toSPDXID(*sourceFile)
+		relate(rootPackage.PackageSPDXIdentifier, helpers.DescribesRelationship, id)
+		contained[id] = struct{}{}
+		if isScanRoot(*sourceFile) {
+			fileContainer = id
 		}
 	}
 
-	var ids []spdx.ElementID
 	for _, p := range packages {
-		ids = append(ids, p.PackageSPDXIdentifier)
+		relate(rootPackage.PackageSPDXIdentifier, helpers.ContainsRelationship, p.PackageSPDXIdentifier)
 	}
+	var sha1s []string
 	for _, f := range files {
-		ids = append(ids, f.FileSPDXIdentifier)
-	}
-	for _, id := range ids {
-		if contained[id] {
+		if _, has := contained[f.FileSPDXIdentifier]; has {
 			continue
 		}
-		out = append(out, &spdx.Relationship{
-			RefA: spdx.DocElementID{
-				ElementRefID: rootPackage.PackageSPDXIdentifier,
-			},
-			Relationship: string(helpers.ContainsRelationship),
-			RefB: spdx.DocElementID{
-				ElementRefID: id,
-			},
-		})
+		relate(fileContainer, helpers.ContainsRelationship, f.FileSPDXIdentifier)
+		if fileContainer != rootPackage.PackageSPDXIdentifier {
+			continue
+		}
+		for _, c := range f.Checksums {
+			if c.Algorithm == spdx.SHA1 {
+				sha1s = append(sha1s, c.Value)
+				break
+			}
+		}
 	}
-	return
+
+	rootPackage.PackageVerificationCode = toVerificationCode(sha1s)
+	rootPackage.FilesAnalyzed = rootPackage.PackageVerificationCode != nil
+	return out
 }
 
 //nolint:funlen
@@ -728,9 +751,18 @@ const layerIDCommentPrefix = "layerID: "
 
 // toFiles describes every file, including each archive holding one. A file within an archive is named by
 // its path in that archive, and the archive CONTAINS it.
-func toFiles(s sbom.SBOM) (results []*spdx.File, archiveRelationships []*spdx.Relationship) {
+func toFiles(s sbom.SBOM, sourceFile *file.Coordinates) (results []*spdx.File, archiveRelationships []*spdx.Relationship) {
 	_, coordinateSorter := formatInternal.GetLocationSorters(s)
 	top, entries := formatInternal.ArchiveEntries(s.AllCoordinates(), coordinateSorter)
+
+	// a file holding entries is an archive, whatever its content starts with (such as a launch script)
+	describe := func(c file.Coordinates, name string) *spdx.File {
+		f := toFile(s.Artifacts, c, name)
+		if len(entries[c]) > 0 {
+			f.FileTypes = withArchiveType(f.FileTypes)
+		}
+		return f
+	}
 
 	var addEntries func(archive file.Coordinates)
 	addEntries = func(archive file.Coordinates) {
@@ -740,7 +772,7 @@ func toFiles(s sbom.SBOM) (results []*spdx.File, archiveRelationships []*spdx.Re
 				Relationship: string(helpers.ContainsRelationship),
 				RefB:         spdx.DocElementID{ElementRefID: toSPDXID(c)},
 			})
-			results = append(results, toFile(s.Artifacts, c, strings.TrimPrefix(c.LocalPath(), "/")))
+			results = append(results, describe(c, strings.TrimPrefix(c.LocalPath(), "/")))
 			addEntries(c)
 		}
 	}
@@ -750,7 +782,24 @@ func toFiles(s sbom.SBOM) (results []*spdx.File, archiveRelationships []*spdx.Re
 			log.Debugf("unable to convert relative path '%s' to absolute path: %s", c.RealPath, err)
 			name = c.RealPath
 		}
-		results = append(results, toFile(s.Artifacts, c, name))
+		var archive *source.FileMetadata
+		if isScanRoot(c) {
+			// the scanned root is the root package, unless it is the file the source is
+			if sourceFile == nil || c != *sourceFile {
+				continue
+			}
+			name = "."
+			if m, ok := s.Source.Metadata.(source.FileMetadata); ok {
+				archive = &m
+				name = filepath.Base(m.Path)
+			}
+		}
+		f := describe(c, name)
+		if archive != nil {
+			// an extracted archive is the archive file, not the directory it was extracted to
+			f.FileTypes = withArchiveType(toFileTypes(&file.Metadata{MIMEType: archive.MIMEType}))
+		}
+		results = append(results, f)
 		addEntries(c)
 	}
 
@@ -762,6 +811,47 @@ func toFiles(s sbom.SBOM) (results []*spdx.File, archiveRelationships []*spdx.Re
 		return results[i].FileName < results[j].FileName
 	})
 	return results, archiveRelationships
+}
+
+// toSourceFile finds the file the scanned source is: a directory, or an extracted archive, is the scanned root,
+// while a single file is indexed beside its parent directory, which was not scanned.
+func toSourceFile(s sbom.SBOM) *file.Coordinates {
+	var top []file.Coordinates
+	for _, c := range s.AllCoordinates() {
+		if c.FullNestedPath() == c.RealPath {
+			top = append(top, c)
+		}
+	}
+	match := isScanRoot
+	switch m := s.Source.Metadata.(type) {
+	case source.DirectoryMetadata:
+	case source.FileMetadata:
+		name := filepath.Base(m.Path)
+		single := func(c file.Coordinates) bool { return strings.TrimPrefix(c.RealPath, "/") == name }
+		if slices.ContainsFunc(top, single) {
+			match = single
+		}
+	default:
+		return nil
+	}
+	i := slices.IndexFunc(top, match)
+	if i < 0 {
+		return nil
+	}
+	return &top[i]
+}
+
+// withArchiveType adds the archive file type, in place of other
+func withArchiveType(types []string) []string {
+	if slices.Contains(types, string(helpers.ArchiveFileType)) {
+		return types
+	}
+	types = slices.DeleteFunc(types, func(t string) bool { return t == string(helpers.OtherFileType) })
+	return append(types, string(helpers.ArchiveFileType))
+}
+
+func isScanRoot(c file.Coordinates) bool {
+	return c.RealPath == "" || c.RealPath == "/"
 }
 
 func toFile(artifacts sbom.Artifacts, c file.Coordinates, name string) *spdx.File {
@@ -879,7 +969,7 @@ func newPackageVerificationCode(rels *relationship.Index, p pkg.Package, sbom sb
 	// if a sha1 for a file is provided, then the validator will fail if the package does not have
 	// a package verification code
 	coordinates := rels.Coordinates(p, artifact.ContainsRelationship)
-	var digests []file.Digest
+	var sha1s []string
 	for _, c := range coordinates {
 		digest := sbom.Artifacts.FileDigests[c]
 		if len(digest) == 0 {
@@ -893,27 +983,23 @@ func newPackageVerificationCode(rels *relationship.Index, p pkg.Package, sbom sb
 				break
 			}
 		}
-		digests = append(digests, d)
+		sha1s = append(sha1s, d.Value)
 	}
+	return toVerificationCode(sha1s)
+}
 
-	if len(digests) == 0 {
+func toVerificationCode(sha1s []string) *spdx.PackageVerificationCode {
+	if len(sha1s) == 0 {
 		return nil
 	}
 
 	// sort templist in ascending order by SHA1 value
-	sort.SliceStable(digests, func(i, j int) bool {
-		return digests[i].Value < digests[j].Value
-	})
+	sort.Strings(sha1s)
 
 	// filelist = templist with "/n"s removed. /* ordered sequence of SHA1 values with no separators
-	var b strings.Builder
-	for _, digest := range digests {
-		b.WriteString(digest.Value)
-	}
-
 	//nolint:gosec
 	hasher := sha1.New()
-	_, _ = hasher.Write([]byte(b.String()))
+	_, _ = hasher.Write([]byte(strings.Join(sha1s, "")))
 	return &spdx.PackageVerificationCode{
 		// 7.9.1: Package Verification Code Value
 		// Cardinality: mandatory, one
@@ -934,10 +1020,6 @@ func trimPatchVersion(semver string) string {
 // spdx requires that the file name field is a relative filename
 // with the root of the package archive or directory
 func convertAbsoluteToRelative(absPath string) (string, error) {
-	// the root itself; an empty file name is not valid SPDX (tag-value omits it and cannot read it back)
-	if absPath == "" || absPath == "/" {
-		return ".", nil
-	}
 	// Ensure the absolute path is absolute (although it should already be)
 	if !path.IsAbs(absPath) {
 		// already relative

@@ -231,7 +231,7 @@ func TestEncodeDecodeSourceWithoutName(t *testing.T) {
 }
 
 func TestEncodeDecodeRootDirectoryFile(t *testing.T) {
-	// a directory scan with all file metadata describes the scanned root, whose relative path is empty
+	// a directory scan with all file metadata includes the scanned root, which has no relative path of its own
 	root := file.NewCoordinates("", "")
 	etc := file.NewCoordinates("/etc", "")
 	for _, enc := range defaultFormatEncoders() {
@@ -252,7 +252,7 @@ func TestEncodeDecodeRootDirectoryFile(t *testing.T) {
 			for c := range s.Artifacts.FileMetadata {
 				names = append(names, c.RealPath)
 			}
-			assert.ElementsMatch(t, []string{".", "etc"}, names)
+			assert.ElementsMatch(t, []string{"", "etc"}, names)
 		})
 	}
 }
