@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -62,21 +63,21 @@ func Test_candidateProductsForTerraformProvider(t *testing.T) {
 			pkg: pkg.Package{
 				Name: "registry.terraform.io/hashicorp/aws",
 			},
-			expected: []string{"terraform-provider-aws"},
+			expected: []string{"terraform_provider"},
 		},
 		{
 			name: "grafana/grafana provider",
 			pkg: pkg.Package{
 				Name: "registry.terraform.io/grafana/grafana",
 			},
-			expected: []string{"terraform-provider-grafana"},
+			expected: []string{"terraform_provider"},
 		},
 		{
 			name: "hashicorp/google provider",
 			pkg: pkg.Package{
 				Name: "registry.terraform.io/hashicorp/google",
 			},
-			expected: []string{"terraform-provider-google"},
+			expected: []string{"terraform_provider"},
 		},
 		{
 			name: "malformed name with fewer than 3 segments",
@@ -90,6 +91,41 @@ func Test_candidateProductsForTerraformProvider(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			actual := candidateProductsForTerraformProvider(test.pkg).uniqueValues()
 			assert.ElementsMatch(t, test.expected, actual)
+		})
+	}
+}
+
+func Test_candidateTargetSwForTerraformProvider(t *testing.T) {
+	tests := []struct {
+		name     string
+		pkg      pkg.Package
+		expected []string
+	}{
+		{
+			name: "hashicorp/aws provider",
+			pkg: pkg.Package{
+				Name: "registry.terraform.io/hashicorp/aws",
+			},
+			expected: []string{"aws"},
+		},
+		{
+			name: "grafana/grafana provider",
+			pkg: pkg.Package{
+				Name: "registry.terraform.io/grafana/grafana",
+			},
+			expected: []string{"grafana"},
+		},
+		{
+			name: "malformed name with fewer than 3 segments",
+			pkg: pkg.Package{
+				Name: "hashicorp/aws",
+			},
+			expected: []string{cpe.Any},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, candidateTargetSwForTerraformProvider(test.pkg))
 		})
 	}
 }

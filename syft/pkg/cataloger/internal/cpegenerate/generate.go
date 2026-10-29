@@ -228,7 +228,9 @@ func candidateTargetSw(p pkg.Package) []string {
 		// cpe:2.3:a:mojolicious:mojolicious:*:*:*:*:*:perl:*:*
 		return []string{"perl"}
 	case p.Type == pkg.TerraformPkg:
-		return []string{"terraform"}
+		// NVD records terraform providers with the provider type in target_sw, e.g.
+		// cpe:2.3:a:hashicorp:terraform_provider:*:*:*:*:*:vault:*:*
+		return candidateTargetSwForTerraformProvider(p)
 	}
 
 	return []string{cpe.Any}
