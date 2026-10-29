@@ -1,0 +1,287 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:redacted",
+  "version": 1,
+  "metadata": {
+    "timestamp": "timestamp:redacted",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "author": "anchore",
+          "name": "syft",
+          "version": "v0.42.0-bogus"
+        }
+      ]
+    },
+    "component": {
+      "bom-ref": "redacted",
+      "type": "file",
+      "name": "some/path"
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:deb/debian/attr@1%3A2.4.47-2%2Bb1?arch=amd64&distro=debian-12&package-id=5cc0e8979d7f5115&upstream=attr%401%3A2.4.47-2",
+      "type": "library",
+      "name": "attr",
+      "version": "1:2.4.47-2+b1",
+      "purl": "pkg:deb/debian/attr@1%3A2.4.47-2%2Bb1?arch=amd64&distro=debian-12&upstream=attr%401%3A2.4.47-2",
+      "externalReferences": [
+        {
+          "url": "pkg:deb/debian/attr@1%3A2.4.47-2?arch=source&distro=debian-12",
+          "type": "source-distribution"
+        }
+      ],
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "dpkg-db-cataloger"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "deb"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "dpkg-db-entry"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/var/lib/dpkg/status"
+        },
+        {
+          "name": "syft:metadata:installedSize",
+          "value": "0"
+        },
+        {
+          "name": "syft:metadata:source",
+          "value": "attr"
+        },
+        {
+          "name": "syft:metadata:sourceVersion",
+          "value": "1:2.4.47-2"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:rpm/centos/bind-export-libs@9.11.13-3.el8?arch=x86_64&distro=centos-8&epoch=32&package-id=6008fca05ca7b418&upstream=bind-9.11.13-3.el8.src.rpm",
+      "type": "library",
+      "name": "bind-export-libs",
+      "version": "32:9.11.13-3.el8",
+      "purl": "pkg:rpm/centos/bind-export-libs@9.11.13-3.el8?arch=x86_64&distro=centos-8&epoch=32&upstream=bind-9.11.13-3.el8.src.rpm",
+      "externalReferences": [
+        {
+          "url": "pkg:rpm/centos/bind@9.11.13-3.el8?arch=src&distro=centos-8&epoch=32",
+          "type": "source-distribution"
+        }
+      ],
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "rpm-db-cataloger"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "rpm"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "rpm-db-entry"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/var/lib/rpm/Packages"
+        },
+        {
+          "name": "syft:metadata:epoch",
+          "value": "32"
+        },
+        {
+          "name": "syft:metadata:release",
+          "value": "3.el8"
+        },
+        {
+          "name": "syft:metadata:size",
+          "value": "0"
+        },
+        {
+          "name": "syft:metadata:sourceRpm",
+          "value": "bind-9.11.13-3.el8.src.rpm"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:apk/alpine/busybox@1.35.0-r17?arch=x86_64&distro=alpine-3.16.3&package-id=aa74af1190de1c40",
+      "type": "library",
+      "name": "busybox",
+      "version": "1.35.0-r17",
+      "purl": "pkg:apk/alpine/busybox@1.35.0-r17?arch=x86_64&distro=alpine-3.16.3",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "apk-db-cataloger"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "apk"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "apk-db-entry"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/lib/apk/db/installed"
+        },
+        {
+          "name": "syft:metadata:installedSize",
+          "value": "0"
+        },
+        {
+          "name": "syft:metadata:originPackage",
+          "value": "busybox"
+        },
+        {
+          "name": "syft:metadata:size",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:alpm/arch/gcc-libs@13.2.1-3?arch=x86_64&distro=arch-rolling&package-id=58a2fcf749a9a3cc&upstream=gcc",
+      "type": "library",
+      "name": "gcc-libs",
+      "version": "13.2.1-3",
+      "purl": "pkg:alpm/arch/gcc-libs@13.2.1-3?arch=x86_64&distro=arch-rolling&upstream=gcc",
+      "externalReferences": [
+        {
+          "url": "pkg:alpm/arch/gcc@13.2.1-3?distro=arch-rolling",
+          "type": "source-distribution"
+        }
+      ],
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "alpm-db-cataloger"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "alpm"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "alpm-db-entry"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/var/lib/pacman/local/gcc-libs-13.2.1-3/desc"
+        },
+        {
+          "name": "syft:metadata:architecture",
+          "value": "x86_64"
+        },
+        {
+          "name": "syft:metadata:basepackage",
+          "value": "gcc"
+        },
+        {
+          "name": "syft:metadata:package",
+          "value": "gcc-libs"
+        },
+        {
+          "name": "syft:metadata:size",
+          "value": "0"
+        },
+        {
+          "name": "syft:metadata:version",
+          "value": "13.2.1-3"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:apk/alpine/libc-utils@0.7.2-r3?arch=x86_64&distro=alpine-3.16.3&package-id=16a8c7b19fde6f4f&upstream=libc-dev",
+      "type": "library",
+      "name": "libc-utils",
+      "version": "0.7.2-r3",
+      "purl": "pkg:apk/alpine/libc-utils@0.7.2-r3?arch=x86_64&distro=alpine-3.16.3&upstream=libc-dev",
+      "externalReferences": [
+        {
+          "url": "pkg:apk/alpine/libc-dev@0.7.2-r3?distro=alpine-3.16.3",
+          "type": "source-distribution"
+        }
+      ],
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "apk-db-cataloger"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "apk"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "apk-db-entry"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/lib/apk/db/installed"
+        },
+        {
+          "name": "syft:metadata:installedSize",
+          "value": "0"
+        },
+        {
+          "name": "syft:metadata:originPackage",
+          "value": "libc-dev"
+        },
+        {
+          "name": "syft:metadata:size",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:deb/debian/libpam-runtime@1.5.2-6%2Bdeb12u1?arch=all&distro=debian-12&package-id=7b4ddc97df57aec4&upstream=pam",
+      "type": "library",
+      "name": "libpam-runtime",
+      "version": "1.5.2-6+deb12u1",
+      "purl": "pkg:deb/debian/libpam-runtime@1.5.2-6%2Bdeb12u1?arch=all&distro=debian-12&upstream=pam",
+      "externalReferences": [
+        {
+          "url": "pkg:deb/debian/pam@1.5.2-6%2Bdeb12u1?arch=source&distro=debian-12",
+          "type": "source-distribution"
+        }
+      ],
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "dpkg-db-cataloger"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "deb"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "dpkg-db-entry"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/var/lib/dpkg/status"
+        },
+        {
+          "name": "syft:metadata:installedSize",
+          "value": "0"
+        },
+        {
+          "name": "syft:metadata:source",
+          "value": "pam"
+        }
+      ]
+    }
+  ]
+}
