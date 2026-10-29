@@ -903,7 +903,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			expected: []string{},
 		},
 		{
-			name: "terraform provider generates provider-specific CPEs not application CPEs",
+			name: "terraform provider generates NVD terraform_provider CPEs not application CPEs",
 			p: pkg.Package{
 				Name:     "registry.terraform.io/grafana/grafana",
 				Version:  "4.45.2",
@@ -915,8 +915,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:grafana:terraform-provider-grafana:4.45.2:*:*:*:*:terraform:*:*",
-				"cpe:2.3:a:grafana:terraform_provider_grafana:4.45.2:*:*:*:*:terraform:*:*",
+				"cpe:2.3:a:grafana:terraform_provider:4.45.2:*:*:*:*:grafana:*:*",
 			},
 		},
 		{
@@ -932,8 +931,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:hashicorp:terraform-provider-aws:5.72.1:*:*:*:*:terraform:*:*",
-				"cpe:2.3:a:hashicorp:terraform_provider_aws:5.72.1:*:*:*:*:terraform:*:*",
+				"cpe:2.3:a:hashicorp:terraform_provider:5.72.1:*:*:*:*:aws:*:*",
 			},
 		},
 		{
