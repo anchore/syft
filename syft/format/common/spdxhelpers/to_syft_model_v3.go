@@ -356,7 +356,11 @@ func v3collectSyftFiles(s *sbom.SBOM, spdxMap ptrMap[any], doc *spdx.Document, s
 	}
 
 	for _, f := range files {
-		l := file.NewLocationFromCoordinates(nested.coordinates(ptrTo(f)))
+		c, ok := nested.coordinates(ptrTo(f))
+		if !ok {
+			continue
+		}
+		l := file.NewLocationFromCoordinates(c)
 		spdxMap.Set(f, l)
 
 		s.Artifacts.FileMetadata[l.Coordinates] = v3toFileMetadata(f)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -52,11 +53,13 @@ func collectFiles(components []cyclonedx.Component, container *file.Coordinates,
 		if component.Type == cyclonedx.ComponentTypeFile {
 			c := file.NewCoordinates("/"+strings.TrimPrefix(component.Name, "/"), "")
 			if container != nil {
-				c = file.Coordinates{
-					RealPath:     container.RealPath,
-					FileSystemID: container.FileSystemID,
-					FullPath:     container.FullNestedPath() + file.ArchivePathSeparator + strings.TrimPrefix(component.Name, "/"),
+				nested, ok := internal.NestedCoordinates(*container, component.Name)
+				if !ok {
+					// a chain a scan would refuse is dropped with everything in it, since no scan put it
+					// anywhere else
+					continue
 				}
+				c = nested
 			}
 			coordinates = &c
 			if s.Artifacts.FileMetadata == nil {

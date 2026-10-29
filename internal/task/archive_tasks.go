@@ -42,7 +42,7 @@ const ArchiveCatalogerTaskName = "archive-cataloger"
 // unknowns.IncludeUnexpandedArchives it also reports archives in formats it does not extract.
 //
 // exclusions are the scan's exclusion patterns, applied inside each archive. Returns nil when archive
-// cataloging is disabled (MaxDepth == 0; negative means as deep as unboundedArchiveDepth).
+// cataloging is disabled (MaxDepth == 0; negative or beyond archive.MaxDepth means as deep as archive.MaxDepth).
 func NewArchiveCatalogerTask(cfg cataloging.ArchiveSearchConfig, unknowns cataloging.UnknownsConfig, pkgTasks, fileTasks []Task, exclusions []string) Task {
 	return newArchiveCatalogerTask(cfg.MaxDepth, archiveLimits(cfg), unknowns.IncludeUnexpandedArchives, pkgTasks, fileTasks, exclusions)
 }
@@ -138,10 +138,6 @@ func (c *archiveCataloger) logStats() {
 	log.WithFields(fields...).Info("nested archive cataloging complete")
 }
 
-// unboundedArchiveDepth is the depth a negative MaxDepth stops at. No real nesting comes close, and a
-// hostile archive (a zip quine, a recursive bomb) must still end.
-const unboundedArchiveDepth = 16
-
 // catalog processes every archive in the resolver, recursing into each up to maxDepth.
 func (c *archiveCataloger) catalog(ctx context.Context, resolver file.Resolver, depth int, builder sbomsync.Builder) error {
 	return c.catalogCandidates(ctx, resolver, c.discoverArchives(resolver), depth, builder)
@@ -149,8 +145,9 @@ func (c *archiveCataloger) catalog(ctx context.Context, resolver file.Resolver, 
 
 func (c *archiveCataloger) catalogCandidates(ctx context.Context, resolver file.Resolver, candidates []archiveCandidate, depth int, builder sbomsync.Builder) error {
 	maxDepth := c.maxDepth
-	if maxDepth < 0 {
-		maxDepth = unboundedArchiveDepth
+	// a deeper scan would write chains no decoder accepts back
+	if maxDepth < 0 || maxDepth > archive.MaxDepth {
+		maxDepth = archive.MaxDepth
 	}
 	if depth >= maxDepth {
 		// java's own recursion is off while this task runs, so an archive left here is otherwise lost

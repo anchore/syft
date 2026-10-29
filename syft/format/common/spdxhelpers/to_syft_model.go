@@ -443,7 +443,11 @@ func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document
 	}
 
 	for id, f := range files {
-		l := file.NewLocationFromCoordinates(nested.coordinates(id))
+		c, ok := nested.coordinates(id)
+		if !ok {
+			continue
+		}
+		l := file.NewLocationFromCoordinates(c)
 		spdxIDMap[string(id)] = l
 
 		s.Artifacts.FileMetadata[l.Coordinates] = toFileMetadata(f)
@@ -457,29 +461,41 @@ type nestedFiles[K comparable] struct {
 	own       map[K]file.Coordinates
 	container map[K]K
 	resolved  map[K]file.Coordinates
+	refused   map[K]bool
 }
 
 func newNestedFiles[K comparable]() nestedFiles[K] {
-	return nestedFiles[K]{own: map[K]file.Coordinates{}, container: map[K]K{}, resolved: map[K]file.Coordinates{}}
+	return nestedFiles[K]{own: map[K]file.Coordinates{}, container: map[K]K{}, resolved: map[K]file.Coordinates{}, refused: map[K]bool{}}
 }
 
-func (n nestedFiles[K]) coordinates(id K) file.Coordinates {
-	if c, ok := n.resolved[id]; ok {
-		return c
-	}
-	c := n.own[id]
-	if container, ok := n.container[id]; ok {
-		// a containment cycle ends where it started
-		delete(n.container, id)
-		archive := n.coordinates(container)
-		c = file.Coordinates{
-			RealPath:     archive.RealPath,
-			FileSystemID: archive.FileSystemID,
-			FullPath:     archive.FullNestedPath() + file.ArchivePathSeparator + strings.TrimPrefix(c.RealPath, "/"),
+// coordinates reports false for a file within a chain a scan would refuse (a bad name, too deep, too long), and
+// for everything within it. Such a file is dropped rather than moved, since no scan put it anywhere else.
+func (n nestedFiles[K]) coordinates(id K) (file.Coordinates, bool) {
+	// walk up to a resolved or outermost file, then resolve back down, so a long chain costs no stack
+	chain := []K{id}
+	for {
+		next, ok := n.container[chain[len(chain)-1]]
+		if _, resolved := n.resolved[chain[len(chain)-1]]; resolved || !ok {
+			break
 		}
+		// a containment cycle ends where it started
+		delete(n.container, chain[len(chain)-1])
+		chain = append(chain, next)
 	}
-	n.resolved[id] = c
-	return c
+	for i := len(chain) - 1; i >= 0; i-- {
+		if _, ok := n.resolved[chain[i]]; ok {
+			continue
+		}
+		c := n.own[chain[i]]
+		if i+1 < len(chain) {
+			container := chain[i+1]
+			nested, ok := internal.NestedCoordinates(n.resolved[container], c.RealPath)
+			n.refused[chain[i]] = !ok || n.refused[container]
+			c = nested
+		}
+		n.resolved[chain[i]] = c
+	}
+	return n.resolved[id], !n.refused[id]
 }
 
 func toFileDigests(f *spdx.File) (digests []file.Digest) {

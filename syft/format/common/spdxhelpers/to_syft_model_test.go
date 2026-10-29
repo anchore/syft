@@ -2,6 +2,7 @@ package spdxhelpers
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -12,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -794,4 +796,25 @@ func Test_skipsPackagesWithGeneratedFromRelationship(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, s.Artifacts.Packages.Package("1"))
 	assert.Nil(t, s.Artifacts.Packages.Package("1-src"))
+}
+
+func Test_nestedFiles_longChainIsCapped(t *testing.T) {
+	// a document can claim any chain; it decodes no deeper than a scan goes, without recursing per level, and
+	// what is past that is dropped
+	n := newNestedFiles[int]()
+	const length = 100_000
+	for i := range length {
+		n.own[i] = file.NewCoordinates("/a.jar", "")
+		if i > 0 {
+			n.container[i] = i - 1
+		}
+	}
+
+	for i := length - 1; i >= 0; i-- {
+		c, ok := n.coordinates(i)
+		assert.Equal(t, i <= archive.MaxDepth, ok, "%d", i)
+		if ok {
+			assert.Equal(t, "/a.jar"+strings.Repeat("!/a.jar", i), c.FullNestedPath())
+		}
+	}
 }

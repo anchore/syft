@@ -247,20 +247,25 @@ func Test_NewArchiveCatalogerTask_gating(t *testing.T) {
 	}
 }
 
-func Test_archiveCataloger_negativeDepthStopsAtTheCeiling(t *testing.T) {
-	// "unbounded" must still end, or a zip quine or recursive bomb runs forever
+func Test_archiveCataloger_depthStopsAtTheCeiling(t *testing.T) {
+	// "unbounded" must still end, or a zip quine or recursive bomb runs forever, and a configured depth
+	// past the ceiling must too, or the SBOM holds chains no decoder accepts back
 	chain := testutils.Zip(t, map[string][]byte{"deep.txt": []byte("deep")})
-	for range unboundedArchiveDepth + 4 {
+	for range archive.MaxDepth + 4 {
 		chain = testutils.Zip(t, map[string][]byte{"n.zip": chain})
 	}
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), chain, 0o600))
 
-	var seen []string
-	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(-1), capturingTask(t, &seen, nil))
-	_ = tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM()))
+	for _, depth := range []int{-1, archive.MaxDepth + 2} {
+		t.Run(fmt.Sprint(depth), func(t *testing.T) {
+			var seen []string
+			tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(depth), capturingTask(t, &seen, nil))
+			_ = tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM()))
 
-	assert.Len(t, seen, unboundedArchiveDepth)
+			assert.Len(t, seen, archive.MaxDepth)
+		})
+	}
 }
 
 func Test_archiveCataloger_anArchiveIdenticalToAnAncestorIsNotEntered(t *testing.T) {

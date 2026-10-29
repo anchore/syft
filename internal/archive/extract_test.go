@@ -228,6 +228,18 @@ func TestResolver_extract_dataEdgeCases(t *testing.T) {
 		assert.ErrorContains(t, r.Truncated, "path components")
 	})
 
+	t.Run("an entry whose chain is longer than a path is skipped and reported", func(t *testing.T) {
+		// the chain is the archive's own path, the separator, then the name
+		fits := strings.Repeat("a", MaxPathBytes-len("test-archive!/"))
+		data := zipBytes(t, map[string]string{
+			fits:       "at the cap",
+			fits + "b": "over the cap",
+		})
+		r, _ := extractBytes(t, data, "test.zip", nil)
+		assert.Equal(t, []string{fits}, storedNames(t, r))
+		assert.ErrorContains(t, r.Truncated, "archive chain")
+	})
+
 	t.Run("an over-long entry name is skipped", func(t *testing.T) {
 		data := zipBytes(t, map[string]string{
 			strings.Repeat("a/", maxEntryNameBytes) + "f": "deep",

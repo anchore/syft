@@ -487,7 +487,17 @@ func (entryReader) Close() error { return nil }
 
 // maxEntryNameBytes is the longest entry name stored: PATH_MAX. Every path component becomes a node,
 // so a longer name is a cheap way to inflate the index and no filesystem could hold it anyway.
-const maxEntryNameBytes = 4096
+const maxEntryNameBytes = MaxPathBytes
+
+// MaxPathBytes is PATH_MAX, the longest whole archive chain a scan stores or a decoded document may build.
+// Each nested file copies its container's chain, so without it a long name shared by many small entries
+// costs memory quadratic in the document.
+const MaxPathBytes = 4096
+
+// MaxDepth is the deepest archives nest: a scan stops there whatever depth is configured, and a decoded
+// document is held to it. No real nesting comes close, and a hostile archive (a zip quine, a recursive bomb)
+// must still end.
+const MaxDepth = 16
 
 // maxEntryNameDepth is the most path components an entry name may have. Adding an entry costs work per
 // component, and no real archive nests anywhere near this deep.
@@ -507,12 +517,17 @@ func (r *Resolver) entryHeader(f archives.FileInfo) (tar.Header, bool) {
 		return tar.Header{}, false
 	}
 
-	name, err := entryName(f.NameInArchive)
+	name, err := EntryName(f.NameInArchive)
 	if err != nil {
 		r.truncate(fmt.Errorf("an entry was skipped: %w", err))
 		return tar.Header{}, false
 	}
 	if name == "" {
+		return tar.Header{}, false
+	}
+	// held to the chain length a decoder accepts back, so the SBOM round-trips
+	if chain := len(r.archiveCoordinates.FullNestedPath()) + len(file.ArchivePathSeparator) + len(name); chain > MaxPathBytes {
+		r.truncate(fmt.Errorf("an entry was skipped: its path of %d bytes within the archive chain exceeds the %d byte cap", chain, MaxPathBytes))
 		return tar.Header{}, false
 	}
 
@@ -533,11 +548,12 @@ func (r *Resolver) entryHeader(f archives.FileInfo) (tar.Header, bool) {
 	return *hdr, true
 }
 
-// entryName cleans an archive entry's name to a path relative to the archive root, returning "" when it
+// EntryName cleans an archive entry's name to a path relative to the archive root, returning "" when it
 // names nothing inside the archive. This is the trust boundary for names: every one ends up in FullPath
 // and the encoders, so a name that could forge an archive boundary ("!/") or a line in a line-oriented
-// format (control characters, unicode line separators) is refused.
-func entryName(name string) (string, error) {
+// format (control characters, unicode line separators) is refused. Decoders building nested coordinates
+// from a document hold its names to the same rules.
+func EntryName(name string) (string, error) {
 	if len(name) > maxEntryNameBytes {
 		return "", fmt.Errorf("entry name of %d bytes exceeds the %d byte cap", len(name), maxEntryNameBytes)
 	}
