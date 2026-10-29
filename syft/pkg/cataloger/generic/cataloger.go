@@ -191,16 +191,20 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 	lgr := log.Nested("cataloger", c.upstreamCataloger)
 
-	env := Environment{
+	requests := c.selectFiles(resolver)
+
+	var env Environment
+	if len(requests) > 0 {
+		// The release is only needed by parsers, so skip identifying it when there is nothing to parse.
 		// TODO: consider passing into the cataloger, this would affect the cataloger interface (and all implementations). This can be deferred until later.
-		LinuxRelease: linux.IdentifyRelease(resolver),
+		env.LinuxRelease = linux.IdentifyRelease(resolver)
 	}
 
 	type result struct {
 		pkgs []pkg.Package
 		rels []artifact.Relationship
 	}
-	errs := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(c.selectFiles(resolver)), func(req request) (result, error) {
+	errs := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(requests), func(req request) (result, error) {
 		location, parser := req.Location, req.Parser
 
 		log.WithFields("path", location.RealPath).Trace("parsing file contents")
