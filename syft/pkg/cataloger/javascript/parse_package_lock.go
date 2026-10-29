@@ -41,6 +41,7 @@ type lockPackage struct {
 	Integrity    string             `json:"integrity"`
 	License      packageLockLicense `json:"license"`
 	Dev          bool               `json:"dev"`
+	Link         bool               `json:"link"`
 	Dependencies map[string]string  `json:"dependencies"`
 }
 
@@ -84,7 +85,23 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 	}
 
 	if lock.LockfileVersion == 2 || lock.LockfileVersion == 3 {
+		// a link entry ("node_modules/<name>" with link: true) only points at a local package
+		// entry elsewhere in the lockfile; its key is the name that local package is installed under
+		linkNames := make(map[string]string)
 		for name, pkgMeta := range lock.Packages {
+			if pkgMeta.Link {
+				linkNames[pkgMeta.Resolved] = getNameFromPath(name)
+			}
+		}
+
+		for name, pkgMeta := range lock.Packages {
+			if pkgMeta.Link {
+				continue
+			}
+			if linkName, ok := linkNames[name]; ok && pkgMeta.Name == "" {
+				name = linkName
+			}
+
 			if name == "" {
 				if pkgMeta.Name == "" {
 					continue
