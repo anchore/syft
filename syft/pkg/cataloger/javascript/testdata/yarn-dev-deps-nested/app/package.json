@@ -1,0 +1,10 @@
+{
+  "name": "test-project",
+  "version": "1.0.0",
+  "dependencies": {
+    "prod-pkg": "^1.0.0"
+  },
+  "devDependencies": {
+    "dev-pkg": "^1.0.0"
+  }
+}

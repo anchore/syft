@@ -1049,10 +1049,51 @@ func TestParseYarnLock_DevDependencies(t *testing.T) {
 
 			adapter := newGenericYarnLockAdapter(CatalogerConfig{IncludeDevDependencies: tt.includeDev})
 			pkgtest.NewCatalogTester().
-				FromDirectory(t, tt.fixtureDir).
+				// the fixture location is relative to the working directory, so the resolver must be rooted
+				// there too for the sibling package.json to be found next to the lockfile
+				FromDirectory(t, ".").
 				FromFile(t, fixture).
 				Expects(expectedPkgs, expectedRels).
 				TestParser(t, adapter.parseYarnLock)
+		})
+	}
+}
+
+func TestLockCataloger_YarnDevDependenciesInSubdirectory(t *testing.T) {
+	// the yarn.lock lives in app/, next to its own package.json. The scan root has a different
+	// package.json that marks prod-pkg as dev-only and does not mention dev-pkg at all. The lockfile
+	// must be filtered with app/package.json, not with the one at the scan root.
+	tests := []struct {
+		name       string
+		includeDev bool
+		expected   []string
+	}{
+		{
+			name:       "exclude dev dependencies",
+			includeDev: false,
+			expected: []string{
+				"prod-pkg @ 1.0.0 (app/yarn.lock)",
+				"shared-pkg @ 1.0.0 (app/yarn.lock)",
+			},
+		},
+		{
+			name:       "include dev dependencies",
+			includeDev: true,
+			expected: []string{
+				"dev-only-transitive @ 1.0.0 (app/yarn.lock)",
+				"dev-pkg @ 1.0.0 (app/yarn.lock)",
+				"prod-pkg @ 1.0.0 (app/yarn.lock)",
+				"shared-pkg @ 1.0.0 (app/yarn.lock)",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, "testdata/yarn-dev-deps-nested").
+				ExpectsPackageStrings(tt.expected).
+				TestCataloger(t, NewLockCataloger(CatalogerConfig{IncludeDevDependencies: tt.includeDev}))
 		})
 	}
 }
