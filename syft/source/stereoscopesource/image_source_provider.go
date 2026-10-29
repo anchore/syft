@@ -15,6 +15,8 @@ type ProviderConfig struct {
 	StereoscopeImageProviderConfig stereoscope.ImageProviderConfig
 	Exclude                        source.ExcludeConfig
 	Alias                          source.Alias
+	// ImageSquashOnly reads the image keeping only the image squash, see image.WithImageSquashOnly
+	ImageSquashOnly bool
 }
 
 type stereoscopeImageSourceProvider struct {
@@ -29,6 +31,10 @@ func (l stereoscopeImageSourceProvider) Name() string {
 }
 
 func (l stereoscopeImageSourceProvider) Provide(ctx context.Context) (source.Source, error) {
+	if l.cfg.ImageSquashOnly {
+		// scoped to this read only, the caller's ctx may be shared with reads that need every layer squash
+		ctx = image.WithImageSquashOnly(ctx)
+	}
 	img, err := l.stereoscopeProvider.Provide(ctx)
 	if err != nil {
 		return nil, err

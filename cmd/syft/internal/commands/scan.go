@@ -239,7 +239,9 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 		}).
 		WithBasePath(opts.Source.BasePath).
 		WithSources(sources...).
-		WithDefaultImagePullSource(opts.Source.Image.DefaultPullSource)
+		WithDefaultImagePullSource(opts.Source.Image.DefaultPullSource).
+		// only the squashed scope reads from the image squash alone, every other scope needs each layer's squash
+		WithImageSquashOnly(source.ParseScope(opts.Scope) == source.SquashedScope)
 
 	var err error
 	var platform *image.Platform

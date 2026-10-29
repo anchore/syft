@@ -57,6 +57,14 @@ func (c *GetSourceConfig) WithBasePath(basePath string) *GetSourceConfig {
 	return c
 }
 
+// WithImageSquashOnly reads container images keeping only the image squash, which cuts memory sharply on
+// images with many layers. Only use it when the source will be resolved with source.SquashedScope:
+// any other scope returns an error from FileResolver.
+func (c *GetSourceConfig) WithImageSquashOnly(squashOnly bool) *GetSourceConfig {
+	c.SourceProviderConfig = c.SourceProviderConfig.WithImageSquashOnly(squashOnly)
+	return c
+}
+
 func (c *GetSourceConfig) WithSources(sources ...string) *GetSourceConfig {
 	c.Sources = sources
 	return c

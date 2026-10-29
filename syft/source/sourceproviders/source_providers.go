@@ -67,8 +67,9 @@ func stereoscopeSourceProviders(userInput string, cfg *Config) collections.Tagge
 			Platform:  cfg.Platform,
 			Registry:  registry,
 		},
-		Alias:   cfg.Alias,
-		Exclude: cfg.Exclude,
+		Alias:           cfg.Alias,
+		Exclude:         cfg.Exclude,
+		ImageSquashOnly: cfg.ImageSquashOnly,
 	})
 	return stereoscopeProviders
 }

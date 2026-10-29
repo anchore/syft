@@ -15,6 +15,10 @@ type Config struct {
 	Exclude          source.ExcludeConfig
 	DigestAlgorithms []crypto.Hash
 	BasePath         string
+	// ImageSquashOnly reads container images keeping only the image squash, dropping the squash every
+	// lower layer would otherwise hold. This cuts memory sharply on images with many layers, but the
+	// resulting source only supports the squashed scope.
+	ImageSquashOnly bool
 }
 
 func (c *Config) WithAlias(alias source.Alias) *Config {
@@ -44,6 +48,11 @@ func (c *Config) WithDigestAlgorithms(algorithms ...crypto.Hash) *Config {
 
 func (c *Config) WithBasePath(basePath string) *Config {
 	c.BasePath = basePath
+	return c
+}
+
+func (c *Config) WithImageSquashOnly(squashOnly bool) *Config {
+	c.ImageSquashOnly = squashOnly
 	return c
 }
 
