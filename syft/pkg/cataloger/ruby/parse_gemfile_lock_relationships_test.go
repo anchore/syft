@@ -46,6 +46,25 @@ func Test_isGemDependencyLine(t *testing.T) {
 	}
 }
 
+func Test_isDirectDependencyLine(t *testing.T) {
+	tests := []struct {
+		name string
+		line string
+		want bool
+	}{
+		{"declared gem with constraint (2-space indent)", "  rails (= 4.1.1)", true},
+		{"declared gem from a git source", "  turbolinks!", true},
+		{"spec entry (4-space indent)", "    rake (13.0.6)", false},
+		{"section header", "DEPENDENCIES", false},
+		{"too short", " x", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, isDirectDependencyLine(tt.line))
+		})
+	}
+}
+
 func Test_gemfileLockDependencySpecifier(t *testing.T) {
 	tests := []struct {
 		name string

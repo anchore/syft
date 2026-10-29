@@ -36,6 +36,8 @@ catalogers:
             default:
               - direct
               - indirect
+            evidence:
+              - RubyGemfileLockEntry.Direct
           - name: dependency.edges
             default: complete
           - name: dependency.kinds

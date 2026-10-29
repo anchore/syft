@@ -30,4 +30,9 @@ type RubyGemfileLockEntry struct {
 	// in the entry's indented dependency list. Used to derive dependency-of
 	// relationships between the locked gems.
 	Dependencies []string `mapstructure:"dependencies" json:"dependencies,omitempty"`
+
+	// Direct is true when the project itself declares this gem, i.e. it is listed in
+	// the Gemfile.lock DEPENDENCIES section (the gems named in the Gemfile), rather
+	// than only being required by another locked gem.
+	Direct bool `mapstructure:"direct" json:"direct,omitempty"`
 }

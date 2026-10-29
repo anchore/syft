@@ -23,23 +23,32 @@ var sectionsOfInterest = strset.New("GEM", "GIT", "PATH", "PLUGIN SOURCE")
 // Each gem's dependency list (the indented lines beneath its spec) is recorded
 // on the package metadata; the dependency.Processor wired into the cataloger
 // turns those into dependency-of relationships once all packages are known.
+// Gems listed in the DEPENDENCIES section, the ones the Gemfile declares, are
+// marked Direct.
 func parseGemFileLockEntries(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := internal.NewLineScanner(reader)
 
 	var currentSection string
 	var entries []pkg.RubyGemfileLockEntry
+	direct := strset.New()
 	current := -1 // index into entries of the gem whose dependency lines we're reading
 
 	for scanner.Scan() {
 		line := scanner.Text()
 		sanitizedLine := strings.TrimSpace(line)
 
-		if len(line) > 1 && line[0] != ' ' {
+		switch {
+		case len(line) > 1 && line[0] != ' ':
 			// start of section
 			currentSection = sanitizedLine
 			current = -1
 			continue
-		} else if !sectionsOfInterest.Has(currentSection) {
+		case currentSection == "DEPENDENCIES":
+			if fields := strings.Fields(sanitizedLine); isDirectDependencyLine(line) && len(fields) > 0 {
+				direct.Add(strings.TrimSuffix(fields[0], "!"))
+			}
+			continue
+		case !sectionsOfInterest.Has(currentSection):
 			// skip this line, we're in the wrong section
 			continue
 		}
@@ -70,6 +79,7 @@ func parseGemFileLockEntries(_ context.Context, _ file.Resolver, _ *generic.Envi
 
 	pkgs := make([]pkg.Package, 0, len(entries))
 	for _, entry := range entries {
+		entry.Direct = direct.Has(entry.Name)
 		pkgs = append(pkgs,
 			newGemfileLockPackage(entry, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		)
@@ -94,4 +104,13 @@ func isGemDependencyLine(line string) bool {
 		return false
 	}
 	return strings.Count(line[:7], " ") == 6
+}
+
+// isDirectDependencyLine reports whether a line names a gem in the DEPENDENCIES
+// section (2-space indent), e.g. "  rails (= 4.1.1)" or "  turbolinks!".
+func isDirectDependencyLine(line string) bool {
+	if len(line) < 3 {
+		return false
+	}
+	return strings.Count(line[:3], " ") == 2
 }

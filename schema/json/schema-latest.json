@@ -4223,6 +4223,10 @@
           },
           "type": "array",
           "description": "Dependencies are the names of the gems this entry depends on, as declared\nin the entry's indented dependency list. Used to derive dependency-of\nrelationships between the locked gems."
+        },
+        "direct": {
+          "type": "boolean",
+          "description": "Direct is true when the project itself declares this gem, i.e. it is listed in\nthe Gemfile.lock DEPENDENCIES section (the gems named in the Gemfile), rather\nthan only being required by another locked gem."
         }
       },
       "type": "object",

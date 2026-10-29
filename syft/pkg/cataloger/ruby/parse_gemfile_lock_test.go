@@ -3,6 +3,8 @@ package ruby
 import (
 	"testing"
 
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -100,12 +102,22 @@ func TestParseGemfileLockEntries(t *testing.T) {
 		"unicorn":         {"kgio", "rack", "raindrops"},
 	}
 
+	// directGems mirrors the DEPENDENCIES section of testdata/Gemfile.lock, the
+	// gems the Gemfile declares. google-cloud-errors and turbolinks are written
+	// with a trailing "!" there because they come from a git source.
+	directGems := strset.New(
+		"bootstrap-sass", "coffee-rails", "google-cloud-errors", "jbuilder", "jquery-rails",
+		"mysql2", "rails", "sass-rails", "sdoc", "spring", "sqlite3", "therubyracer",
+		"turbolinks", "uglifier", "unicorn",
+	)
+
 	for i := range expectedPkgs {
 		name := expectedPkgs[i].Name
 		expectedPkgs[i].Metadata = pkg.RubyGemfileLockEntry{
 			Name:         name,
 			Version:      expectedPkgs[i].Version,
 			Dependencies: gemDeps[name],
+			Direct:       directGems.Has(name),
 		}
 		expectedPkgs[i].SetID()
 	}
