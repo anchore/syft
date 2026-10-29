@@ -80,42 +80,68 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 			}
 		}
 	}
-
+	if srcRef := encodeSourcePackageExternalReference(p); srcRef != nil {
+		refs = append(refs, *srcRef)
+	}
 	if len(refs) > 0 {
 		return &refs
 	}
 	return nil
 }
 
+// encodeSourcePackageExternalReference returns a "source-distribution" reference holding the PURL of the distro
+// source package that a binary OS package was built from (e.g. libpam-runtime -> pkg:deb/debian/pam@...?arch=source).
+// It is only emitted when the source differs from the binary package (by name or version) and when the package PURL
+// is of the type implied by the metadata. The main consumer is vulnerability matching, since distros tend to report
+// vulnerabilities against the source package rather than each binary package built from it.
+//
+// why an external reference and not pedigree: `component.pedigree.ancestors` looks like the obvious spot for "this
+// binary came from that source", but pedigree describes code lineage (forks, patched variants, and the patches that
+// separate them). A binary built unmodified from its own distro source package is the same code in a different form,
+// not a fork, and CycloneDX components are deliberately agnostic to source vs binary form (see the comments from the
+// CycloneDX maintainers in https://github.com/CycloneDX/specification/issues/612#issuecomment-2958800363). The
+// ancestor slot is better left for the upstream project a distro patched (e.g. Linux-PAM for Debian's pam), which
+// syft does not know today.
+//
+// why "source-distribution": the spec defines it as "the location where the source code distributable can be
+// obtained", and a deb/rpm source package is exactly that distributable (a .dsc and tarballs in the Debian source
+// pool, a .src.rpm in an SRPMS repo). The value is a PURL (an identifier) rather than a download URL, which the
+// schema allows since external reference URLs are URIs of any scheme, and a CycloneDX maintainer confirmed this exact
+// shape is valid in https://github.com/CycloneDX/specification/issues/612#issuecomment-5428057874. A first-class
+// "source" component type was discussed in that issue and deferred to CycloneDX 2.0.
 func encodeSourcePackageExternalReference(p pkg.Package) *cyclonedx.ExternalReference {
-	name, version, arch := sourceCoordinates(p)
-	if name == "" || version == "" {
-		return nil
-	}
 	if p.PURL == "" {
 		return nil
 	}
-
-	pkgPurl, err := packageurl.FromString(p.PURL)
-	if err != nil {
+	src := sourcePackageOf(p)
+	if src == nil {
 		return nil
 	}
 
-	qualifiers := pkgPurl.Qualifiers.Map()
-	delete(qualifiers, pkg.PURLQualifierUpstream)
-	delete(qualifiers, pkg.PURLQualifierArch)
+	// the binary PURL is only consulted for the namespace and a small set of qualifiers (e.g. distro), everything
+	// else describes the binary package and must not be restated as a fact about the source package.
+	binPurl, err := packageurl.FromString(p.PURL)
+	if err != nil || binPurl.Type != src.purlType {
+		return nil
+	}
 
-	if arch != "" {
-		qualifiers[pkg.PURLQualifierArch] = arch
+	qualifiers := map[string]string{}
+	for _, q := range binPurl.Qualifiers {
+		if src.keepQualifier(q.Key) {
+			qualifiers[q.Key] = q.Value
+		}
+	}
+	if src.arch != "" {
+		qualifiers[pkg.PURLQualifierArch] = src.arch
 	}
 
 	srcPurl := packageurl.NewPackageURL(
-		pkgPurl.Type,
-		pkgPurl.Namespace,
-		name,
-		version,
+		src.purlType,
+		binPurl.Namespace,
+		src.name,
+		src.version,
 		packageurl.QualifiersFromMap(qualifiers),
-		pkgPurl.Subpath,
+		"",
 	)
 
 	return &cyclonedx.ExternalReference{
@@ -124,51 +150,90 @@ func encodeSourcePackageExternalReference(p pkg.Package) *cyclonedx.ExternalRefe
 	}
 }
 
-func sourceCoordinates(p pkg.Package) (name, version, arch string) {
-	switch metadata := p.Metadata.(type) {
-	case pkg.ApkDBEntry:
-		if metadata.OriginPackage != "" && metadata.OriginPackage != metadata.Package {
-			return metadata.OriginPackage, metadata.Version, ""
-		}
+// sourcePackage is the identity of the source package a binary OS package was built from.
+type sourcePackage struct {
+	purlType string
+	name     string
+	version  string
+	// arch is the ecosystem's source architecture marker ("source" for deb, "src" or "nosrc" for rpm)
+	arch string
+}
+
+func (s sourcePackage) keepQualifier(key string) bool {
+	switch key {
+	case pkg.PURLQualifierDistro:
+		return true
+	case pkg.PURLQualifierEpoch, pkg.PURLQualifierRpmModularity:
+		return s.purlType == pkg.RpmPkg.PackageURLType()
+	}
+	return false
+}
+
+// sourcePackageOf returns the source package for p, or nil when there is none or it is the same as the binary.
+//
+// only deb and rpm are supported, since those are the ecosystems that publish real source packages with their own
+// PURL identity (arch=source / arch=src). apk (origin) and alpm (pkgbase) are intentionally left out: there the
+// "source" is a build recipe rather than a published source distributable, and its name is usually also the name of
+// a real binary package (e.g. pkg:apk/alpine/libc-dev@0.7.2-r3 is an installable package, not a source archive), so
+// a "source-distribution" reference would point at a binary package. Whether those ecosystems have a meaningful
+// source PURL is still an open question, and until then the `upstream` PURL qualifier continues to carry that info.
+func sourcePackageOf(p pkg.Package) *sourcePackage {
+	var src sourcePackage
+	var binName, binVersion string
+	switch m := p.Metadata.(type) {
 	case pkg.DpkgDBEntry:
-		return dpkgSourceCoordinates(metadata)
+		src = dpkgSourcePackage(m)
+		binName, binVersion = m.Package, m.Version
 	case pkg.DpkgArchiveEntry:
-		return dpkgSourceCoordinates(pkg.DpkgDBEntry(metadata))
+		src = dpkgSourcePackage(pkg.DpkgDBEntry(m))
+		binName, binVersion = m.Package, m.Version
 	case pkg.RpmDBEntry:
-		return rpmSourceCoordinates(metadata.SourceRpm)
+		src = rpmSourcePackage(m.SourceRpm)
+		binName, binVersion = m.Name, m.Version+"-"+m.Release
 	case pkg.RpmArchive:
-		return rpmSourceCoordinates(metadata.SourceRpm)
-	case pkg.AlpmDBEntry:
-		if metadata.BasePackage != "" {
-			return metadata.BasePackage, metadata.Version, ""
-		}
+		src = rpmSourcePackage(m.SourceRpm)
+		binName, binVersion = m.Name, m.Version+"-"+m.Release
+	default:
+		return nil
 	}
-	return "", "", ""
+	if src.name == "" || src.version == "" {
+		return nil
+	}
+	if src.name == binName && src.version == binVersion {
+		return nil
+	}
+	return &src
 }
 
-func dpkgSourceCoordinates(entry pkg.DpkgDBEntry) (name, version, arch string) {
-	if entry.Source == "" {
-		return "", "", ""
+func dpkgSourcePackage(entry pkg.DpkgDBEntry) sourcePackage {
+	version := entry.SourceVersion
+	if version == "" {
+		version = entry.Version
 	}
-	if entry.SourceVersion != "" {
-		return entry.Source, entry.SourceVersion, "source"
-	}
-	return entry.Source, entry.Version, "source"
+	return sourcePackage{purlType: pkg.DebPkg.PackageURLType(), name: entry.Source, version: version, arch: "source"}
 }
 
-func rpmSourceCoordinates(sourceRpm string) (name, version, arch string) {
-	// <name>-<version>-<release>.src.rpm
-	sourceRpm = strings.TrimSuffix(sourceRpm, ".rpm")
-	sourceRpm = strings.TrimSuffix(strings.TrimSuffix(sourceRpm, ".src"), ".nosrc")
-	release := strings.LastIndex(sourceRpm, "-")
+// rpmSourcePackage parses a source RPM filename of the form <name>-<version>-<release>.(no)src.rpm.
+func rpmSourcePackage(sourceRpm string) sourcePackage {
+	var arch string
+	switch {
+	case strings.HasSuffix(sourceRpm, ".src.rpm"):
+		arch = "src"
+	case strings.HasSuffix(sourceRpm, ".nosrc.rpm"):
+		arch = "nosrc"
+	default:
+		return sourcePackage{}
+	}
+	nvr := strings.TrimSuffix(sourceRpm, "."+arch+".rpm")
+	release := strings.LastIndex(nvr, "-")
 	if release < 0 {
-		return "", "", ""
+		return sourcePackage{}
 	}
-	ver := strings.LastIndex(sourceRpm[:release], "-")
+	ver := strings.LastIndex(nvr[:release], "-")
 	if ver < 0 {
-		return "", "", ""
+		return sourcePackage{}
 	}
-	return sourceRpm[:ver], sourceRpm[ver+1:], "src"
+	return sourcePackage{purlType: pkg.RpmPkg.PackageURLType(), name: nvr[:ver], version: nvr[ver+1:], arch: arch}
 }
 
 // supported algorithm in cycloneDX as of 1.4
