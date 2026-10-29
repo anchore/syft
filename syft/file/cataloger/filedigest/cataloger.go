@@ -50,6 +50,18 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 		}
 	}
 
+	// symlinks resolve to the same file, so drop repeated coordinates to avoid hashing the same contents more than once
+	seen := make(map[file.Coordinates]struct{}, len(locations))
+	unique := locations[:0]
+	for _, l := range locations {
+		if _, ok := seen[l.Coordinates]; ok {
+			continue
+		}
+		seen[l.Coordinates] = struct{}{}
+		unique = append(unique, l)
+	}
+	locations = unique
+
 	prog := catalogingProgress(int64(len(locations)))
 
 	err := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(locations), func(location file.Location) ([]file.Digest, error) {
