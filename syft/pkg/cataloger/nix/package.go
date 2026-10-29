@@ -21,7 +21,7 @@ func newNixStorePackage(pp nixStorePackage, catalogerName string) pkg.Package {
 
 	var derivationPath string
 	if pp.derivationFile != nil {
-		derivationPath = pp.derivationFile.Location.RealPath
+		derivationPath = pp.derivationFile.Location.LocalPath()
 		locations.Add(pp.derivationFile.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 	}
 
@@ -97,7 +97,7 @@ func newDerivation(df *derivationFile) pkg.NixDerivation {
 	sort.Strings(sources)
 
 	return pkg.NixDerivation{
-		Path:             df.Location.RealPath,
+		Path:             df.Location.LocalPath(),
 		System:           df.Platform,
 		InputDerivations: inputDerivations,
 		InputSources:     sources,

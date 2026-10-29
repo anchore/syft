@@ -29,7 +29,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 			input: pkg.Package{
 				FoundBy: "cataloger",
 				Locations: file.NewLocationSet(
-					file.NewLocationFromCoordinates(file.Coordinates{RealPath: "test"}),
+					file.NewLocationFromCoordinates(file.NewCoordinates("test", "")),
 				),
 				Metadata: pkg.ApkDBEntry{
 					Package:       "libc-utils",

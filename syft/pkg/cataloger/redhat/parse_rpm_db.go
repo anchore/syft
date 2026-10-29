@@ -69,7 +69,7 @@ func parseRpmDB(ctx context.Context, resolver file.Resolver, env *generic.Enviro
 		// This appears to be a holdover, where nowadays only the RSA Header is used.
 		sigs, err := parseSignatures(strings.TrimSpace(entry.PGP), strings.TrimSpace(entry.RSAHeader))
 		if err != nil {
-			log.WithFields("error", err, "location", reader.RealPath, "pkg", fmt.Sprintf("%s@%s", entry.Name, entry.Version)).Trace("unable to parse signatures for package %s", entry.Name)
+			log.WithFields("error", err, "location", reader.FullNestedPath(), "pkg", fmt.Sprintf("%s@%s", entry.Name, entry.Version)).Trace("unable to parse signatures for package %s", entry.Name)
 			sigs = nil
 		}
 
@@ -98,7 +98,7 @@ func parseRpmDB(ctx context.Context, resolver file.Resolver, env *generic.Enviro
 		)
 
 		if !pkg.IsValid(&p) {
-			log.WithFields("location", reader.RealPath, "pkg", fmt.Sprintf("%s@%s", entry.Name, entry.Version)).
+			log.WithFields("location", reader.FullNestedPath(), "pkg", fmt.Sprintf("%s@%s", entry.Name, entry.Version)).
 				Warn("ignoring invalid package found in RPM DB")
 			errs = unknown.Appendf(errs, reader, "invalild package found; name: %s, version: %s", entry.Name, entry.Version)
 			continue

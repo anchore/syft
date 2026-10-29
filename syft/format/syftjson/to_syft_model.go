@@ -80,7 +80,10 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 	}
 
 	for _, f := range files {
-		coord := f.Location
+		coord, ok := internal.NormalizeCoordinates(f.Location)
+		if !ok {
+			continue
+		}
 		if f.Metadata != nil {
 			fm, err := safeFileModeConvert(f.Metadata.Mode)
 			if err != nil {
@@ -90,11 +93,11 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 
 			ret.FileMetadata[coord] = file.Metadata{
 				FileInfo: stereoscopeFile.ManualInfo{
-					NameValue: path.Base(coord.RealPath),
+					NameValue: path.Base(coord.FullNestedPath()),
 					SizeValue: f.Metadata.Size,
 					ModeValue: fm,
 				},
-				Path:            coord.RealPath,
+				Path:            coord.FullNestedPath(),
 				LinkDestination: f.Metadata.LinkDestination,
 				UserID:          f.Metadata.UserID,
 				GroupID:         f.Metadata.GroupID,
@@ -163,7 +166,7 @@ func toSyftLicenses(m []model.License) (p []pkg.License) {
 			SPDXExpression: l.SPDXExpression,
 			Type:           l.Type,
 			URLs:           l.URLs,
-			Locations:      file.NewLocationSet(l.Locations...),
+			Locations:      file.NewLocationSet(internal.NormalizeLocations(l.Locations)...),
 			Contents:       l.Contents,
 		})
 	}
@@ -239,7 +242,9 @@ func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relations
 	idMap[doc.Source.ID] = toSyftSource(doc.Source)
 
 	for _, f := range doc.Files {
-		idMap[f.ID] = f.Location
+		if c, ok := internal.NormalizeCoordinates(f.Location); ok {
+			idMap[f.ID] = c
+		}
 	}
 
 	var out []artifact.Relationship
@@ -346,7 +351,7 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		Name:      p.Name,
 		Version:   p.Version,
 		FoundBy:   p.FoundBy,
-		Locations: file.NewLocationSet(p.Locations...),
+		Locations: file.NewLocationSet(internal.NormalizeLocations(p.Locations)...),
 		Licenses:  pkg.NewLicenseSet(toSyftLicenses(p.Licenses)...),
 		Language:  p.Language,
 		Type:      p.Type,

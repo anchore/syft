@@ -163,10 +163,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		PURL:     "pkg:golang/github.com/anchore/syft",
 		Locations: file.NewLocationSet(
 			file.NewLocationFromCoordinates(
-				file.Coordinates{
-					RealPath:     "/a-path",
-					FileSystemID: "layer-id",
-				},
+				file.NewCoordinates("/a-path", "layer-id"),
 			).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 		Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -209,10 +206,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{},
@@ -254,10 +248,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -292,10 +283,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -366,10 +354,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/anchore/syft@v0.0.0-20221014195457-41bc6bb41035",
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -433,10 +418,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/anchore/syft@v0.79.0",
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -498,10 +480,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/anchore/syft@v0.79.0",
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -555,10 +534,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/anchore/syft@v0.79.0",
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -612,10 +588,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/anchore/syft@v0.79.0",
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -670,10 +643,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/anchore/syft@v0.0.0-20221014195457-41bc6bb41035",
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -742,10 +712,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -763,10 +730,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -820,10 +784,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -840,10 +801,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -895,10 +853,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -916,10 +871,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -971,10 +923,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/anchore/syft@v1.0.0-somethingelse%2Bincompatible",
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -1030,10 +979,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				PURL:     "pkg:golang/github.com/anchore/syft",
 				Locations: file.NewLocationSet(
 					file.NewLocationFromCoordinates(
-						file.Coordinates{
-							RealPath:     "/a-path",
-							FileSystemID: "layer-id",
-						},
+						file.NewCoordinates("/a-path", "layer-id"),
 					).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				),
 				Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -1082,10 +1028,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/kuskoman/something-else@v1.2.3",
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -1102,10 +1045,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/kuskoman/logstash-exporter@v1.7.0",
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/a-path",
-								FileSystemID: "layer-id",
-							},
+							file.NewCoordinates("/a-path", "layer-id"),
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
@@ -1143,10 +1083,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				p.SetID()
 			}
 			location := file.NewLocationFromCoordinates(
-				file.Coordinates{
-					RealPath:     "/a-path",
-					FileSystemID: "layer-id",
-				},
+				file.NewCoordinates("/a-path", "layer-id"),
 			)
 
 			if test.cfg == nil {
@@ -1433,7 +1370,7 @@ func (alwaysErrorReader) Read(_ []byte) (int, error) {
 }
 
 func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
-	location := file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"})
+	location := file.NewLocationFromCoordinates(file.NewCoordinates("/a-path", "layer-id"))
 
 	// the symbols a binary would carry once scanFile has extracted them: one main-package symbol, two
 	// dependency symbols from distinct packages within the same module (so the per-package keying of the
@@ -1615,7 +1552,7 @@ var (
 // symbols more than once. This happens in production for universal/fat Mach-O binaries: scanFile yields
 // one build info per architecture and each is recorded under the same location coordinates.
 func Test_recordStdlibSymbols_merge(t *testing.T) {
-	coord := file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"}
+	coord := file.NewCoordinates("/a-path", "layer-id")
 	c := newGoBinaryCataloger(CatalogerConfig{})
 
 	c.recordStdlibSymbols(coord, map[string][]string{
@@ -1638,7 +1575,7 @@ func Test_recordStdlibSymbols_merge(t *testing.T) {
 // Test_stdlibSymbolsFor_isolation asserts the returned map is a deep copy: mutating it (or its slices)
 // must not corrupt the cataloger's guarded internal state.
 func Test_stdlibSymbolsFor_isolation(t *testing.T) {
-	coord := file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"}
+	coord := file.NewCoordinates("/a-path", "layer-id")
 	c := newGoBinaryCataloger(CatalogerConfig{})
 	c.recordStdlibSymbols(coord, map[string][]string{"net/http": {"Get"}})
 

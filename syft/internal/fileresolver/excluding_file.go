@@ -28,14 +28,14 @@ func NewExcludingDecorator(delegate file.Resolver, excludeFn excludeFn) file.Res
 
 func (r *excluding) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
 	if locationMatches(&location, r.excludeFn) {
-		return nil, fmt.Errorf("no such location: %+v", location.RealPath)
+		return nil, fmt.Errorf("no such location: %+v", location.FullNestedPath())
 	}
 	return r.delegate.FileContentsByLocation(location)
 }
 
 func (r *excluding) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
 	if locationMatches(&location, r.excludeFn) {
-		return file.Metadata{}, fmt.Errorf("no such location: %+v", location.RealPath)
+		return file.Metadata{}, fmt.Errorf("no such location: %+v", location.FullNestedPath())
 	}
 	return r.delegate.FileMetadataByLocation(location)
 }
@@ -89,7 +89,7 @@ func (r *excluding) AllLocations(ctx context.Context) <-chan file.Location {
 }
 
 func locationMatches(location *file.Location, exclusionFn excludeFn) bool {
-	return exclusionFn(location.RealPath) || exclusionFn(location.AccessPath)
+	return exclusionFn(location.LocalPath()) || exclusionFn(location.AccessPath)
 }
 
 func filterLocations(locations []file.Location, err error, exclusionFn excludeFn) ([]file.Location, error) {

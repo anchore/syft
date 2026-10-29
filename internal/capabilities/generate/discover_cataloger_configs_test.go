@@ -457,3 +457,32 @@ func TestDiscoverAllowedConfigStructs(t *testing.T) {
 		t.Logf("  - %s", configType)
 	}
 }
+
+func TestEmbeddedFieldAllowlist(t *testing.T) {
+	comments := func(lines ...string) *ast.CommentGroup {
+		g := &ast.CommentGroup{}
+		for _, l := range lines {
+			g.List = append(g.List, &ast.Comment{Text: l})
+		}
+		return g
+	}
+
+	tests := []struct {
+		name string
+		doc  *ast.CommentGroup
+		want map[string]bool
+	}{
+		{name: "no doc lists every field", doc: nil, want: nil},
+		{name: "no annotation lists every field", doc: comments("// Deprecated: use something else."), want: nil},
+		{
+			name: "annotation limits to the named fields",
+			doc:  comments("// Deprecated: use something else.", "// capabilities-fields: IncludeIndexedArchives, IncludeUnindexedArchives"),
+			want: map[string]bool{"IncludeIndexedArchives": true, "IncludeUnindexedArchives": true},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, embeddedFieldAllowlist(tt.doc))
+		})
+	}
+}

@@ -16,7 +16,7 @@ func resourceCleanup(m dsl.Matcher) {
 			m["res"].Type.Implements(`io.Reader`) &&
 			m["err"].Type.Implements(`error`) &&
 			!m["next"].Text.Matches(`defer internal.CloseAndLogError`)).
-		Report(`please call "defer internal.CloseAndLogError($res, $loc.RealPath)" right after checking the error returned from $resolver.FileContentsByLocation.`)
+		Report(`please call "defer internal.CloseAndLogError($res, $loc.FullNestedPath())" right after checking the error returned from $resolver.FileContentsByLocation.`)
 }
 
 // nolint:unused

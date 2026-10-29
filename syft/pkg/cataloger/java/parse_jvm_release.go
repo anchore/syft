@@ -62,7 +62,7 @@ type jvmCpeInfo struct {
 func parseJVMRelease(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	ri, err := parseJvmReleaseInfo(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to parse JVM release info %q: %w", reader.Path(), err)
+		return nil, nil, fmt.Errorf("unable to parse JVM release info %q: %w", reader.FullNestedPath(), err)
 	}
 
 	if ri == nil {
@@ -81,13 +81,17 @@ func parseJVMRelease(_ context.Context, resolver file.Resolver, _ *generic.Envir
 		locations.Add(lic.Locations.ToSlice()...)
 	}
 
-	installDir := path.Dir(reader.Path())
+	installDir := path.Dir(reader.LocalPath())
 	files, hasJdk := findJvmFiles(resolver, installDir)
 
 	// the reason we use the reference to get the real path is in cases where the file cataloger is involved
 	// (thus the real path is not available except for in the original file reference). This is important
 	// since the path is critical for distinguishing between different JVM vendors.
-	vendor, product := jvmPrimaryVendorProduct(ri, string(reader.Reference().RealPath), hasJdk)
+	jdkPath := string(reader.Reference().RealPath)
+	if jdkPath == "" {
+		jdkPath = reader.LocalPath()
+	}
+	vendor, product := jvmPrimaryVendorProduct(ri, jdkPath, hasJdk)
 
 	p := pkg.Package{
 		Name:      product,
@@ -123,7 +127,7 @@ func findJvmFiles(resolver file.Resolver, installDir string) ([]string, bool) {
 	var results []string
 	var hasJdk bool
 	for _, loc := range ownedLocations {
-		p := loc.Path()
+		p := loc.LocalPath()
 		results = append(results, p)
 		if !hasJdk && strings.HasSuffix(p, "bin/javac") {
 			hasJdk = true

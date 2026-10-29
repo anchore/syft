@@ -17,28 +17,29 @@ func Test_ProcessPathErrors(t *testing.T) {
 		{
 			errorText: `prefix path="/var/lib/thing" suffix`,
 			expected: &CoordinateError{
-				Coordinates: file.Coordinates{
-					RealPath: "/var/lib/thing",
-				},
-				Reason: fmt.Errorf(`prefix path="/var/lib/thing" suffix`),
+				Coordinates: file.NewCoordinates("/var/lib/thing", ""),
+				Reason:      fmt.Errorf(`prefix path="/var/lib/thing" suffix`),
 			},
 		},
 		{
 			errorText: `prefix path="/var/lib/thing"`,
 			expected: &CoordinateError{
-				Coordinates: file.Coordinates{
-					RealPath: "/var/lib/thing",
-				},
-				Reason: fmt.Errorf(`prefix path="/var/lib/thing"`),
+				Coordinates: file.NewCoordinates("/var/lib/thing", ""),
+				Reason:      fmt.Errorf(`prefix path="/var/lib/thing"`),
 			},
 		},
 		{
 			errorText: `path="/var/lib/thing" suffix`,
 			expected: &CoordinateError{
-				Coordinates: file.Coordinates{
-					RealPath: "/var/lib/thing",
-				},
-				Reason: fmt.Errorf(`path="/var/lib/thing" suffix`),
+				Coordinates: file.NewCoordinates("/var/lib/thing", ""),
+				Reason:      fmt.Errorf(`path="/var/lib/thing" suffix`),
+			},
+		},
+		{
+			errorText: `path="/data/Hello!/world.txt"`,
+			expected: &CoordinateError{
+				Coordinates: file.NewCoordinates("/data/Hello!/world.txt", ""),
+				Reason:      fmt.Errorf(`path="/data/Hello!/world.txt"`),
 			},
 		},
 		{

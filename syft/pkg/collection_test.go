@@ -392,10 +392,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:1:1:*:*:*:*:*:*:*", cpe.GeneratedSource)},
 					Locations: file.NewLocationSet(
 						file.NewVirtualLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/b/path",
-								FileSystemID: "a",
-							},
+							file.NewCoordinates("/b/path", "a"),
 							"/another/path",
 						),
 					),
@@ -405,10 +402,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:2:2:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource)},
 					Locations: file.NewLocationSet(
 						file.NewVirtualLocationFromCoordinates(
-							file.Coordinates{
-								RealPath:     "/b/path",
-								FileSystemID: "b",
-							},
+							file.NewCoordinates("/b/path", "b"),
 							"/another/path",
 						),
 					),
@@ -417,17 +411,11 @@ func TestCatalog_MergeRecords(t *testing.T) {
 			},
 			expectedLocations: []file.Location{
 				file.NewVirtualLocationFromCoordinates(
-					file.Coordinates{
-						RealPath:     "/b/path",
-						FileSystemID: "a",
-					},
+					file.NewCoordinates("/b/path", "a"),
 					"/another/path",
 				),
 				file.NewVirtualLocationFromCoordinates(
-					file.Coordinates{
-						RealPath:     "/b/path",
-						FileSystemID: "b",
-					},
+					file.NewCoordinates("/b/path", "b"),
 					"/another/path",
 				),
 			},
@@ -443,6 +431,23 @@ func TestCatalog_MergeRecords(t *testing.T) {
 			require.Len(t, actual[0].CPEs, tt.expectedCPECount)
 		})
 	}
+}
+
+func TestCatalog_PackagesByPath_nestedPackagesAreNotFoundByTheOuterArchive(t *testing.T) {
+	jar := Package{Name: "jar", Type: JavaPkg, Locations: file.NewLocationSet(file.NewLocation("/opt/x.jar"))}
+	nested := file.Coordinates{RealPath: "/opt/x.jar", FullPath: "/opt/x.jar!/lib/a.so"}
+	so := Package{Name: "so", Type: BinaryPkg, Locations: file.NewLocationSet(file.NewLocationFromCoordinates(nested))}
+	c := NewCollection(jar, so)
+
+	names := func(pkgs []Package) []string {
+		var out []string
+		for _, p := range pkgs {
+			out = append(out, p.Name)
+		}
+		return out
+	}
+	assert.Equal(t, []string{"jar"}, names(c.PackagesByPath("/opt/x.jar")))
+	assert.Equal(t, []string{"so"}, names(c.PackagesByPath(nested.FullPath)))
 }
 
 func TestCatalog_EnumerateNilCatalog(t *testing.T) {

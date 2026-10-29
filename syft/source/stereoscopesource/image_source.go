@@ -2,6 +2,7 @@ package stereoscopesource
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/distribution/reference"
@@ -15,7 +16,10 @@ import (
 	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ source.Source = (*stereoscopeImageSource)(nil)
+var (
+	_ source.Source       = (*stereoscopeImageSource)(nil)
+	_ source.PathExcluder = (*stereoscopeImageSource)(nil)
+)
 
 type ImageConfig struct {
 	Reference       string
@@ -120,6 +124,11 @@ func (s stereoscopeImageSource) FileResolver(scope source.Scope) (file.Resolver,
 	}
 
 	return res, nil
+}
+
+// ExcludedPaths returns the exclusion patterns this source was configured with.
+func (s stereoscopeImageSource) ExcludedPaths() []string {
+	return slices.Clone(s.config.Exclude.Paths)
 }
 
 func (s stereoscopeImageSource) Close() error {

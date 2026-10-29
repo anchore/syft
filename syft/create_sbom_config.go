@@ -28,6 +28,7 @@ type CreateSBOMConfig struct {
 	Packages           pkgcataloging.Config
 	Licenses           cataloging.LicenseConfig
 	Files              filecataloging.Config
+	Archive            cataloging.ArchiveSearchConfig
 	Parallelism        int
 	CatalogerSelection cataloging.SelectionRequest
 
@@ -49,6 +50,7 @@ func DefaultCreateSBOMConfig() *CreateSBOMConfig {
 		Packages:             pkgcataloging.DefaultConfig(),
 		Licenses:             cataloging.DefaultLicenseConfig(),
 		Files:                filecataloging.DefaultConfig(),
+		Archive:              cataloging.DefaultArchiveSearchConfig(),
 		Parallelism:          0, // use default: run in parallel based on number of CPUs
 		packageTaskFactories: task.DefaultPackageTaskFactories(),
 
@@ -144,6 +146,13 @@ func (c *CreateSBOMConfig) WithFilesConfig(cfg filecataloging.Config) *CreateSBO
 	return c
 }
 
+// WithArchiveConfig sets how archives are cataloged: how deep to recurse into nested archives (MaxDepth
+// 0, the default, does not recurse) and how much extracted content the scan may hold at once.
+func (c *CreateSBOMConfig) WithArchiveConfig(cfg cataloging.ArchiveSearchConfig) *CreateSBOMConfig {
+	c.Archive = cfg
+	return c
+}
+
 // WithoutFiles allows for disabling file cataloging altogether.
 func (c *CreateSBOMConfig) WithoutFiles() *CreateSBOMConfig {
 	c.Files = filecataloging.Config{
@@ -183,14 +192,15 @@ func (c *CreateSBOMConfig) WithCatalogers(catalogerRefs ...pkgcataloging.Catalog
 // groups, where each task in a group can be run concurrently, while tasks in different groups must be run serially.
 // The final set of task groups is returned along with a cataloger manifest that describes the catalogers that were
 // selected and the tokens that were sensitive to this selection (both for adding and removing from the final set).
-func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task, *catalogerManifest, error) {
+//
+// exclusions are the source's exclusion patterns, which the archive cataloger applies inside each archive.
+func (c *CreateSBOMConfig) makeTaskGroups(src source.Description, exclusions []string) ([][]task.Task, *catalogerManifest, error) {
 	var taskGroups [][]task.Task
 
 	// generate package and file tasks based on the configuration
 	environmentTasks := c.environmentTasks()
 	scopeTasks := c.scopeTasks()
 	relationshipsTasks := c.relationshipTasks(src)
-	unknownTasks := c.unknownsTasks()
 	osFeatureDetectionTasks := c.osFeatureDetectionTasks()
 
 	pkgTasks, fileTasks, selectionEvidence, err := c.selectTasks(src)
@@ -198,11 +208,29 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 		return nil, nil, err
 	}
 
+	// the same package and file catalogers run against the contents of every archive, after the scan
+	// root and before relationship and unknowns post-processing
+	archiveTask := task.NewArchiveCatalogerTask(c.Archive, c.Unknowns, pkgTasks, fileTasks, exclusions)
+
+	// the archive cataloger reports the archives it does not expand, which the labeler can only guess at
+	unknowns := c.Unknowns
+	if archiveTask != nil {
+		unknowns.IncludeUnexpandedArchives = false
+	}
+	unknownTasks := unknownsTasks(unknowns)
+
 	// combine the user-provided and configured tasks
-	if c.Files.Selection == file.FilesOwnedByPackageSelection {
+	switch {
+	case c.Files.Selection == file.FilesOwnedByPackageSelection && archiveTask != nil:
+		// the archive task describes archives at the root too (java leaves them to it), so the root file
+		// catalogers must run after it to see those packages
+		taskGroups = append(taskGroups, pkgTasks, []task.Task{archiveTask}, fileTasks)
+	case c.Files.Selection == file.FilesOwnedByPackageSelection:
 		// special case: we need the package info when we are cataloging files owned by packages
 		taskGroups = append(taskGroups, pkgTasks, fileTasks)
-	} else {
+	case archiveTask != nil:
+		taskGroups = append(taskGroups, append(pkgTasks, fileTasks...), []task.Task{archiveTask})
+	default:
 		taskGroups = append(taskGroups, append(pkgTasks, fileTasks...))
 	}
 
@@ -226,6 +254,11 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 		taskGroups = append(taskGroups, osFeatureDetectionTasks)
 	}
 
+	// archives are related to the files within them only once every task has decided which files are described
+	if archiveTask != nil {
+		taskGroups = append(taskGroups, []task.Task{task.NewArchiveContainsTask()})
+	}
+
 	// identifying the environment (i.e. the linux release) must be done first as this is required for package cataloging
 	taskGroups = append(
 		[][]task.Task{
@@ -237,6 +270,9 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 	var allTasks []task.Task
 	allTasks = append(allTasks, pkgTasks...)
 	allTasks = append(allTasks, fileTasks...)
+	if archiveTask != nil {
+		allTasks = append(allTasks, archiveTask)
+	}
 
 	return taskGroups, &catalogerManifest{
 		Requested: selectionEvidence.Request,
@@ -260,7 +296,7 @@ func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []t
 		SearchConfig:         c.Search,
 		RelationshipsConfig:  c.Relationships,
 		DataGenerationConfig: c.DataGeneration,
-		PackagesConfig:       c.Packages,
+		PackagesConfig:       c.packagesWithArchiveSearch(),
 		LicenseConfig:        c.Licenses,
 		ComplianceConfig:     c.Compliance,
 		FilesConfig:          c.Files,
@@ -440,10 +476,10 @@ func (c *CreateSBOMConfig) environmentTasks() []task.Task {
 
 // unknownsTasks returns a set of tasks that perform any necessary post-processing
 // to identify SBOM elements as unknowns
-func (c *CreateSBOMConfig) unknownsTasks() []task.Task {
+func unknownsTasks(cfg cataloging.UnknownsConfig) []task.Task {
 	var tasks []task.Task
 
-	if t := task.NewUnknownsLabelerTask(c.Unknowns); t != nil {
+	if t := task.NewUnknownsLabelerTask(cfg); t != nil {
 		tasks = append(tasks, t)
 	}
 
@@ -461,11 +497,35 @@ func (c *CreateSBOMConfig) osFeatureDetectionTasks() []task.Task {
 	return tasks
 }
 
+// packagesWithArchiveSearch returns a copy of the packages config with the top-level archive search
+// booleans applied to java, which is still the only cataloger that reads them.
+//
+// ponytail: a top-level boolean wins only when it differs from the default, so callers who set just
+// java's deprecated copy see no change. Delete this along with that field.
+func (c *CreateSBOMConfig) packagesWithArchiveSearch() pkgcataloging.Config {
+	pkgs := c.Packages
+	def := cataloging.DefaultArchiveSearchConfig()
+	java := &pkgs.JavaArchive.ArchiveSearchConfig
+	if c.Archive.IncludeIndexedArchives != def.IncludeIndexedArchives {
+		java.IncludeIndexedArchives = c.Archive.IncludeIndexedArchives
+	}
+	if c.Archive.IncludeUnindexedArchives != def.IncludeUnindexedArchives {
+		java.IncludeUnindexedArchives = c.Archive.IncludeUnindexedArchives
+	}
+	return pkgs
+}
+
 func (c *CreateSBOMConfig) validate() error {
 	if c.Relationships.ExcludeBinaryPackagesWithFileOwnershipOverlap {
 		if !c.Relationships.PackageFileOwnershipOverlap {
 			return fmt.Errorf("invalid configuration: to exclude binary packages based on file ownership overlap relationships, cataloging file ownership overlap relationships must be enabled")
 		}
+	}
+	if j := c.Packages.JavaArchive.ArchiveSearchConfig; j.MaxDepth != 0 || j.MaxMemoryBytes != 0 || j.MaxDiskBytes != 0 {
+		return fmt.Errorf("invalid configuration: nested archive depth and limits are not java cataloger settings, set them with CreateSBOMConfig.Archive")
+	}
+	if a := c.Archive; a.MaxDepth != 0 && a.MaxMemoryBytes == 0 && a.MaxDiskBytes == 0 {
+		return fmt.Errorf("invalid configuration: nested archive cataloging is enabled but its memory and disk limits are both 0, leaving nowhere to extract archives")
 	}
 	return nil
 }

@@ -60,7 +60,7 @@ var hashLookup = map[uint8]string{
 func parseRpmArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	rpm, err := rpmutils.ReadRpm(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("RPM file found but unable to read: %s (%w)", reader.RealPath, err)
+		return nil, nil, fmt.Errorf("RPM file found but unable to read: %s (%w)", reader.FullNestedPath(), err)
 	}
 
 	nevra, err := rpm.Header.GetNEVRA()
@@ -269,6 +269,6 @@ func parseEpoch(epoch string) *int {
 
 func logRpmArchiveErr(location file.Location, operation string, err error) {
 	if err != nil {
-		log.WithFields("error", err, "operation", operation, "path", location.RealPath).Trace("unable to parse RPM archive")
+		log.WithFields("error", err, "operation", operation, "path", location.FullNestedPath()).Trace("unable to parse RPM archive")
 	}
 }

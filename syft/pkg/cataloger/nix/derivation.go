@@ -34,7 +34,7 @@ func newDerivationFromLocation(loc file.Location, resolver file.Resolver) (*deri
 	if err != nil {
 		return nil, fmt.Errorf("failed to read derivation: %w", err)
 	}
-	defer internal.CloseAndLogError(reader, loc.RealPath)
+	defer internal.CloseAndLogError(reader, loc.FullNestedPath())
 
 	d, err := derivation.ReadDerivation(reader)
 	if err != nil {
@@ -60,12 +60,12 @@ func newDerivations() *derivations {
 }
 
 func (c *derivations) add(df derivationFile) {
-	c.derivationsByDrvPath[df.Location.RealPath] = df
+	c.derivationsByDrvPath[df.Location.LocalPath()] = df
 	for _, output := range df.Outputs {
 		if output == nil || output.Path == "" {
 			continue
 		}
-		c.drvPathByOutputPath[output.Path] = df.Location.RealPath
+		c.drvPathByOutputPath[output.Path] = df.Location.LocalPath()
 	}
 }
 

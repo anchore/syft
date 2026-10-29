@@ -113,11 +113,7 @@ func toPath(s source.Description, p pkg.Package) string {
 	locations := p.Locations.ToSlice()
 	if len(locations) > 0 {
 		location := locations[0]
-		packagePath := location.RealPath
-		if location.AccessPath != "" {
-			packagePath = location.AccessPath
-		}
-		packagePath = strings.TrimPrefix(packagePath, "/")
+		packagePath := strings.TrimPrefix(location.Path(), "/")
 		switch metadata := s.Metadata.(type) {
 		case source.ImageMetadata:
 			image := strings.ReplaceAll(metadata.UserInput, ":/", "//")

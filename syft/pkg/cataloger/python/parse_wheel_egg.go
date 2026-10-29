@@ -52,7 +52,7 @@ func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location,
 	// to reconcile the installed-files.txt path to the same layer (or the next adjacent lower layer).
 
 	// find the installed-files.txt file relative to the directory where the METADATA file resides (in path AND layer structure)
-	installedFilesPath := path.Join(path.Dir(metadataLocation.RealPath), "installed-files.txt")
+	installedFilesPath := path.Join(path.Dir(metadataLocation.LocalPath()), "installed-files.txt")
 	installedFilesRef := resolver.RelativeFileByPath(metadataLocation, installedFilesPath)
 
 	if installedFilesRef != nil {
@@ -62,10 +62,10 @@ func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location,
 		if err != nil {
 			return nil, nil, err
 		}
-		defer internal.CloseAndLogError(installedFilesContents, installedFilesPath)
+		defer internal.CloseAndLogError(installedFilesContents, installedFilesRef.FullNestedPath())
 
 		// parse the installed-files contents
-		installedFiles, err := parseInstalledFiles(installedFilesContents, metadataLocation.RealPath, sitePackagesRootPath)
+		installedFiles, err := parseInstalledFiles(installedFilesContents, metadataLocation.LocalPath(), sitePackagesRootPath)
 		if err != nil {
 			retErr = unknown.Newf(*installedFilesRef, "unable to parse installed-files.txt for python package: %w", retErr)
 		}
@@ -82,7 +82,7 @@ func fetchRecordFiles(resolver file.Resolver, metadataLocation file.Location) (f
 	// to reconcile the RECORD path to the same layer (or the next adjacent lower layer).
 
 	// find the RECORD file relative to the directory where the METADATA file resides (in path AND layer structure)
-	recordPath := path.Join(path.Dir(metadataLocation.RealPath), "RECORD")
+	recordPath := path.Join(path.Dir(metadataLocation.LocalPath()), "RECORD")
 	recordRef := resolver.RelativeFileByPath(metadataLocation, recordPath)
 
 	if recordRef != nil {
@@ -92,7 +92,7 @@ func fetchRecordFiles(resolver file.Resolver, metadataLocation file.Location) (f
 		if err != nil {
 			return nil, nil, err
 		}
-		defer internal.CloseAndLogError(recordContents, recordPath)
+		defer internal.CloseAndLogError(recordContents, recordRef.FullNestedPath())
 
 		// parse the record contents
 		var records []pkg.PythonFileRecord
@@ -106,7 +106,7 @@ func fetchRecordFiles(resolver file.Resolver, metadataLocation file.Location) (f
 // fetchTopLevelPackages finds a corresponding top_level.txt file for the given python package metadata file and returns the set of package names contained.
 func fetchTopLevelPackages(resolver file.Resolver, metadataLocation file.Location) (pkgs []string, sources []file.Location, err error) {
 	// a top_level.txt file specifies the python top-level packages (provided by this python package) installed into site-packages
-	parentDir := path.Dir(metadataLocation.RealPath)
+	parentDir := path.Dir(metadataLocation.LocalPath())
 	topLevelPath := path.Join(parentDir, "top_level.txt")
 	topLevelLocation := resolver.RelativeFileByPath(metadataLocation, topLevelPath)
 
@@ -120,7 +120,7 @@ func fetchTopLevelPackages(resolver file.Resolver, metadataLocation file.Locatio
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(topLevelContents, topLevelLocation.AccessPath)
+	defer internal.CloseAndLogError(topLevelContents, topLevelLocation.FullNestedPath())
 
 	scanner := bufio.NewScanner(topLevelContents)
 	for scanner.Scan() {
@@ -156,7 +156,7 @@ type vcsInfo struct {
 }
 
 func fetchDirectURLData(resolver file.Resolver, metadataLocation file.Location) (d *pkg.PythonDirectURLOriginInfo, sources []file.Location, err error) {
-	parentDir := path.Dir(metadataLocation.RealPath)
+	parentDir := path.Dir(metadataLocation.LocalPath())
 	directURLPath := path.Join(parentDir, "direct_url.json")
 	directURLLocation := resolver.RelativeFileByPath(metadataLocation, directURLPath)
 
@@ -170,7 +170,7 @@ func fetchDirectURLData(resolver file.Resolver, metadataLocation file.Location) 
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(directURLContents, directURLLocation.AccessPath)
+	defer internal.CloseAndLogError(directURLContents, directURLLocation.FullNestedPath())
 
 	var directURLJson directURLOrigin
 	if err := json.NewDecoder(directURLContents).Decode(&directURLJson); err != nil {
@@ -194,7 +194,7 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(metadataContents, metadataLocation.AccessPath)
+	defer internal.CloseAndLogError(metadataContents, metadataLocation.FullNestedPath())
 
 	pd, err := parseWheelOrEggMetadata(file.NewLocationReadCloser(metadataLocation, metadataContents))
 	if err != nil {
@@ -261,7 +261,7 @@ func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg
 
 	default:
 		// search for known license paths from RECORDS file
-		parent := path.Base(path.Dir(m.DistInfoLocation.Path()))
+		parent := path.Base(path.Dir(m.DistInfoLocation.LocalPath()))
 		candidatePaths := strset.New()
 		for _, f := range m.Files {
 			if !strings.HasPrefix(f.Path, parent) || strings.Count(f.Path, "/") > 1 {

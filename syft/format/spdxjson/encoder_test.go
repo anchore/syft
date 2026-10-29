@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/syft/syft/format/internal/testutil"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
 var updateSnapshot = flag.Bool("update-spdx-json", false, "update the *.golden files for spdx-json encoders")
@@ -123,10 +124,7 @@ func TestSPDX22JSONRequredProperties(t *testing.T) {
 	enc, err := NewFormatEncoderWithConfig(cfg)
 	require.NoError(t, err)
 
-	coords := file.Coordinates{
-		RealPath:     "/some/file",
-		FileSystemID: "ac897d978b6c38749a1",
-	}
+	coords := file.NewCoordinates("/some/file", "ac897d978b6c38749a1")
 
 	p1 := pkg.Package{
 		Name:      "files-analyzed-true",
@@ -283,4 +281,84 @@ func defaultFormatEncoders() []sbom.FormatEncoder {
 		encs = append(encs, enc)
 	}
 	return encs
+}
+
+func TestEncodeDecodeTopLevelFiles(t *testing.T) {
+	// the root package contains the top-level files, or the scanned root does when it is described
+	root := file.NewCoordinates("", "")
+	etc := file.NewCoordinates("/etc/os-release", "")
+	jar := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/a.jar"}
+	war := file.NewCoordinates("/app.war", "")
+	tests := []struct {
+		name      string
+		src       source.Description
+		files     []file.Coordinates
+		wantPaths []string
+		wantRels  []string
+	}{
+		{
+			name:      "img",
+			src:       source.Description{Name: "img", Metadata: source.ImageMetadata{UserInput: "img:latest", ManifestDigest: "sha256:abc"}},
+			files:     []file.Coordinates{etc, jar},
+			wantPaths: []string{"etc/os-release", "app.war", "app.war!/WEB-INF/lib/a.jar"},
+			wantRels:  []string{"app.war contains app.war!/WEB-INF/lib/a.jar"},
+		},
+		{
+			name:      "dir",
+			src:       source.Description{Name: "dir", Metadata: source.DirectoryMetadata{Path: "dir"}},
+			files:     []file.Coordinates{etc, jar},
+			wantPaths: []string{"etc/os-release", "app.war", "app.war!/WEB-INF/lib/a.jar"},
+			wantRels:  []string{"app.war contains app.war!/WEB-INF/lib/a.jar"},
+		},
+		{
+			name:      "dir-root",
+			src:       source.Description{Name: "dir", Metadata: source.DirectoryMetadata{Path: "dir"}},
+			files:     []file.Coordinates{root, etc, jar},
+			wantPaths: []string{"", "etc/os-release", "app.war", "app.war!/WEB-INF/lib/a.jar"},
+			wantRels:  []string{"app.war contains app.war!/WEB-INF/lib/a.jar"},
+		},
+		{
+			// a scanned archive is the scanned root, holding what is at the root
+			name:      "file",
+			src:       source.Description{Name: "app.war", Metadata: source.FileMetadata{Path: "dir/app.war"}},
+			files:     []file.Coordinates{war, jar},
+			wantPaths: []string{"", "WEB-INF/lib/a.jar"},
+		},
+	}
+	for _, tt := range tests {
+		src := tt.src
+		for _, enc := range defaultFormatEncoders() {
+			t.Run(tt.name+"_"+enc.Version(), func(t *testing.T) {
+				metadata := map[file.Coordinates]file.Metadata{}
+				for _, c := range tt.files {
+					metadata[c] = file.Metadata{}
+				}
+				var buf bytes.Buffer
+				require.NoError(t, enc.Encode(&buf, sbom.SBOM{
+					Source:    src,
+					Artifacts: sbom.Artifacts{FileMetadata: metadata},
+				}))
+
+				s, _, _, err := NewFormatDecoder().Decode(bytes.NewReader(buf.Bytes()))
+				require.NoError(t, err, "encoded document:\n%s", buf.String())
+
+				assert.Equal(t, src.Name, s.Source.Name)
+				assert.IsType(t, src.Metadata, s.Source.Metadata)
+
+				var paths []string
+				for c := range s.Artifacts.FileMetadata {
+					paths = append(paths, c.FullNestedPath())
+				}
+				assert.ElementsMatch(t, tt.wantPaths, paths)
+
+				var rels []string
+				for _, r := range s.Relationships {
+					from, _ := r.From.(file.Coordinates)
+					to, _ := r.To.(file.Coordinates)
+					rels = append(rels, from.FullNestedPath()+" "+string(r.Type)+" "+to.FullNestedPath())
+				}
+				assert.ElementsMatch(t, tt.wantRels, rels)
+			})
+		}
+	}
 }
