@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/embeddedsbom"
 )
 
 const catalogerName = "bitnami-cataloger"
@@ -109,23 +110,26 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 	return pkgs, filterRelationships(s.Relationships, pkgs), nil
 }
 
-// filterRelationships filters out relationships that are not related to Bitnami packages
+// filterRelationships filters out relationships that are not from Bitnami packages
 // and replaces the package information with the one with completed info
 func filterRelationships(relationships []artifact.Relationship, pkgs []pkg.Package) []artifact.Relationship {
 	var result []artifact.Relationship
-	for _, r := range relationships {
-		if value, ok := r.From.(pkg.Package); ok {
-			found := false
-			for _, p := range pkgs {
-				if value.PURL == p.PURL {
-					r.From = p
-					found = true
-					break
-				}
+	for _, r := range embeddedsbom.Relationships(relationships) {
+		// only what a package says about itself is kept
+		value, ok := r.From.(pkg.Package)
+		if !ok {
+			continue
+		}
+		found := false
+		for _, p := range pkgs {
+			if value.PURL == p.PURL {
+				r.From = p
+				found = true
+				break
 			}
-			if !found {
-				continue
-			}
+		}
+		if !found {
+			continue
 		}
 		if value, ok := r.To.(pkg.Package); ok {
 			found := false
