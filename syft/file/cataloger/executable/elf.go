@@ -2,11 +2,15 @@ package executable
 
 import (
 	"debug/elf"
+	"encoding/binary"
+	"encoding/hex"
+	"io"
 	"regexp"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
+	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
@@ -35,8 +39,93 @@ func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) erro
 	data.ELFSecurityFeatures = findELFSecurityFeatures(f)
 	data.HasEntrypoint = elfHasEntrypoint(f)
 	data.HasExports = elfHasExports(f)
+	data.Identifiers = findELFIdentifiers(f)
 
 	return err
+}
+
+const (
+	// NT_GNU_BUILD_ID is not defined by debug/elf.
+	ntGNUBuildID = 3
+
+	elfNoteOwnerGNU = "GNU"
+
+	// Bound decoded bytes read from .note.gnu.build-id.
+	maxELFNoteBytes = 64 * intFile.KB
+
+	elfNoteHeaderSize = 12
+)
+
+type elfNote struct {
+	owner string
+	typ   uint32
+	desc  []byte
+}
+
+func findELFIdentifiers(f *elf.File) []file.ExecutableIdentifier {
+	s := f.Section(".note.gnu.build-id")
+	if s == nil || s.Type != elf.SHT_NOTE {
+		return nil
+	}
+	data, err := io.ReadAll(io.LimitReader(s.Open(), maxELFNoteBytes))
+	if err != nil {
+		log.WithFields("error", err).Trace("unable to read ELF build ID")
+		return nil
+	}
+
+	var ids []file.ExecutableIdentifier
+	seen := strset.New()
+	for _, n := range parseELFNotes(data, s.Addralign, f.ByteOrder) {
+		if n.owner != elfNoteOwnerGNU || n.typ != ntGNUBuildID || len(n.desc) == 0 {
+			continue
+		}
+		value := hex.EncodeToString(n.desc)
+		if seen.Has(value) {
+			continue
+		}
+		seen.Add(value)
+		ids = append(ids, file.ExecutableIdentifier{Kind: file.ELFGNUBuildID, Value: value})
+	}
+	return ids
+}
+
+// parseELFNotes decodes the Elf_Nhdr records in a note region, stopping at the first truncated record.
+func parseELFNotes(data []byte, align uint64, order binary.ByteOrder) []elfNote {
+	// Some GNU property note regions use 8-byte alignment instead of 4.
+	if align != 8 {
+		align = 4
+	}
+
+	var notes []elfNote
+	for len(data) >= elfNoteHeaderSize {
+		nameSize := uint64(order.Uint32(data[0:4]))
+		descSize := uint64(order.Uint32(data[4:8]))
+		typ := order.Uint32(data[8:12])
+
+		nameEnd := elfNoteHeaderSize + nameSize
+		descStart := alignUp(nameEnd, align)
+		descEnd := descStart + descSize
+		if descEnd > uint64(len(data)) {
+			break
+		}
+
+		notes = append(notes, elfNote{
+			owner: strings.TrimRight(string(data[elfNoteHeaderSize:nameEnd]), "\x00"),
+			typ:   typ,
+			desc:  data[descStart:descEnd],
+		})
+
+		next := alignUp(descEnd, align)
+		if next >= uint64(len(data)) {
+			break
+		}
+		data = data[next:]
+	}
+	return notes
+}
+
+func alignUp(n, align uint64) uint64 {
+	return (n + align - 1) &^ (align - 1)
 }
 
 func findELFSecurityFeatures(f *elf.File) *file.ELFSecurityFeatures {
