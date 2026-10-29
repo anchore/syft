@@ -41,6 +41,13 @@ type T5 struct {
 	Map map[string]string
 }
 
+// TRecursive refers to itself, like pkg.SafeTensorsModelInfo and pkg.GGUFFileHeader do through their Parts field
+type TRecursive struct {
+	Name     string
+	Children []TRecursive
+	Next     *TRecursive
+}
+
 func Test_EncodeDecodeCycle(t *testing.T) {
 	val := 99
 
@@ -123,6 +130,33 @@ func Test_EncodeDecodeCycle(t *testing.T) {
 			},
 		},
 		{
+			name: "recursive type without children",
+			value: &TRecursive{
+				Name: "root",
+			},
+		},
+		{
+			name: "recursive type with nested children",
+			value: &TRecursive{
+				Name: "root",
+				Children: []TRecursive{
+					{
+						Name: "child 0",
+						Children: []TRecursive{
+							{Name: "grandchild 0"},
+						},
+					},
+					{
+						Name: "child 1",
+						Next: &TRecursive{Name: "next of child 1"},
+					},
+				},
+				Next: &TRecursive{
+					Name: "next",
+				},
+			},
+		},
+		{
 			name: "map of strings",
 			value: &T5{
 				Map: map[string]string{
@@ -153,4 +187,57 @@ func Test_EncodeDecodeCycle(t *testing.T) {
 			assert.EqualValues(t, test.value, t3)
 		})
 	}
+}
+
+func Test_propertyNames_hasPrefix(t *testing.T) {
+	names := sortedPropertyNames(map[string]string{
+		"props:name":          "root",
+		"props:children:10:x": "a",
+		"props:children:2:x":  "b",
+		"props:children:3":    "c",
+		"props:children:40":   "d",
+		"props:children:4:x":  "e",
+	})
+
+	tests := []struct {
+		prefix string
+		want   bool
+	}{
+		{prefix: "", want: true},
+		{prefix: "props", want: true},
+		{prefix: "props:name", want: true},
+		{prefix: "props:nam", want: false},
+		{prefix: "props:children", want: true},
+		{prefix: "props:children:0", want: false},
+		// only "props:children:10:x" shares this prefix as a string
+		{prefix: "props:children:1", want: false},
+		{prefix: "props:children:10", want: true},
+		{prefix: "props:children:2", want: true},
+		{prefix: "props:children:3", want: true},
+		{prefix: "props:children:3:x", want: false},
+		// "props:children:40" sorts between this prefix and the nested "props:children:4:x"
+		{prefix: "props:children:4", want: true},
+		{prefix: "other", want: false},
+	}
+	for _, test := range tests {
+		t.Run(test.prefix, func(t *testing.T) {
+			assert.Equal(t, test.want, names.hasPrefix(test.prefix))
+		})
+	}
+
+	assert.False(t, sortedPropertyNames(nil).hasPrefix(""))
+}
+
+func Test_DecodeRecursiveTypeWithManyChildren(t *testing.T) {
+	// more than ten children, so that "children:1" sorts next to "children:10"
+	value := &TRecursive{Name: "root"}
+	for i := 0; i < 12; i++ {
+		value.Children = append(value.Children, TRecursive{
+			Children: []TRecursive{{Name: "grandchild"}},
+		})
+	}
+
+	vals := Encode(value, "props", OptionalJSONTag)
+
+	assert.EqualValues(t, value, Decode(reflect.TypeOf(value), vals, "props", OptionalJSONTag))
 }
