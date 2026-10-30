@@ -302,6 +302,83 @@ func Test_InstalledPackageCataloger(t *testing.T) {
 			},
 		},
 		{
+			name:    "detect license files under dist-info/licenses (PEP 639)",
+			fixture: "testdata/site-packages/license-pep639",
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "pep639-example",
+					Version:  "1.0.0",
+					PURL:     "pkg:pypi/pep639-example@1.0.0",
+					Type:     pkg.PythonPkg,
+					Language: pkg.Python,
+					Locations: file.NewLocationSet(
+						file.NewLocation("pep639_example-1.0.0.dist-info/METADATA"),
+						file.NewLocation("pep639_example-1.0.0.dist-info/RECORD"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{
+							Value:          "BSD-3-Clause",
+							SPDXExpression: "BSD-3-Clause",
+							Type:           "concluded",
+							Contents:       mustContentsFromLocation(t, "testdata/site-packages/license-pep639/pep639_example-1.0.0.dist-info/licenses/LICENSE", 0, 1475),
+							// no License-File is declared, so the license file is found through RECORD
+							Locations: file.NewLocationSet(file.NewLocation("pep639_example-1.0.0.dist-info/licenses/LICENSE")),
+						},
+					),
+					FoundBy: "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "pep639-example",
+						Version:              "1.0.0",
+						SitePackagesRootPath: ".",
+						Files: []pkg.PythonFileRecord{
+							{Path: "pep639_example-1.0.0.dist-info/METADATA", Digest: &pkg.PythonFileDigest{Algorithm: "sha256", Value: "Z_-WBDzq246VHj56DO8yfBNNtlTqMj6q9xw_OGgeEMw"}, Size: "218"},
+							{Path: "pep639_example-1.0.0.dist-info/licenses/LICENSE", Digest: &pkg.PythonFileDigest{Algorithm: "sha256", Value: "SJqOEQhQntmKN7uYPhHg9-HTHwvY-Zp5yESOf_N9B-o"}, Size: "1475"},
+							{Path: "pep639_example-1.0.0.dist-info/RECORD"},
+						},
+						RequiresPython: ">=3.9",
+					},
+				},
+				{
+					Name:     "pep639-declared",
+					Version:  "1.0.0",
+					PURL:     "pkg:pypi/pep639-declared@1.0.0",
+					Type:     pkg.PythonPkg,
+					Language: pkg.Python,
+					Locations: file.NewLocationSet(
+						file.NewLocation("pep639_declared-1.0.0.dist-info/METADATA"),
+						file.NewLocation("pep639_declared-1.0.0.dist-info/RECORD"),
+					),
+					// found only through License-File, since RECORD does not list them; AUTHORS.rst is not a license file
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{
+							Value:          "BSD-3-Clause",
+							SPDXExpression: "BSD-3-Clause",
+							Type:           "concluded",
+							Contents:       mustContentsFromLocation(t, "testdata/site-packages/license-pep639/pep639_declared-1.0.0.dist-info/licenses/LICENSE.BSD", 0, 1475),
+							Locations:      file.NewLocationSet(file.NewLocation("pep639_declared-1.0.0.dist-info/licenses/LICENSE.BSD")),
+						},
+						pkg.License{
+							Value:          "MIT",
+							SPDXExpression: "MIT",
+							Type:           "concluded",
+							Contents:       mustContentsFromLocation(t, "testdata/site-packages/license-pep639/pep639_declared-1.0.0.dist-info/licenses/LICENSE.MIT", 13, 1072),
+							Locations:      file.NewLocationSet(file.NewLocation("pep639_declared-1.0.0.dist-info/licenses/LICENSE.MIT")),
+						},
+					),
+					FoundBy: "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "pep639-declared",
+						Version:              "1.0.0",
+						SitePackagesRootPath: ".",
+						Files: []pkg.PythonFileRecord{
+							{Path: "pep639_declared-1.0.0.dist-info/METADATA", Digest: &pkg.PythonFileDigest{Algorithm: "sha256", Value: "QM0YKaGTutHOanSl_CjBQDgF2cayCxbgyEPE0xhMGks"}, Size: "255"},
+							{Path: "pep639_declared-1.0.0.dist-info/RECORD"},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:    "malformed-record",
 			fixture: "testdata/site-packages/malformed-record",
 			expectedPackages: []pkg.Package{
