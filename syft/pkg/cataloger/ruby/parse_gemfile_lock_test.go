@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -127,11 +128,32 @@ func TestParseGemfileLockEntries(t *testing.T) {
 		expectedPkgs[i].SetID()
 	}
 
-	// relationships are produced by the cataloger's dependency.Processor, not the
-	// parser itself; see TestCataloger_Relationships.
+	// each locked dependency of a gem is one dependency-of relationship: bundler is
+	// not locked so it has none, and treetop's duplicate polyglot gives one.
+	pkgsByName := map[string]pkg.Package{}
+	for _, p := range expectedPkgs {
+		pkgsByName[p.Name] = p
+	}
+	var expectedRelationships []artifact.Relationship
+	for name, deps := range gemDeps {
+		resolved := strset.New()
+		for _, dep := range deps {
+			depPkg, locked := pkgsByName[dep]
+			if !locked || resolved.Has(dep) {
+				continue
+			}
+			resolved.Add(dep)
+			expectedRelationships = append(expectedRelationships, artifact.Relationship{
+				From: depPkg,
+				To:   pkgsByName[name],
+				Type: artifact.DependencyOfRelationship,
+			})
+		}
+	}
+
 	pkgtest.NewCatalogTester().
 		FromFile(t, fixture).
-		Expects(expectedPkgs, nil).
+		Expects(expectedPkgs, expectedRelationships).
 		TestParser(t, parseGemFileLockEntries)
 }
 

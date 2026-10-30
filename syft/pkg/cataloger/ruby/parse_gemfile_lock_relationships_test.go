@@ -134,6 +134,20 @@ func TestCataloger_Relationships(t *testing.T) {
 		TestCataloger(t, NewGemFileLockCataloger())
 }
 
+func TestCataloger_RelationshipsStayWithinEachLockfile(t *testing.T) {
+	// two apps in one scan lock different versions of rack; each app's gem must
+	// only depend on the rack locked next to it.
+	expectedRelationships := []string{
+		"rack @ 2.2.8 (app-a/Gemfile.lock) [dependency-of] rails @ 7.1.3 (app-a/Gemfile.lock)",
+		"rack @ 3.0.9 (app-b/Gemfile.lock) [dependency-of] sinatra @ 4.0.0 (app-b/Gemfile.lock)",
+	}
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/multiple-lockfiles").
+		ExpectsRelationshipStrings(expectedRelationships).
+		TestCataloger(t, NewGemFileLockCataloger())
+}
+
 func TestCataloger_DirectDependencies(t *testing.T) {
 	// cowboy is listed under DEPENDENCIES; cowlib and ranch are only required by
 	// it. Direct must survive the full cataloger, not just the parser.

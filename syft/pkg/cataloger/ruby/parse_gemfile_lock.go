@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
 var _ generic.Parser = parseGemFileLockEntries
@@ -21,8 +22,8 @@ var sectionsOfInterest = strset.New("GEM", "GIT", "PATH", "PLUGIN SOURCE")
 // parseGemFileLockEntries is a parser function for Gemfile.lock contents, returning all Gems discovered.
 //
 // Each gem's dependency list (the indented lines beneath its spec) is recorded
-// on the package metadata; the dependency.Processor wired into the cataloger
-// turns those into dependency-of relationships once all packages are known.
+// on the package metadata and resolved into dependency-of relationships between
+// the gems of this lockfile only, so separate projects in one scan stay apart.
 // Gems listed in the DEPENDENCIES section, the ones the Gemfile declares, are
 // marked Direct.
 func parseGemFileLockEntries(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -85,7 +86,7 @@ func parseGemFileLockEntries(_ context.Context, _ file.Resolver, _ *generic.Envi
 		)
 	}
 
-	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
+	return pkgs, dependency.Resolve(gemfileLockDependencySpecifier, pkgs), unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
 // isGemSpecLine reports whether a line is a gem spec entry (4-space indent),
