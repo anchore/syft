@@ -153,6 +153,14 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 		return nil
 	}
 
+	// Apple application bundles have no ecosystem CPE dictionary, and the display name is not a
+	// valid source for a CPE: name-derived CPEs essentially never match NVD records (and
+	// sometimes match the wrong one, e.g. Docker Desktop matching Docker Engine CVEs). Only a
+	// curated bundle-identifier mapping can produce a CPE for these packages.
+	if p.Type == pkg.AppleAppBundlePkg {
+		return appBundleCPESet(p)
+	}
+
 	vendors := boundCandidates(candidateVendors(p))
 	products := boundCandidates(candidateProducts(p))
 	targetSWs := candidateTargetSw(p)
