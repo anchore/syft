@@ -251,6 +251,15 @@ func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg
 		} else {
 			licenseLocations.Add(locs...)
 		}
+	} else {
+		metadataDir := path.Dir(m.DistInfoLocation.Path())
+		for _, name := range m.LicenseFiles {
+			// License-File may also list notices such as AUTHORS, which are not licenses
+			if !licenses.IsLicenseFile(path.Base(name)) {
+				continue
+			}
+			licenseLocations.Add(resolveDeclaredLicenseFile(resolver, metadataDir, name)...)
+		}
 	}
 
 	switch {
@@ -276,6 +285,22 @@ func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg
 		out = licenses.FindAtPaths(ctx, resolver, candidatePaths.List()...)
 	}
 	return pkg.NewLicenseSet(out...)
+}
+
+// resolveDeclaredLicenseFile finds a License-File entry, which PEP 639 (Metadata-Version 2.4) makes relative to
+// .dist-info/licenses/ and older metadata makes relative to the metadata directory itself.
+func resolveDeclaredLicenseFile(resolver file.Resolver, metadataDir, name string) []file.Location {
+	for _, p := range []string{path.Join(metadataDir, name), path.Join(metadataDir, "licenses", name)} {
+		locs, err := resolver.FilesByPath(p)
+		if err != nil {
+			log.WithFields("error", err, "path", p).Trace("unable to resolve python license file")
+			continue
+		}
+		if len(locs) > 0 {
+			return locs
+		}
+	}
+	return nil
 }
 
 // isDistInfoLicenseCandidate reports whether a RECORD path sits directly in the .dist-info directory,

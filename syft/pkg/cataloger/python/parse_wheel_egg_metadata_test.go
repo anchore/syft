@@ -26,7 +26,6 @@ func TestParseWheelEggMetadata(t *testing.T) {
 			ExpectedMetadata: parsedData{
 				DistInfoLocation:  file.NewLocation("testdata/site-packages/nested/egg-name/egg-info/PKG-INFO"),
 				Licenses:          "Apache 2.0",
-				LicenseFile:       "",
 				LicenseExpression: "",
 				LicenseFilePath:   "testdata/site-packages/nested/egg-name/egg-info/PKG-INFO",
 				PythonPackage: pkg.PythonPackage{
@@ -46,7 +45,6 @@ func TestParseWheelEggMetadata(t *testing.T) {
 			ExpectedMetadata: parsedData{
 				DistInfoLocation:  file.NewLocation("testdata/site-packages/nested/dist-name/dist-info/METADATA"),
 				Licenses:          "BSD License",
-				LicenseFile:       "",
 				LicenseExpression: "",
 				LicenseFilePath:   "testdata/site-packages/nested/dist-name/dist-info/METADATA",
 				PythonPackage: pkg.PythonPackage{
@@ -156,7 +154,6 @@ func TestParseWheelEggMetadataInvalid(t *testing.T) {
 				DistInfoLocation:  file.NewLocation("testdata/site-packages/nested/egg-name/egg-info/PKG-INFO-INVALID"),
 				Licenses:          "",
 				LicenseExpression: "",
-				LicenseFile:       "",
 				LicenseFilePath:   "",
 				PythonPackage: pkg.PythonPackage{
 					Name:                 "mxnet",
