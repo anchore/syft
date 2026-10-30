@@ -1269,6 +1269,19 @@ func DefaultClassifiers() []binutils.Classifier {
 				m.FileContentsVersionMatcher(`enroll(?:: true)?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-?header`),
 				// 8.11.x: 3:04PM8.11.2:https
 				m.FileContentsVersionMatcher(`PM(?P<version>[0-9]+\.[0-9]+\.[0-9]+):https`),
+				// The release version is only embedded as two bare Go string constants: "X.Y.Z" and "X.Y.Z-"
+				// (defaultBeatVersion and the folded defaultBeatVersion + "-" from elastic-agent's version package).
+				// The Go linker sorts string data by length, so the strings next to the version change between
+				// builds and whenever the version length changes (e.g. 8.19.9 -> 8.19.10). The patterns below anchor
+				// on the following string, which has been stable within each release line. The major version is a
+				// single digit because the preceding string may end in digits (e.g. "...3906258.10.0:https") and
+				// RE2 has no lookbehind.
+				// 8.17.10, 8.19.10+: mkdirat8.17.10staging, perPage8.19.10staging
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]\.[0-9]+\.[0-9]+)-?staging`),
+				// 7.17.x: Month(7.17.29---headerHTTPPROF
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]\.[0-9]+\.[0-9]+)-(?:--header)?HTTPPROF`),
+				// 8.2.x - 8.10.x, 8.12.x: 3906258.10.0:https, 7.14.08.2.0-:https
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]\.[0-9]+\.[0-9]+)-?:https`),
 			),
 			Package: "elastic-agent",
 			PURL:    mustPURL("pkg:generic/elastic-agent@version"),
