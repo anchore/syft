@@ -123,6 +123,46 @@ func Test_encodeComponentProperties(t *testing.T) {
 			},
 		},
 		{
+			name: "from a Gemfile.lock gem declared in the Gemfile",
+			input: pkg.Package{
+				Name:     "rails",
+				Version:  "7.1.3",
+				Language: pkg.Ruby,
+				Type:     pkg.GemPkg,
+				Metadata: pkg.RubyGemfileLockEntry{
+					Name:         "rails",
+					Version:      "7.1.3",
+					Dependencies: []string{"actionpack"},
+					Direct:       true,
+				},
+			},
+			expected: []cyclonedx.Property{
+				{Name: "syft:package:language", Value: pkg.Ruby.String()},
+				{Name: "syft:package:metadataType", Value: "ruby-gemfile-lock-entry"},
+				{Name: "syft:package:type", Value: "gem"},
+				{Name: "syft:metadata:direct", Value: "true"},
+			},
+		},
+		{
+			name: "from a Gemfile.lock gem only required by another gem",
+			input: pkg.Package{
+				Name:     "actionpack",
+				Version:  "7.1.3",
+				Language: pkg.Ruby,
+				Type:     pkg.GemPkg,
+				Metadata: pkg.RubyGemfileLockEntry{
+					Name:    "actionpack",
+					Version: "7.1.3",
+				},
+			},
+			expected: []cyclonedx.Property{
+				{Name: "syft:package:language", Value: pkg.Ruby.String()},
+				{Name: "syft:package:metadataType", Value: "ruby-gemfile-lock-entry"},
+				{Name: "syft:package:type", Value: "gem"},
+				{Name: "syft:metadata:direct", Value: "false"},
+			},
+		},
+		{
 			name: "from rpm",
 			input: pkg.Package{
 				Name:    "dive",
@@ -411,6 +451,22 @@ func Test_decodeComponent(t *testing.T) {
 				GGUFVersion: 3,
 				TensorCount: 291,
 			},
+		},
+		{
+			name: "decode a direct Gemfile.lock gem",
+			component: cyclonedx.Component{
+				Name:       "rails",
+				Version:    "7.1.3",
+				PackageURL: "pkg:gem/rails@7.1.3",
+				Type:       "library",
+				BOMRef:     "pkg:gem/rails@7.1.3",
+				Properties: &[]cyclonedx.Property{
+					{Name: "syft:package:metadataType", Value: "ruby-gemfile-lock-entry"},
+					{Name: "syft:metadata:direct", Value: "true"},
+				},
+			},
+			wantMetadata: pkg.RubyGemfileLockEntry{Direct: true},
+			wantPURL:     "pkg:gem/rails@7.1.3",
 		},
 		{
 			name: "generate a purl from package type",

@@ -17,3 +17,22 @@ type RubyGemspec struct {
 	// Homepage is project homepage URL
 	Homepage string `mapstructure:"homepage" json:"homepage,omitempty"`
 }
+
+// RubyGemfileLockEntry represents a single gem entry parsed from a Gemfile.lock file.
+type RubyGemfileLockEntry struct {
+	// Name is the gem name as locked in the Gemfile.lock
+	Name string `mapstructure:"name" json:"name"`
+
+	// Version is the resolved gem version as locked in the Gemfile.lock
+	Version string `mapstructure:"version" json:"version"`
+
+	// Dependencies are the names of the gems this entry depends on, as declared
+	// in the entry's indented dependency list. Used to derive dependency-of
+	// relationships between the locked gems.
+	Dependencies []string `mapstructure:"dependencies" json:"dependencies,omitempty"`
+
+	// Direct is true when the project itself declares this gem, i.e. it is listed in
+	// the Gemfile.lock DEPENDENCIES section (the gems named in the Gemfile), rather
+	// than only being required by another locked gem.
+	Direct bool `mapstructure:"direct" json:"direct,omitempty" cyclonedx:"direct"`
+}
