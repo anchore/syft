@@ -54,7 +54,7 @@ func (r *ObservingResolver) ObservedPathQuery(input string) bool {
 // ObservedPathResponses checks if a specific path was returned in any response.
 func (r *ObservingResolver) ObservedPathResponses(path string) bool {
 	for _, loc := range r.pathResponses {
-		if loc.RealPath == path {
+		if loc.FullNestedPath() == path {
 			return true
 		}
 	}
@@ -64,7 +64,7 @@ func (r *ObservingResolver) ObservedPathResponses(path string) bool {
 // ObservedContentQueries checks if a specific file's content was read.
 func (r *ObservingResolver) ObservedContentQueries(path string) bool {
 	for _, loc := range r.contentQueries {
-		if loc.RealPath == path {
+		if loc.FullNestedPath() == path {
 			return true
 		}
 	}
@@ -75,7 +75,7 @@ func (r *ObservingResolver) ObservedContentQueries(path string) bool {
 func (r *ObservingResolver) AllContentQueries() []string {
 	observed := strset.New()
 	for _, loc := range r.contentQueries {
-		observed.Add(loc.RealPath)
+		observed.Add(loc.FullNestedPath())
 	}
 	return observed.List()
 }

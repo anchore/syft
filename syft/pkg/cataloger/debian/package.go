@@ -187,7 +187,7 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 	copyrightReader, copyrightLocation := fetchCopyrightContents(resolver, dbLocation, metadata)
 	var licenseStrs []string
 	if copyrightReader != nil && copyrightLocation != nil {
-		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.AccessPath)
+		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.FullNestedPath())
 		// attach the licenses
 		licenseStrs = parseLicensesFromCopyright(copyrightReader)
 		for _, licenseStr := range licenseStrs {
@@ -200,7 +200,7 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 	if len(licenseStrs) == 0 {
 		sr, sl := fetchCopyrightContents(resolver, dbLocation, metadata)
 		if sr != nil && sl != nil {
-			defer internal.CloseAndLogError(sr, sl.AccessPath)
+			defer internal.CloseAndLogError(sr, sl.FullNestedPath())
 			p.Licenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(*sl, sr))...)
 		}
 	}
@@ -246,11 +246,11 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 	md5Reader, md5Location := fetchMd5Contents(resolver, dbLocation, m)
 
 	if md5Reader != nil && md5Location != nil {
-		defer internal.CloseAndLogError(md5Reader, md5Location.AccessPath)
+		defer internal.CloseAndLogError(md5Reader, md5Location.FullNestedPath())
 		// attach the file list
 		records, err := parseDpkgMD5Info(md5Reader)
 		if err != nil {
-			log.Debugf("dpkg md5sums file %q: %v", md5Location.RealPath, err)
+			log.Debugf("dpkg md5sums file %q: %v", md5Location.FullNestedPath(), err)
 		}
 		files = append(files, records...)
 
@@ -261,11 +261,11 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 	conffilesReader, conffilesLocation := fetchConffileContents(resolver, dbLocation, m)
 
 	if conffilesReader != nil && conffilesLocation != nil {
-		defer internal.CloseAndLogError(conffilesReader, conffilesLocation.AccessPath)
+		defer internal.CloseAndLogError(conffilesReader, conffilesLocation.FullNestedPath())
 		// attach the file list
 		records, err := parseDpkgConffileInfo(conffilesReader)
 		if err != nil {
-			log.Debugf("dpkg conffiles file %q: %v", conffilesLocation.RealPath, err)
+			log.Debugf("dpkg conffiles file %q: %v", conffilesLocation.FullNestedPath(), err)
 		}
 		files = append(files, records...)
 
@@ -288,7 +288,7 @@ func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.Dp
 	// and the md5sum information is under /var/lib/dpkg/info/; however, for distroless the installed
 	// package info is across multiple files under /var/lib/dpkg/status.d/ and the md5sums are contained in
 	// the same directory
-	searchPath := filepath.Dir(dbLocation.RealPath)
+	searchPath := filepath.Dir(dbLocation.LocalPath())
 
 	if !strings.HasSuffix(searchPath, "status.d") {
 		searchPath = path.Join(searchPath, "info")
@@ -327,7 +327,7 @@ func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, m p
 		return nil, nil
 	}
 
-	parentPath := filepath.Dir(dbLocation.RealPath)
+	parentPath := filepath.Dir(dbLocation.LocalPath())
 
 	// look for /var/lib/dpkg/info/NAME:ARCH.conffiles
 	name := md5Key(m)

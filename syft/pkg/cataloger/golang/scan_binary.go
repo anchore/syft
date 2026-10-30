@@ -96,7 +96,7 @@ func scanReader(ctx context.Context, location file.Location, r io.ReaderAt, capt
 		if isCancelled(err) {
 			return nil, err
 		}
-		log.WithFields("file", location.RealPath, "error", err).Trace("unable to fully read golang buildinfo")
+		log.WithFields("file", location.FullNestedPath(), "error", err).Trace("unable to fully read golang buildinfo")
 		if reportableGap(err) {
 			// the build info is either missing or it is not, and the same err covers both: a partial
 			// reconstruction still hands back everything .go.buildinfo carried, and what it lost is the
@@ -128,7 +128,7 @@ func scanReader(ctx context.Context, location file.Location, r io.ReaderAt, capt
 	// bounds only the section elf.NewFile expands as it parses.
 	v, err := getCryptoInformation(contents)
 	if err != nil {
-		log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang version info")
+		log.WithFields("file", location.FullNestedPath(), "error", err).Trace("unable to read golang version info")
 		// don't skip this build info.
 		// we can still catalog packages, even if we can't get the crypto information
 		errs = unknown.Appendf(errs, location, "unable to read golang version info: %w", err)
@@ -138,7 +138,7 @@ func scanReader(ctx context.Context, location file.Location, r io.ReaderAt, capt
 	if arch == "" {
 		arch, err = getGOARCHFromBin(contents)
 		if err != nil {
-			log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang arch info")
+			log.WithFields("file", location.FullNestedPath(), "error", err).Trace("unable to read golang arch info")
 			// don't skip this build info.
 			// we can still catalog packages, even if we can't get the arch information
 			errs = unknown.Appendf(errs, location, "unable to read golang arch info: %w", err)
@@ -149,7 +149,7 @@ func scanReader(ctx context.Context, location file.Location, r io.ReaderAt, capt
 	if captureSymbols {
 		symbols, err = getSymbols(contents)
 		if err != nil {
-			log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang symbol info")
+			log.WithFields("file", location.FullNestedPath(), "error", err).Trace("unable to read golang symbol info")
 			// don't skip this build info.
 			// we can still catalog packages, even if we can't get the symbol information
 			errs = unknown.Appendf(errs, location, "unable to read golang symbol info: %w", err)

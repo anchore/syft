@@ -71,7 +71,7 @@ func FindInDirs(ctx context.Context, resolver file.Resolver, dirs ...string) []p
 func FindRelativeToLocations(ctx context.Context, resolver file.Resolver, locations ...file.Location) []pkg.License {
 	var out []pkg.License
 	for _, location := range locations {
-		dir := path.Dir(location.AccessPath)
+		dir := path.Dir(location.LocalPath())
 		out = append(out, FindInDirs(ctx, resolver, dir)...)
 	}
 	return out
@@ -115,9 +115,9 @@ func NewFromValues(ctx context.Context, locations []file.Location, values ...str
 func readFromResolver(ctx context.Context, resolver file.Resolver, location file.Location) []pkg.License {
 	metadataContents, err := resolver.FileContentsByLocation(location)
 	if err != nil || metadataContents == nil {
-		log.WithFields("error", err, "path", location.Path()).Trace("unable to license file contents")
+		log.WithFields("error", err, "path", location.FullNestedPath()).Trace("unable to license file contents")
 		return nil
 	}
-	defer internal.CloseAndLogError(metadataContents, location.Path())
+	defer internal.CloseAndLogError(metadataContents, location.FullNestedPath())
 	return pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(location, metadataContents))
 }

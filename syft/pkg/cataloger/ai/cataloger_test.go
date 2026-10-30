@@ -10,9 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/tmpdir"
-	"github.com/anchore/syft/syft/internal/fileresolver"
-
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
@@ -123,6 +122,45 @@ func TestGGUFCataloger(t *testing.T) {
 						RemainingKeyValues: map[string]any{
 							"gpt2.context_length":   "1024",
 							"gpt2.embedding_length": uint32(768),
+						},
+					},
+				},
+			},
+			expectedRelationships: nil,
+		},
+		{
+			// syft copies at most maxHeaderSize bytes of a model to parse, so in any model larger than that the
+			// tensors declare far more data than the copy holds
+			name: "catalog GGUF file larger than the header copy",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				data := newTestGGUFBuilder().
+					withStringKV("general.architecture", "qwen2").
+					withUint32KV("general.file_type", 0).                       // ALL_F32
+					withTensor("token_embd.weight", ggmlTypeF32, 1024, 8192).   // 32 MiB
+					withTensor("blk.0.ffn_up.weight", ggmlTypeF32, 1024, 8192). // 32 MiB
+					build()
+
+				path := filepath.Join(dir, "qwen2.5-0.5b-instruct-f32.gguf")
+				require.NoError(t, os.WriteFile(path, data, 0644))
+				// the tensor data is never read, so it is left as a sparse range: alignment padding, then 64 MiB
+				require.NoError(t, os.Truncate(path, int64(len(data))+32+64<<20))
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "qwen2.5-0.5b-instruct-f32",
+					Type:     pkg.ModelPkg,
+					Licenses: pkg.NewLicenseSet(),
+					Metadata: pkg.GGUFFileHeader{
+						Architecture:          "qwen2",
+						Quantization:          "F32",
+						Parameters:            2 * 1024 * 8192,
+						GGUFVersion:           3,
+						TensorCount:           2,
+						MetadataKeyValuesHash: "fddec34fd07b3547",
+						RemainingKeyValues: map[string]any{
+							"general.file_type": uint32(0),
 						},
 					},
 				},

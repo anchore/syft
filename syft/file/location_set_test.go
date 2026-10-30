@@ -4,6 +4,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/gohugoio/hashstructure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -255,6 +256,10 @@ func TestLocationSet_Hash(t *testing.T) {
 		},
 	}
 
+	inA := NewLocationFromCoordinates(Coordinates{RealPath: "/app.war", FullPath: "/app.war!/a.jar!/package.json"})
+	inB := NewLocationFromCoordinates(Coordinates{RealPath: "/app.war", FullPath: "/app.war!/b.jar!/package.json"})
+	etcFull := Location{LocationData: LocationData{Coordinates: Coordinates{RealPath: "/etc/hosts", FileSystemID: "a", FullPath: "/etc/hosts"}}}
+
 	tests := []struct {
 		name string
 		setA LocationSet
@@ -297,6 +302,18 @@ func TestLocationSet_Hash(t *testing.T) {
 			setB: NewLocationSet(binB, etcB),
 			want: assert.Equal,
 		},
+		{
+			name: "same outer archive but different nested entries have different hashes",
+			setA: NewLocationSet(inA),
+			setB: NewLocationSet(inB),
+			want: assert.NotEqual,
+		},
+		{
+			name: "a full path equal to the real path has the same hash as a blank one",
+			setA: NewLocationSet(etcA),
+			setB: NewLocationSet(etcFull),
+			want: assert.Equal,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -307,4 +324,14 @@ func TestLocationSet_Hash(t *testing.T) {
 			tt.want(t, gotA, gotB)
 		})
 	}
+}
+
+// IDs outside archives must not change from when only real paths were hashed
+func TestLocationSet_Hash_unchangedOutsideArchives(t *testing.T) {
+	want, err := hashstructure.Hash([]string{"/etc/hosts", "/bin"}, &hashstructure.HashOptions{ZeroNil: true, SlicesAsSets: true})
+	require.NoError(t, err)
+
+	got, err := NewLocationSet(NewLocation("/etc/hosts"), NewVirtualLocation("/bin", "/usr/bin")).Hash()
+	require.NoError(t, err)
+	assert.Equal(t, want, got)
 }

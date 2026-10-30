@@ -19,7 +19,7 @@ var _ dbProcessor = processV10DB
 
 func processV10DB(ctx context.Context, config Config, dbLocation file.Location, resolver file.Resolver, catalogerName string) ([]pkg.Package, []artifact.Relationship, error) {
 	dbContents, err := resolver.FileContentsByLocation(dbLocation)
-	defer internal.CloseAndLogError(dbContents, dbLocation.RealPath)
+	defer internal.CloseAndLogError(dbContents, dbLocation.FullNestedPath())
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read Nix database: %w", err)
 	}

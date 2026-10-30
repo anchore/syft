@@ -14,5 +14,5 @@ func DefaultLocationComparer(x, y file.Location) bool {
 }
 
 func LocationComparerWithoutLayer(x, y file.Location) bool {
-	return cmp.Equal(x.RealPath, y.RealPath) && cmp.Equal(x.AccessPath, y.AccessPath)
+	return cmp.Equal(x.FullNestedPath(), y.FullNestedPath()) && cmp.Equal(x.AccessPath, y.AccessPath)
 }

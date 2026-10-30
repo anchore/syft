@@ -2,6 +2,8 @@ package bitnami
 
 import (
 	"context"
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -37,7 +39,7 @@ func TestBitnamiCataloger(t *testing.T) {
 		FoundBy: catalogerName,
 		PURL:    "pkg:bitnami/postgresql@17.2.0-8?arch=arm64&distro=debian-12",
 		CPEs: mustCPEs(
-			"cpe:2.3:*:postgresql:postgresql:17.2.0:*:*:*:*:*:*:*",
+			"cpe:2.3:a:postgresql:postgresql:17.2.0:*:*:*:*:*:*:*",
 		),
 		Metadata: &pkg.BitnamiSBOMEntry{
 			Name:         "postgresql",
@@ -64,7 +66,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/geos@3.13.0?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:libgeos:geos:3.13.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libgeos:geos:3.13.0:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "geos",
@@ -86,7 +88,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/proj@6.3.2?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:proj:proj:6.3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:proj:proj:6.3.2:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "proj",
@@ -108,7 +110,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/gdal@3.10.1?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:osgeo:gdal:3.10.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:osgeo:gdal:3.10.1:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "gdal",
@@ -130,7 +132,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/json-c@0.16.20220414?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:json-c_project:json-c:0.16.20220414:*:*:*:*:*:*:*",
+				"cpe:2.3:a:json-c_project:json-c:0.16.20220414:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "json-c",
@@ -152,7 +154,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/orafce@4.14.1?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:orafce:orafce:4.14.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:orafce:orafce:4.14.1:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "orafce",
@@ -174,7 +176,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/pljava@1.6.8?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:pl/java_project:pl/java:1.6.8:*:*:*:*:*:*:*",
+				"cpe:2.3:a:pl/java_project:pl/java:1.6.8:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "pljava",
@@ -201,7 +203,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/unixodbc@2.3.12?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:unixodbc:unixodbc:2.3.12:*:*:*:*:*:*:*",
+				"cpe:2.3:a:unixodbc:unixodbc:2.3.12:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "unixodbc",
@@ -223,7 +225,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/psqlodbc@16.0.0?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:postgresql:psqlodbc:16.0.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:postgresql:psqlodbc:16.0.0:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "psqlodbc",
@@ -245,7 +247,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/protobuf@3.21.12?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:golang:protobuf:3.21.12:*:*:*:*:*:*:*",
+				"cpe:2.3:a:golang:protobuf:3.21.12:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "protobuf",
@@ -267,7 +269,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/protobuf-c@1.5.1?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:protobuf-c:protobuf-c:1.5.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:protobuf-c:protobuf-c:1.5.1:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "protobuf-c",
@@ -289,7 +291,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/postgis@3.4.4?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:postgis:postgis:3.4.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:postgis:postgis:3.4.4:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "postgis",
@@ -330,7 +332,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/pgbackrest@2.54.2?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:pgbackrest:pgbackrest:2.54.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:pgbackrest:pgbackrest:2.54.2:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "pgbackrest",
@@ -352,7 +354,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/wal2json@2.6.0?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:wal2json:wal2json:2.6.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:wal2json:wal2json:2.6.0:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "wal2json",
@@ -374,7 +376,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/nss_wrapper@1.1.16?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:nss_wrapper:nss_wrapper:1.1.16:*:*:*:*:*:*:*",
+				"cpe:2.3:a:nss_wrapper:nss_wrapper:1.1.16:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "nss_wrapper",
@@ -410,7 +412,7 @@ func TestBitnamiCataloger(t *testing.T) {
 		FoundBy: catalogerName,
 		PURL:    "pkg:bitnami/render-template@1.0.7-4?arch=arm64&distro=debian-12",
 		CPEs: mustCPEs(
-			"cpe:2.3:*:render-template:render-template:1.0.7:*:*:*:*:*:*:*",
+			"cpe:2.3:a:render-template:render-template:1.0.7:*:*:*:*:*:*:*",
 		),
 		Metadata: &pkg.BitnamiSBOMEntry{
 			Name:         "render-template",
@@ -435,7 +437,7 @@ func TestBitnamiCataloger(t *testing.T) {
 		FoundBy: catalogerName,
 		PURL:    "pkg:bitnami/redis@7.4.0-0?arch=arm64&distro=debian-12",
 		CPEs: mustCPEs(
-			"cpe:2.3:*:redis:redis:7.4.0:*:*:*:*:*:*:*",
+			"cpe:2.3:a:redis:redis:7.4.0:*:*:*:*:*:*:*",
 		),
 		Metadata: &pkg.BitnamiSBOMEntry{
 			Name:         "redis",
@@ -619,6 +621,70 @@ func TestBitnamiCataloger(t *testing.T) {
 				Expects(tt.wantPkgs, tt.wantRelationships).
 				WithErrorAssertion(tt.wantErr).
 				TestCataloger(t, NewCataloger())
+		})
+	}
+}
+
+func Test_filterRelationships_keepsOnlyPackageRelationships(t *testing.T) {
+	p := pkg.Package{Name: "postgresql", PURL: "pkg:bitnami/postgresql@17.2.0"}
+	jar := file.NewLocation("app.jar")
+	inner := file.NewLocation("BOOT-INF/lib/log4j-core-2.14.1.jar")
+	// as the decoder nests it when the SBOM also says the jar CONTAINS it
+	nested := file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/app.jar", FullPath: "/app.jar!/BOOT-INF/lib/log4j-core-2.14.1.jar"})
+	relationships := []artifact.Relationship{
+		{From: p, To: jar, Type: artifact.ContainsRelationship},
+		{From: jar, To: inner, Type: artifact.ContainsRelationship},
+		{From: jar, To: p, Type: artifact.ContainsRelationship},
+		{From: p, To: nested, Type: artifact.ContainsRelationship},
+	}
+
+	got := filterRelationships(relationships, []pkg.Package{p})
+
+	require.Equal(t, relationships[:1], got)
+}
+
+func Test_parseSBOM_nestingInTheSBOMIsNotKept(t *testing.T) {
+	// a file the SBOM says another CONTAINS decodes as nested within it, and one the SBOM DESCRIBES as the scan
+	// root; neither is anything the scan found
+	const head = `{
+ "spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":"x","documentNamespace":"https://x/y",
+ "creationInfo":{"created":"2024-01-01T00:00:00Z","creators":["Tool: x"]},
+ "packages":[{"name":"postgresql","SPDXID":"SPDXRef-pg","versionInfo":"17.2.0","downloadLocation":"NONE",
+   "externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:bitnami/postgresql@17.2.0"}]}],
+ "files":[{"fileName":"app.jar","SPDXID":"SPDXRef-F1","checksums":[{"algorithm":"SHA1","checksumValue":"0000000000000000000000000000000000000000"}]},
+          {"fileName":"BOOT-INF/lib/log4j-core-2.14.1.jar","SPDXID":"SPDXRef-F2","checksums":[{"algorithm":"SHA1","checksumValue":"0000000000000000000000000000000000000000"}]}],
+ "relationships":[`
+	tests := []struct {
+		name          string
+		relationships string
+	}{
+		{
+			name: "nested",
+			relationships: `{"spdxElementId":"SPDXRef-DOCUMENT","relationshipType":"DESCRIBES","relatedSpdxElement":"SPDXRef-pg"},
+   {"spdxElementId":"SPDXRef-pg","relationshipType":"CONTAINS","relatedSpdxElement":"SPDXRef-F2"},
+   {"spdxElementId":"SPDXRef-F1","relationshipType":"CONTAINS","relatedSpdxElement":"SPDXRef-F2"}`,
+		},
+		{
+			name: "scan root",
+			relationships: `{"spdxElementId":"SPDXRef-DOCUMENT","relationshipType":"DESCRIBES","relatedSpdxElement":"SPDXRef-pg"},
+   {"spdxElementId":"SPDXRef-pg","relationshipType":"DESCRIBES","relatedSpdxElement":"SPDXRef-F1"},
+   {"spdxElementId":"SPDXRef-pg","relationshipType":"CONTAINS","relatedSpdxElement":"SPDXRef-F1"},
+   {"spdxElementId":"SPDXRef-F1","relationshipType":"CONTAINS","relatedSpdxElement":"SPDXRef-F2"}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			loc := file.NewLocation("/opt/bitnami/postgresql/.spdx-postgresql.spdx")
+			doc := head + tt.relationships + "]}"
+			_, relationships, err := parseSBOM(context.Background(), file.NewMockResolverForPaths(), nil, file.NewLocationReadCloser(loc, io.NopCloser(strings.NewReader(doc))))
+			require.NoError(t, err)
+
+			for _, r := range relationships {
+				if l, ok := r.To.(file.Location); ok {
+					require.Empty(t, l.FullPath, "%+v", r)
+					require.NotContains(t, []string{"", "/"}, l.RealPath, "%+v", r)
+				}
+			}
 		})
 	}
 }

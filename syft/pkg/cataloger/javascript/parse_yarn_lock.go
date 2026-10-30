@@ -93,20 +93,20 @@ func readPackageJSONDeps(resolver file.Resolver, lockfileLocation file.Location)
 
 	pkgJSONLocation := resolver.RelativeFileByPath(lockfileLocation, "package.json")
 	if pkgJSONLocation == nil {
-		log.WithFields("lockfile", lockfileLocation.RealPath).Debug("could not find package.json for dev dependency detection")
+		log.WithFields("lockfile", lockfileLocation.FullNestedPath()).Debug("could not find package.json for dev dependency detection")
 		return prod, dev
 	}
 
 	reader, err := resolver.FileContentsByLocation(*pkgJSONLocation)
 	if err != nil {
-		log.WithFields("location", pkgJSONLocation.RealPath, "error", err).Debug("could not read package.json for dev dependency detection")
+		log.WithFields("location", pkgJSONLocation.FullNestedPath(), "error", err).Debug("could not read package.json for dev dependency detection")
 		return prod, dev
 	}
-	defer internal.CloseAndLogError(reader, pkgJSONLocation.RealPath)
+	defer internal.CloseAndLogError(reader, pkgJSONLocation.FullNestedPath())
 
 	var pkgJSON packageJSON
 	if err := json.NewDecoder(reader).Decode(&pkgJSON); err != nil {
-		log.WithFields("location", pkgJSONLocation.RealPath, "error", err).Debug("could not parse package.json for dev dependency detection")
+		log.WithFields("location", pkgJSONLocation.FullNestedPath(), "error", err).Debug("could not parse package.json for dev dependency detection")
 		return prod, dev
 	}
 
@@ -288,7 +288,7 @@ func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
 func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find yarn.lock files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the project
-	if pathContainsNodeModulesDirectory(reader.Path()) {
+	if pathContainsNodeModulesDirectory(reader.LocalPath()) {
 		return nil, nil, nil
 	}
 

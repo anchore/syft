@@ -62,7 +62,7 @@ func (c dbCataloger) catalog(ctx context.Context, resolver file.Resolver) ([]pkg
 	for _, dbLoc := range dbLocs {
 		parser, schema := c.selectDBParser(dbLoc, resolver)
 		if parser == nil {
-			errs = unknown.Appendf(errs, dbLoc.Coordinates, "unsupported Nix database schema for schema=%d at %q", schema, dbLoc.RealPath)
+			errs = unknown.Appendf(errs, dbLoc.Coordinates, "unsupported Nix database schema for schema=%d at %q", schema, dbLoc.FullNestedPath())
 			continue
 		}
 
@@ -80,28 +80,28 @@ func (c dbCataloger) catalog(ctx context.Context, resolver file.Resolver) ([]pkg
 }
 
 func (c dbCataloger) selectDBParser(dbLocation file.Location, resolver file.Resolver) (dbProcessor, int) {
-	loc := resolver.RelativeFileByPath(dbLocation, path.Join(path.Dir(dbLocation.RealPath), "schema"))
+	loc := resolver.RelativeFileByPath(dbLocation, path.Join(path.Dir(dbLocation.LocalPath()), "schema"))
 	if loc == nil {
-		log.WithFields("path", dbLocation.RealPath).Tracef("failed to detect Nix database schema, assuming %d", defaultSchema)
+		log.WithFields("path", dbLocation.FullNestedPath()).Tracef("failed to detect Nix database schema, assuming %d", defaultSchema)
 		return c.schemaProcessor[defaultSchema], 0
 	}
 
 	schemaContents, err := resolver.FileContentsByLocation(*loc)
-	defer internal.CloseAndLogError(schemaContents, loc.RealPath)
+	defer internal.CloseAndLogError(schemaContents, loc.FullNestedPath())
 	if err != nil {
-		log.WithFields("path", loc.RealPath).Tracef("failed to open Nix database schema file, assuming %d", defaultSchema)
+		log.WithFields("path", loc.FullNestedPath()).Tracef("failed to open Nix database schema file, assuming %d", defaultSchema)
 		return c.schemaProcessor[defaultSchema], 0
 	}
 
 	scanner := bufio.NewScanner(schemaContents)
 	if !scanner.Scan() {
-		log.WithFields("path", loc.RealPath, "error", scanner.Err()).Tracef("failed to read Nix database schema file, assuming %d", defaultSchema)
+		log.WithFields("path", loc.FullNestedPath(), "error", scanner.Err()).Tracef("failed to read Nix database schema file, assuming %d", defaultSchema)
 		return c.schemaProcessor[defaultSchema], 0
 	}
 
 	schema, err := strconv.Atoi(strings.TrimSpace(scanner.Text()))
 	if err != nil {
-		log.WithFields("path", loc.RealPath).Tracef("failed to parse Nix database schema file, assuming %d", defaultSchema)
+		log.WithFields("path", loc.FullNestedPath()).Tracef("failed to parse Nix database schema file, assuming %d", defaultSchema)
 		return c.schemaProcessor[defaultSchema], 0
 	}
 
@@ -113,7 +113,7 @@ func (c dbCataloger) selectDBParser(dbLocation file.Location, resolver file.Reso
 			schema = defaultSchema
 		}
 		processor = c.schemaProcessor[closestSchema]
-		log.WithFields("path", loc.RealPath).Tracef("unsupported Nix database schema (%d), treating as closest available schema (%d)", schema, closestSchema)
+		log.WithFields("path", loc.FullNestedPath()).Tracef("unsupported Nix database schema (%d), treating as closest available schema (%d)", schema, closestSchema)
 	}
 
 	return processor, schema
