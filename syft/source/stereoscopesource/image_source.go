@@ -99,10 +99,6 @@ func (s stereoscopeImageSource) FileResolver(scope source.Scope) (file.Resolver,
 	var res file.Resolver
 	var err error
 
-	if scope != source.SquashedScope && !hasLayerSquashes(s.image) {
-		return nil, fmt.Errorf("the %q scope needs every layer's squashed tree, but the image was read keeping only the image squash", scope)
-	}
-
 	switch scope {
 	case source.SquashedScope:
 		res, err = fileresolver.NewFromContainerImageSquash(s.image)
@@ -124,17 +120,6 @@ func (s stereoscopeImageSource) FileResolver(scope source.Scope) (file.Resolver,
 	}
 
 	return res, nil
-}
-
-// hasLayerSquashes reports whether every layer kept its squashed tree, which is not the case for an image
-// read with image.WithImageSquashOnly (only the top layer keeps one).
-func hasLayerSquashes(img *image.Image) bool {
-	for _, l := range img.Layers {
-		if l.SquashedTree == nil {
-			return false
-		}
-	}
-	return true
 }
 
 func (s stereoscopeImageSource) Close() error {
