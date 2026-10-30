@@ -264,7 +264,7 @@ func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg
 		parent := path.Base(path.Dir(m.DistInfoLocation.LocalPath()))
 		candidatePaths := strset.New()
 		for _, f := range m.Files {
-			if !strings.HasPrefix(f.Path, parent) || strings.Count(f.Path, "/") > 1 {
+			if !isDistInfoLicenseCandidate(parent, f.Path) {
 				continue
 			}
 
@@ -276,4 +276,14 @@ func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg
 		out = licenses.FindAtPaths(ctx, resolver, candidatePaths.List()...)
 	}
 	return pkg.NewLicenseSet(out...)
+}
+
+// isDistInfoLicenseCandidate reports whether a RECORD path sits directly in the .dist-info directory,
+// or anywhere under its licenses/ subdirectory, where PEP 639 places license files.
+func isDistInfoLicenseCandidate(distInfoDir, recordPath string) bool {
+	rel, found := strings.CutPrefix(recordPath, distInfoDir+"/")
+	if !found {
+		return false
+	}
+	return !strings.Contains(rel, "/") || strings.HasPrefix(rel, "licenses/")
 }

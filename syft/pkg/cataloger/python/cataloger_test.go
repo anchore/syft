@@ -302,6 +302,45 @@ func Test_InstalledPackageCataloger(t *testing.T) {
 			},
 		},
 		{
+			name:    "detect license file under dist-info/licenses (PEP 639)",
+			fixture: "testdata/site-packages/license-pep639",
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "pep639-example",
+					Version:  "1.0.0",
+					PURL:     "pkg:pypi/pep639-example@1.0.0",
+					Type:     pkg.PythonPkg,
+					Language: pkg.Python,
+					Locations: file.NewLocationSet(
+						file.NewLocation("pep639_example-1.0.0.dist-info/METADATA"),
+						file.NewLocation("pep639_example-1.0.0.dist-info/RECORD"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{
+							Value:          "BSD-3-Clause",
+							SPDXExpression: "BSD-3-Clause",
+							Type:           "concluded",
+							Contents:       mustContentsFromLocation(t, "testdata/site-packages/license-pep639/pep639_example-1.0.0.dist-info/licenses/LICENSE", 0, 1475),
+							Locations:      file.NewLocationSet(file.NewLocation("pep639_example-1.0.0.dist-info/licenses/LICENSE")),
+						},
+					),
+					FoundBy: "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "pep639-example",
+						Version:              "1.0.0",
+						SitePackagesRootPath: ".",
+						Files: []pkg.PythonFileRecord{
+							{Path: "pep639_example/__init__.py", Digest: &pkg.PythonFileDigest{Algorithm: "sha256", Value: "qpzzsOW31KT955agi-7NS--90I0iNiJCyLJQnRCHgKI"}, Size: "10"},
+							{Path: "pep639_example-1.0.0.dist-info/METADATA", Digest: &pkg.PythonFileDigest{Algorithm: "sha256", Value: "PVpa2_Oku6BGuiUvutvuPnWGpzxqFy2I8-NIrqCvqUY"}, Size: "250"},
+							{Path: "pep639_example-1.0.0.dist-info/licenses/LICENSE", Digest: &pkg.PythonFileDigest{Algorithm: "sha256", Value: "utiUvpzxqFPVpvuPnWG2_Oku6BGuay2I8-NIrqCvqUY"}, Size: "1475"},
+							{Path: "pep639_example-1.0.0.dist-info/RECORD"},
+						},
+						RequiresPython: ">=3.9",
+					},
+				},
+			},
+		},
+		{
 			name:    "malformed-record",
 			fixture: "testdata/site-packages/malformed-record",
 			expectedPackages: []pkg.Package{
