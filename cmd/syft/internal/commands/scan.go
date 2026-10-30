@@ -260,6 +260,11 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 		cfg = cfg.WithDigestAlgorithms(hashers...)
 	}
 
+	if source.ParseScope(opts.Scope) != source.SquashedScope {
+		// every other scope reads each layer's squash, which is cheaper to build while the image is read
+		ctx = internal.WithEagerLayerSquashes(ctx)
+	}
+
 	src, err := syft.GetSource(ctx, userInput, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("could not determine source: %w", err)
