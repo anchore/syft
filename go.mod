@@ -33,7 +33,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/dave/jennifer v1.7.1
-	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
+	github.com/deitch/magic v1.0.0
 	github.com/diskfs/go-diskfs v1.9.4
 	github.com/distribution/reference v0.6.0
 	github.com/dustin/go-humanize v1.1.0
