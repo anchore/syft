@@ -964,18 +964,21 @@ func TestGeneratePackageCPEs(t *testing.T) {
 }
 
 func TestTomcatEmbeddedCPEs(t *testing.T) {
-	packageFor := func(artifactID string) pkg.Package {
+	packageFor := func(artifactID string, includePomProperties bool) pkg.Package {
+		metadata := pkg.JavaArchive{}
+		if includePomProperties {
+			metadata.PomProperties = &pkg.JavaPomProperties{
+				GroupID:    "org.apache.tomcat.embed",
+				ArtifactID: artifactID,
+			}
+		}
+
 		return pkg.Package{
 			Name:     artifactID,
 			Version:  "11.0.20",
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
-			Metadata: pkg.JavaArchive{
-				PomProperties: &pkg.JavaPomProperties{
-					GroupID:    "org.apache.tomcat.embed",
-					ArtifactID: artifactID,
-				},
-			},
+			Metadata: metadata,
 		}
 	}
 
@@ -988,12 +991,39 @@ func TestTomcatEmbeddedCPEs(t *testing.T) {
 		return false
 	}
 
-	elCPEs := FromPackageAttributes(packageFor("tomcat-embed-el"))
-	assert.False(t, hasCPE(elCPEs, "apache", "tomcat"), "EL-only module should not inherit the server CPE")
-	assert.True(t, hasCPE(elCPEs, "apache", "tomcat-embed-el"), "keep the artifact-specific CPE candidate")
+	tests := []struct {
+		name                 string
+		artifactID           string
+		includePomProperties bool
+		wantTomcatServerCPE  bool
+	}{
+		{
+			name:                 "embedded EL with Maven properties",
+			artifactID:           "tomcat-embed-el",
+			includePomProperties: true,
+			wantTomcatServerCPE:  false,
+		},
+		{
+			name:                 "embedded EL without Maven properties",
+			artifactID:           "tomcat-embed-el",
+			includePomProperties: false,
+			wantTomcatServerCPE:  false,
+		},
+		{
+			name:                 "embedded core without Maven properties",
+			artifactID:           "tomcat-embed-core",
+			includePomProperties: false,
+			wantTomcatServerCPE:  true,
+		},
+	}
 
-	coreCPEs := FromPackageAttributes(packageFor("tomcat-embed-core"))
-	assert.True(t, hasCPE(coreCPEs, "apache", "tomcat"), "core module should retain the Tomcat server CPE")
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cpes := FromPackageAttributes(packageFor(test.artifactID, test.includePomProperties))
+			assert.Equal(t, test.wantTomcatServerCPE, hasCPE(cpes, "apache", "tomcat"))
+			assert.True(t, hasCPE(cpes, "apache", test.artifactID), "keep the artifact-specific CPE candidate")
+		})
+	}
 }
 
 func TestCandidateProducts(t *testing.T) {
