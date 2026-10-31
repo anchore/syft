@@ -244,6 +244,8 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description, exclusions []s
 		taskGroups = append(taskGroups, relationshipsTasks)
 	}
 
+	taskGroups = append(taskGroups, []task.Task{task.NewSBOMitTask()})
+
 	// all unknowns tasks should happen after all scanning is complete
 	if len(unknownTasks) > 0 {
 		taskGroups = append(taskGroups, unknownTasks)
