@@ -3,6 +3,7 @@ package javascript
 import (
 	"context"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -331,6 +332,25 @@ func TestParseBunLock_ExcludeDevDependencies(t *testing.T) {
 
 	adapter := newGenericBunLockAdapter(CatalogerConfig{IncludeDevDependencies: false})
 	pkgtest.TestFileParser(t, fixture, adapter.parseBunLock, expectedPkgs, expectedRelationships)
+}
+
+func TestFindDevOnlyBunPkgs_SameNameEntries(t *testing.T) {
+	// x is a production dependency through a -> b@1.0.0 -> x, and is also reachable from the dev dependency d.
+	// the result must not depend on which of the two b entries comes last.
+	bunPkgs := []bunPackage{
+		{Name: "a", Version: "1.0.0", Metadata: bunPackageMetadata{Dependencies: map[string]string{"b": "^1.0.0"}}},
+		{Name: "b", Version: "1.0.0", Metadata: bunPackageMetadata{Dependencies: map[string]string{"x": "^1.0.0"}}},
+		{Name: "b", Version: "2.0.0"},
+		{Name: "d", Version: "1.0.0", Metadata: bunPackageMetadata{Dependencies: map[string]string{"x": "^1.0.0"}}},
+		{Name: "x", Version: "1.0.0"},
+	}
+	prodDeps := map[string]string{"a": "^1.0.0"}
+	devDeps := map[string]bool{"d": true}
+	want := map[string]bool{"d": true}
+
+	assert.Equal(t, want, findDevOnlyBunPkgs(bunPkgs, prodDeps, devDeps))
+	slices.Reverse(bunPkgs)
+	assert.Equal(t, want, findDevOnlyBunPkgs(bunPkgs, prodDeps, devDeps), "reversed entry order")
 }
 
 // TestParseBunLock_Fixtures parses each bun.lock fixture and asserts the set of cataloged

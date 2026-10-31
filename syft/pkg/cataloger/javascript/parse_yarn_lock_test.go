@@ -1,11 +1,13 @@
 package javascript
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -1054,6 +1056,44 @@ func TestParseYarnLock_DevDependencies(t *testing.T) {
 				Expects(expectedPkgs, expectedRels).
 				TestParser(t, adapter.parseYarnLock)
 		})
+	}
+}
+
+func TestFindDevOnlyPkgs_SameNameEntries(t *testing.T) {
+	// x is a production dependency through a -> b@1.0.0 -> x, and is also reachable from the dev dependency d.
+	// the result must not depend on which of the two b entries comes last.
+	yarnPkgs := []yarnPackage{
+		{Name: "a", Version: "1.0.0", Dependencies: map[string]string{"b": "^1.0.0"}},
+		{Name: "b", Version: "1.0.0", Dependencies: map[string]string{"x": "^1.0.0"}},
+		{Name: "b", Version: "2.0.0"},
+		{Name: "d", Version: "1.0.0", Dependencies: map[string]string{"x": "^1.0.0"}},
+		{Name: "x", Version: "1.0.0"},
+	}
+	prodDeps := map[string]string{"a": "^1.0.0"}
+	devDeps := map[string]string{"d": "^1.0.0"}
+	want := map[string]bool{"d": true}
+
+	assert.Equal(t, want, findDevOnlyPkgs(yarnPkgs, prodDeps, devDeps))
+	slices.Reverse(yarnPkgs)
+	assert.Equal(t, want, findDevOnlyPkgs(yarnPkgs, prodDeps, devDeps), "reversed entry order")
+}
+
+func TestParseYarnLockYaml_Deterministic(t *testing.T) {
+	// yarn berry keeps a patch: entry (here yarn's builtin compat patch for resolve) next to the npm entry it
+	// patches. both have the same name and version, so only one is kept, and which one (along with the order
+	// of the returned entries) must not depend on map iteration order.
+	data, err := os.ReadFile("testdata/yarn-berry-patch/yarn.lock")
+	require.NoError(t, err)
+
+	parse := func() []yarnPackage {
+		pkgs, err := parseYarnLockYaml(io.NopCloser(bytes.NewReader(data)))
+		require.NoError(t, err)
+		return pkgs
+	}
+
+	want := parse()
+	for range 100 {
+		require.Equal(t, want, parse())
 	}
 }
 
