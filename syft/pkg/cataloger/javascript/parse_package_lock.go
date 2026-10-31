@@ -85,48 +85,56 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 	}
 
 	if lock.LockfileVersion == 2 || lock.LockfileVersion == 3 {
-		// a link entry ("node_modules/<name>" with link: true) only points at a local package
-		// entry elsewhere in the lockfile; its key is the name that local package is installed under
-		linkNames := make(map[string]string)
-		for name, pkgMeta := range lock.Packages {
-			if pkgMeta.Link {
-				linkNames[pkgMeta.Resolved] = getNameFromPath(name)
-			}
-		}
-
-		for name, pkgMeta := range lock.Packages {
-			if pkgMeta.Link {
-				continue
-			}
-			if linkName, ok := linkNames[name]; ok && pkgMeta.Name == "" {
-				name = linkName
-			}
-
-			if name == "" {
-				if pkgMeta.Name == "" {
-					continue
-				}
-				name = pkgMeta.Name
-			}
-
-			// skip packages that are only present as a dev dependency
-			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
-				continue
-			}
-
-			// handles alias names
-			if pkgMeta.Name != "" {
-				name = pkgMeta.Name
-			}
-
-			newPkg := newPackageLockV2Package(ctx, a.licenseResolver, resolver, reader.Location, getNameFromPath(name), pkgMeta)
-			pkgs = append(pkgs, newPkg)
-		}
+		pkgs = append(pkgs, a.packageLockV2Packages(ctx, resolver, reader.Location, lock.Packages)...)
 	}
 
 	pkg.Sort(pkgs)
 
 	return pkgs, dependency.Resolve(packageLockDependencySpecifier, pkgs), unknown.IfEmptyf(pkgs, "unable to determine packages")
+}
+
+func (a genericPackageLockAdapter) packageLockV2Packages(ctx context.Context, resolver file.Resolver, location file.Location, packages map[string]lockPackage) []pkg.Package {
+	var pkgs []pkg.Package
+
+	// a link entry ("node_modules/<name>" with link: true) only points at a local package
+	// entry elsewhere in the lockfile; its key is the name that local package is installed under
+	linkNames := make(map[string]string)
+	for name, pkgMeta := range packages {
+		if pkgMeta.Link {
+			linkNames[pkgMeta.Resolved] = getNameFromPath(name)
+		}
+	}
+
+	for name, pkgMeta := range packages {
+		if pkgMeta.Link {
+			continue
+		}
+		if linkName, ok := linkNames[name]; ok && pkgMeta.Name == "" {
+			name = linkName
+		}
+
+		if name == "" {
+			if pkgMeta.Name == "" {
+				continue
+			}
+			name = pkgMeta.Name
+		}
+
+		// skip packages that are only present as a dev dependency
+		if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
+			continue
+		}
+
+		// handles alias names
+		if pkgMeta.Name != "" {
+			name = pkgMeta.Name
+		}
+
+		newPkg := newPackageLockV2Package(ctx, a.licenseResolver, resolver, location, getNameFromPath(name), pkgMeta)
+		pkgs = append(pkgs, newPkg)
+	}
+
+	return pkgs
 }
 
 func (a genericPackageLockAdapter) packageLockV1Packages(ctx context.Context, resolver file.Resolver, location file.Location, dependencies map[string]lockDependency) []pkg.Package {
