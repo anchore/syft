@@ -135,6 +135,8 @@ catalogers:
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
             - '**/gradle.lockfile*'
+            - '**/buildscript-gradle.lockfile'
+            - '**/settings-gradle.lockfile'
         metadata_types: # AUTO-GENERATED
           - pkg.JavaArchive
         package_types: # AUTO-GENERATED
