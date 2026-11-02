@@ -893,6 +893,16 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			expected: []string{},
 		},
 		{
+			name: "Microsoft KB package should generate no CPEs",
+			p: pkg.Package{
+				Name:     "12437",
+				Version:  "935509",
+				Type:     pkg.KbPkg,
+				Metadata: pkg.MicrosoftKbPatch{ProductID: "12437", Kb: "935509"},
+			},
+			expected: []string{},
+		},
+		{
 			name: "rust package",
 			p: pkg.Package{
 				Name:     "rust-package",

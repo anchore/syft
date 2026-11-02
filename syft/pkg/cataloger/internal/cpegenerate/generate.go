@@ -141,9 +141,16 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 // generate the minimal set of representative CPEs, which implies that optional fields should not be included
 // (such as target SW).
 func FromPackageAttributes(p pkg.Package) []cpe.CPE {
-	// ML models should not have CPEs as they are not traditional software packages
-	// and don't fit the vulnerability model used for software packages.
-	if p.Type == pkg.ModelPkg {
+	switch p.Type {
+	case pkg.KbPkg:
+		// Microsoft KB packages are patches, not products: the name is an MSRC product ID and the
+		// version a KB number, neither of which maps onto a CPE vendor, product or version. They are
+		// matched against MSRC data by name and version, so a generated CPE is only noise, and one
+		// that NVD-based matching could misread.
+		return nil
+	case pkg.ModelPkg:
+		// ML models should not have CPEs as they are not traditional software packages
+		// and don't fit the vulnerability model used for software packages.
 		return nil
 	}
 
