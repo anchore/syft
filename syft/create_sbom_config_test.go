@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
@@ -650,4 +651,74 @@ func TestCreateSBOMConfig_archiveTaskGroup(t *testing.T) {
 		assert.Zero(t, cfg.Packages.JavaArchive.MaxDepth,
 			"java's own squash-inlined depth must not be written to either")
 	})
+}
+
+func Test_deprecatedTasks(t *testing.T) {
+	newTask := func(name string, tags ...string) task.Task {
+		return task.NewTask(name, func(context.Context, file.Resolver, sbomsync.Builder) error {
+			return nil
+		}, tags...)
+	}
+
+	fileTasks := []task.Task{newTask("file-cataloger", filecataloging.FileTag)}
+
+	tests := []struct {
+		name       string
+		taskGroups [][]task.Task
+		want       []string
+	}{
+		{
+			name: "no deprecated tasks",
+			taskGroups: [][]task.Task{
+				{newTask("a-cataloger", pkgcataloging.PackageTag)},
+				fileTasks,
+			},
+		},
+		{
+			name: "deprecated package tasks",
+			taskGroups: [][]task.Task{
+				{
+					newTask("a-cataloger", pkgcataloging.PackageTag, pkgcataloging.DeprecatedTag),
+					newTask("b-cataloger", pkgcataloging.PackageTag),
+					newTask("c-cataloger", pkgcataloging.PackageTag, pkgcataloging.DeprecatedTag),
+				},
+				fileTasks,
+			},
+			want: []string{"a-cataloger", "c-cataloger"},
+		},
+		{
+			name: "deprecated file tasks are not reported",
+			taskGroups: [][]task.Task{
+				{newTask("a-cataloger", pkgcataloging.PackageTag)},
+				{newTask("b-cataloger", filecataloging.FileTag, pkgcataloging.DeprecatedTag)},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.ElementsMatch(t, tt.want, deprecatedTasks(tt.taskGroups))
+		})
+	}
+}
+
+func BenchmarkCreateSBOMConfig_makeTaskGroups(b *testing.B) {
+	sources := []struct {
+		name string
+		src  source.Description
+	}{
+		{name: "image", src: source.Description{Metadata: source.ImageMetadata{}}},
+		{name: "directory", src: source.Description{Metadata: source.DirectoryMetadata{}}},
+		{name: "file", src: source.Description{Metadata: source.FileMetadata{}}},
+	}
+	for _, s := range sources {
+		b.Run(s.name, func(b *testing.B) {
+			cfg := DefaultCreateSBOMConfig()
+			b.ReportAllocs()
+			for b.Loop() {
+				if _, _, err := cfg.makeTaskGroups(s.src, nil); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	}
 }
