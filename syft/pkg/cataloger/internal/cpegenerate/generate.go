@@ -152,6 +152,10 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 		// ML models should not have CPEs as they are not traditional software packages
 		// and don't fit the vulnerability model used for software packages.
 		return nil
+	case pkg.OpamPkg:
+		// opam package names collide with unrelated products far more often than they match NVD entries,
+		// so only curated CPEs are generated (see opamPackageCPEs).
+		return opamCPEs(p)
 	}
 
 	// real CPE fields are short, and every byte of a field is paid once per generated CPE (key building and regex

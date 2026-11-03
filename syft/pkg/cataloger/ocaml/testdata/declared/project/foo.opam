@@ -1,0 +1,10 @@
+opam-version: "2.0"
+version: "0.1.0"
+synopsis: "A project with a lock file"
+license: ["MIT" "ISC"]
+homepage: "https://example.com/foo"
+depends: [
+  "ocaml" {>= "4.14"}
+  "lwt"
+  "ounit2" {with-test}
+]
