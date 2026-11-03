@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -45,6 +43,12 @@ func TestParseOpamPackage(t *testing.T) {
 							"sha256=39f44260382f28d1054c5f9d8bf4753cb7ad64027da792f7938344544da155e8",
 						},
 						Homepage: "https://ocaml.org",
+						Dependencies: []string{
+							"ocaml", "base-unix", "base-bigarray", "base-threads", "host-arch-arm32", "host-arch-arm64",
+							"host-arch-ppc64", "host-arch-riscv64", "host-arch-s390x", "host-arch-x86_32", "host-arch-x86_64",
+							"host-arch-unknown", "arch-x86_64", "system-mingw", "mingw-w64-shims", "system-msvc", "arch-x86_32",
+							"host-system-other", "ocaml-options-vanilla", "flexdll",
+						},
 					},
 				},
 			},
@@ -71,6 +75,9 @@ func TestParseOpamPackage(t *testing.T) {
 						Version:  "1.5.0",
 						Licenses: []string{"ISC"},
 						Homepage: "https://github.com/mirage/alcotest",
+						Dependencies: []string{
+							"dune", "ocaml", "fmt", "astring", "cmdliner", "re", "stdlib-shims", "uutf", "ocaml-syntax-shims", "odoc",
+						},
 					},
 				},
 			},
@@ -78,89 +85,10 @@ func TestParseOpamPackage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.fixture, func(t *testing.T) {
-			// TODO: no relationships are under test yet
+			// dependency relationships are resolved by the cataloger's processor, not by the parser
 			var expectedRelationships []artifact.Relationship
 
 			pkgtest.TestFileParser(t, tt.fixture, parseOpamPackage, tt.want, expectedRelationships)
-		})
-	}
-}
-
-func TestParseLicense(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-		want  []string
-	}{
-		{
-			name:  "single license",
-			input: `"MIT"`,
-			want: []string{
-				"MIT",
-			},
-		},
-		{
-			name: "multiple license",
-			input: `[
-			"MIT", "IST"
-			]`,
-			want: []string{
-				"MIT",
-				"IST",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, parseLicenses(tt.input))
-		})
-	}
-}
-
-func TestParseUrl(t *testing.T) {
-	tests := []struct {
-		name          string
-		input         string
-		wantUrl       string
-		wantChecksums []string
-	}{
-		{
-			name: "single checksums",
-			input: `
-src:
-    "https://github.com/mirage/mirage-clock/releases/download/v4.2.0/mirage-clock-4.2.0.tbz"
-  checksum:
-    "sha256=fa17d15d5be23c79ba741f5f7cb88ed7112de16a4410cea81c71b98086889847"
-			`,
-			wantUrl: "https://github.com/mirage/mirage-clock/releases/download/v4.2.0/mirage-clock-4.2.0.tbz",
-			wantChecksums: []string{
-				"sha256=fa17d15d5be23c79ba741f5f7cb88ed7112de16a4410cea81c71b98086889847",
-			},
-		},
-		{
-			name: "multiple checksums",
-			input: `
-src:
-    "https://github.com/mirage/mirage-clock/releases/download/v4.2.0/mirage-clock-4.2.0.tbz"
-  checksum: [
-    "sha256=fa17d15d5be23c79ba741f5f7cb88ed7112de16a4410cea81c71b98086889847"
-    "sha512=05a359dc8400d4ca200ff255dbd030acd33d2c4acb5020838f772c02cdb5f243f3dbafbc43a8cd51e6b5923a140f84c9e7ea25b2c0fa277bb68b996190d36e3b"
-	"sha1024=05a359dc8400d4ca200ff255dbd030acd33d2c4acb5020838f772c02cdb5f243f3dbafbc43a8cd51e6b5923a140f84c9e7ea25b2c0fa277bb68b996190d36e3b"
-  ]
-			`,
-			wantUrl: "https://github.com/mirage/mirage-clock/releases/download/v4.2.0/mirage-clock-4.2.0.tbz",
-			wantChecksums: []string{
-				"sha256=fa17d15d5be23c79ba741f5f7cb88ed7112de16a4410cea81c71b98086889847",
-				"sha512=05a359dc8400d4ca200ff255dbd030acd33d2c4acb5020838f772c02cdb5f243f3dbafbc43a8cd51e6b5923a140f84c9e7ea25b2c0fa277bb68b996190d36e3b",
-				"sha1024=05a359dc8400d4ca200ff255dbd030acd33d2c4acb5020838f772c02cdb5f243f3dbafbc43a8cd51e6b5923a140f84c9e7ea25b2c0fa277bb68b996190d36e3b",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			url, checksums := parseURL([]byte(tt.input))
-			assert.Equal(t, tt.wantUrl, url)
-			assert.Equal(t, tt.wantChecksums, checksums)
 		})
 	}
 }

@@ -15,11 +15,48 @@ catalogers:
       - opam
       - package
     parsers: # AUTO-GENERATED structure
+      - function: parseOpamLockFile
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.opam.locked'
+        metadata_types: # AUTO-GENERATED
+          - pkg.OpamPackage
+        package_types: # AUTO-GENERATED
+          - opam
+        purl_types: # AUTO-GENERATED
+          - opam
+        json_schema_types: # AUTO-GENERATED
+          - OpamPackage
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+            comment: from the sibling <name>.opam file, when present
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+            comment: lock files pin the full dependency closure without distinguishing direct from transitive dependencies
+          - name: dependency.edges
+            default: flat
+          - name: dependency.kinds
+            default:
+              - runtime
+              - build
+              - test
+            comment: build, with-test and with-doc dependencies are included in lock files
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
       - function: parseOpamPackage
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
-            - '**/*opam'
+            - '**/*.opam'
+            - '**/opam'
         metadata_types: # AUTO-GENERATED
           - pkg.OpamPackage
         package_types: # AUTO-GENERATED
@@ -37,6 +74,139 @@ catalogers:
             default: ""
           - name: dependency.kinds
             default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: ocaml # MANUAL
+    name: opam-switch-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/ocaml/cataloger.go
+      function: NewOpamSwitchCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - language
+      - ocaml
+      - opam
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseOpamSwitchPackage
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/.opam-switch/packages/*/opam'
+        metadata_types: # AUTO-GENERATED
+          - pkg.OpamPackage
+        package_types: # AUTO-GENERATED
+          - opam
+        purl_types: # AUTO-GENERATED
+          - opam
+        json_schema_types: # AUTO-GENERATED
+          - OpamPackage
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+              - build
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            comment: from the checksum of the url section recorded for the installed package
+  - ecosystem: ocaml # MANUAL
+    name: ocaml-installed-library-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/ocaml/cataloger.go
+      function: NewInstalledLibraryCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - dune
+      - findlib
+      - image
+      - installed
+      - language
+      - ocaml
+      - opam
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseFindlibMeta
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/META'
+        metadata_types: # AUTO-GENERATED
+          - pkg.OpamPackage
+        package_types: # AUTO-GENERATED
+          - opam
+        purl_types: # AUTO-GENERATED
+          - opam
+        json_schema_types: # AUTO-GENERATED
+          - OpamPackage
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+            comment: from the opam file installed next to the library, when present
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+            comment: edges are derived from the depends field of the opam files installed next to the libraries
+          - name: dependency.kinds
+            default:
+              - runtime
+              - build
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parseDunePackage
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/dune-package'
+        metadata_types: # AUTO-GENERATED
+          - pkg.OpamPackage
+        package_types: # AUTO-GENERATED
+          - opam
+        purl_types: # AUTO-GENERATED
+          - opam
+        json_schema_types: # AUTO-GENERATED
+          - OpamPackage
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+            comment: from the opam file installed next to the library, when present
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+            comment: edges are derived from the depends field of the opam files installed next to the libraries
+          - name: dependency.kinds
+            default:
+              - runtime
+              - build
           - name: package_manager.files.listing
             default: false
           - name: package_manager.files.digests

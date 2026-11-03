@@ -1,0 +1,3 @@
+version = "1.3.0"
+description = "Declarative definition of command line interfaces"
+archive(byte) = "cmdliner.cma"

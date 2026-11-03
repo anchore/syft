@@ -1,0 +1,5 @@
+(lang dune 3.9)
+(name lwt)
+(version 5.4.2)
+(sections (lib .) (libexec .) (doc ../../doc/lwt))
+(files (lib (META dune-package lwt.a lwt.cma opam)))

@@ -1,0 +1,2 @@
+version = "[distributed with OCaml 4.02 or above]"
+description = "dummy backward-compatibility package"
