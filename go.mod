@@ -39,7 +39,6 @@ require (
 	github.com/dustin/go-humanize v1.1.0
 	github.com/elliotchance/phpserialize v1.4.0
 	github.com/facebookincubator/nvdtools v0.1.5
-	github.com/github/go-spdx/v2 v2.8.0
 	github.com/gkampitakis/go-snaps v0.5.24
 	github.com/go-git/go-billy/v5 v5.9.2
 	github.com/go-git/go-git/v5 v5.19.3
@@ -69,6 +68,7 @@ require (
 	github.com/nix-community/go-nix v0.0.0-20250101154619-4bdde671e0a1
 	github.com/olekukonko/tablewriter v1.1.5
 	github.com/opencontainers/go-digest v1.0.0
+	github.com/pb33f/ordered-map/v2 v2.3.2
 	github.com/pelletier/go-toml v1.9.5
 	github.com/quasilyte/go-ruleguard/dsl v0.3.23
 	github.com/rust-secure-code/go-rustaudit v0.0.0-20250226111315-e20ec32e963c
@@ -83,6 +83,7 @@ require (
 	github.com/spf13/afero v1.15.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
+	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
 	github.com/ulikunitz/xz v0.5.17
 	github.com/vbatts/go-mtree v0.7.0
 	github.com/vifraa/gopom v1.0.0
@@ -95,17 +96,14 @@ require (
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f
 	golang.org/x/mod v0.42.0
 	golang.org/x/net v0.61.0
+	golang.org/x/sys v0.49.0
 	golang.org/x/time v0.16.0
 	golang.org/x/tools v0.52.0
+	howett.net/plist v1.0.1
 	modernc.org/sqlite v1.61.0
 )
 
-require (
-	github.com/pb33f/ordered-map/v2 v2.3.2
-	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
-	golang.org/x/sys v0.49.0
-	howett.net/plist v1.0.1
-)
+require github.com/github/go-spdx/v2 v2.8.0
 
 require (
 	cel.dev/expr v0.25.2 // indirect
