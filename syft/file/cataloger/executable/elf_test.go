@@ -7,7 +7,9 @@ import (
 	"encoding/hex"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -490,4 +492,36 @@ func Test_findELFIdentifiers_readLimit(t *testing.T) {
 func Test_parseELFNotes_bigEndian(t *testing.T) {
 	data := []byte{0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 3, 'G', 'N', 'U', 0, 0xde, 0xad, 0xbe, 0xef}
 	assert.Equal(t, []elfNote{{owner: "GNU", typ: ntGNUBuildID, desc: data[16:]}}, parseELFNotes(data, 4, binary.BigEndian))
+}
+
+// Test_findELFFeatures_realLinkerIdentifiers proves identifiers are picked up from real linker output, not just
+// hand-built notes. The go toolchain is the one linker every test environment has, and -B makes it emit a GNU
+// build ID next to the go build ID it always writes.
+func Test_findELFFeatures_realLinkerIdentifiers(t *testing.T) {
+	if testing.Short() {
+		t.Skip("builds a go binary")
+	}
+	dir := t.TempDir()
+	src := filepath.Join(dir, "main.go")
+	bin := filepath.Join(dir, "main")
+	require.NoError(t, os.WriteFile(src, []byte("package main\n\nfunc main() {}\n"), 0o600))
+
+	build := exec.Command("go", "build", "-trimpath", "-ldflags=-B 0x0123456789abcdef", "-o", bin, src)
+	build.Env = append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0", "GOFLAGS=", "GOWORK=off")
+	out, err := build.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	goBuildID, err := exec.Command("go", "tool", "buildid", bin).Output()
+	require.NoError(t, err)
+
+	f, err := os.Open(bin)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = f.Close() })
+
+	var data file.Executable
+	require.NoError(t, findELFFeatures(&data, f))
+	assert.Equal(t, []file.ExecutableIdentifier{
+		{Kind: file.ELFGNUBuildID, Value: "0123456789abcdef"},
+		{Kind: file.GoBuildID, Value: strings.TrimSpace(string(goBuildID))},
+	}, data.Identifiers)
 }
