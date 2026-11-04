@@ -75,7 +75,7 @@ func (c storeCataloger) finalizeStorePackages(ctx context.Context, resolver file
 		p := newNixStorePackage(pp, c.name)
 		p = licenses.RelativeToPackage(ctx, resolver, p)
 		pkgs = append(pkgs, p)
-		pkgByStorePath[pp.Location.RealPath] = p
+		pkgByStorePath[pp.Location.LocalPath()] = p
 	}
 
 	var relationships []artifact.Relationship
@@ -117,7 +117,7 @@ func (c storeCataloger) findDerivationsFromStore(resolver file.Resolver, pkgProt
 	// attach derivations to the packages they belong to
 	for i := range pkgPrototypes {
 		p := &pkgPrototypes[i]
-		p.derivationFile = dvs.findDerivationForOutputPath(p.Location.RealPath)
+		p.derivationFile = dvs.findDerivationForOutputPath(p.Location.LocalPath())
 	}
 
 	return dvs, errs
@@ -130,16 +130,16 @@ func (c storeCataloger) findPackagesFromStore(ctx context.Context, resolver file
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	for location := range resolver.AllLocations(ctx) {
-		matchesStorePath, err := doublestar.Match("**/nix/store/*", location.RealPath)
+		matchesStorePath, err := doublestar.Match("**/nix/store/*", location.LocalPath())
 		if err != nil {
 			return nil, fmt.Errorf("failed to match nix store path: %w", err)
 		}
 
-		parentStorePath := findParentNixStorePath(location.RealPath)
+		parentStorePath := findParentNixStorePath(location.LocalPath())
 		if c.config.CaptureOwnedFiles && parentStorePath != "" {
 			fileInfo, err := resolver.FileMetadataByLocation(location)
 			if err != nil {
-				log.WithFields("path", location.RealPath).Trace("failed to get file metadata")
+				log.WithFields("path", location.FullNestedPath()).Trace("failed to get file metadata")
 				continue
 			}
 
@@ -159,7 +159,7 @@ func (c storeCataloger) findPackagesFromStore(ctx context.Context, resolver file
 			continue
 		}
 
-		storePath := parseNixStorePath(location.RealPath)
+		storePath := parseNixStorePath(location.LocalPath())
 
 		if storePath == nil || !storePath.isValidPackage() {
 			continue
@@ -178,7 +178,7 @@ func (c storeCataloger) findPackagesFromStore(ctx context.Context, resolver file
 			log.WithFields("package", p.nixStorePath.Name).Debug("nix package has no evidence locations associated")
 			continue
 		}
-		parentStorePath := p.Location.RealPath
+		parentStorePath := p.Location.LocalPath()
 		files, ok := filesByStorePath[parentStorePath]
 		if !ok {
 			log.WithFields("path", parentStorePath, "nix-store-path", parentStorePath).Debug("found a nix store file for a non-existent package")
@@ -193,7 +193,7 @@ func (c storeCataloger) findPackagesFromStore(ctx context.Context, resolver file
 func filePaths(files []file.Location) []string {
 	var relativePaths []string
 	for _, f := range files {
-		relativePaths = append(relativePaths, f.RealPath)
+		relativePaths = append(relativePaths, f.LocalPath())
 	}
 	return relativePaths
 }

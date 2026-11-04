@@ -495,7 +495,7 @@ func stringPackage(p pkg.Package) string {
 	locs := p.Locations.ToSlice()
 	var loc string
 	if len(locs) > 0 {
-		loc = p.Locations.ToSlice()[0].RealPath
+		loc = p.Locations.ToSlice()[0].FullNestedPath()
 	}
 
 	return fmt.Sprintf("%s @ %s (%s)", p.Name, p.Version, loc)

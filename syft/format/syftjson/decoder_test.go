@@ -137,10 +137,7 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 		FoundBy: "something",
 		Locations: file.NewLocationSet(file.Location{
 			LocationData: file.LocationData{
-				Coordinates: file.Coordinates{
-					RealPath:     "/somewhere",
-					FileSystemID: "id",
-				},
+				Coordinates: file.NewCoordinates("/somewhere", "id"),
 			},
 			LocationMetadata: file.LocationMetadata{
 				Annotations: map[string]string{
@@ -174,10 +171,7 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 	}
 	p.SetID()
 
-	c := file.Coordinates{
-		RealPath:     "some-file",
-		FileSystemID: "some-fs-id",
-	}
+	c := file.NewCoordinates("some-file", "some-fs-id")
 
 	s := sbom.SBOM{
 		Artifacts: sbom.Artifacts{

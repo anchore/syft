@@ -37,7 +37,7 @@ var (
 func parseDpkgDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	metadata, err := parseDpkgStatus(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to catalog dpkg DB=%q: %w", reader.RealPath, err)
+		return nil, nil, fmt.Errorf("unable to catalog dpkg DB=%q: %w", reader.FullNestedPath(), err)
 	}
 
 	dbLoc := reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
@@ -61,7 +61,7 @@ func findDpkgInfoFiles(name string, resolver file.Resolver, dbLocation file.Loca
 	// and the md5sum information is under /var/lib/dpkg/info/; however, for distroless the installed
 	// package info is across multiple files under /var/lib/dpkg/status.d/ and the md5sums are contained in
 	// the same directory
-	searchPath := path.Dir(dbLocation.RealPath)
+	searchPath := path.Dir(dbLocation.LocalPath())
 
 	if !strings.HasSuffix(searchPath, "status.d") {
 		searchPath = path.Join(searchPath, "info")

@@ -18,5 +18,5 @@ const (
 	// 16.1.9 - add Symbols (grouped by owning package import path) to GolangBinaryBuildinfoEntry metadata
 	// 16.1.10 - add SafeTensorsModelInfo metadata type for the safetensors AI model cataloger
 	// 16.1.11 - add CpanDistribution and CpanUnpackedRelease metadata types for the perl catalogers
-	// 16.1.12 - add executable identifiers for ELF GNU build IDs
+	// 16.1.12 - add fullPath to file coordinates, naming the nested archive chain a file was found in (blank for files not within an archive)
 )

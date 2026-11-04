@@ -108,7 +108,7 @@ func (sp setupFileParser) validateAndCreatePackage(ctx context.Context, name, ve
 
 	if name == "" || version == "" {
 		// the raw line is not logged since this runs once per match, which is quadratic on a long line
-		log.WithFields("path", reader.RealPath, "name", name, "version", version).Debug("unable to parse package in setup.py")
+		log.WithFields("path", reader.FullNestedPath(), "name", name, "version", version).Debug("unable to parse package in setup.py")
 		return pkg.Package{}, false
 	}
 

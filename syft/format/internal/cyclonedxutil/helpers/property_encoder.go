@@ -171,7 +171,7 @@ func Decode(typ reflect.Type, values map[string]string, prefix string, fn FieldN
 
 	v := reflect.New(typ)
 
-	decode(values, v, prefix, fn)
+	decode(values, sortedPropertyNames(values), v, prefix, fn)
 
 	switch {
 	case isSlice && isPtr:
@@ -192,11 +192,11 @@ func DecodeInto(obj any, values map[string]string, prefix string, fn FieldName) 
 		value = value.Elem()
 	}
 
-	decode(values, value, prefix, fn)
+	decode(values, sortedPropertyNames(values), value, prefix, fn)
 }
 
 //nolint:funlen,gocognit,gocyclo
-func decode(vals map[string]string, value reflect.Value, prefix string, fn FieldName) bool {
+func decode(vals map[string]string, names propertyNames, value reflect.Value, prefix string, fn FieldName) bool {
 	if !value.IsValid() {
 		return false
 	}
@@ -211,7 +211,7 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 		if v.IsNil() {
 			v = reflect.New(t)
 		}
-		if decode(vals, v.Elem(), prefix, fn) && value.CanSet() {
+		if decode(vals, names, v.Elem(), prefix, fn) && value.CanSet() {
 			o := v.Interface()
 			log.Tracef("%v", o)
 			value.Set(v)
@@ -273,7 +273,7 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 				newType = t.Elem()
 			}
 			v := reflect.New(newType)
-			if decode(vals, v.Elem(), str, fn) {
+			if decode(vals, names, v.Elem(), str, fn) {
 				// append to slice
 				if t.Kind() != reflect.Pointer {
 					v = v.Elem()
@@ -308,7 +308,8 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 					newKeyType = keyType.Elem()
 				}
 				k := reflect.New(newKeyType)
-				if !decode(keyVals, k.Elem(), key, fn) {
+				// a key is decoded from the single property holding it, so it has no nested property names
+				if !decode(keyVals, nil, k.Elem(), key, fn) {
 					log.Debugf("unable to decode key for: %s", key)
 					continue
 				}
@@ -322,7 +323,7 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 					newValueType = valueType.Elem()
 				}
 				v := reflect.New(newValueType)
-				if decode(vals, v.Elem(), key, fn) {
+				if decode(vals, names, v.Elem(), key, fn) {
 					if valueType.Kind() != reflect.Pointer {
 						v = v.Elem()
 					}
@@ -339,6 +340,13 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 			return false
 		}
 	case reflect.Struct:
+		// every field is decoded from the property named prefix or from one nested below it, so there is
+		// nothing to decode when there is none. Stopping here also bounds the recursion for a type that refers
+		// to itself (e.g. a Parts []T field): otherwise decoding the first element of an absent []T decodes
+		// the same []T one level deeper, without end.
+		if !names.hasPrefix(prefix) {
+			return false
+		}
 		values := false
 		for i := 0; i < typ.NumField(); i++ {
 			f := typ.Field(i)
@@ -349,7 +357,7 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 				continue
 			}
 
-			if decode(vals, v, name, fn) {
+			if decode(vals, names, v, name, fn) {
 				values = true
 			}
 		}
@@ -359,6 +367,34 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 		return false
 	}
 	return true
+}
+
+// propertyNames holds the names of the properties being decoded, sorted, so that decode can find whether a property
+// is nested below a prefix without scanning every property for every struct it decodes
+type propertyNames []string
+
+func sortedPropertyNames(vals map[string]string) propertyNames {
+	names := make(propertyNames, 0, len(vals))
+	for name := range vals {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+// hasPrefix reports whether there is a property named prefix or any property nested below it
+func (names propertyNames) hasPrefix(prefix string) bool {
+	if prefix == "" {
+		return len(names) > 0
+	}
+	i := sort.SearchStrings(names, prefix)
+	if i < len(names) && names[i] == prefix {
+		return true
+	}
+	// names sorting between prefix and prefix+":" (e.g. "parts:10" between "parts:1" and "parts:1:") are skipped
+	nested := prefix + ":"
+	i += sort.SearchStrings(names[i:], nested)
+	return i < len(names) && strings.HasPrefix(names[i], nested)
 }
 
 func PtrToStruct(ptr any) any {

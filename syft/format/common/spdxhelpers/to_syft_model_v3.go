@@ -31,6 +31,9 @@ func ToSyftModelV3(doc *spdx.Document) (*sbom.SBOM, error) {
 
 	spdxMap := ptrMap[any]{}
 
+	// found before the root package and its relationships are removed
+	sourceFile := v3findSourceFile(doc)
+
 	s := &sbom.SBOM{
 		Source: v3extractSource(spdxMap, doc),
 		Artifacts: sbom.Artifacts{
@@ -45,7 +48,7 @@ func ToSyftModelV3(doc *spdx.Document) (*sbom.SBOM, error) {
 
 	v3collectSyftPackages(s, spdxMap, relationships, doc)
 
-	v3collectSyftFiles(s, spdxMap, doc)
+	v3collectSyftFiles(s, spdxMap, doc, sourceFile)
 
 	s.Relationships = v3toSyftRelationships(spdxMap, doc)
 
@@ -282,20 +285,86 @@ func v3collectSyftPackages(s *sbom.SBOM, spdxMap ptrMap[any], relationships ptrM
 	}
 }
 
-func v3collectSyftFiles(s *sbom.SBOM, spdxMap ptrMap[any], doc *spdx.Document) {
-	found := ptrMap[struct{}]{}
+// v3findSourceFile returns the file the root package DESCRIBES when it CONTAINS files: an archive scanned as the
+// source is the scanned root, so what it contains is at the root rather than within an archive.
+func v3findSourceFile(doc *spdx.Document) spdx.AnyFile {
+	roots := v3findRootPackages(doc)
+	if len(roots) != 1 {
+		return nil
+	}
+	var described spdx.AnyFile
+	containers := ptrMap[bool]{}
+	for _, r := range doc.Elements.Relationships() {
+		from := r.GetFrom()
+		if from == nil {
+			continue
+		}
+		switch r.GetType() {
+		case spdx.RelationshipType_Describes:
+			if from == spdx.AnyElement(roots[0]) {
+				for _, to := range r.GetTo() {
+					if f, ok := to.(spdx.AnyFile); ok {
+						described = f
+					}
+				}
+			}
+		case spdx.RelationshipType_Contains:
+			containers.Set(from, true)
+		}
+	}
+	if described == nil || !containers.Get(described) {
+		return nil
+	}
+	return described
+}
+
+func v3collectSyftFiles(s *sbom.SBOM, spdxMap ptrMap[any], doc *spdx.Document, sourceFile spdx.AnyFile) {
+	nested := newNestedFiles[reflect.Value]()
+	var files []spdx.AnyFile
 	for _, elementList := range []spdx.ElementList{doc.Elements, doc.RootElements} {
 		for _, f := range elementList.Files() {
-			if found.Has(f) {
+			if _, found := nested.own[ptrTo(f)]; found {
 				continue
 			}
-			found.Set(f, struct{}{})
-			l := v3toSyftLocation(f)
-			spdxMap.Set(f, l)
-
-			s.Artifacts.FileMetadata[l.Coordinates] = v3toFileMetadata(f)
-			s.Artifacts.FileDigests[l.Coordinates] = v3toFileDigests(f)
+			nested.own[ptrTo(f)] = v3toSyftCoordinates(f)
+			files = append(files, f)
 		}
+	}
+	if sourceFile != nil {
+		if c, ok := nested.own[ptrTo(sourceFile)]; ok {
+			// the scanned root
+			c.RealPath = ""
+			nested.own[ptrTo(sourceFile)] = c
+		}
+	}
+	for _, r := range doc.Elements.Relationships() {
+		container, ok := r.GetFrom().(spdx.AnyFile)
+		if !ok || r.GetType() != spdx.RelationshipType_Contains {
+			continue
+		}
+		for _, to := range r.GetTo() {
+			entry, ok := to.(spdx.AnyFile)
+			if !ok {
+				continue
+			}
+			_, knownContainer := nested.own[ptrTo(container)]
+			_, knownEntry := nested.own[ptrTo(entry)]
+			if knownContainer && knownEntry && !isScanRoot(nested.own[ptrTo(container)]) {
+				nested.container[ptrTo(entry)] = ptrTo(container)
+			}
+		}
+	}
+
+	for _, f := range files {
+		c, ok := nested.coordinates(ptrTo(f))
+		if !ok {
+			continue
+		}
+		l := file.NewLocationFromCoordinates(c)
+		spdxMap.Set(f, l)
+
+		s.Artifacts.FileMetadata[l.Coordinates] = v3toFileMetadata(f)
+		s.Artifacts.FileDigests[l.Coordinates] = v3toFileDigests(f)
 	}
 }
 
@@ -341,6 +410,12 @@ func v3collectDocRelationships(spdxMap ptrMap[any], doc *spdx.Document) (out []a
 
 		for _, to := range r.GetTo() {
 			b := spdxMap.Get(to)
+			if r.GetType() == spdx.RelationshipType_Contains {
+				if rel, ok := fileContainsRelationship(helpers.ContainsRelationship, a, b); ok {
+					out = append(out, rel)
+					continue
+				}
+			}
 			from, fromOk := a.(pkg.Package)
 			toPackage, toPackageOk := b.(pkg.Package)
 			toLocation, toLocationOk := b.(file.Location)
@@ -393,23 +468,7 @@ func v3collectDocRelationships(spdxMap ptrMap[any], doc *spdx.Document) (out []a
 }
 
 func v3toSyftCoordinates(f spdx.AnyFile) file.Coordinates {
-	const layerIDPrefix = "layerID: "
-	var fileSystemID string
-	if strings.HasPrefix(f.GetComment(), layerIDPrefix) {
-		fileSystemID = strings.TrimPrefix(f.GetComment(), layerIDPrefix)
-	}
-	if strings.HasPrefix(f.GetID(), layerIDPrefix) {
-		fileSystemID = strings.TrimPrefix(f.GetID(), layerIDPrefix)
-	}
-	return file.Coordinates{
-		RealPath:     f.GetName(),
-		FileSystemID: fileSystemID,
-	}
-}
-
-func v3toSyftLocation(f spdx.AnyFile) file.Location {
-	l := file.NewVirtualLocationFromCoordinates(v3toSyftCoordinates(f), f.GetName())
-	return l
+	return coordinatesFromFile(f.GetName(), f.GetComment(), f.GetID())
 }
 
 func v3findQualifierValue(purl packageurl.PackageURL, qualifier string) string {

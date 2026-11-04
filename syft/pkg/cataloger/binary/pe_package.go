@@ -22,7 +22,7 @@ func newPEPackage(versionResources map[string]string, f file.Location) pkg.Packa
 
 	if name == "" {
 		// it's possible that the version resources are empty, so we fall back to the file name
-		name = strings.TrimSuffix(strings.TrimSuffix(path.Base(f.RealPath), ".exe"), ".dll")
+		name = strings.TrimSuffix(strings.TrimSuffix(path.Base(f.LocalPath()), ".exe"), ".dll")
 	}
 
 	p := pkg.Package{

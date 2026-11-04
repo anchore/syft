@@ -40,10 +40,11 @@ func packagesToRemove(accessor sbomsync.Accessor) []artifact.ID {
 					}
 				case "":
 					if isPrimaryEvidence {
-						if exists := filterDuplicates[getKey(p, l)]; exists {
+						k := getKey(p, l)
+						if exists := filterDuplicates[k]; exists {
 							break
 						}
-						filterDuplicates[getKey(p, l)] = true
+						filterDuplicates[k] = true
 						noPrimary = false
 						break
 					}
@@ -59,5 +60,5 @@ func packagesToRemove(accessor sbomsync.Accessor) []artifact.ID {
 }
 
 func getKey(pkg pkg.Package, loc file.Location) string {
-	return fmt.Sprintf("%s-%s-%s-%s", pkg.Name, pkg.Version, loc.RealPath, loc.AccessPath)
+	return fmt.Sprintf("%s-%s-%s-%s", pkg.Name, pkg.Version, loc.FullNestedPath(), loc.AccessPath)
 }

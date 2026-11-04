@@ -15,7 +15,7 @@ func newPackageFromUsageStatement(use, comment string, location file.Location) (
 	name, version := parseStepUsageStatement(use, comment)
 
 	if name == "" {
-		log.WithFields("file", location.RealPath, "statement", use).Trace("unable to parse github action usage statement")
+		log.WithFields("file", location.FullNestedPath(), "statement", use).Trace("unable to parse github action usage statement")
 		return nil, fmt.Errorf("unable to parse github action usage statement")
 	}
 

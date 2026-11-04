@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	formatInternal "github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil/helpers"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -42,7 +43,8 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	cdxBOM.SerialNumber = uuid.New().URN()
 	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source)
 
-	coordinates, locationSorter := getCoordinates(s)
+	locationSorter, coordinateSorter := formatInternal.GetLocationSorters(s)
+	top, entries := formatInternal.ArchiveEntries(s.AllCoordinates(), coordinateSorter)
 
 	// Packages
 	packages := s.Artifacts.Packages.Sorted()
@@ -52,40 +54,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	}
 	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
 
-	artifacts := s.Artifacts
-
-	for _, coordinate := range coordinates {
-		var metadata *file.Metadata
-		// File Info
-		fileMetadata, exists := artifacts.FileMetadata[coordinate]
-		// no file metadata then don't include in SBOM
-		// the syft config allows for sometimes only capturing files owned by packages
-		// so there can be a map miss here where we have less metadata than all coordinates
-		if !exists {
-			continue
-		}
-		if fileMetadata.Type == stfile.TypeDirectory ||
-			fileMetadata.Type == stfile.TypeSocket ||
-			fileMetadata.Type == stfile.TypeSymLink {
-			// skip dir, symlinks and sockets for the final bom
-			continue
-		}
-		metadata = &fileMetadata
-
-		// Digests
-		var digests []file.Digest
-		if digestsForLocation, exists := artifacts.FileDigests[coordinate]; exists {
-			digests = digestsForLocation
-		}
-
-		cdxHashes := digestsToHashes(digests)
-		components = append(components, cyclonedx.Component{
-			BOMRef: string(coordinate.ID()),
-			Type:   cyclonedx.ComponentTypeFile,
-			Name:   metadata.Path,
-			Hashes: &cdxHashes,
-		})
-	}
+	components = append(components, toFileComponents(s.Artifacts, entries, top)...)
 	cdxBOM.Components = &components
 
 	dependencies := toDependencies(s.Relationships)
@@ -96,19 +65,41 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	return cdxBOM
 }
 
-func getCoordinates(s sbom.SBOM) ([]file.Coordinates, func(a, b file.Location) int) {
-	var layers []string
-	if m, ok := s.Source.Metadata.(source.ImageMetadata); ok {
-		for _, l := range m.Layers {
-			layers = append(layers, l.Digest)
+// toFileComponents describes each of coordinates that is a regular file with metadata, named by its path
+// (within its archive, for a file within one), with the files within it nested in its component.
+func toFileComponents(artifacts sbom.Artifacts, entries map[file.Coordinates][]file.Coordinates, coordinates []file.Coordinates) []cyclonedx.Component {
+	var components []cyclonedx.Component
+	for _, coordinate := range coordinates {
+		nested := toFileComponents(artifacts, entries, entries[coordinate])
+		// no file metadata then don't include in SBOM
+		// the syft config allows for sometimes only capturing files owned by packages
+		// so there can be a map miss here where we have less metadata than all coordinates
+		metadata, exists := artifacts.FileMetadata[coordinate]
+		if !isFileComponent(metadata, exists) && len(nested) == 0 {
+			continue
 		}
+
+		cdxHashes := digestsToHashes(artifacts.FileDigests[coordinate])
+		component := cyclonedx.Component{
+			BOMRef: string(coordinate.ID()),
+			Type:   cyclonedx.ComponentTypeFile,
+			Name:   coordinate.LocalPath(),
+			Hashes: &cdxHashes,
+		}
+		if len(nested) > 0 {
+			component.Components = &nested
+		}
+		components = append(components, component)
 	}
+	return components
+}
 
-	coordSorter := file.CoordinatesSorter(layers)
-	coordinates := s.AllCoordinates()
-
-	slices.SortFunc(coordinates, coordSorter)
-	return coordinates, file.LocationSorter(layers)
+// isFileComponent skips dirs, symlinks and sockets for the final bom
+func isFileComponent(metadata file.Metadata, exists bool) bool {
+	return exists &&
+		metadata.Type != stfile.TypeDirectory &&
+		metadata.Type != stfile.TypeSocket &&
+		metadata.Type != stfile.TypeSymLink
 }
 
 func digestsToHashes(digests []file.Digest) []cyclonedx.Hash {
