@@ -1474,7 +1474,7 @@
             "$ref": "#/$defs/ExecutableIdentifier"
           },
           "type": "array",
-          "description": "Identifiers contains GNU build IDs from the .note.gnu.build-id section."
+          "description": "Identifiers lists self-declared build identifiers found in the binary (e.g. ELF GNU build IDs or Go build IDs)."
         }
       },
       "type": "object",
@@ -1490,11 +1490,11 @@
       "properties": {
         "kind": {
           "type": "string",
-          "description": "Kind identifies the source of the build ID."
+          "description": "Kind identifies the type and source of the identifier."
         },
         "value": {
           "type": "string",
-          "description": "Value is the build ID encoded as lowercase hexadecimal."
+          "description": "Value is the identifier in the conventional text form for its Kind (e.g. lowercase hex for an ELF GNU build ID)."
         }
       },
       "type": "object",

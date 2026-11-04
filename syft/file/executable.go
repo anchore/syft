@@ -7,7 +7,7 @@ type (
 	// RelocationReadOnly indicates the RELRO security protection level applied to an ELF binary.
 	RelocationReadOnly string
 
-	// ExecutableIdentifierKind identifies the source of an executable identifier.
+	// ExecutableIdentifierKind identifies the type and source of an executable identifier.
 	ExecutableIdentifierKind string
 )
 
@@ -41,17 +41,17 @@ type Executable struct {
 	// ELFSecurityFeatures contains ELF-specific security hardening information when Format is ELF.
 	ELFSecurityFeatures *ELFSecurityFeatures `json:"elfSecurityFeatures,omitempty" yaml:"elfSecurityFeatures" mapstructure:"elfSecurityFeatures"`
 
-	// Identifiers contains GNU build IDs from the .note.gnu.build-id section.
+	// Identifiers lists self-declared build identifiers found in the binary (e.g. ELF GNU build IDs or Go build IDs).
 	Identifiers []ExecutableIdentifier `json:"identifiers,omitempty" yaml:"identifiers" mapstructure:"identifiers"`
 }
 
 // ExecutableIdentifier is a self-declared build identifier used to correlate a binary with its build or debug information.
 // It can survive stripping; use file digests to verify content.
 type ExecutableIdentifier struct {
-	// Kind identifies the source of the build ID.
+	// Kind identifies the type and source of the identifier.
 	Kind ExecutableIdentifierKind `json:"kind" yaml:"kind" mapstructure:"kind"`
 
-	// Value is the build ID encoded as lowercase hexadecimal.
+	// Value is the identifier in the conventional text form for its Kind (e.g. lowercase hex for an ELF GNU build ID).
 	Value string `json:"value" yaml:"value" mapstructure:"value"`
 }
 
