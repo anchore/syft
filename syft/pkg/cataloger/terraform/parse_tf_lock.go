@@ -31,7 +31,7 @@ func (r *terraformLicenseResolver) parseTerraformLock(ctx context.Context, resol
 		return nil, nil, fmt.Errorf("failed to decode terraform lock file: %w", err)
 	}
 
-	lockFileDir := path.Dir(reader.Location.AccessPath)
+	lockFileDir := path.Dir(reader.AccessPath)
 	pkgs := make([]pkg.Package, 0, len(lockFile.Providers))
 
 	for _, provider := range lockFile.Providers {

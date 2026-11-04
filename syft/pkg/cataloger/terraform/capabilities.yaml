@@ -7,7 +7,7 @@ configs: # AUTO-GENERATED - config structs and their fields
         description: SearchRemoteLicenses enables downloading provider archives from the Terraform Registry to extract license information.
         app_key: terraform.search-remote-licenses
       - key: RegistryBaseURL
-        description: RegistryBaseURL specifies the base URL for the Terraform Registry API used when searching for remote license information.
+        description: RegistryBaseURL specifies the base URL of the Terraform Registry (or a mirror of it) used when searching for remote license information for providers sourced from registry.terraform.io. Providers from other registries are resolved via that registry's service discovery.
         app_key: terraform.registry-base-url
 catalogers:
   - ecosystem: terraform # MANUAL
@@ -38,7 +38,11 @@ catalogers:
           - TerraformLockProviderEntry
         capabilities: # MANUAL - preserved across regeneration
           - name: license
-            default: true
+            default: false
+            conditions:
+              - when:
+                  SearchRemoteLicenses: true
+                value: true
           - name: dependency.depth
             default:
               - direct

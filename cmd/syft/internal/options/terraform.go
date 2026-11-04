@@ -23,5 +23,5 @@ func defaultTerraformConfig() terraformConfig {
 
 func (o *terraformConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.SearchRemoteLicenses, `enables Syft to use the network to download provider archives and extract license information`)
-	descriptions.Add(&o.RegistryBaseURL, `base Terraform Registry URL to use`)
+	descriptions.Add(&o.RegistryBaseURL, `base Terraform Registry URL to use for providers sourced from registry.terraform.io (e.g. a mirror)`)
 }
