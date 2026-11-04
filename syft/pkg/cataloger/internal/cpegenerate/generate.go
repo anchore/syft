@@ -234,6 +234,10 @@ func candidateTargetSw(p pkg.Package) []string {
 		// NVD records CPAN distributions with perl in target_sw, e.g.
 		// cpe:2.3:a:mojolicious:mojolicious:*:*:*:*:*:perl:*:*
 		return []string{"perl"}
+	case p.Type == pkg.TerraformPkg:
+		// NVD records terraform providers with the provider type in target_sw, e.g.
+		// cpe:2.3:a:hashicorp:terraform_provider:*:*:*:*:*:vault:*:*
+		return candidateTargetSwForTerraformProvider(p)
 	}
 
 	return []string{cpe.Any}
@@ -332,6 +336,9 @@ func candidateVendorsByType(p pkg.Package, vendors fieldCandidateSet) fieldCandi
 	case pkg.WordpressPluginEntry:
 		vendors.clear()
 		vendors.union(candidateVendorsForWordpressPlugin(p))
+	case pkg.TerraformLockProviderEntry:
+		vendors.clear()
+		vendors.union(candidateVendorsForTerraformProvider(p))
 	}
 	return vendors
 }
@@ -377,6 +384,9 @@ func candidateProductSet(p pkg.Package) fieldCandidateSet {
 	case pkg.WordpressPluginEntry:
 		products.clear()
 		products.union(candidateProductsForWordpressPlugin(p))
+	case pkg.TerraformLockProviderEntry:
+		products.clear()
+		products.union(candidateProductsForTerraformProvider(p))
 	}
 
 	// it is never OK to have candidates with these values ["" and "*"] (since CPEs will match any other value)
