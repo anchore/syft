@@ -21,6 +21,10 @@ func TestArtifactIDToGroupID(t *testing.T) {
 		{name: "groovy without a version falls back to codehaus", artifactID: "groovy-json", want: "org.codehaus.groovy", wantOK: true},
 		{name: "groovy-eclipse stays on codehaus at 4.x", artifactID: "groovy-eclipse-batch", version: "4.0.33-02", want: "org.codehaus.groovy", wantOK: true},
 		{name: "apache-only groovy module", artifactID: "groovy-ginq", version: "4.0.33", want: "org.apache.groovy", wantOK: true},
+		{name: "hibernate-commons-annotations 5 moves to org.hibernate.common", artifactID: "hibernate-commons-annotations", version: "5.1.2.Final", want: "org.hibernate.common", wantOK: true},
+		{name: "hibernate-commons-annotations 7 stays on org.hibernate.common", artifactID: "hibernate-commons-annotations", version: "7.0.3.Final", want: "org.hibernate.common", wantOK: true},
+		{name: "hibernate-commons-annotations 3 stays on org.hibernate", artifactID: "hibernate-commons-annotations", version: "3.3.0.ga", want: "org.hibernate", wantOK: true},
+		{name: "hibernate-commons-annotations without a version falls back to org.hibernate", artifactID: "hibernate-commons-annotations", want: "org.hibernate", wantOK: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
