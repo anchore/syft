@@ -455,6 +455,14 @@ func Test_findELFIdentifiers(t *testing.T) {
 	}
 }
 
+func Test_findELFIdentifiers_compressedSectionIgnored(t *testing.T) {
+	f, err := elfutil.NewFile(bytes.NewReader(elfWithSection(t, elf.ELFCLASS64, elf.SHT_NOTE, 4, encodeELFNote("GNU", ntGNUBuildID, []byte{0xde, 0xad}, 4))))
+	require.NoError(t, err)
+	f.Sections[1].Name = ".note.gnu.build-id"
+	f.Sections[1].Flags |= elf.SHF_COMPRESSED
+	assert.Nil(t, findELFIdentifiers(f))
+}
+
 type countingNoteReader struct {
 	io.ReaderAt
 	bytesRead int

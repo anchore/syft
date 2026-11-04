@@ -92,7 +92,9 @@ func findELFIdentifiers(f *elf.File) []file.ExecutableIdentifier {
 
 func findELFNoteIdentifiers(f *elf.File, in elfIdentifierNote) []file.ExecutableIdentifier {
 	s := f.Section(in.section)
-	if s == nil || s.Type != elf.SHT_NOTE {
+	// real identifier notes are SHF_ALLOC, which the gABI forbids compressing, so a compressed one is
+	// hostile or broken and is never decompressed
+	if s == nil || s.Type != elf.SHT_NOTE || s.Flags&elf.SHF_COMPRESSED != 0 {
 		return nil
 	}
 	data, err := io.ReadAll(io.LimitReader(s.Open(), maxELFNoteBytes))
