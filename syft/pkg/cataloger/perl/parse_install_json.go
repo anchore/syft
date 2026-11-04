@@ -28,13 +28,13 @@ type installJSON struct {
 func parseInstallJSON(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var doc installJSON
 	if err := json.NewDecoder(reader).Decode(&doc); err != nil {
-		log.WithFields("path", reader.Path(), "error", err).Debug("unable to parse CPAN install.json")
+		log.WithFields("path", reader.FullNestedPath(), "error", err).Debug("unable to parse CPAN install.json")
 		return nil, nil, nil
 	}
 
 	name, version := distributionNameVersion(doc)
 	if name == "" || version == "" {
-		log.WithFields("path", reader.Path()).Debug("CPAN install.json is missing a distribution name or version")
+		log.WithFields("path", reader.FullNestedPath()).Debug("CPAN install.json is missing a distribution name or version")
 		return nil, nil, nil
 	}
 

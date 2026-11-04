@@ -44,7 +44,7 @@ func NewCataloger(cfg Config) *Cataloger {
 	}
 }
 
-func (i *Cataloger) Catalog(_ context.Context, resolver file.Resolver) (map[file.Coordinates]string, error) {
+func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) (map[file.Coordinates]string, error) {
 	results := make(map[file.Coordinates]string)
 	var locations []file.Location
 	var errs error
@@ -54,10 +54,10 @@ func (i *Cataloger) Catalog(_ context.Context, resolver file.Resolver) (map[file
 		return nil, err
 	}
 
-	prog := catalogingProgress(int64(len(locations)))
+	prog := catalogingProgress(ctx, int64(len(locations)))
 
 	for _, location := range locations {
-		prog.AtomicStage.Set(location.Path())
+		prog.AtomicStage.Set(location.FullNestedPath())
 
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {
@@ -98,12 +98,12 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	if err != nil {
 		return "", err
 	}
-	defer internal.CloseAndLogError(contentReader, location.AccessPath)
+	defer internal.CloseAndLogError(contentReader, location.FullNestedPath())
 
 	buf := &bytes.Buffer{}
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)
 	if _, err = io.Copy(encoder, contentReader); err != nil {
-		return "", internal.ErrPath{Context: "content-cataloger", Path: location.RealPath, Err: err}
+		return "", internal.ErrPath{Context: "content-cataloger", Path: location.FullNestedPath(), Err: err}
 	}
 	// note: it's important to close the reader before reading from the buffer since closing will flush the remaining bytes
 	if err := encoder.Close(); err != nil {
@@ -113,7 +113,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	return buf.String(), nil
 }
 
-func catalogingProgress(locations int64) *monitor.TaskProgress {
+func catalogingProgress(ctx context.Context, locations int64) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "File contents",
@@ -121,5 +121,5 @@ func catalogingProgress(locations int64) *monitor.TaskProgress {
 		ParentID: monitor.TopLevelCatalogingTaskID,
 	}
 
-	return bus.StartCatalogerTask(info, locations, "")
+	return bus.StartCatalogerTask(ctx, info, locations, "")
 }

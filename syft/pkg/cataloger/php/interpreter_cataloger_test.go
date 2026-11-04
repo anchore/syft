@@ -6,7 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
@@ -163,4 +165,18 @@ func Test_getClassifier_declaredCPESource(t *testing.T) {
 	require.NotNil(t, cls)
 	require.Len(t, cls.CPEs, 1)
 	assert.Equal(t, cpe.DeclaredSource, cls.CPEs[0].Source)
+}
+
+func Test_catalogExtension_unreadableFileKeepsItsCoordinates(t *testing.T) {
+	nested := file.NewLocationFromCoordinates(file.Coordinates{
+		RealPath: "/app.tar",
+		FullPath: "/app.tar!/usr/lib/php83/modules/bcmath.so",
+	})
+	c := NewInterpreterCataloger().(interpreterCataloger)
+
+	_, err := c.catalogExtension(file.NewMockResolverForPaths(), nested)
+
+	var coordinateErr *unknown.CoordinateError
+	require.ErrorAs(t, err, &coordinateErr)
+	assert.Equal(t, nested.Coordinates, coordinateErr.Coordinates)
 }

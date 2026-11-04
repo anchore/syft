@@ -15,10 +15,7 @@ import (
 func TestIDUniqueness(t *testing.T) {
 	ctx := context.TODO()
 	originalLocation := file.NewVirtualLocationFromCoordinates(
-		file.Coordinates{
-			RealPath:     "39.0742° N, 21.8243° E",
-			FileSystemID: "Earth",
-		},
+		file.NewCoordinates("39.0742° N, 21.8243° E", "Earth"),
 		"/Ancient-Greece",
 	)
 
@@ -230,10 +227,7 @@ func TestIDUniqueness(t *testing.T) {
 
 func TestPackage_Merge(t *testing.T) {
 	originalLocation := file.NewVirtualLocationFromCoordinates(
-		file.Coordinates{
-			RealPath:     "39.0742° N, 21.8243° E",
-			FileSystemID: "Earth",
-		},
+		file.NewCoordinates("39.0742° N, 21.8243° E", "Earth"),
 		"/Ancient-Greece",
 	)
 
@@ -460,4 +454,22 @@ func TestIsValid(t *testing.T) {
 	for _, c := range cases {
 		require.Equal(t, c.want, IsValid(c.given), "when package: %s", c.name)
 	}
+}
+
+func TestID_nestedArchiveLocations(t *testing.T) {
+	id := func(c file.Coordinates) string {
+		p := Package{Name: "x", Version: "1", Type: NpmPkg, Locations: file.NewLocationSet(file.NewLocationFromCoordinates(c))}
+		p.SetID()
+		return string(p.ID())
+	}
+
+	assert.NotEqual(t,
+		id(file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/a.jar!/package.json"}),
+		id(file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/b.jar!/package.json"}),
+		"packages in different entries of the same outer archive must not share an ID")
+
+	assert.Equal(t,
+		id(file.Coordinates{RealPath: "/package.json"}),
+		id(file.NewCoordinates("/package.json", "")),
+		"a full path equal to the real path must not change the ID")
 }

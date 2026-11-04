@@ -265,7 +265,7 @@ func newDotnetBinaryPackage(versionResources map[string]string, f file.Location)
 
 	if name == "" {
 		// older .NET runtime dlls may not have any version resources
-		name = strings.TrimSuffix(strings.TrimSuffix(path.Base(f.RealPath), ".exe"), ".dll")
+		name = strings.TrimSuffix(strings.TrimSuffix(path.Base(f.FullNestedPath()), ".exe"), ".dll")
 	}
 
 	ver := findVersionFromVersionResources(versionResources)

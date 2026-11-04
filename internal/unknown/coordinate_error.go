@@ -23,9 +23,9 @@ var _ error = (*CoordinateError)(nil)
 
 func (u *CoordinateError) Error() string {
 	if u.Coordinates.FileSystemID == "" {
-		return fmt.Sprintf("%s: %v", u.Coordinates.RealPath, u.Reason)
+		return fmt.Sprintf("%s: %v", u.Coordinates.FullNestedPath(), u.Reason)
 	}
-	return fmt.Sprintf("%s (%s): %v", u.Coordinates.RealPath, u.Coordinates.FileSystemID, u.Reason)
+	return fmt.Sprintf("%s (%s): %v", u.Coordinates.FullNestedPath(), u.Coordinates.FileSystemID, u.Reason)
 }
 
 // New returns a new CoordinateError unless the reason is a CoordinateError itself, in which case

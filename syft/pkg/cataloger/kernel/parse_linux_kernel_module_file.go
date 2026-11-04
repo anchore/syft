@@ -34,9 +34,9 @@ func parseLinuxKernelModuleFile(ctx context.Context, _ file.Resolver, _ *generic
 		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)
 	}
 
-	moduleReader, err := decompressedModuleReader(ctx, reader.RealPath, unionReader)
+	moduleReader, err := decompressedModuleReader(ctx, reader.FullNestedPath(), unionReader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to decompress kernel module %q: %w", reader.RealPath, err)
+		return nil, nil, fmt.Errorf("unable to decompress kernel module %q: %w", reader.FullNestedPath(), err)
 	}
 	defer moduleReader.Close()
 
@@ -48,7 +48,7 @@ func parseLinuxKernelModuleFile(ctx context.Context, _ file.Resolver, _ *generic
 		return nil, nil, nil
 	}
 
-	metadata.Path = reader.RealPath
+	metadata.Path = reader.LocalPath()
 
 	return []pkg.Package{
 		newLinuxKernelModulePackage(

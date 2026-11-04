@@ -586,7 +586,7 @@ func fetchPkgs(reader unionreader.UnionReader, location file.Location) ([]pkg.Pa
 		log.Debugf("failed to open the java native-image binary: %v", err)
 		return nil, nil
 	}
-	filename := location.RealPath
+	filename := location.FullNestedPath()
 	for _, r := range readers {
 		for _, makeNativeImage := range imageFormats {
 			ni, err := makeNativeImage(filename, r)
@@ -645,7 +645,7 @@ func processLocation(location file.Location, resolver file.Resolver) ([]pkg.Pack
 		log.Debugf("error opening file: %v", err)
 		return nil, nil, nil
 	}
-	defer internal.CloseAndLogError(readerCloser, location.RealPath)
+	defer internal.CloseAndLogError(readerCloser, location.FullNestedPath())
 
 	reader, err := unionreader.GetUnionReader(readerCloser)
 	if err != nil {
