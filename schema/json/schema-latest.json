@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.1.12/document",
+  "$id": "anchore.io/schema/syft/json/16.1.13/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -1468,6 +1468,13 @@
         "elfSecurityFeatures": {
           "$ref": "#/$defs/ELFSecurityFeatures",
           "description": "ELFSecurityFeatures contains ELF-specific security hardening information when Format is ELF."
+        },
+        "identifiers": {
+          "items": {
+            "$ref": "#/$defs/ExecutableIdentifier"
+          },
+          "type": "array",
+          "description": "Identifiers lists self-declared build identifiers found in the binary (e.g. ELF GNU build IDs or Go build IDs)."
         }
       },
       "type": "object",
@@ -1478,6 +1485,24 @@
         "importedLibraries"
       ],
       "description": "Executable contains metadata about binary files and their security features."
+    },
+    "ExecutableIdentifier": {
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "Kind identifies the type and source of the identifier."
+        },
+        "value": {
+          "type": "string",
+          "description": "Value is the identifier in the conventional text form for its Kind (e.g. lowercase hex for an ELF GNU build ID)."
+        }
+      },
+      "type": "object",
+      "required": [
+        "kind",
+        "value"
+      ],
+      "description": "ExecutableIdentifier is a self-declared build identifier used to correlate a binary with its build or debug information."
     },
     "File": {
       "properties": {
