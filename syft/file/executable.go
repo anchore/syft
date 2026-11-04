@@ -20,7 +20,8 @@ const (
 	RelocationReadOnlyPartial RelocationReadOnly = "partial" // partial RELRO protection
 	RelocationReadOnlyFull    RelocationReadOnly = "full"    // full RELRO protection
 
-	ELFGNUBuildID ExecutableIdentifierKind = "elf-gnu-build-id"
+	ELFGNUBuildID ExecutableIdentifierKind = "elf-gnu-build-id" // GNU build ID from an ELF .note.gnu.build-id note
+	GoBuildID     ExecutableIdentifierKind = "go-build-id"      // build ID written by the go linker
 )
 
 // Executable contains metadata about binary files and their security features.

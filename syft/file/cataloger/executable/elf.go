@@ -7,6 +7,7 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -47,10 +48,13 @@ func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) erro
 const (
 	// NT_GNU_BUILD_ID is not defined by debug/elf.
 	ntGNUBuildID = 3
+	// ELF_NOTE_GOBUILDID_TAG from cmd/link, the note type the go linker uses for the go build ID.
+	ntGoBuildID = 4
 
 	elfNoteOwnerGNU = "GNU"
+	elfNoteOwnerGo  = "Go"
 
-	// Bound decoded bytes read from .note.gnu.build-id.
+	// bound decoded bytes read from any one identifier note section.
 	maxELFNoteBytes = 64 * intFile.KB
 
 	elfNoteHeaderSize = 12
@@ -62,31 +66,63 @@ type elfNote struct {
 	desc  []byte
 }
 
+// elfIdentifierNote describes where one kind of identifier lives and how its descriptor becomes a value.
+type elfIdentifierNote struct {
+	section string
+	owner   string
+	typ     uint32
+	kind    file.ExecutableIdentifierKind
+	// encode returns the value for a descriptor, or "" to skip it.
+	encode func([]byte) string
+}
+
+var elfIdentifierNotes = []elfIdentifierNote{
+	{section: ".note.gnu.build-id", owner: elfNoteOwnerGNU, typ: ntGNUBuildID, kind: file.ELFGNUBuildID, encode: hex.EncodeToString},
+	// the go linker always writes this note, while it only writes a GNU build ID when asked (-B) or when linking externally
+	{section: ".note.go.buildid", owner: elfNoteOwnerGo, typ: ntGoBuildID, kind: file.GoBuildID, encode: goBuildIDValue},
+}
+
 func findELFIdentifiers(f *elf.File) []file.ExecutableIdentifier {
-	s := f.Section(".note.gnu.build-id")
+	var ids []file.ExecutableIdentifier
+	for _, in := range elfIdentifierNotes {
+		ids = append(ids, findELFNoteIdentifiers(f, in)...)
+	}
+	return ids
+}
+
+func findELFNoteIdentifiers(f *elf.File, in elfIdentifierNote) []file.ExecutableIdentifier {
+	s := f.Section(in.section)
 	if s == nil || s.Type != elf.SHT_NOTE {
 		return nil
 	}
 	data, err := io.ReadAll(io.LimitReader(s.Open(), maxELFNoteBytes))
 	if err != nil {
-		log.WithFields("error", err).Trace("unable to read ELF build ID")
+		log.WithFields("error", err, "section", in.section).Trace("unable to read ELF identifier note")
 		return nil
 	}
 
 	var ids []file.ExecutableIdentifier
 	seen := strset.New()
 	for _, n := range parseELFNotes(data, s.Addralign, f.ByteOrder) {
-		if n.owner != elfNoteOwnerGNU || n.typ != ntGNUBuildID || len(n.desc) == 0 {
+		if n.owner != in.owner || n.typ != in.typ || len(n.desc) == 0 {
 			continue
 		}
-		value := hex.EncodeToString(n.desc)
-		if seen.Has(value) {
+		value := in.encode(n.desc)
+		if value == "" || seen.Has(value) {
 			continue
 		}
 		seen.Add(value)
-		ids = append(ids, file.ExecutableIdentifier{Kind: file.ELFGNUBuildID, Value: value})
+		ids = append(ids, file.ExecutableIdentifier{Kind: in.kind, Value: value})
 	}
 	return ids
+}
+
+// goBuildIDValue keeps the go build ID as the text the go toolchain prints for it (e.g. "go tool buildid").
+func goBuildIDValue(desc []byte) string {
+	if !utf8.Valid(desc) {
+		return ""
+	}
+	return string(desc)
 }
 
 // parseELFNotes decodes the Elf_Nhdr records in a note region, stopping at the first truncated record.

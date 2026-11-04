@@ -425,6 +425,22 @@ func Test_findELFIdentifiers(t *testing.T) {
 			sectionName: ".note.gnu.build-id",
 		},
 		{
+			name:        "go build id",
+			elf:         elfWithSection(t, elf.ELFCLASS64, elf.SHT_NOTE, 4, encodeELFNote("Go\x00", ntGoBuildID, []byte("action/content"), 4)),
+			sectionName: ".note.go.buildid",
+			want:        []file.ExecutableIdentifier{{Kind: file.GoBuildID, Value: "action/content"}},
+		},
+		{
+			name:        "go build id that is not utf-8 is ignored",
+			elf:         elfWithSection(t, elf.ELFCLASS64, elf.SHT_NOTE, 4, encodeELFNote("Go\x00", ntGoBuildID, []byte{0xff, 0xfe}, 4)),
+			sectionName: ".note.go.buildid",
+		},
+		{
+			name:        "gnu build id note in the go section is ignored",
+			elf:         elfWithSection(t, elf.ELFCLASS64, elf.SHT_NOTE, 4, encodeELFNote("GNU", ntGNUBuildID, sha1ID, 4)),
+			sectionName: ".note.go.buildid",
+		},
+		{
 			name: "no build-id section",
 			elf:  elfWithDynamicSection(t, elf.ELFCLASS64, nil),
 		},
