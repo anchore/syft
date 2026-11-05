@@ -212,6 +212,15 @@ func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file
 	// only the last document, would drop them from the SBOM entirely.
 	pnpmPkgs, errs := parsePnpmLockStream(reader)
 
+	var pairs [][2]string
+	for _, p := range toSortedSlice(pnpmPkgs) {
+		if p.Dev && !a.cfg.IncludeDevDependencies {
+			continue
+		}
+		pairs = append(pairs, [2]string{p.Name, p.Version})
+	}
+	prefetchNpmLicenses(ctx, a.licenseResolver, pairs)
+
 	// left nil when nothing parses, so a failed lockfile reports no packages rather than an empty set
 	var packages []pkg.Package
 	for _, p := range toSortedSlice(pnpmPkgs) {
