@@ -8,6 +8,7 @@ import (
 
 	"github.com/acobaugh/osrelease"
 	"github.com/google/go-cmp/cmp"
+	"howett.net/plist"
 
 	"github.com/anchore/go-logger"
 	"github.com/anchore/syft/internal"
@@ -43,6 +44,11 @@ var identityFiles = []parseEntry{
 		// last ditch effort for determining older centos version distro information
 		path: "/etc/redhat-release",
 		fn:   parseRedhatRelease,
+	},
+	{
+		// macOS has no os-release file; release details are kept in a property list instead
+		path: "/System/Library/CoreServices/SystemVersion.plist",
+		fn:   parseSystemVersionPlist,
 	},
 	// /////////////////////////////////////////////////////////////////////////////////////////////////////
 	// IMPORTANT! checking busybox must be last since other distros contain the busybox binary
@@ -222,6 +228,45 @@ func parseRedhatRelease(contents string) (*Release, error) {
 		IDLike:     idLike,
 		Version:    version,
 		VersionID:  versionID,
+	}, nil
+}
+
+// systemVersionPlist captures the keys from SystemVersion.plist that identify the release
+type systemVersionPlist struct {
+	ProductName         string `plist:"ProductName"`
+	ProductVersion      string `plist:"ProductVersion"`
+	ProductBuildVersion string `plist:"ProductBuildVersion"`
+}
+
+// parseSystemVersionPlist parses the macOS release file (/System/Library/CoreServices/SystemVersion.plist),
+// which may be in either XML or binary property list format.
+func parseSystemVersionPlist(contents string) (*Release, error) {
+	var info systemVersionPlist
+	if _, err := plist.Unmarshal([]byte(contents), &info); err != nil {
+		return nil, fmt.Errorf("unable to parse SystemVersion.plist: %w", err)
+	}
+
+	name := strings.TrimSpace(info.ProductName)
+	version := strings.TrimSpace(info.ProductVersion)
+	if name == "" || version == "" {
+		return nil, nil
+	}
+
+	// older releases report "Mac OS X"; use a single stable ID across the rename. Other Apple platforms
+	// that share this file (e.g. "iPhone OS") fall back to a normalized form of the product name.
+	id := strings.ToLower(strings.ReplaceAll(name, " ", ""))
+	if id == "macosx" {
+		id = "macos"
+	}
+
+	return &Release{
+		PrettyName: name + " " + version,
+		Name:       name,
+		ID:         id,
+		Version:    version,
+		VersionID:  version,
+		// the build distinguishes releases that share a version (e.g. Rapid Security Responses and betas)
+		BuildID: strings.TrimSpace(info.ProductBuildVersion),
 	}, nil
 }
 
