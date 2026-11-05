@@ -81,9 +81,17 @@ func disallowTomcatServerCPEForEmbeddedEL(c cpe.Attributes, p pkg.Package) bool 
 	}
 
 	metadata, ok := p.Metadata.(pkg.JavaArchive)
-	if !ok || metadata.PomProperties == nil {
+	if !ok {
 		return false
 	}
 
-	return metadata.PomProperties.GroupID == "org.apache.tomcat.embed" && metadata.PomProperties.ArtifactID == "tomcat-embed-el"
+	if metadata.PomProperties != nil {
+		return metadata.PomProperties.GroupID == "org.apache.tomcat.embed" && metadata.PomProperties.ArtifactID == "tomcat-embed-el"
+	}
+
+	// Official tomcat-embed-el JARs do not include META-INF/maven metadata.
+	// Fall back to Syft's authoritative artifact-to-group mapping, which is
+	// also used to construct the package URL when POM properties are absent.
+	groupID, found := ArtifactIDToGroupID(p.Name, p.Version)
+	return found && groupID == "org.apache.tomcat.embed" && p.Name == "tomcat-embed-el"
 }
