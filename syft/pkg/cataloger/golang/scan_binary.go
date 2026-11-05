@@ -321,15 +321,42 @@ func closeUnpacked(unpacked unpackedContents) {
 	_ = unpacked.Close()
 }
 
+// goBuildInfoSection is where the Go linker puts the build info blob in an ELF binary. debug/buildinfo
+// looks for it by this name first and only falls back to scanning the first writable PT_LOAD segment when
+// no section carries it, so a section table without it says the fallback scan would come up empty.
+const goBuildInfoSection = ".go.buildinfo"
+
 // readBuildInfo bounds the reader before handing it to debug/buildinfo, which opens ELF files with
 // debug/elf itself rather than through elfutil. elf.NewFile expands the section-name string table as it
 // parses, so an unbounded read here is reachable no matter how little of the file buildinfo goes on to
 // look at.
+//
+// It also answers "not a Go binary" itself, as (nil, nil), for an ELF whose section table has no
+// .go.buildinfo. This cataloger runs on every executable in an image and nearly all of them are not Go;
+// without the check each one costs a 1MB search buffer and a read of its whole writable segment.
 func readBuildInfo(r io.ReaderAt) (*debug.BuildInfo, error) {
 	if err := elfutil.CheckSectionNameTable(r); err != nil {
 		return nil, err
 	}
+	if elfLacksBuildInfoSection(r) {
+		return nil, nil
+	}
 	return buildinfo.Read(r)
+}
+
+// elfLacksBuildInfoSection reports whether r is an ELF whose section table shows it carries no Go build
+// info. It is a pre-check, not a parse: elfutil reads the section headers and the one name it is asked
+// about, a few small reads against the 1MB buffer debug/buildinfo allocates to search a segment, and
+// nothing is allocated that debug/buildinfo would go on to allocate again for a real Go binary.
+//
+// It only ever rules a binary out on positive evidence. Anything that is not an ELF (Mach-O, PE, XCOFF) and
+// any ELF whose section table cannot be read pass through to debug/buildinfo, which describes them as it
+// did before. So does an ELF with no section table at all: a binary that has been through sstrip or UPX
+// has no section names left to check, and the segment scan debug/buildinfo falls back to is the only way
+// to read it.
+func elfLacksBuildInfoSection(r io.ReaderAt) bool {
+	found, ok := elfutil.HasSectionNamed(r, goBuildInfoSection)
+	return ok && !found
 }
 
 func getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, err error) {
