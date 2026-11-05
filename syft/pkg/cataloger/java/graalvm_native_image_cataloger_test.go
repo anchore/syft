@@ -50,6 +50,7 @@ func TestParseNativeImage(t *testing.T) {
 			for _, r := range readers {
 				ni, err := test.newFn(test.fixture, r)
 				require.NoError(t, err)
+				require.NotNil(t, ni)
 				_, _, err = ni.fetchPkgs()
 				if err == nil {
 					t.Fatalf("should have failed to extract SBOM.")
