@@ -1,0 +1,22 @@
+download-path: classifiers/bin
+snippet-path: classifiers/snippets
+
+from-images:
+  - name: busybox
+    version: 1.36.1
+    images:
+      - ref: busybox:1.36.1@sha256:058f0df5310fbbbfea7e81a3a3e2b4bf3452438ec841138d170e170adbbd27a4
+        platform: linux/amd64
+    paths:
+      - /bin/[
+
+from-urls:
+  - name: kubelet
+    version: 1.28.0
+    format: tar.gz
+    path-in-archive: kubernetes/node/bin/kubelet
+    targets:
+      - url: https://dl.k8s.io/v1.28.0/kubernetes-node-linux-amd64.tar.gz
+        platform: linux/amd64
+      - url: https://dl.k8s.io/v1.28.0/kubernetes-node-linux-arm64.tar.gz
+        platform: linux/arm64
