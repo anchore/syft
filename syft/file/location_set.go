@@ -1,6 +1,7 @@
 package file
 
 import (
+	"maps"
 	"slices"
 	"sort"
 
@@ -35,7 +36,7 @@ func (s *LocationSet) Add(locations ...Location) {
 			}
 			s.set[l.LocationData] = m
 		} else {
-			s.set[l.LocationData] = l.LocationMetadata
+			s.set[l.LocationData] = LocationMetadata{Annotations: maps.Clone(l.Annotations)}
 		}
 	}
 }
