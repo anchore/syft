@@ -444,6 +444,21 @@ func Test_PackageCataloger(t *testing.T) {
 				"urllib3 @ 1.26.20 (pdm.lock) [dependency-of] requests @ 2.27.1 (pdm.lock)",
 			},
 		},
+		{
+			// each file parsed once despite overlapping globs
+			name:    "requirements directories",
+			fixture: "testdata/requirements-dirs",
+			expectedPackages: []string{
+				"apache-airflow @ 2.9.3 (requirements/main.txt)",
+				"black @ 24.1.0 (requirements/devRequirements.txt)",
+				"blinker @ 1.6.3 (requirements-min/tests-min.txt)",
+				"flask @ 2.0.3 (requirements.txt)",
+				"graphviz @ 0.20.1 (requirements/requirements-extra/lattice.txt)",
+				"gunicorn @ 22.0.0 (PROD-REQUIREMENTS.txt)",
+				"pandas @ 2.2.2 (requirements/edx/base.txt)",
+				"pytest @ 8.0.0 (requirements/requirements-dev.txt)",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -452,6 +467,7 @@ func Test_PackageCataloger(t *testing.T) {
 				FromDirectory(t, tt.fixture).
 				ExpectsPackageStrings(tt.expectedPackages).
 				ExpectsRelationshipStrings(tt.expectedRelationships).
+				WithErrorAssertion(require.NoError).
 				TestCataloger(t, NewPackageCataloger(DefaultCatalogerConfig()))
 		})
 	}
@@ -496,7 +512,16 @@ func Test_IndexCataloger_Globs(t *testing.T) {
 				"src/requirements.txt",
 				"src/extra-requirements.txt",
 				"src/requirements-dev.txt",
+				"src/requirements_dev.txt",
+				"src/requirements.prod.txt",
+				"src/requirementsdev.txt",
 				"src/1-requirements-dev.txt",
+				"src/devRequirements.txt",
+				"src/PROD-REQUIREMENTS.txt",
+				"src/requirements/main.txt",
+				"src/requirements/nested/main.txt",
+				"src/requirements-prod/base.txt",
+				"src/requirements_prod/base.txt",
 				"src/setup.py",
 				"src/poetry.lock",
 				"src/Pipfile.lock",
