@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
@@ -546,6 +547,71 @@ func Test_wheelEggDependencySpecifier(t *testing.T) {
 	}
 }
 
+// Test_preferPackageOver verifies the deterministic tie-break used when two
+// installed distributions share a site-packages directory key and a name.
+// https://github.com/anchore/syft/issues/5357
+func Test_preferPackageOver(t *testing.T) {
+	loc := func(p string) file.Location {
+		l := file.NewLocation(p)
+		l.Annotations[pkg.EvidenceAnnotationKey] = pkg.PrimaryEvidenceAnnotation
+		return l
+	}
+	pkgAt := func(name, version, path string) pkg.Package {
+		p := pkg.Package{
+			Name:      name,
+			Version:   version,
+			Type:      pkg.PythonPkg,
+			Language:  pkg.Python,
+			Locations: file.NewLocationSet(loc(path)),
+		}
+		p.SetID()
+		return p
+	}
+
+	tests := []struct {
+		name      string
+		candidate pkg.Package
+		current   pkg.Package
+		want      bool
+	}{
+		{
+			name:      "higher PEP440 version wins",
+			candidate: pkgAt("packaging", "26.3", "/opt/app/packaging-26.3.dist-info"),
+			current:   pkgAt("packaging", "24.2", "/opt/app/_vendor/packaging-24.2.dist-info"),
+			want:      true,
+		},
+		{
+			name:      "lower PEP440 version loses",
+			candidate: pkgAt("packaging", "24.2", "/opt/app/_vendor/packaging-24.2.dist-info"),
+			current:   pkgAt("packaging", "26.3", "/opt/app/packaging-26.3.dist-info"),
+			want:      false,
+		},
+		{
+			name:      "equal version breaks ties by primary location path",
+			candidate: pkgAt("packaging", "26.3", "/opt/app/packaging-26.3.dist-info"),
+			current:   pkgAt("packaging", "26.3", "/opt/app/other/packaging-26.3.dist-info"),
+			want:      true,
+		},
+		{
+			name:      "equal version and equal path is stable (no replacement)",
+			candidate: pkgAt("packaging", "26.3", "/opt/app/packaging-26.3.dist-info"),
+			current:   pkgAt("packaging", "26.3", "/opt/app/packaging-26.3.dist-info"),
+			want:      false,
+		},
+		{
+			name:      "non-PEP440 versions fall back to string comparison",
+			candidate: pkgAt("weird", "1.10", "/opt/app/weird-1.10.dist-info"),
+			current:   pkgAt("weird", "1.9", "/opt/app/weird-1.9.dist-info"),
+			want:      true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, preferPackageOver(tt.candidate, tt.current))
+		})
+	}
+}
+
 func Test_pdmLockDependencySpecifier(t *testing.T) {
 
 	tests := []struct {
@@ -725,4 +791,71 @@ func Test_pdmLockDependencySpecifier(t *testing.T) {
 			assert.Equal(t, tt.want, pdmLockDependencySpecifier(tt.p))
 		})
 	}
+}
+
+// Test_wheelEggRelationships_deterministicOnNameCollision reproduces
+// https://github.com/anchore/syft/issues/5357: a top-level distribution and a
+// vendored copy sharing a name (and, here, an empty site-packages directory
+// key) must produce the same dependency targets regardless of cataloging
+// order. The higher-version copy is kept deterministically.
+func Test_wheelEggRelationships_deterministicOnNameCollision(t *testing.T) {
+	loc := func(p string) file.Location {
+		l := file.NewLocation(p)
+		l.Annotations[pkg.EvidenceAnnotationKey] = pkg.PrimaryEvidenceAnnotation
+		return l
+	}
+	pkgAt := func(name, version, path string, requiresDist []string) pkg.Package {
+		p := pkg.Package{
+			Name:      name,
+			Version:   version,
+			Type:      pkg.PythonPkg,
+			Language:  pkg.Python,
+			Locations: file.NewLocationSet(loc(path)),
+			Metadata: pkg.PythonPackage{
+				RequiresDist: requiresDist,
+			},
+		}
+		p.SetID()
+		return p
+	}
+
+	build := pkgAt("build", "1.2.0", "/opt/app/build-1.2.0.dist-info", []string{"packaging>=23.0"})
+	vendoredPackaging := pkgAt("packaging", "24.2", "/opt/app/_vendor/packaging-24.2.dist-info", nil)
+	topPackaging := pkgAt("packaging", "26.3", "/opt/app/packaging-26.3.dist-info", nil)
+	setuptools := pkgAt("setuptools", "68.0.0", "/opt/app/setuptools-68.0.0.dist-info", nil)
+
+	// neither path contains a site-packages/dist-packages segment, so both
+	// packaging copies land on the same (empty) directory key
+	base := []pkg.Package{build, setuptools}
+
+		// resolve relationships for both possible cataloging orders
+		for _, order := range [][]pkg.Package{
+			append(append([]pkg.Package{}, base...), vendoredPackaging, topPackaging),
+			append(append([]pkg.Package{}, base...), topPackaging, vendoredPackaging),
+		} {
+			resolver := file.NewMockResolverForPaths()
+			_, rels, err := wheelEggRelationships(context.TODO(), resolver, order, nil, nil)
+			require.NoError(t, err)
+
+			byID := make(map[artifact.ID]pkg.Package, len(order))
+			for _, p := range order {
+				byID[p.ID()] = p
+			}
+
+			// find the relationship packaging -> build (From is the provider, To the dependent)
+			var dep *artifact.Relationship
+			for i := range rels {
+				r := rels[i]
+				if r.To.ID() == build.ID() {
+					dep = &r
+					break
+				}
+			}
+			require.NotNil(t, dep, "expected a relationship from packaging to build")
+
+			toPkg, ok := byID[dep.From.ID()]
+			require.True(t, ok)
+			assert.Equal(t, "packaging", toPkg.Name)
+			assert.Equal(t, "26.3", toPkg.Version, "dependency target must deterministically resolve to the higher version")
+		}
 }
