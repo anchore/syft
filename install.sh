@@ -257,8 +257,9 @@ hash_sha256() (
     hash=$(shasum -a 256 "$TARGET" 2>/dev/null) || return 1
     echo "$hash" | cut -d ' ' -f 1
   elif is_command openssl; then
-    hash=$(openssl -dst openssl dgst -sha256 "$TARGET") || return 1
-    echo "$hash" | cut -d ' ' -f a
+    hash=$(openssl dgst -sha256 "$TARGET") || return 1
+    # output is "SHA256(<file>)= <digest>" (or "SHA2-256(...)" on OpenSSL 3.x)
+    echo "${hash##* }"
   else
     log_err "hash_sha256 unable to find command to compute sha-256 hash"
     return 1
