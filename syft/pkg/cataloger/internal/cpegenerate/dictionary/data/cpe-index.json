@@ -2434,7 +2434,8 @@
         "cpe:2.3:a:linuxfoundation:backstage\\/integration:*:*:*:*:*:node.js:*:*"
       ],
       "@backstage/plugin-auth-backend": [
-        "cpe:2.3:a:linuxfoundation:auth_backend:*:*:*:*:*:node.js:*:*"
+        "cpe:2.3:a:linuxfoundation:auth_backend:*:*:*:*:*:node.js:*:*",
+        "cpe:2.3:a:linuxfoundation:backstage\\/plugin-auth-backend:*:*:*:*:*:node.js:*:*"
       ],
       "@backstage/plugin-catalog-backend": [
         "cpe:2.3:a:linuxfoundation:backstage\\/plugin-catalog-backend-module-unprocessed:*:*:*:*:*:node.js:*:*"
@@ -6578,8 +6579,14 @@
       "Pillow": [
         "cpe:2.3:a:python:pillow:*:*:*:*:*:*:*:*"
       ],
+      "PraisonAI": [
+        "cpe:2.3:a:praison:praisonai:*:*:*:*:*:*:*:*"
+      ],
       "PyAMF": [
         "cpe:2.3:a:pyamf:pyamf:*:*:*:*:*:*:*:*"
+      ],
+      "PyJWT": [
+        "cpe:2.3:a:pyjwt_project:pyjwt:*:*:*:*:*:*:*:*"
       ],
       "PyPDF2": [
         "cpe:2.3:a:pypdf2_project:pypdf2:*:*:*:*:*:*:*:*"
@@ -7880,6 +7887,9 @@
       "anchor-lang": [
         "cpe:2.3:a:anchor-lang:anchor:*:*:*:*:*:rust:*:*"
       ],
+      "anode": [
+        "cpe:2.3:a:obsidiandynamics:anode:*:*:*:*:*:rust:*:*"
+      ],
       "anymap": [
         "cpe:2.3:a:anymap_project:anymap:*:*:*:*:*:rust:*:*"
       ],
@@ -8002,6 +8012,9 @@
       ],
       "capnp": [
         "cpe:2.3:a:capnproto:capnp:*:*:*:*:*:rust:*:*"
+      ],
+      "cargo": [
+        "cpe:2.3:a:rust-lang:cargo:*:*:*:*:*:rust:*:*"
       ],
       "cbox": [
         "cpe:2.3:a:cbox_project:cbox:*:*:*:*:*:rust:*:*"
@@ -10569,6 +10582,9 @@
       ],
       "captcha": [
         "cpe:2.3:a:bestwebsoft:captcha:*:*:*:*:*:wordpress:*:*"
+      ],
+      "captcha-bank": [
+        "cpe:2.3:a:tech-banker:captcha_bank:*:*:*:*:*:wordpress:*:*"
       ],
       "captchinoo-captcha-for-login-form-protection": [
         "cpe:2.3:a:wp-buy:captchinoo:*:*:*:*:*:wordpress:*:*"
@@ -18653,6 +18669,9 @@
       ],
       "sharable-password-protected-posts": [
         "cpe:2.3:a:fabiantodt:private_post_share:*:*:*:*:*:wordpress:*:*"
+      ],
+      "share-button": [
+        "cpe:2.3:a:maxfoundry:social_share_buttons:*:*:*:*:*:wordpress:*:*"
       ],
       "share-buttons": [
         "cpe:2.3:a:artlosk:share_buttons:*:*:*:*:*:wordpress:*:*",

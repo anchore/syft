@@ -20,7 +20,7 @@ func AddSampleFileRelationships(s *sbom.SBOM) {
 
 	for _, f := range files {
 		meta := file.Metadata{}
-		coords := file.Coordinates{RealPath: f}
+		coords := file.NewCoordinates(f, "")
 		s.Artifacts.FileMetadata[coords] = meta
 
 		s.Relationships = append(s.Relationships, artifact.Relationship{

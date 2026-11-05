@@ -35,13 +35,13 @@ func supplementDebianVersion(resolver file.Resolver, release *Release) {
 func readDebianVersionFile(resolver file.Resolver, location file.Location) string {
 	rdr, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		log.Debugf("error getting contents for %s: %v", location.RealPath, err)
+		log.Debugf("error getting contents for %s: %v", location.FullNestedPath(), err)
 		return ""
 	}
-	defer internal.CloseAndLogError(rdr, location.RealPath)
+	defer internal.CloseAndLogError(rdr, location.FullNestedPath())
 	contents, err := io.ReadAll(io.LimitReader(rdr, 5*1024*1024))
 	if err != nil {
-		log.Debugf("error reading %s: %v", location.RealPath, err)
+		log.Debugf("error reading %s: %v", location.FullNestedPath(), err)
 		return ""
 	}
 	version := strings.TrimSpace(string(contents))

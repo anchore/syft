@@ -60,9 +60,9 @@ func NewMockResolverForPathsWithMetadata(metadata map[Coordinates]Metadata) *Moc
 		l := NewLocationFromCoordinates(c)
 		locations = append(locations, l)
 		mimeTypeIndex[m.MIMEType] = append(mimeTypeIndex[m.MIMEType], l)
-		ext := path.Ext(l.RealPath)
+		ext := path.Ext(l.FullNestedPath())
 		extension[ext] = append(extension[ext], l)
-		bn := path.Base(l.RealPath)
+		bn := path.Base(l.FullNestedPath())
 		basename[bn] = append(basename[bn], l)
 	}
 
@@ -97,9 +97,9 @@ func NewMockResolverForMediaTypes(mediaTypes map[string][]Location) *MockResolve
 		mediaTypeIndex[mediaType] = append(mediaTypeIndex[mediaType], locs...)
 		for _, l := range locs {
 			locations = append(locations, l)
-			ext := path.Ext(l.RealPath)
+			ext := path.Ext(l.FullNestedPath())
 			extension[ext] = append(extension[ext], l)
-			bn := path.Base(l.RealPath)
+			bn := path.Base(l.FullNestedPath())
 			basename[bn] = append(basename[bn], l)
 		}
 	}
@@ -121,7 +121,7 @@ func (r MockResolver) ImageReference() string {
 // HasPath indicates if the given path exists in the underlying source.
 func (r MockResolver) HasPath(path string) bool {
 	for _, l := range r.locations {
-		if l.RealPath == path {
+		if l.FullNestedPath() == path {
 			return true
 		}
 	}
@@ -142,7 +142,7 @@ func (r MockResolver) FileContentsByLocation(location Location) (io.ReadCloser, 
 		}
 	}
 
-	return nil, fmt.Errorf("no file for location: %v", location)
+	return nil, fmt.Errorf("no file for location: %q", location.FullNestedPath())
 }
 
 // FilesByPath returns all Locations that match the given paths.
@@ -150,7 +150,7 @@ func (r MockResolver) FilesByPath(paths ...string) ([]Location, error) {
 	var results []Location
 	for _, p := range paths {
 		for _, location := range r.locations {
-			if p == location.RealPath {
+			if p == location.LocalPath() {
 				results = append(results, NewLocation(p))
 			}
 		}
@@ -164,7 +164,7 @@ func (r MockResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 	var results []Location
 	for _, pattern := range patterns {
 		for _, location := range r.locations {
-			matches, err := doublestar.Match(pattern, location.RealPath)
+			matches, err := doublestar.Match(pattern, location.LocalPath())
 			if err != nil {
 				return nil, err
 			}

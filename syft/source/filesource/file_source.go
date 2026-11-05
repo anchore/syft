@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 
@@ -25,7 +26,10 @@ import (
 	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ source.Source = (*fileSource)(nil)
+var (
+	_ source.Source       = (*fileSource)(nil)
+	_ source.PathExcluder = (*fileSource)(nil)
+)
 
 type Config struct {
 	Path               string
@@ -67,8 +71,14 @@ func New(cfg Config) (source.Source, error) {
 		return nil, fmt.Errorf("given path is a directory: %q", cfg.Path)
 	}
 
+	mimeType := stereoFile.MIMEType(f)
+
 	var digests []file.Digest
 	if len(cfg.DigestAlgorithms) > 0 {
+		// reading the MIME type moved past the start of the file
+		if _, err := f.Seek(0, io.SeekStart); err != nil {
+			return nil, fmt.Errorf("unable to seek file=%q: %w", cfg.Path, err)
+		}
 		digests, err = intFile.NewDigestsFromFile(context.TODO(), f, cfg.DigestAlgorithms)
 		if err != nil {
 			return nil, fmt.Errorf("unable to calculate digests for file=%q: %w", cfg.Path, err)
@@ -95,7 +105,7 @@ func New(cfg Config) (source.Source, error) {
 		analysisPath:     analysisPath,
 		digestForVersion: versionDigest,
 		digests:          digests,
-		mimeType:         stereoFile.MIMEType(f),
+		mimeType:         mimeType,
 	}, nil
 }
 
@@ -154,7 +164,7 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 
 	if isArchiveAnalysis := fi.IsDir(); isArchiveAnalysis {
 		// this is an analysis of an archive file... we should scan the directory where the archive contents
-		res, err := fileresolver.NewFromDirectory(s.analysisPath, "", exclusionFunctions...)
+		res, err := fileresolver.NewFromDirectory(s.analysisPath, s.analysisPath, exclusionFunctions...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 		}
@@ -171,6 +181,11 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 
 	s.resolver = res
 	return s.resolver, nil
+}
+
+// ExcludedPaths returns the exclusion patterns this source was configured with.
+func (s fileSource) ExcludedPaths() []string {
+	return slices.Clone(s.config.Exclude.Paths)
 }
 
 func (s *fileSource) Close() error {

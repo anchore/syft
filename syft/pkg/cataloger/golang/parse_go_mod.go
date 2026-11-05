@@ -39,12 +39,13 @@ func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 
 // parseGoModFile takes a go.mod and tries to resolve and lists all packages discovered.
 func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (pkgs []pkg.Package, relationships []artifact.Relationship, err error) {
+	// the go toolchain needs the go.mod on the host: a location without a reference (such as a file within
+	// an archive) has none, so only the go.mod and go.sum contents are cataloged
 	realPath := string(reader.Location.Reference().RealPath)
 	if windows.HostRunningOnWindows() {
 		// directory resolvers hand back volume-encoded posix paths (/c/...), the go toolchain needs the native path
 		realPath = windows.FromPosix(realPath)
 	}
-	modDir := filepath.Dir(realPath)
 	digests, err := parseGoSumFile(resolver, reader)
 	if err != nil {
 		log.Debugf("unable to get go.sum: %v", err)
@@ -65,12 +66,12 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 	var sourceModules map[string]*packages.Module
 	var catalogedModules []pkg.Package
 
-	if c.usePackagesLib {
+	if c.usePackagesLib && realPath != "" {
 		var sourcePackages map[string][]pkgInfo
 		var sourceDependencies map[string][]string
 		var sourceModuleToPkg map[string]artifact.Identifiable
 
-		sourcePackages, sourceModules, sourceDependencies, err = c.loadPackages(modDir, reader.Location)
+		sourcePackages, sourceModules, sourceDependencies, err = c.loadPackages(filepath.Dir(realPath), reader.Location)
 		catalogedModules, sourceModuleToPkg = c.catalogModules(ctx, scanRoot, sourcePackages, sourceModules, reader, digests)
 		relationships = buildModuleRelationships(catalogedModules, sourceDependencies, sourceModuleToPkg)
 	}
@@ -137,9 +138,9 @@ func (c *goModCataloger) loadPackages(modDir string, loc file.Location) (pkgs ma
 	for _, p := range rootPkgs {
 		if len(p.Errors) > 0 {
 			// Log errors but continue processing
-			for _, e := range p.Errors {
-				log.Debugf("package load error for %s: %v", p.PkgPath, e)
-				unknownErr = unknown.Append(unknownErr, loc, err)
+			for _, pe := range p.Errors {
+				log.Debugf("package load error for %s: %v", p.PkgPath, pe)
+				unknownErr = unknown.Append(unknownErr, loc, pe)
 			}
 		}
 	}
@@ -334,7 +335,7 @@ func (c *goModCataloger) parseModFileContents(reader file.LocationReadCloser) (*
 		return nil, fmt.Errorf("failed to read go module: %w", err)
 	}
 
-	f, err := modfile.Parse(reader.RealPath, contents, nil)
+	f, err := modfile.Parse(reader.FullNestedPath(), contents, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse go module: %w", err)
 	}
@@ -427,7 +428,7 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 		return out, fmt.Errorf("no resolver provided")
 	}
 
-	goSumPath := strings.TrimSuffix(reader.RealPath, ".mod") + ".sum"
+	goSumPath := strings.TrimSuffix(reader.LocalPath(), ".mod") + ".sum"
 	goSumLocation := resolver.RelativeFileByPath(reader.Location, goSumPath)
 	if goSumLocation == nil {
 		return nil, fmt.Errorf("unable to resolve: %s", goSumPath)
@@ -436,7 +437,7 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(contents, goSumLocation.AccessPath)
+	defer internal.CloseAndLogError(contents, goSumLocation.FullNestedPath())
 
 	// go.sum has the format like:
 	// github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=

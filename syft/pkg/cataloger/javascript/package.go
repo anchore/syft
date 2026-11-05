@@ -276,7 +276,7 @@ func addLicenses(name string, resolver file.Resolver, location file.Location) (a
 		return allLicenses
 	}
 
-	dir := path.Dir(location.RealPath)
+	dir := path.Dir(location.LocalPath())
 	pkgPath := []string{dir, "node_modules"}
 	pkgPath = append(pkgPath, strings.Split(name, "/")...)
 	pkgPath = append(pkgPath, "package.json")
@@ -308,7 +308,7 @@ func parseLicensesFromLocation(l file.Location, resolver file.Resolver, pkgFile 
 		log.Debugf("error getting file content reader for %s: %v", pkgFile, err)
 		return nil, err
 	}
-	defer internal.CloseAndLogError(contentReader, l.RealPath)
+	defer internal.CloseAndLogError(contentReader, l.FullNestedPath())
 
 	var pkgJSON packageJSON
 	err = json.NewDecoder(contentReader).Decode(&pkgJSON)

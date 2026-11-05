@@ -87,3 +87,19 @@ func Test_parserGradleLockfile_lineTooLong(t *testing.T) {
 	require.Len(t, pkgs, 1)
 	assert.Equal(t, "before", pkgs[0].Name)
 }
+
+func Test_parserGradleLockfile_skipsComments(t *testing.T) {
+	contents := `# This is a Gradle generated file for dependency locking.
+# To regenerate this file, run: ./gradlew :dependencies --write-locks
+  # indented: comment=too
+com.squareup.okhttp3:okhttp:4.12.0=compileClasspath,runtimeClasspath
+empty=annotationProcessor
+`
+	reader := file.NewLocationReadCloser(file.NewLocation("gradle.lockfile"), io.NopCloser(strings.NewReader(contents)))
+
+	pkgs, _, err := parseGradleLockfile(context.Background(), nil, nil, reader)
+	require.NoError(t, err)
+	require.Len(t, pkgs, 1)
+	assert.Equal(t, "okhttp", pkgs[0].Name)
+	assert.Equal(t, "4.12.0", pkgs[0].Version)
+}

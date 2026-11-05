@@ -6,9 +6,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	maventest "github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven/test"
 )
@@ -352,7 +354,7 @@ func Test_relativePathParent(t *testing.T) {
 			loc := locs[0]
 			contents, err := resolver.FileContentsByLocation(loc)
 			require.NoError(t, err)
-			defer internal.CloseAndLogError(contents, loc.RealPath)
+			defer internal.CloseAndLogError(contents, loc.FullNestedPath())
 
 			pom, err := ParsePomXML(contents)
 			require.NoError(t, err)
@@ -367,4 +369,26 @@ func Test_relativePathParent(t *testing.T) {
 // ptr returns a pointer to the given value
 func ptr[T any](value T) *T {
 	return &value
+}
+
+// pathRecorder records the paths it is asked for and finds nothing.
+type pathRecorder struct {
+	file.Resolver
+	paths []string
+}
+
+func (p *pathRecorder) FilesByPath(paths ...string) ([]file.Location, error) {
+	p.paths = append(p.paths, paths...)
+	return nil, nil
+}
+
+func Test_relativePathParent_staysInsideTheArchive(t *testing.T) {
+	recorder := &pathRecorder{}
+	r := NewResolver(recorder, DefaultConfig())
+	pom := &Project{Parent: &Parent{RelativePath: ptr("../../other")}}
+	nested := file.Coordinates{RealPath: "/data/outer.zip", FullPath: "/data/outer.zip!/a/pom.xml"}
+	r.pomLocations[pom] = file.NewVirtualLocationFromCoordinates(nested, nested.FullPath)
+
+	assert.Nil(t, r.findParentPomByRelativePath(context.Background(), pom, ID{}, nil))
+	assert.Equal(t, []string{"/other/pom.xml"}, recorder.paths)
 }

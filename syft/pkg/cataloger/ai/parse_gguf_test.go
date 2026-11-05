@@ -57,6 +57,11 @@ func TestParseGGUFModel_malformedHeader(t *testing.T) {
 	// a header that declares more KVs than the cap, with none following
 	tooManyKVs := append(append([]byte("GGUF"), le(uint32(3))...), le([]uint64{0, maxGGUFKVCount + 1})...)
 
+	// a tensor whose name declares far more bytes than the file holds
+	hostileTensorName := newTestGGUFBuilder().withStringKV("general.architecture", "llama")
+	hostileTensorName.tensorCount = 1
+	hugeTensorName := append(hostileTensorName.build(), le(uint64(1<<40))...)
+
 	tests := []struct {
 		name    string
 		builder *testGGUFBuilder
@@ -150,6 +155,11 @@ func TestParseGGUFModel_malformedHeader(t *testing.T) {
 			name:    "skipped scalar array",
 			builder: newTestGGUFBuilder().withRawKV("tokenizer.ggml.scores", ggufTypeArray, ggufArray(ggufTypeFloat32, 3, make([]byte, 12))),
 		},
+		{name: "tensor name too long", data: hugeTensorName, wantErr: true},
+		{name: "tensor name empty", builder: newTestGGUFBuilder().withTensor("", ggmlTypeF32, 1), wantErr: true},
+		{name: "tensor with too many dimensions", builder: newTestGGUFBuilder().withTensor("t", ggmlTypeF32, 1, 1, 1, 1, 1), wantErr: true},
+		{name: "tensor count beyond the header", builder: newTestGGUFBuilder().withTensorCount(1), wantErr: true},
+		{name: "tensor info", builder: newTestGGUFBuilder().withTensor("t", ggmlTypeF32, 8)},
 		// ponytail: zero block size tensor types and dimension overflow panic inside tensor info parsing;
 		// those are left to the generic cataloger's panic handling rather than checked here.
 	}

@@ -47,7 +47,7 @@ type dockerAIModelConfig struct {
 
 // parseSafeTensorsOCIConfig decodes the Docker AI model-config blob
 func parseSafeTensorsOCIConfig(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	defer internal.CloseAndLogError(reader, reader.Path())
+	defer internal.CloseAndLogError(reader, reader.FullNestedPath())
 
 	body, err := readBounded(reader, maxModelConfigBlobSize)
 	if err != nil {
@@ -86,7 +86,7 @@ func parseSafeTensorsOCIConfig(_ context.Context, _ file.Resolver, _ *generic.En
 // parseSafeTensorsOCILayer decodes the JSON header of a SafeTensors weight
 // layer fetched from an OCI model artifact
 func parseSafeTensorsOCILayer(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	defer internal.CloseAndLogError(reader, reader.Path())
+	defer internal.CloseAndLogError(reader, reader.FullNestedPath())
 
 	header, err := readSafeTensorsHeader(&io.LimitedReader{R: reader, N: maxSafeTensorsHeaderSize + 8})
 	if err != nil {
