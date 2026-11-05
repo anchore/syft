@@ -100,6 +100,16 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Person: auth",
 		},
 		{
+			name: "from apk -- hyphenated maintainer email domain",
+			input: pkg.Package{
+				Metadata: pkg.ApkDBEntry{
+					Maintainer: "Sören Tempel <soeren+alpine@soeren-tempel.net>",
+				},
+			},
+			originator: "Person: Sören Tempel (soeren+alpine@soeren-tempel.net)",
+			supplier:   "Person: Sören Tempel (soeren+alpine@soeren-tempel.net)",
+		},
+		{
 			name: "from alpm",
 			input: pkg.Package{
 				Metadata: pkg.AlpmDBEntry{
@@ -522,6 +532,30 @@ func Test_parseNameEmailUrl(t *testing.T) {
 			input:     "my name (i@izs.me)",
 			wantName:  "my name",
 			wantEmail: "i@izs.me",
+		},
+		{
+			name:      "hyphenated email domain",
+			input:     "Sören Tempel <soeren+alpine@soeren-tempel.net>",
+			wantName:  "Sören Tempel",
+			wantEmail: "soeren+alpine@soeren-tempel.net",
+		},
+		{
+			name:      "multi-label email domain",
+			input:     "Jane Doe <jane@mail.example.org>",
+			wantName:  "Jane Doe",
+			wantEmail: "jane@mail.example.org",
+		},
+		{
+			name:      "second-level TLD email domain",
+			input:     "Jane Doe <jane@example.co.uk>",
+			wantName:  "Jane Doe",
+			wantEmail: "jane@example.co.uk",
+		},
+		{
+			name:      "single-label email domain is still accepted",
+			input:     "Natanael Copa <ncopa@alpinelinux.org>",
+			wantName:  "Natanael Copa",
+			wantEmail: "ncopa@alpinelinux.org",
 		},
 	}
 	for _, tt := range tests {

@@ -200,7 +200,7 @@ func Supplier(p pkg.Package) (typ string, author string) {
 	return typ, parseAndFormatPersonOrOrg(author)
 }
 
-var nameEmailURLPattern = regexp.MustCompile(`^(?P<name>[^<>()]*)( <(?P<email>[^@]+@\w+\.\w+)>)?( \((?P<url>.*)\))?$`)
+var nameEmailURLPattern = regexp.MustCompile(`^(?P<name>[^<>()]*)( <(?P<email>[^@<>]+@[^@<>]+)>)?( \((?P<url>.*)\))?$`)
 
 func parseAndFormatPersonOrOrg(s string) string {
 	name, email, _ := parseNameEmailURL(s)
