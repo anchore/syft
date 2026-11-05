@@ -363,15 +363,19 @@ func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []t
 }
 
 func deprecatedTasks(taskGroups [][]task.Task) []string {
-	// we want to identify any deprecated catalogers that are being used but default selections will always additionally select `file`
-	// catalogers. For this reason, we must explicitly remove `file` catalogers in the selection request. This means if we
+	// we want to identify any deprecated catalogers that are being used, excluding `file` catalogers. This means if we
 	// deprecate a file cataloger we will need special processing.
-	_, selection, err := task.SelectInGroups(taskGroups, cataloging.SelectionRequest{DefaultNamesOrTags: []string{pkgcataloging.DeprecatedTag}, RemoveNamesOrTags: []string{filecataloging.FileTag}})
-	if err != nil {
-		// ignore the error, as it is not critical
-		return nil
+	var names []string
+	for _, tasks := range taskGroups {
+		for _, t := range tasks {
+			sel, ok := t.(task.Selector)
+			if !ok || !sel.HasAllSelectors(pkgcataloging.DeprecatedTag) || sel.HasAllSelectors(filecataloging.FileTag) {
+				continue
+			}
+			names = append(names, t.Name())
+		}
 	}
-	return selection.Result.List()
+	return names
 }
 
 func logTaskNames(tasks []task.Task, kind string) {

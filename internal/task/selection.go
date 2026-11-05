@@ -195,7 +195,12 @@ func tagsOrNamesThatTaskGroupRespondsTo(tasks []Task, requestTagsOrNames *strset
 	for _, t := range tasks {
 		if sel, ok := t.(Selector); ok {
 			positiveRefs.Add("all") // everything responds to "all"
-			positiveRefs.Add(strset.Intersection(requestTagsOrNames, strset.New(sel.Selectors()...)).List()...)
+			requestTagsOrNames.Each(func(ref string) bool {
+				if sel.HasAllSelectors(ref) {
+					positiveRefs.Add(ref)
+				}
+				return true
+			})
 		}
 		positiveRefs.Add(t.Name())
 	}
