@@ -20,7 +20,13 @@ func (c *goBinaryCataloger) stdlibProcessor(ctx context.Context, _ file.Resolver
 func (c *goBinaryCataloger) stdlibPackageAndRelationships(ctx context.Context, pkgs []pkg.Package) ([]pkg.Package, []artifact.Relationship) {
 	var goCompilerPkgs []pkg.Package
 	var relationships []artifact.Relationship
-	totalLocations := file.NewLocationSet()
+	// a universal (fat) Mach-O binary yields packages for each slice at one location, so de-duplicate
+	// on location and compiler version, not location alone
+	type stdlibKey struct {
+		coordinates file.Coordinates
+		version     string
+	}
+	seen := make(map[stdlibKey]struct{})
 	for _, goPkg := range pkgs {
 		mValue, ok := goPkg.Metadata.(pkg.GolangBinaryBuildinfoEntry)
 		if !ok {
@@ -29,7 +35,8 @@ func (c *goBinaryCataloger) stdlibPackageAndRelationships(ctx context.Context, p
 
 		// go binary packages should only contain a single location
 		for _, location := range goPkg.Locations.ToSlice() {
-			if totalLocations.Contains(location) {
+			key := stdlibKey{coordinates: location.Coordinates, version: mValue.GoCompiledVersion}
+			if _, ok := seen[key]; ok {
 				continue
 			}
 
@@ -38,7 +45,7 @@ func (c *goBinaryCataloger) stdlibPackageAndRelationships(ctx context.Context, p
 				continue
 			}
 			goCompilerPkgs = append(goCompilerPkgs, *stdLibPkg)
-			totalLocations.Add(location)
+			seen[key] = struct{}{}
 
 			relationships = append(relationships, artifact.Relationship{
 				From: *stdLibPkg,
