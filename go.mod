@@ -64,7 +64,7 @@ require (
 	github.com/klauspost/compress v1.20.3
 	github.com/magiconair/properties v1.18.12
 	github.com/mholt/archives v0.1.5
-	github.com/moby/sys/mountinfo v0.7.2
+	github.com/moby/sys/mountinfo v0.7.3
 	github.com/nix-community/go-nix v0.0.0-20250101154619-4bdde671e0a1
 	github.com/olekukonko/tablewriter v1.1.5
 	github.com/opencontainers/go-digest v1.0.0
