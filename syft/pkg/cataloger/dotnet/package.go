@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/anchore/go-version"
+	"github.com/hashicorp/go-version"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
