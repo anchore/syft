@@ -1839,6 +1839,135 @@ var defaultArtifactIDToGroupID = map[string]string{
 	"commons-jelly-tags-velocity":                              "commons-jelly",
 	"commons-jelly-tags-xml":                                   "commons-jelly",
 	"commons-jelly-tags-xmlunit":                               "commons-jelly",
+
+	"api-common":   "com.google.api",
+	"api-compiler": "com.google.api",
+	"gax":          "com.google.api",
+	"gax-grpc":     "com.google.api",
+	"gax-httpjson": "com.google.api",
+	"gwt-oauth2":   "com.google.api",
+
+	"picocli":                     "info.picocli",
+	"picocli-codegen":             "info.picocli",
+	"picocli-groovy":              "info.picocli",
+	"picocli-jansi-graalvm":       "info.picocli",
+	"picocli-jpms-module":         "info.picocli",
+	"picocli-shell-jline2":        "info.picocli",
+	"picocli-shell-jline3":        "info.picocli",
+	"picocli-spring-boot-starter": "info.picocli",
+
+	"grpc-all":                            "io.grpc",
+	"grpc-alts":                           "io.grpc",
+	"grpc-api":                            "io.grpc",
+	"grpc-auth":                           "io.grpc",
+	"grpc-autosharding":                   "io.grpc",
+	"grpc-benchmarks":                     "io.grpc",
+	"grpc-census":                         "io.grpc",
+	"grpc-context":                        "io.grpc",
+	"grpc-context-override-opentelemetry": "io.grpc",
+	"grpc-core":                           "io.grpc",
+	"grpc-gcp-csm-observability":          "io.grpc",
+	"grpc-gcp-observability":              "io.grpc",
+	"grpc-googleapis":                     "io.grpc",
+	"grpc-grpclb":                         "io.grpc",
+	"grpc-inprocess":                      "io.grpc",
+	"grpc-interop-testing":                "io.grpc",
+	"grpc-kotlin-stub":                    "io.grpc",
+	"grpc-netty":                          "io.grpc",
+	"grpc-netty-shaded":                   "io.grpc",
+	"grpc-okhttp":                         "io.grpc",
+	"grpc-opentelemetry":                  "io.grpc",
+	"grpc-protobuf":                       "io.grpc",
+	"grpc-protobuf-lite":                  "io.grpc",
+	"grpc-protobuf-nano":                  "io.grpc",
+	"grpc-rls":                            "io.grpc",
+	"grpc-s2a":                            "io.grpc",
+	"grpc-services":                       "io.grpc",
+	"grpc-servlet":                        "io.grpc",
+	"grpc-servlet-jakarta":                "io.grpc",
+	"grpc-stub":                           "io.grpc",
+	"grpc-testing":                        "io.grpc",
+	"grpc-testing-proto":                  "io.grpc",
+	"grpc-util":                           "io.grpc",
+	"grpc-xds":                            "io.grpc",
+
+	"ocjdbc":                   "io.opencensus",
+	"opencensus-api":           "io.opencensus",
+	"opencensus-contrib-agent": "io.opencensus",
+	"opencensus-contrib-appengine-standard-util":     "io.opencensus",
+	"opencensus-contrib-dropwizard":                  "io.opencensus",
+	"opencensus-contrib-dropwizard5":                 "io.opencensus",
+	"opencensus-contrib-exemplar-util":               "io.opencensus",
+	"opencensus-contrib-grpc-metrics":                "io.opencensus",
+	"opencensus-contrib-grpc-util":                   "io.opencensus",
+	"opencensus-contrib-http-jaxrs":                  "io.opencensus",
+	"opencensus-contrib-http-jetty-client":           "io.opencensus",
+	"opencensus-contrib-http-servlet":                "io.opencensus",
+	"opencensus-contrib-http-util":                   "io.opencensus",
+	"opencensus-contrib-log-correlation-log4j2":      "io.opencensus",
+	"opencensus-contrib-log-correlation-stackdriver": "io.opencensus",
+	"opencensus-contrib-monitored-resource-util":     "io.opencensus",
+	"opencensus-contrib-observability-ready-util":    "io.opencensus",
+	"opencensus-contrib-resource-util":               "io.opencensus",
+	"opencensus-contrib-spring":                      "io.opencensus",
+	"opencensus-contrib-spring-sleuth-v1x":           "io.opencensus",
+	"opencensus-contrib-zpages":                      "io.opencensus",
+	"opencensus-exporter-metrics-ocagent":            "io.opencensus",
+	"opencensus-exporter-metrics-util":               "io.opencensus",
+	"opencensus-exporter-stats-prometheus":           "io.opencensus",
+	"opencensus-exporter-stats-signalfx":             "io.opencensus",
+	"opencensus-exporter-stats-stackdriver":          "io.opencensus",
+	"opencensus-exporter-trace-datadog":              "io.opencensus",
+	"opencensus-exporter-trace-elasticsearch":        "io.opencensus",
+	"opencensus-exporter-trace-instana":              "io.opencensus",
+	"opencensus-exporter-trace-jaeger":               "io.opencensus",
+	"opencensus-exporter-trace-logging":              "io.opencensus",
+	"opencensus-exporter-trace-ocagent":              "io.opencensus",
+	"opencensus-exporter-trace-stackdriver":          "io.opencensus",
+	"opencensus-exporter-trace-util":                 "io.opencensus",
+	"opencensus-exporter-trace-zipkin":               "io.opencensus",
+	"opencensus-impl":                                "io.opencensus",
+	"opencensus-impl-core":                           "io.opencensus",
+	"opencensus-impl-lite":                           "io.opencensus",
+	"opencensus-proto":                               "io.opencensus",
+	"opencensus-testing":                             "io.opencensus",
+
+	"reactor-alloc":                      "io.projectreactor",
+	"reactor-bus":                        "io.projectreactor",
+	"reactor-core-micrometer":            "io.projectreactor",
+	"reactor-scala-extensions":           "io.projectreactor",
+	"reactor-scala-extensions_2.11":      "io.projectreactor",
+	"reactor-scala-extensions_2.12":      "io.projectreactor",
+	"reactor-scala-extensions_2.13":      "io.projectreactor",
+	"reactor-scala-extensions_2.13.0-M3": "io.projectreactor",
+	"reactor-stream":                     "io.projectreactor",
+	"reactor-test":                       "io.projectreactor",
+	"reactor-tools":                      "io.projectreactor",
+
+	"jna":               "net.java.dev.jna",
+	"jna-jpms":          "net.java.dev.jna",
+	"jna-platform":      "net.java.dev.jna",
+	"jna-platform-jpms": "net.java.dev.jna",
+
+	"checker-compat-qual":  "org.checkerframework",
+	"checker-qual":         "org.checkerframework",
+	"checker-qual-android": "org.checkerframework",
+	"checker-qual7":        "org.checkerframework",
+	"checker-util":         "org.checkerframework",
+	"dataflow-errorprone":  "org.checkerframework",
+	"dataflow-nullaway":    "org.checkerframework",
+	"dataflow-shaded":      "org.checkerframework",
+	"javacutil":            "org.checkerframework",
+
+	"duckdb_jdbc": "org.duckdb",
+
+	"jspecify": "org.jspecify",
+
+	"reactor-spring": "org.projectreactor",
+	"reactor-tcp":    "org.projectreactor",
+
+	"xz": "org.tukaani",
+
 	// the Eclipse-hosted groovy-eclipse-* artifacts stayed on codehaus past 4.0, and the org.apache.groovy modules
 	// below were added in 4.0+ and only exist under apache. See https://github.com/anchore/syft/issues/5311
 	"groovy-eclipse-batch":                    "org.codehaus.groovy",
@@ -1933,12 +2062,19 @@ type groupIDMigration struct {
 	atMajor       int
 }
 
+var reactorMigration = groupIDMigration{before: "org.projectreactor", after: "io.projectreactor", atMajor: 2}
+
 // groovy moved from org.codehaus.groovy to org.apache.groovy at 4.0
 var groovyMigration = groupIDMigration{before: "org.codehaus.groovy", after: "org.apache.groovy", atMajor: 4}
 
 // migratedArtifactIDToGroupID holds artifacts whose group ID depends on the version. It takes precedence over
 // defaultArtifactIDToGroupID; use ArtifactIDToGroupID rather than reading it directly.
 var migratedArtifactIDToGroupID = map[string]groupIDMigration{
+	"reactor-core":              reactorMigration,
+	"reactor-groovy":            reactorMigration,
+	"reactor-groovy-extensions": reactorMigration,
+	"reactor-net":               reactorMigration,
+
 	// groovy artifacts published under both coordinates. Without these, jars that ship no pom metadata get a
 	// stale codehaus group or one guessed from the per-module Automatic-Module-Name (e.g. org.apache.groovy.json).
 	// See https://github.com/anchore/syft/issues/5311
