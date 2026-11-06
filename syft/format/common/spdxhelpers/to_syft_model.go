@@ -376,7 +376,7 @@ func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Docum
 		if p == nil || skipIDs.Has(string(p.PackageSPDXIdentifier)) {
 			continue
 		}
-		syftPkg := toSyftPackage(p)
+		syftPkg := toSyftPackage(p, doc)
 		spdxIDMap[string(p.PackageSPDXIdentifier)] = syftPkg
 		s.Artifacts.Packages.Add(syftPkg)
 	}
@@ -717,7 +717,7 @@ func extractPkgInfo(p *spdx.Package) pkgInfo {
 	}
 }
 
-func toSyftPackage(p *spdx.Package) pkg.Package {
+func toSyftPackage(p *spdx.Package, doc *spdx.Document) pkg.Package {
 	info := extractPkgInfo(p)
 	sP := &pkg.Package{
 		Type:     info.typ,
@@ -733,8 +733,11 @@ func toSyftPackage(p *spdx.Package) pkg.Package {
 	internal.Backfill(sP)
 
 	if p.PackageSPDXIdentifier != "" {
-		// always prefer the IDs from the SBOM over derived IDs
-		sP.OverrideID(artifact.ID(p.PackageSPDXIdentifier))
+		// always prefer the IDs from the SBOM over derived IDs, but note that SPDX element IDs are
+		// only required to be unique within a single document (SPDX 2.3, clause 7.2); qualifying the
+		// element ID with the document namespace (unique per document) keeps the element ID unique
+		// when packages from multiple SPDX documents share one package collection
+		sP.OverrideID(artifact.ID(doc.DocumentNamespace + "#" + string(p.PackageSPDXIdentifier)))
 	} else {
 		sP.SetID()
 	}
