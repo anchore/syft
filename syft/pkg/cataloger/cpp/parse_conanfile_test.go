@@ -119,3 +119,37 @@ func TestParseConanfileCommentInRequires(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parseConanfile, expected, expectedRelationships)
 }
+
+func TestParseConanfileNoTrailingNewline(t *testing.T) {
+	location := "conanfile.txt"
+	locationSet := file.NewLocationSet(file.NewLocation(location))
+	expected := []pkg.Package{
+		{
+			Name:      "catch2",
+			Version:   "2.13.8",
+			PURL:      "pkg:conan/catch2@2.13.8",
+			Locations: locationSet,
+			Language:  pkg.CPP,
+			Type:      pkg.ConanPkg,
+			Metadata: pkg.ConanfileEntry{
+				Ref: "catch2/2.13.8",
+			},
+		},
+		{
+			Name:      "docopt.cpp",
+			Version:   "0.6.3",
+			PURL:      "pkg:conan/docopt.cpp@0.6.3",
+			Locations: locationSet,
+			Language:  pkg.CPP,
+			Type:      pkg.ConanPkg,
+			Metadata: pkg.ConanfileEntry{
+				Ref: "docopt.cpp/0.6.3",
+			},
+		},
+	}
+
+	pkgtest.NewCatalogTester().
+		FromString(location, "[requires]\ncatch2/2.13.8\ndocopt.cpp/0.6.3").
+		Expects(expected, nil).
+		TestParser(t, parseConanfile)
+}
