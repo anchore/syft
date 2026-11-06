@@ -203,7 +203,7 @@ func DefaultClassifiers() []binutils.Classifier {
 		},
 		{
 			Class:    "nodejs-binary",
-			FileGlob: "**/node",
+			FileGlob: "**/{node,node.exe}",
 			EvidenceMatcher: binutils.MatchAny(
 				// [NUL]node v0.10.48[NUL]
 				// [NUL]v0.12.18[NUL]

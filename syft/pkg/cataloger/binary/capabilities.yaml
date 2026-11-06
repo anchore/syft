@@ -111,7 +111,7 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
-          - '**/node'
+          - '**/{node,node.exe}'
         packages:
           - class: nodejs-binary
             name: node

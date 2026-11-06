@@ -931,6 +931,16 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "node/19.2.0/windows-amd64",
+			expected: pkg.Package{
+				Name:      "node",
+				Version:   "19.2.0",
+				PURL:      "pkg:generic/node@19.2.0",
+				Locations: locations("node.exe"),
+				Metadata:  metadata("nodejs-binary"),
+			},
+		},
+		{
 			// TODO: find original binary...
 			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
 			logicalFixture: "go-version-hint/1.15-dev/any",
