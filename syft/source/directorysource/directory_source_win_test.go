@@ -48,6 +48,13 @@ func Test_DirectorySource_crossPlatformExclusions(t *testing.T) {
 			exclude: "*/*.txt",
 			match:   false,
 		},
+		{
+			desc:    "nested file under excluded directory via symlink (issue #5232)",
+			root:    "D:\\tmp\\repro",
+			path:    "D:\\tmp\\repro\\boot\\grub2\\grub.cfg",
+			exclude: "./boot",
+			match:   true,
+		},
 	}
 
 	for _, test := range testCases {
