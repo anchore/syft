@@ -3015,6 +3015,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "julia/1.13.0-beta3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.13.0-beta3",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.13.0-beta3",
+				Locations: locations("libjulia-internal.so.1.13.0"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
 			logicalFixture: "julia/1.13.0-alpha2/linux-amd64",
 			expected: pkg.Package{
 				Name:      "julia",
@@ -3037,6 +3048,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "julia/1.12.4/linux-arm64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.12.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.12.4",
+				Locations: locations("libjulia-internal.so.1.12.4"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
 			logicalFixture: "julia/1.11.9/linux-amd64",
 			expected: pkg.Package{
 				Name:      "julia",
@@ -3044,6 +3066,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Type:      "binary",
 				PURL:      "pkg:generic/julia@1.11.9",
 				Locations: locations("libjulia-internal.so.1.11.9"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
+			logicalFixture: "julia/1.11.6/linux-ppc64le",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.11.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.11.6",
+				Locations: locations("libjulia-internal.so.1.11.6"),
 				Metadata:  metadata("julia-binary"),
 			},
 		},
@@ -3059,6 +3092,50 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "julia/1.10.4/linux-arm64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.10.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.10.4",
+				Locations: locations("libjulia-internal.so.1.10.4"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
+			logicalFixture: "julia/1.9.0-beta3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.9.0-beta3",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.9.0-beta3",
+				Locations: locations("libjulia-internal.so.1.9"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
+			logicalFixture: "julia/1.9.0-beta3/linux-ppc64le",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.9.0-beta3",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.9.0-beta3",
+				Locations: locations("libjulia-internal.so.1.9"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
+			logicalFixture: "julia/1.9.0-beta2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.9.0-beta2",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.9.0-beta2",
+				Locations: locations("libjulia-internal.so.1.9"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
 			logicalFixture: "julia/1.9.0-alpha1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "julia",
@@ -3070,7 +3147,29 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "julia/1.9.0-alpha1/linux-arm64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.9.0-alpha1",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.9.0-alpha1",
+				Locations: locations("libjulia-internal.so.1.9"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
 			logicalFixture: "julia/1.8.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.8.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.8.5",
+				Locations: locations("libjulia-internal.so.1.8"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
+			logicalFixture: "julia/1.8.5/linux-arm64",
 			expected: pkg.Package{
 				Name:      "julia",
 				Version:   "1.8.5",
