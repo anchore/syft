@@ -263,6 +263,13 @@ jobs:
       - name: Run comparison tests (Linux)
         run: make compare-linux
 
+      - name: Restore install.sh test image cache
+        id: install-test-image-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 #v6.1.0
+        with:
+          path: ${{ github.workspace }}/test/install/cache
+          key: ${{ runner.os }}-install-test-image-cache-${{ hashFiles('test/install/cache.fingerprint') }}
+
       - name: Load test image cache
         if: steps.install-test-image-cache.outputs.cache-hit == 'true'
         run: make install-test-cache-load
@@ -294,7 +301,6 @@ jobs:
         uses: ./.github/actions/bootstrap
         with:
           bootstrap-apt-packages: ""
-          go-dependencies: false
           download-test-fixture-cache: true
 
       - name: Download snapshot artifacts
