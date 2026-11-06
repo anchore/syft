@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path"
 	"regexp"
 	"strings"
 
@@ -91,7 +92,10 @@ func readPackageJSONDeps(resolver file.Resolver, lockfileLocation file.Location)
 		return prod, dev
 	}
 
-	pkgJSONLocation := resolver.RelativeFileByPath(lockfileLocation, "package.json")
+	// resolve the package.json next to the lockfile; a bare "package.json" would be looked up from the
+	// root of directory sources rather than relative to the lockfile
+	pkgJSONPath := path.Join(path.Dir(lockfileLocation.RealPath), "package.json")
+	pkgJSONLocation := resolver.RelativeFileByPath(lockfileLocation, pkgJSONPath)
 	if pkgJSONLocation == nil {
 		log.WithFields("lockfile", lockfileLocation.FullNestedPath()).Debug("could not find package.json for dev dependency detection")
 		return prod, dev
