@@ -152,6 +152,47 @@ func Test_packageURL(t *testing.T) {
 			},
 			expect: "pkg:maven/org.apache.groovy/groovy@4.0.33",
 		},
+		{
+			// regression for github.com/anchore/syft/issues/5522
+			name: "hibernate-commons-annotations 5 without pom metadata",
+			pkg: pkg.Package{
+				Name:     "hibernate-commons-annotations",
+				Version:  "5.1.2.Final",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
+					VirtualPath: "hibernate-commons-annotations-5.1.2.Final.jar",
+					Manifest: &pkg.JavaManifest{
+						Main: []pkg.KeyValue{
+							{Key: "Bundle-Name", Value: "hibernate-commons-annotations"},
+							{Key: "Bundle-SymbolicName", Value: "org.hibernate.common.hibernate-commons-annotations"},
+							{Key: "Implementation-Vendor-Id", Value: "org.hibernate"},
+							{Key: "Automatic-Module-Name", Value: "org.hibernate.commons.annotations"},
+						},
+					},
+				},
+			},
+			expect: "pkg:maven/org.hibernate.common/hibernate-commons-annotations@5.1.2.Final",
+		},
+		{
+			// regression for github.com/anchore/syft/issues/5522
+			name: "hibernate-commons-annotations 7 without pom metadata",
+			pkg: pkg.Package{
+				Name:     "hibernate-commons-annotations",
+				Version:  "7.0.3.Final",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
+					VirtualPath: "hibernate-commons-annotations-7.0.3.Final.jar",
+					Manifest: &pkg.JavaManifest{
+						Main: []pkg.KeyValue{
+							{Key: "Implementation-Vendor-Id", Value: "org.hibernate"},
+						},
+					},
+				},
+			},
+			expect: "pkg:maven/org.hibernate.common/hibernate-commons-annotations@7.0.3.Final",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.expect, func(t *testing.T) {
