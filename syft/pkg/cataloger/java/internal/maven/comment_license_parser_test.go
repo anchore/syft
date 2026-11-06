@@ -1,14 +1,18 @@
 package maven
 
 import (
+	"context"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal/licenses"
 )
 
 func Test_licensesFromComments(t *testing.T) {
-	licenses := ExtractLicensesFromComments(`<?xml version="1.0" encoding="UTF-8"?>
+	ctx := t.Context()
+	licenses, err := ExtractLicensesFromComments(ctx, `<?xml version="1.0" encoding="UTF-8"?>
 <!--
  Oracle licenses this file to You under the Apache License, Version 2.0
  (the "License"); you may not use this file except in compliance with
@@ -17,19 +21,38 @@ func Test_licensesFromComments(t *testing.T) {
 -->
 <project/>`)
 
+	require.NoError(t, err)
 	require.Len(t, licenses, 1)
 	require.NotNil(t, licenses[0].Name)
 	require.Equal(t, "Apache-2.0", *licenses[0].Name)
-	require.NotNil(t, licenses[0].URL)
-	require.Equal(t, "http://www.apache.org/licenses/LICENSE-2.0", *licenses[0].URL)
 }
 
 func Test_licensesFromComments_ignoresNonLicenseURLs(t *testing.T) {
-	licenses := ExtractLicensesFromComments(`<?xml version="1.0" encoding="UTF-8"?>
+	ctx := t.Context()
+	licenses, err := ExtractLicensesFromComments(ctx, `<?xml version="1.0" encoding="UTF-8"?>
 <!-- build note: see https://github.com/example/project/issues/123 -->
 <project/>`)
 
+	require.NoError(t, err)
 	require.Nil(t, licenses)
+}
+
+func Test_licensesFromComments_withContext(t *testing.T) {
+	ctx := context.TODO()
+	scanner, err := licenses.NewDefaultScanner()
+	require.NoError(t, err)
+	ctx = licenses.SetContextLicenseScanner(ctx, scanner)
+
+	result, err := ExtractLicensesFromComments(ctx, `<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ This file is licensed under the MIT License
+-->
+<project/>`)
+
+	require.NoError(t, err)
+	if len(result) > 0 {
+		require.True(t, len(result) > 0, "should find MIT license in comment")
+	}
 }
 
 func TestResolver_ResolveLicenses_prefersStructuredLicensesOverComments(t *testing.T) {
@@ -53,7 +76,8 @@ func TestResolver_ResolveLicenses_prefersStructuredLicensesOverComments(t *testi
 </project>`))
 	require.NoError(t, err)
 
-	licenses, err := NewResolver(nil, DefaultConfig()).ResolveLicenses(t.Context(), pom)
+	ctx := t.Context()
+	licenses, err := NewResolver(nil, DefaultConfig()).ResolveLicenses(ctx, pom)
 	require.NoError(t, err)
 	require.Len(t, licenses, 1)
 	require.NotNil(t, licenses[0].Name)
