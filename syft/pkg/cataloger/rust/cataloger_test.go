@@ -57,7 +57,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 	helloWorld := pkg.Package{
 		Name:      "hello_world",
 		Version:   "0.1.0",
-		PURL:      "pkg:cargo/hello_world@0.1.0",
+		PURL:      "",
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
