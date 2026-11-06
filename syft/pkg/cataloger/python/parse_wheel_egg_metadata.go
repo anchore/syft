@@ -23,13 +23,14 @@ type parsedData struct {
 
 	// license info
 
-	Licenses          string `mapstructure:"License"`
-	LicenseFile       string `mapstructure:"LicenseFile"`
-	LicenseExpression string `mapstructure:"LicenseExpression"`
+	Licenses          string   `mapstructure:"License"`
+	LicenseFiles      []string `mapstructure:"LicenseFile"`
+	LicenseExpression string   `mapstructure:"LicenseExpression"`
 	LicenseFilePath   string
 }
 
 var pluralFields = map[string]bool{
+	"LicenseFile":   true,
 	"ProvidesExtra": true,
 	"RequiresDist":  true,
 }
@@ -53,8 +54,6 @@ func parseWheelOrEggMetadata(locationReader file.LocationReadCloser) (parsedData
 	pd.SitePackagesRootPath = determineSitePackagesRootPath(metadataPath)
 	if pd.Licenses != "" || pd.LicenseExpression != "" {
 		pd.LicenseFilePath = metadataPath
-	} else if pd.LicenseFile != "" {
-		pd.LicenseFilePath = path.Join(path.Dir(metadataPath), pd.LicenseFile)
 	}
 
 	pd.DistInfoLocation = locationReader.Location
