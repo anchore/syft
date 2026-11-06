@@ -21,6 +21,7 @@ func TestArtifactIDToGroupID(t *testing.T) {
 		{name: "groovy without a version falls back to codehaus", artifactID: "groovy-json", want: "org.codehaus.groovy", wantOK: true},
 		{name: "groovy-eclipse stays on codehaus at 4.x", artifactID: "groovy-eclipse-batch", version: "4.0.33-02", want: "org.codehaus.groovy", wantOK: true},
 		{name: "apache-only groovy module", artifactID: "groovy-ginq", version: "4.0.33", want: "org.apache.groovy", wantOK: true},
+		{name: "date-stamped asm predates org.ow2.asm", artifactID: "asm-tree", version: "20041228.180559", want: "asm", wantOK: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

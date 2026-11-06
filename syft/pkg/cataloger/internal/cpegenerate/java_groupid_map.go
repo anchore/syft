@@ -1925,6 +1925,12 @@ var defaultArtifactIDToGroupID = map[string]string{
 	"jackson-jaxrs":      "org.codehaus.jackson",
 	"jackson-xc":         "org.codehaus.jackson",
 	"jackson-smile":      "org.codehaus.jackson",
+
+	// ASM modules published under only one of the two asmMigration groups
+	"asm-attrs":      "asm",
+	"kasm":           "asm",
+	"asm-deprecated": "org.ow2.asm",
+	"asm-test":       "org.ow2.asm",
 }
 
 // groupIDMigration describes an artifact that moved from one group ID to another at a major version.
@@ -1935,6 +1941,8 @@ type groupIDMigration struct {
 
 // groovy moved from org.codehaus.groovy to org.apache.groovy at 4.0
 var groovyMigration = groupIDMigration{before: "org.codehaus.groovy", after: "org.apache.groovy", atMajor: 4}
+
+var asmMigration = groupIDMigration{before: "asm", after: "org.ow2.asm", atMajor: 4}
 
 // migratedArtifactIDToGroupID holds artifacts whose group ID depends on the version. It takes precedence over
 // defaultArtifactIDToGroupID; use ArtifactIDToGroupID rather than reading it directly.
@@ -1980,6 +1988,17 @@ var migratedArtifactIDToGroupID = map[string]groupIDMigration{
 	"groovy-xml":                groovyMigration,
 	"groovy-xmlrpc":             groovyMigration,
 	"groovy-yaml":               groovyMigration,
+
+	// ASM artifacts published under both coordinates. ASM jars ship no pom metadata, and no manifest header
+	// carries their group (OSGi bundles are named after the package, e.g. org.objectweb.asm.commons).
+	"asm":           asmMigration,
+	"asm-all":       asmMigration,
+	"asm-analysis":  asmMigration,
+	"asm-commons":   asmMigration,
+	"asm-debug-all": asmMigration,
+	"asm-tree":      asmMigration,
+	"asm-util":      asmMigration,
+	"asm-xml":       asmMigration,
 }
 
 // ArtifactIDToGroupID returns the known group ID for the given artifact ID at the given version. For migrated
@@ -1996,12 +2015,13 @@ func ArtifactIDToGroupID(artifactID, version string) (string, bool) {
 }
 
 // majorVersion returns the leading numeric component of a version (e.g. "4.0.33" and "4-SNAPSHOT"
-// resolve to 4), or 0 when the version does not start with a number.
+// resolve to 4), or 0 when the version does not start with a number. Date-stamped versions
+// (e.g. asm's "20041228.180559") also resolve to 0, since they predate the group migrations.
 func majorVersion(version string) int {
 	leading, _, _ := strings.Cut(version, ".")
 	leading, _, _ = strings.Cut(leading, "-")
 	n, err := strconv.Atoi(leading)
-	if err != nil {
+	if err != nil || len(leading) >= len("yyyymmdd") {
 		return 0
 	}
 	return n
