@@ -11,18 +11,18 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/adrg/xdg v0.5.3
-	github.com/anchore/bubbly v0.2.2
-	github.com/anchore/clio v0.1.2
-	github.com/anchore/fangs v0.1.1
-	github.com/anchore/go-collections v0.1.1
-	github.com/anchore/go-homedir v0.1.1
-	github.com/anchore/go-logger v0.2.0
-	github.com/anchore/go-macholibre v0.1.1
-	github.com/anchore/go-rpmdb v0.2.2
-	github.com/anchore/go-sync v0.1.2
+	github.com/anchore/bubbly v0.2.3-0.20261106055526-3d84aa9bab47
+	github.com/anchore/clio v0.1.3-0.20261106204511-a4c473e9b8a3
+	github.com/anchore/fangs v0.1.2-0.20261106223455-6ae4f60fe299
+	github.com/anchore/go-collections v0.1.2-0.20261102145139-fa2df25c611e
+	github.com/anchore/go-homedir v0.1.2-0.20261106170621-6753f05e2253
+	github.com/anchore/go-logger v0.2.1-0.20261102150012-5958d6737944
+	github.com/anchore/go-macholibre v0.1.2-0.20261030232458-0dd5973e8bc6
+	github.com/anchore/go-rpmdb v0.2.3-0.20261102005811-25d8b1fb1e81
+	github.com/anchore/go-sync v0.1.3-0.20261030235548-da6f55679938
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
-	github.com/anchore/packageurl-go v0.2.0
-	github.com/anchore/stereoscope v0.4.1
+	github.com/anchore/packageurl-go v0.2.1-0.20261106033657-1eda7cf3f9f2
+	github.com/anchore/stereoscope v0.4.2-0.20261106204048-0c6278c8b7ec
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	github.com/aquasecurity/go-pep440-version v0.0.1
 	github.com/bitnami/go-version v0.0.0-20250131085805-b1f57a8634ef
@@ -127,7 +127,7 @@ require (
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
-	github.com/anchore/go-lzo v0.1.1 // indirect
+	github.com/anchore/go-lzo v0.1.2-0.20261030041440-c6cb39a30b97 // indirect
 	github.com/anchore/go-struct-converter v0.2.0-rc2 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
@@ -291,7 +291,7 @@ require (
 	github.com/sorairolake/lzip-go v0.3.8 // indirect
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
-	github.com/spf13/pflag v1.0.10 // indirect
+	github.com/spf13/pflag v1.1.0 // indirect
 	github.com/spf13/viper v1.21.0 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.8.1 // indirect
 	github.com/stefanberger/go-pkcs11uri v0.0.0-20230803200340-78284954bff6 // indirect
