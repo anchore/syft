@@ -56,6 +56,8 @@ application: # AUTO-GENERATED - application-level config keys
     description: include development-scoped dependencies
   - key: javascript.npm-base-url
     description: base NPM url to use
+  - key: javascript.search-local-licenses
+    description: search sibling license files when package.json declares no license; disabling this preserves packages and declared licenses but omits fallback license discovery
   - key: javascript.search-remote-licenses
     description: enables Syft to use the network to fill in more detailed license information
   - key: linux-kernel.catalog-modules

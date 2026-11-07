@@ -6,6 +6,7 @@ import (
 )
 
 type javaScriptConfig struct {
+	SearchLocalLicenses    bool   `json:"search-local-licenses" yaml:"search-local-licenses" mapstructure:"search-local-licenses"`
 	SearchRemoteLicenses   *bool  `json:"search-remote-licenses" yaml:"search-remote-licenses" mapstructure:"search-remote-licenses"`
 	NpmBaseURL             string `json:"npm-base-url" yaml:"npm-base-url" mapstructure:"npm-base-url"`
 	IncludeDevDependencies *bool  `json:"include-dev-dependencies" yaml:"include-dev-dependencies" mapstructure:"include-dev-dependencies"`
@@ -27,6 +28,7 @@ func defaultJavaScriptConfig() javaScriptConfig {
 		searchRemoteLicenses = &def.SearchRemoteLicenses
 	}
 	return javaScriptConfig{
+		SearchLocalLicenses:    def.SearchLocalLicenses,
 		NpmBaseURL:             def.NPMBaseURL,
 		SearchRemoteLicenses:   searchRemoteLicenses,
 		IncludeDevDependencies: includeDevDependencies,
@@ -34,6 +36,7 @@ func defaultJavaScriptConfig() javaScriptConfig {
 }
 
 func (o *javaScriptConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
+	descriptions.Add(&o.SearchLocalLicenses, `search sibling license files when package.json declares no license; disabling this preserves packages and declared licenses but omits fallback license discovery`)
 	descriptions.Add(&o.SearchRemoteLicenses, `enables Syft to use the network to fill in more detailed license information`)
 	descriptions.Add(&o.NpmBaseURL, `base NPM url to use`)
 	descriptions.Add(&o.IncludeDevDependencies, `include development-scoped dependencies`)
