@@ -48,14 +48,30 @@ builds:
     ldflags: *build-ldflags
 
 archives:
+  # The release CHANGELOG.md is generated during the build, so it carries the
+  # runner's umask (0600) into the archive while LICENSE and README.md keep the
+  # 0644 they have in git. State the default globs explicitly so every archived
+  # file gets a readable mode regardless of how it was produced.
   - id: linux-archives
     ids: [linux-build]
+    files: &archive-files
+      - src: LICENSE*
+        info:
+          mode: 0644
+      - src: README*
+        info:
+          mode: 0644
+      - src: CHANGELOG*
+        info:
+          mode: 0644
   - id: darwin-archives
     ids: [darwin-build]
+    files: *archive-files
   - id: windows-archives
     formats:
       - zip
     ids: [windows-build]
+    files: *archive-files
 
 nfpms:
   - license: "Apache 2.0"
