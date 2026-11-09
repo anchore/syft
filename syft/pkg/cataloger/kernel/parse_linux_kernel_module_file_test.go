@@ -336,3 +336,42 @@ func TestDecompressedModuleReader_TempFileRemovedOnClose(t *testing.T) {
 	_, err = os.Stat(path)
 	assert.True(t, os.IsNotExist(err), "temp file should be removed after Close, got err=%v", err)
 }
+
+func TestAddLinuxKernelModuleEntry_ParmAndParmtype(t *testing.T) {
+	// .modinfo carries a parameter's description (parm=name:desc) and its type (parmtype=name:type) as two
+	// separate entries. Both have to survive, whichever one is read first, because the packaging model
+	// emits both fields.
+	tests := []struct {
+		name    string
+		entries []string
+	}{
+		{
+			name: "parm before parmtype",
+			entries: []string{
+				"parm=max:size of connection tracking table",
+				"parmtype=max:uint",
+			},
+		},
+		{
+			name: "parmtype before parm",
+			entries: []string{
+				"parmtype=max:uint",
+				"parm=max:size of connection tracking table",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			module := &pkg.LinuxKernelModule{Parameters: make(map[string]pkg.LinuxKernelModuleParameter)}
+
+			for _, entry := range tt.entries {
+				require.NoError(t, addLinuxKernelModuleEntry(module, []byte(entry)))
+			}
+
+			require.Contains(t, module.Parameters, "max")
+			assert.Equal(t, "uint", module.Parameters["max"].Type)
+			assert.Equal(t, "size of connection tracking table", module.Parameters["max"].Description)
+		})
+	}
+}
