@@ -969,6 +969,25 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:libexpat_project:libexpat:2.5.0:*:*:*:*:*:*:*",
 			},
 		},
+		{
+			name: "windows node.exe",
+			p: pkg.Package{
+				Name:    "Node.js",
+				Version: "22.12.0",
+				Type:    pkg.BinaryPkg,
+				Metadata: pkg.PEBinary{
+					VersionResources: pkg.KeyValues{
+						{Key: "CompanyName", Value: "Node.js"},
+						{Key: "InternalName", Value: "node"},
+						{Key: "OriginalFilename", Value: "node.exe"},
+						{Key: "ProductName", Value: "Node.js"},
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:nodejs:node.js:22.12.0:*:*:*:*:*:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {
