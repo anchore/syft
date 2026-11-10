@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	extFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -127,7 +128,10 @@ func Test_ELFPackageCataloger(t *testing.T) {
 							*extFile.NewFileReference("/lib/libBrokenLocale.so.1")).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Licenses: pkg.NewLicenseSet(),
-					Type:     pkg.ApkPkg,
+					CPEs: []cpe.CPE{
+						cpe.Must("cpe:2.3:a:gnu:glibc:2.43:*:*:*:*:*:*:*", cpe.DeclaredSource),
+					},
+					Type: pkg.ApkPkg,
 					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 						Type:         "apk",
 						Architecture: "x86_64",
