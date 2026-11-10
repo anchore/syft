@@ -37,10 +37,6 @@ func candidateVendorsForPE(p pkg.Package) fieldCandidateSet {
 		candidates.addValue("gitforwindows")
 	}
 
-	if product == "node.js" {
-		candidates.addValue("nodejs")
-	}
-
 	return candidates
 }
 
