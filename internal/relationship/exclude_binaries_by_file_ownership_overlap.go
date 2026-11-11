@@ -117,6 +117,11 @@ func identifyOverlappingOSRelationship(parent *pkg.Package, child *pkg.Package) 
 		return ""
 	}
 
+	// a package note of no OS package type declares its own package, which the OS package does not replace
+	if _, ok := child.Metadata.(pkg.ELFBinaryPackageNoteJSONPayload); ok && child.Type == pkg.BinaryPkg {
+		return ""
+	}
+
 	if slices.Contains(binaryCatalogerTypes, child.Type) {
 		return child.ID()
 	}
