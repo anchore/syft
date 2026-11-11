@@ -636,11 +636,14 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "bun-binary",
 			FileGlob: "**/bun",
 			EvidenceMatcher: binutils.MatchAny(
-				// bun 1.1.0
-				// Bun v1.0.0
-				m.FileContentsVersionMatcher(`(?m)[Bb]un v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				// Bun v1.0.0 (the runtime banner). This is checked first because
+				// compiled executables can embed other text that mentions older Bun
+				// versions without the "v" (e.g. "bun 1.0.0 to 1.3.9") before the banner.
+				m.FileContentsVersionMatcher(`(?m)[Bb]un v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 				// bun-1.1.0
 				m.FileContentsVersionMatcher(`(?m)bun-(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				// bun 1.1.0
+				m.FileContentsVersionMatcher(`(?m)[Bb]un (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			),
 			Package: "bun",
 			PURL:    mustPURL("pkg:generic/bun@version"),

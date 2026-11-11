@@ -1670,6 +1670,19 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// a compiled executable that mentions older Bun versions in embedded
+			// text ("bun 1.0.0 to 1.3.9") before the runtime banner
+			logicalFixture: "bun/1.4.4/darwin-arm64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.4.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@1.4.4",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		{
 			logicalFixture: "haskell-ghc/7.10.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haskell/ghc",
