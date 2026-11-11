@@ -28,6 +28,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
+	"github.com/anchore/syft/syft/pkg/cataloger/rust"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -53,6 +54,7 @@ type Catalog struct {
 	LinuxKernel linuxKernelConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
 	Nix         nixConfig         `yaml:"nix" json:"nix" mapstructure:"nix"`
 	Python      pythonConfig      `yaml:"python" json:"python" mapstructure:"python"`
+	Rust        rustConfig        `yaml:"rust" json:"rust" mapstructure:"rust"`
 
 	// configuration for the source (the subject being analyzed)
 	Registry   registryConfig `yaml:"registry" json:"registry" mapstructure:"registry"`
@@ -81,6 +83,7 @@ func DefaultCatalog() Catalog {
 		LinuxKernel:   defaultLinuxKernelConfig(),
 		JavaScript:    defaultJavaScriptConfig(),
 		Python:        defaultPythonConfig(),
+		Rust:          defaultRustConfig(),
 		Nix:           defaultNixConfig(),
 		Cpp:           defaultCppConfig(),
 		Dotnet:        defaultDotnetConfig(),
@@ -182,6 +185,8 @@ func (cfg Catalog) ToLicenseConfig() cataloging.LicenseConfig {
 func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
+		Rust: rust.DefaultCatalogerConfig().
+			WithIncludeDevDependencies(cfg.Rust.IncludeDevDependencies),
 		Cpp: cpp.DefaultCatalogerConfig().
 			WithVcpkgAllowGitClone(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Cpp, task.Vcpkg), cfg.Cpp.VcpkgAllowGitClone)),
 		Dotnet: dotnet.DefaultCatalogerConfig().
