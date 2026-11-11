@@ -266,8 +266,18 @@ func selectLicenses(manifest *pkg.JavaManifest) []string {
 				continue
 			}
 
-			for _, clause := range splitUnquoted(v, ',') {
-				identifier := strings.TrimSpace(splitUnquoted(clause, ';')[0])
+			clauses := splitUnquoted(v, ',')
+			for i := 0; i < len(clauses); i++ {
+				identifier := strings.TrimSpace(splitUnquoted(clauses[i], ';')[0])
+				// Some bundles, including FreeMarker, leave this comma-containing name unquoted.
+				if strings.EqualFold(strings.TrimSpace(clauses[i]), "Apache License") && i+1 < len(clauses) &&
+					strings.EqualFold(strings.TrimSpace(splitUnquoted(clauses[i+1], ';')[0]), "Version 2.0") {
+					identifier += ", Version 2.0"
+					i++
+				}
+				if strings.EqualFold(strings.Trim(identifier, `"'`), "Apache License, Version 2.0") {
+					identifier = "Apache-2.0"
+				}
 				if identifier != "" {
 					result = append(result, identifier)
 				}
