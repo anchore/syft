@@ -20,7 +20,13 @@ func DefaultClassifiers() []binutils.Classifier {
 	m := binutils.ContextualEvidenceMatchers{CatalogerName: catalogerName}
 
 	var libpythonMatcher = m.FileNameTemplateVersionMatcher(
-		`(?:.*/|^)libpython(?P<version>[0-9]+(?:\.[0-9]+)+)[a-z]?\.so.*$`,
+		`(?:.*/|^)libpython(?P<version>[0-9]+(?:\.[0-9]+)+)[a-z]?\.(?:so.*|dylib)$`,
+		pythonVersionTemplate,
+	)
+
+	// macOS framework builds ship the runtime as Python.framework/Versions/<major.minor>/Python
+	var pythonFrameworkMatcher = m.FileNameTemplateVersionMatcher(
+		`(?:.*/|^)Python\.framework/Versions/(?P<version>[0-9]+\.[0-9]+)/Python$`,
 		pythonVersionTemplate,
 	)
 
@@ -47,7 +53,7 @@ func DefaultClassifiers() []binutils.Classifier {
 	classifiers := []binutils.Classifier{
 		{
 			Class:    "python-binary",
-			FileGlob: "**/python*",
+			FileGlob: "**/{python*,Python}",
 			EvidenceMatcher: binutils.MatchAny(
 				// try to find version information from libpython shared libraries
 				binutils.SharedLibraryLookup(
@@ -57,6 +63,8 @@ func DefaultClassifiers() []binutils.Classifier {
 				m.FileNameTemplateVersionMatcher(
 					`(?:.*/|^)python(?P<version>[0-9]+(?:\.[0-9]+)+)$`,
 					pythonVersionTemplate),
+				// macOS framework library
+				pythonFrameworkMatcher,
 			),
 			Package: "python",
 			PURL:    mustPURL("pkg:generic/python@version"),
@@ -67,7 +75,7 @@ func DefaultClassifiers() []binutils.Classifier {
 		},
 		{
 			Class:           "python-binary-lib",
-			FileGlob:        "**/libpython*.so*",
+			FileGlob:        "**/libpython*.{so*,dylib}",
 			EvidenceMatcher: libpythonMatcher,
 			Package:         "python",
 			PURL:            mustPURL("pkg:generic/python@version"),
