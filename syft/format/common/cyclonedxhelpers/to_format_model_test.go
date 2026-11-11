@@ -291,6 +291,65 @@ func Test_FileComponents(t *testing.T) {
 			},
 		},
 		{
+			name: "executable identifiers are encoded as properties on the file component",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					FileMetadata: map[file.Coordinates]file.Metadata{
+						{RealPath: "/bin/app"}: {Path: "/bin/app", Type: stfile.TypeRegular},
+					},
+					FileDigests: map[file.Coordinates][]file.Digest{
+						{RealPath: "/bin/app"}: {{Algorithm: "sha256", Value: "xyz12345"}},
+					},
+					Executables: map[file.Coordinates]file.Executable{
+						{RealPath: "/bin/app"}: {
+							Format: file.ELF,
+							Identifiers: []file.ExecutableIdentifier{
+								{Kind: file.ELFGNUBuildID, Value: "0123456789abcdef0123456789abcdef01234567"},
+								{Kind: file.GoBuildID, Value: "abc/def/ghi/jkl"},
+							},
+						},
+					},
+				},
+			},
+			want: []cyclonedx.Component{
+				{
+					BOMRef: string(file.Coordinates{RealPath: "/bin/app"}.ID()),
+					Name:   "/bin/app",
+					Type:   cyclonedx.ComponentTypeFile,
+					Hashes: &[]cyclonedx.Hash{
+						{Algorithm: "SHA-256", Value: "xyz12345"},
+					},
+					Properties: &[]cyclonedx.Property{
+						{Name: "syft:file:executable:identifiers:0:kind", Value: "elf-gnu-build-id"},
+						{Name: "syft:file:executable:identifiers:0:value", Value: "0123456789abcdef0123456789abcdef01234567"},
+						{Name: "syft:file:executable:identifiers:1:kind", Value: "go-build-id"},
+						{Name: "syft:file:executable:identifiers:1:value", Value: "abc/def/ghi/jkl"},
+					},
+				},
+			},
+		},
+		{
+			name: "executables without file metadata are not added",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(p1),
+					Executables: map[file.Coordinates]file.Executable{
+						{RealPath: "/bin/app"}: {
+							Format:      file.ELF,
+							Identifiers: []file.ExecutableIdentifier{{Kind: file.ELFGNUBuildID, Value: "0123456789abcdef"}},
+						},
+					},
+				},
+			},
+			want: []cyclonedx.Component{
+				{
+					BOMRef: "2a1fc74ade23e357",
+					Type:   cyclonedx.ComponentTypeLibrary,
+					Name:   "p1",
+				},
+			},
+		},
+		{
 			name: "sbom with no files serialized correctly",
 			sbom: sbom.SBOM{
 				Artifacts: sbom.Artifacts{

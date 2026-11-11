@@ -49,10 +49,10 @@ type Executable struct {
 // It can survive stripping; use file digests to verify content.
 type ExecutableIdentifier struct {
 	// Kind identifies the type and source of the identifier.
-	Kind ExecutableIdentifierKind `json:"kind" yaml:"kind" mapstructure:"kind"`
+	Kind ExecutableIdentifierKind `json:"kind" yaml:"kind" mapstructure:"kind" cyclonedx:"kind"`
 
 	// Value is the identifier in the conventional text form for its Kind (e.g. lowercase hex for an ELF GNU build ID).
-	Value string `json:"value" yaml:"value" mapstructure:"value"`
+	Value string `json:"value" yaml:"value" mapstructure:"value" cyclonedx:"value"`
 }
 
 // ELFSecurityFeatures captures security hardening and protection mechanisms in ELF binaries.

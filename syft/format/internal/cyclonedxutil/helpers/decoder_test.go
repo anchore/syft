@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -480,6 +481,32 @@ func Test_useBomRefOverDerivedSyftArtifactID(t *testing.T) {
 	assert.Len(t, pkgsWithoutID, 1)
 	assert.NotEqual(t, "", pkgsWithoutID[0].ID())
 
+}
+
+func Test_collectFiles_decodesExecutableIdentifiers(t *testing.T) {
+	s := &sbom.SBOM{}
+	collectFiles([]cyclonedx.Component{
+		{
+			Type: cyclonedx.ComponentTypeFile,
+			Name: "/bin/app",
+			Properties: &[]cyclonedx.Property{
+				{Name: "syft:file:executable:identifiers:0:kind", Value: "elf-gnu-build-id"},
+				{Name: "syft:file:executable:identifiers:0:value", Value: "0123456789abcdef0123456789abcdef01234567"},
+				{Name: "syft:file:executable:identifiers:1:kind", Value: "go-build-id"},
+				{Name: "syft:file:executable:identifiers:1:value", Value: "abc/def/ghi/jkl"},
+			},
+		},
+		{Type: cyclonedx.ComponentTypeFile, Name: "/etc/config"},
+	}, nil, s)
+
+	assert.Equal(t, map[file.Coordinates]file.Executable{
+		file.NewCoordinates("/bin/app", ""): {
+			Identifiers: []file.ExecutableIdentifier{
+				{Kind: file.ELFGNUBuildID, Value: "0123456789abcdef0123456789abcdef01234567"},
+				{Kind: file.GoBuildID, Value: "abc/def/ghi/jkl"},
+			},
+		},
+	}, s.Artifacts.Executables)
 }
 
 func Test_collectFiles_refusedChainIsDropped(t *testing.T) {

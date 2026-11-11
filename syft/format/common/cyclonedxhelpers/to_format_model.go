@@ -81,10 +81,11 @@ func toFileComponents(artifacts sbom.Artifacts, entries map[file.Coordinates][]f
 
 		cdxHashes := digestsToHashes(artifacts.FileDigests[coordinate])
 		component := cyclonedx.Component{
-			BOMRef: string(coordinate.ID()),
-			Type:   cyclonedx.ComponentTypeFile,
-			Name:   coordinate.LocalPath(),
-			Hashes: &cdxHashes,
+			BOMRef:     string(coordinate.ID()),
+			Type:       cyclonedx.ComponentTypeFile,
+			Name:       coordinate.LocalPath(),
+			Hashes:     &cdxHashes,
+			Properties: helpers.EncodeExecutableIdentifiers(artifacts.Executables[coordinate]),
 		}
 		if len(nested) > 0 {
 			component.Components = &nested
