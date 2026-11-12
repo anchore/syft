@@ -290,7 +290,7 @@ func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.Dp
 	// the same directory
 	searchPath := filepath.Dir(dbLocation.LocalPath())
 
-	if !strings.HasSuffix(searchPath, "status.d") {
+	if !strings.HasSuffix(searchPath, statusDirName) {
 		searchPath = path.Join(searchPath, "info")
 	}
 

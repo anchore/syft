@@ -1,0 +1,23 @@
+Package: bzip2
+Version: 1.0.8-6+dhi2
+Architecture: arm64
+Maintainer: Docker Hardened Images <dhi@docker.com>
+Installed-Size: 193
+Depends: libbz2-1.0 (= 1.0.8-6+dhi2), libc6 (>= 2.41)
+Suggests: bzip2-doc
+Replaces: libbz2 (<< 0.9.5d-3)
+Section: utils
+Priority: standard
+Multi-Arch: foreign
+Homepage: https://sourceware.org/bzip2/
+Description: high-quality block-sorting file compressor - utilities
+ bzip2 is a freely available, patent free, data compressor.
+ .
+ bzip2 compresses files using the Burrows-Wheeler block-sorting text
+ compression algorithm, and Huffman coding.  Compression is generally
+ considerably better than that achieved by more conventional
+ LZ77/LZ78-based compressors, and approaches the performance of the PPM
+ family of statistical compressors.
+ .
+ The archive file format of bzip2 (.bz2) is incompatible with that of its
+ predecessor, bzip (.bz).
