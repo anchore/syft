@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -85,6 +86,10 @@ func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, 
 	if len(dropped) == 0 {
 		return pkgs, rels, err
 	}
+	for target, m := range merged {
+		m.SetID()
+		merged[target] = m
+	}
 
 	kept := make([]pkg.Package, 0, len(pkgs)-len(dropped))
 	for i, p := range pkgs {
@@ -92,13 +97,34 @@ func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, 
 			continue
 		}
 		if m, isMerged := merged[i]; isMerged {
-			m.SetID()
 			p = m
 		}
 		kept = append(kept, p)
 	}
 
-	return kept, rels, err
+	return kept, followMergedPackages(rels, pkgs, func(i int) (pkg.Package, bool) {
+		if dropped[i] {
+			// every status copy of the entry carries the same merged ID, so any of them will do
+			return merged[fromStatus[keys[i]][0]], true
+		}
+		m, isMerged := merged[i]
+		return m, isMerged
+	}), err
+}
+
+// followMergedPackages points relationships at the package that each package was merged into, since merging drops
+// status.d packages and changes the ID of the status packages they were folded into.
+func followMergedPackages(rels []artifact.Relationship, pkgs []pkg.Package, mergedInto func(i int) (pkg.Package, bool)) []artifact.Relationship {
+	if len(rels) == 0 {
+		return rels
+	}
+	idx := relationship.NewIndex(rels...)
+	for i, p := range pkgs {
+		if m, ok := mergedInto(i); ok {
+			idx.Replace(p.ID(), m)
+		}
+	}
+	return idx.All()
 }
 
 // mergeStatusDirPackage returns the package read from the status file with the evidence, licenses and file listing

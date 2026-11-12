@@ -169,7 +169,12 @@ func Test_mergeStatusDirDuplicates(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			inputErr := errors.New("passed through")
-			inputRels := []artifact.Relationship{{Type: artifact.DependencyOfRelationship}}
+			// relationships that do not involve a merged package are kept as they are
+			inputRels := []artifact.Relationship{{
+				From: file.Coordinates{RealPath: "/a"},
+				To:   file.Coordinates{RealPath: "/b"},
+				Type: artifact.ContainsRelationship,
+			}}
 
 			pkgs, rels, err := mergeStatusDirDuplicates(tt.pkgs, inputRels, inputErr)
 
@@ -550,5 +555,32 @@ func Test_mergeStatusDirDuplicates_deterministicAcrossStatusDirCopies(t *testing
 		require.Len(t, got, 1)
 		require.Equal(t, first[0].Metadata, got[0].Metadata, "run %d", i)
 		require.Equal(t, first[0].ID(), got[0].ID(), "run %d", i)
+	}
+}
+
+// the merge drops status.d packages and changes the ID of the status packages it folds them into, so relationships
+// handed to it must be rewritten to the surviving packages rather than left pointing at IDs that no longer exist.
+func Test_mergeStatusDirDuplicates_relationshipsFollowMergedPackages(t *testing.T) {
+	fromStatus := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status")
+	fromStatusDir := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip")
+	libc := dpkgTestPackage("libc6", "2.41-12", "arm64", "/var/lib/dpkg/status")
+
+	rels := []artifact.Relationship{
+		{From: libc, To: fromStatus, Type: artifact.DependencyOfRelationship},
+		{From: libc, To: fromStatusDir, Type: artifact.DependencyOfRelationship},
+	}
+
+	got, gotRels, err := mergeStatusDirDuplicates([]pkg.Package{fromStatus, fromStatusDir, libc}, rels, nil)
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+
+	ids := make(map[artifact.ID]bool)
+	for _, p := range got {
+		ids[p.ID()] = true
+	}
+	require.NotEmpty(t, gotRels)
+	for _, r := range gotRels {
+		assert.True(t, ids[r.From.ID()], "relationship from %s points at a package that was not returned", r.From.ID())
+		assert.True(t, ids[r.To.ID()], "relationship to %s points at a package that was not returned", r.To.ID())
 	}
 }
