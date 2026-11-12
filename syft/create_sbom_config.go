@@ -531,8 +531,15 @@ func (c *CreateSBOMConfig) validate() error {
 }
 
 // Create creates an SBOM from the given source with the current SBOM configuration.
+//
+// Unlike CreateSBOM, Create doesn't fall back to DefaultCreateSBOMConfig, so it doesn't reference the default
+// catalogers. A program that builds its config without DefaultCreateSBOMConfig and adds only the catalogers it needs
+// with WithCatalogers lets the Go linker drop the rest, which makes its binary noticeably smaller.
 func (c *CreateSBOMConfig) Create(ctx context.Context, src source.Source) (*sbom.SBOM, error) {
-	return CreateSBOM(ctx, src, c)
+	if c == nil {
+		return nil, fmt.Errorf("no SBOM configuration provided")
+	}
+	return createSBOM(ctx, src, c)
 }
 
 func findDefaultTags(src source.Description) ([]string, error) {
