@@ -1,0 +1,40 @@
+Package: gzip
+Status: install ok installed
+Version: 1.13-1+dhi1
+Architecture: arm64
+Essential: yes
+Maintainer: Docker Hardened Images <dhi@docker.com>
+Installed-Size: 287
+Pre-Depends: libc6 (>= 2.41)
+Suggests: less
+Conflicts: zutils (<< 1.13-2~)
+Section: utils
+Priority: required
+Homepage: https://www.gnu.org/software/gzip/
+Description: GNU compression utilities
+ This package provides the standard GNU file compression utilities, which
+ are also the default compression tools for Debian.  They typically operate
+ on files with names ending in '.gz', but can also decompress files ending
+ in '.Z' created with 'compress'.
+
+Package: tzdata
+Status: install ok installed
+Version: 2026b-0+deb13u1+dhi2
+Architecture: all
+Maintainer: Docker Hardened Images <dhi@docker.com>
+Installed-Size: 1362
+Recommends: debconf (>= 0.5) | debconf-2.0
+Breaks: tzdata-legacy (= 2023c-8), tzdata-legacy (= 2023c-9)
+Replaces: tzdata-legacy (= 2023c-8), tzdata-legacy (= 2023c-9)
+Provides: tzdata-trixie
+Section: localization
+Priority: required
+Multi-Arch: foreign
+Homepage: https://www.iana.org/time-zones
+Description: time zone and daylight-saving time data
+ This package contains data required for the implementation of
+ standard local time for many representative locations around the
+ globe. It is updated periodically to reflect changes made by
+ political bodies to time zone boundaries, UTC offsets, and
+ daylight-saving rules.
+
