@@ -153,6 +153,33 @@ func TestCycloneDxSourcePackageEncoder_SpecVersions(t *testing.T) {
 	}
 }
 
+func TestCycloneDxEvidenceOccurrences_SpecVersions(t *testing.T) {
+	s := testutil.SourcePackagesInput(t, t.TempDir())
+	tests := []struct {
+		version string
+		want    bool
+	}{
+		{version: "1.3", want: false},
+		{version: "1.4", want: false},
+		{version: "1.5", want: true},
+		{version: "1.6", want: true},
+		{version: cyclonedxutil.DefaultVersion, want: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.version, func(t *testing.T) {
+			enc, err := NewFormatEncoderWithConfig(EncoderConfig{Version: tt.version})
+			require.NoError(t, err)
+
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, s))
+
+			// evidence occurrences only exist from spec 1.5, and no emptied evidence element is left behind before that
+			assert.Equal(t, tt.want, strings.Contains(buf.String(), `"occurrences"`))
+			assert.Equal(t, tt.want, strings.Contains(buf.String(), `"evidence"`))
+		})
+	}
+}
+
 func redactor(values ...string) testutil.Redactor {
 	return testutil.NewRedactions().
 		WithValuesRedacted(values...).

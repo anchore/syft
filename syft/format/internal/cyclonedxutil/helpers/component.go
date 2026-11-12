@@ -61,6 +61,7 @@ func EncodeComponent(p pkg.Package, supplier string, locationSorter func(a, b fi
 		Description:        encodeDescription(p),
 		ExternalReferences: encodeExternalReferences(p),
 		Properties:         properties,
+		Evidence:           encodeEvidence(locations),
 		BOMRef:             DeriveBomRef(p),
 	}
 }
@@ -210,19 +211,8 @@ func decodeLocations(vals map[string]string, evidence *cyclonedx.Evidence) file.
 	if !ok {
 		out = nil
 	}
-
-	locations := file.NewLocationSet(out...)
-	if evidence == nil || evidence.Occurrences == nil {
-		return locations
-	}
-
-	for _, occurrence := range *evidence.Occurrences {
-		if occurrence.Location != "" {
-			locations.Add(file.NewLocation(occurrence.Location))
-		}
-	}
-
-	return locations
+	out = append(out, decodeEvidenceLocations(evidence, out)...)
+	return file.NewLocationSet(out...)
 }
 
 func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeName string) any {

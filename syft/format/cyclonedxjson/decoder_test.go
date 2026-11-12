@@ -21,6 +21,8 @@ func TestDecoder_Decode(t *testing.T) {
 		err      bool
 		distro   string
 		packages []string
+		// locations are the location paths expected for a package, by package name
+		locations map[string][]string
 	}{
 		{
 			name:     "dir-scan",
@@ -33,6 +35,16 @@ func TestDecoder_Decode(t *testing.T) {
 			file:     "snapshot/TestCycloneDxImageEncoder.golden",
 			distro:   "debian:1.2.3",
 			packages: []string{"package-1:1.0.1", "package-2:2.0.1"},
+		},
+		{
+			// an unmodified document from cdxgen 12.8.4 (`cdxgen -t js`) for a project whose src/index.js requires
+			// lodash: the locations of a document syft did not write come from its evidence occurrences
+			name:     "third-party-evidence-occurrences",
+			file:     "cdxgen-evidence-occurrences.json",
+			packages: []string{"evidence-demo:1.0.0", "lodash:4.17.21"},
+			locations: map[string][]string{
+				"lodash": {"src/index.js"},
+			},
 		},
 		{
 			name: "not-an-sbom",
@@ -72,11 +84,13 @@ func TestDecoder_Decode(t *testing.T) {
 			assert.Equal(t, ID, decodeID)
 			assert.Equal(t, formatVersion, decodeVersion)
 
-			split := strings.SplitN(test.distro, ":", 2)
-			distroName := split[0]
-			distroVersion := split[1]
-			assert.Equal(t, bom.Artifacts.LinuxDistribution.ID, distroName)
-			assert.Equal(t, bom.Artifacts.LinuxDistribution.Version, distroVersion)
+			if test.distro != "" {
+				split := strings.SplitN(test.distro, ":", 2)
+				distroName := split[0]
+				distroVersion := split[1]
+				assert.Equal(t, bom.Artifacts.LinuxDistribution.ID, distroName)
+				assert.Equal(t, bom.Artifacts.LinuxDistribution.Version, distroVersion)
+			}
 
 			var pkgs []string
 			for p := range bom.Artifacts.Packages.Enumerate() {
@@ -84,40 +98,18 @@ func TestDecoder_Decode(t *testing.T) {
 			}
 
 			assert.ElementsMatch(t, test.packages, pkgs)
+
+			for name, want := range test.locations {
+				var got []string
+				for _, p := range bom.Artifacts.Packages.PackagesByName(name) {
+					for _, l := range p.Locations.ToSlice() {
+						got = append(got, l.RealPath)
+					}
+				}
+				assert.ElementsMatch(t, want, got, "locations of %s", name)
+			}
 		})
 	}
-}
-
-func TestDecoder_DecodeEvidenceOccurrenceLocation(t *testing.T) {
-	reader := strings.NewReader(`{
-		"bomFormat": "CycloneDX",
-		"specVersion": "1.5",
-		"version": 1,
-		"components": [
-			{
-				"type": "library",
-				"bom-ref": "example@1.0.0",
-				"name": "example",
-				"version": "1.0.0",
-				"evidence": {
-					"occurrences": [
-						{"location": "/usr/bin/example"}
-					]
-				}
-			}
-		]
-	}`)
-
-	bom, _, _, err := NewFormatDecoder().Decode(reader)
-	require.NoError(t, err)
-
-	packages := bom.Artifacts.Packages.Sorted()
-	require.Len(t, packages, 1)
-
-	locations := packages[0].Locations.ToSlice()
-	require.Len(t, locations, 1)
-	assert.Equal(t, "/usr/bin/example", locations[0].RealPath)
-	assert.Equal(t, "/usr/bin/example", locations[0].AccessPath)
 }
 
 func TestDecoder_Identify(t *testing.T) {

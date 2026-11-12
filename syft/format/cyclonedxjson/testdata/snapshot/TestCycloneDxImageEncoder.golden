@@ -63,7 +63,14 @@
           "name": "syft:location:0:path",
           "value": "/somefile-1.txt"
         }
-      ]
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "/somefile-1.txt"
+          }
+        ]
+      }
     },
     {
       "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=4b756c6f6fb127a3",
@@ -97,7 +104,14 @@
           "name": "syft:metadata:installedSize",
           "value": "0"
         }
-      ]
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "/somefile-2.txt"
+          }
+        ]
+      }
     },
     {
       "bom-ref": "os:debian@1.2.3",

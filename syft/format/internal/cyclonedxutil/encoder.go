@@ -35,11 +35,27 @@ func (e Encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		// (see https://github.com/CycloneDX/cyclonedx-go/issues/291), so drop it rather than emit an invalid document
 		dropExternalReferenceType(bom.Components, cyclonedx.ERTypeSourceDistribution)
 	}
+	if e.version < cyclonedx.SpecVersion1_5 {
+		// evidence occurrences are a 1.5+ field; cyclonedx-go strips the occurrences for older spec versions but
+		// leaves the emptied evidence element behind, so drop it rather than emit an empty element
+		dropEvidence(bom.Components)
+	}
 	enc := cyclonedx.NewBOMEncoder(writer, e.format)
 	enc.SetPretty(e.pretty)
 	enc.SetEscapeHTML(false)
 
 	return enc.EncodeVersion(bom, e.version)
+}
+
+func dropEvidence(components *[]cyclonedx.Component) {
+	if components == nil {
+		return
+	}
+	for i := range *components {
+		c := &(*components)[i]
+		dropEvidence(c.Components)
+		c.Evidence = nil
+	}
 }
 
 func dropExternalReferenceType(components *[]cyclonedx.Component, refType cyclonedx.ExternalReferenceType) {
