@@ -37,15 +37,17 @@ type dpkgEntryKey struct {
 func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 	// packages read from a status file, by identity
 	fromStatus := make(map[dpkgEntryKey][]int)
-	// packages read from a status.d directory, by index
-	fromStatusDir := make(map[int]dpkgEntryKey)
+	// indexes of packages read from a status.d directory, in package order so that merging is deterministic
+	var fromStatusDir []int
+	keys := make(map[int]dpkgEntryKey)
 	for i, p := range pkgs {
 		key, inStatusDir, ok := dpkgKey(p)
 		switch {
 		case !ok:
 			continue
 		case inStatusDir:
-			fromStatusDir[i] = key
+			fromStatusDir = append(fromStatusDir, i)
+			keys[i] = key
 		default:
 			fromStatus[key] = append(fromStatus[key], i)
 		}
@@ -63,12 +65,15 @@ func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, 
 	}
 
 	merged := make(map[int]pkg.Package)
-	for i, key := range fromStatusDir {
+	// status.d packages folded into a status package, which are no longer reported on their own
+	dropped := make(map[int]bool)
+	for _, i := range fromStatusDir {
+		key := keys[i]
 		if len(fromStatus[key]) == 0 {
 			// only described in status.d, so there is nothing to merge it into
-			delete(fromStatusDir, i)
 			continue
 		}
+		dropped[i] = true
 		for _, target := range fromStatus[key] {
 			into, alreadyMerged := merged[target]
 			if !alreadyMerged {
@@ -77,13 +82,13 @@ func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, 
 			merged[target] = mergeStatusDirPackage(into, pkgs[i], statusVisible[key])
 		}
 	}
-	if len(fromStatusDir) == 0 {
+	if len(dropped) == 0 {
 		return pkgs, rels, err
 	}
 
-	kept := make([]pkg.Package, 0, len(pkgs)-len(fromStatusDir))
+	kept := make([]pkg.Package, 0, len(pkgs)-len(dropped))
 	for i, p := range pkgs {
-		if _, isDuplicate := fromStatusDir[i]; isDuplicate {
+		if dropped[i] {
 			continue
 		}
 		if m, isMerged := merged[i]; isMerged {

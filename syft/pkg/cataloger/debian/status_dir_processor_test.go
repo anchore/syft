@@ -519,3 +519,36 @@ func Test_mergeStatusDirDuplicates_evidenceAgreesAcrossLayers(t *testing.T) {
 		assert.Equal(t, []string{"/var/lib/dpkg/status.d/gzip"}, evidencePaths(p, pkg.SupportingEvidenceAnnotation), "status copy %d", i)
 	}
 }
+
+// the same status.d entry seen in two layers is folded into one status entry. Which copy's file records win must not
+// depend on map iteration order.
+func Test_mergeStatusDirDuplicates_deterministicAcrossStatusDirCopies(t *testing.T) {
+	statusDirInLayer := func(layer, digest string) pkg.Package {
+		p := dpkgTestPackageAt("gzip", "1.13-1", "arm64",
+			file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/var/lib/dpkg/status.d/gzip", FileSystemID: layer}))
+		m := p.Metadata.(pkg.DpkgDBEntry)
+		m.Files = []pkg.DpkgFileRecord{{Path: "/bin/gzip", Digest: &file.Digest{Algorithm: "md5", Value: digest}}}
+		p.Metadata = m
+		p.SetID()
+		return p
+	}
+	input := func() []pkg.Package {
+		return []pkg.Package{
+			dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status"),
+			statusDirInLayer("sha256:lower", "aaaa"),
+			statusDirInLayer("sha256:upper", "bbbb"),
+		}
+	}
+
+	first, _, err := mergeStatusDirDuplicates(input(), nil, nil)
+	require.NoError(t, err)
+	require.Len(t, first, 1)
+
+	for i := 0; i < 50; i++ {
+		got, _, err := mergeStatusDirDuplicates(input(), nil, nil)
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		require.Equal(t, first[0].Metadata, got[0].Metadata, "run %d", i)
+		require.Equal(t, first[0].ID(), got[0].ID(), "run %d", i)
+	}
+}
