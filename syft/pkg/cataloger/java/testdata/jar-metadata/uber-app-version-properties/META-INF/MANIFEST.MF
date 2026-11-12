@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Multi-Release: true
+Created-By: build.clj
+Build-Jdk-Spec: 25
+Main-Class: example.core.bootstrap
+

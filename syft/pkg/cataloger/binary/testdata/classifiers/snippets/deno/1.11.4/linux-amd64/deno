@@ -1,0 +1,9 @@
+name: deno
+offset: 4225763
+length: 120
+snippetSha256: b47e8cf36bdf93e4bc63a2d7bd0a5d759975f12751a66908661777eba7e90025
+fileSha256: 1a55c23bb0b666d1b26d9d16f3a9d27210b6b13421031f7f18ff18abfcb8664f
+
+### byte snippet to follow ###
+g ctrl+d or close()
+Error: Uncaught cli/tools/standalone.rsdeno-canary/ed16f4332263e81bf00a39ebc2200291b1fcbb8e1.11.4dlw

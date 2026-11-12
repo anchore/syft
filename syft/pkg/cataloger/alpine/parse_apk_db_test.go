@@ -719,6 +719,25 @@ func Test_processChecksum(t *testing.T) {
 	}
 }
 
+func TestParseApkDBAllowsLargeFieldValues(t *testing.T) {
+	contents := strings.Join([]string{
+		"P:large-description",
+		"V:1.0-r0",
+		"A:x86_64",
+		"S:1",
+		"I:1",
+		"T:" + strings.Repeat("a", 70*1024),
+		"",
+	}, "\n")
+	reader := file.NewLocationReadCloser(file.NewLocation("large-installed-db"), io.NopCloser(strings.NewReader(contents)))
+
+	pkgs, _, err := parseApkDB(context.Background(), nil, new(generic.Environment), reader)
+
+	require.NoError(t, err)
+	require.Len(t, pkgs, 1)
+	assert.Equal(t, "large-description", pkgs[0].Name)
+}
+
 func Test_parseApkDB_expectedPkgNames(t *testing.T) {
 	tests := []struct {
 		fixture      string
@@ -847,6 +866,32 @@ https://foo.them.org/alpine/v3.14/community`,
 				ReadCloser: reposReader,
 			})
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestParseApkDB_attributeBeforeItsEntry(t *testing.T) {
+	// ACL (M:, a:) and checksum (Z:) lines describe the most recent directory or file entry, and used to index
+	// files[-1] when no entry had been seen yet
+	tests := []struct {
+		name string
+		line string
+	}{
+		{name: "directory ACL before any directory", line: "M:0:0:755"},
+		{name: "file ACL before any file", line: "a:0:0:755"},
+		{name: "checksum before any file", line: "Z:Q1Kz6TXnPVJeDQUfO0IJVxD3HnYmU="},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			contents := strings.Join([]string{"P:foo", "V:1.0-r0", tt.line, ""}, "\n")
+			reader := file.NewLocationReadCloser(file.NewLocation("installed"), io.NopCloser(strings.NewReader(contents)))
+
+			pkgs, _, err := parseApkDB(context.Background(), nil, new(generic.Environment), reader)
+
+			require.NoError(t, err)
+			require.Len(t, pkgs, 1)
+			assert.Equal(t, "foo", pkgs[0].Name)
+			assert.Empty(t, pkgs[0].Metadata.(pkg.ApkDBEntry).Files, "an orphaned attribute line should not invent a file")
 		})
 	}
 }

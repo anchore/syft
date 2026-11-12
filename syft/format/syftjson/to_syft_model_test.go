@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"math"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -295,10 +296,7 @@ func Test_idsHaveChanged(t *testing.T) {
 }
 
 func Test_toSyftFiles(t *testing.T) {
-	coord := file.Coordinates{
-		RealPath:     "/somerwhere/place",
-		FileSystemID: "abc",
-	}
+	coord := file.NewCoordinates("/somerwhere/place", "abc")
 
 	tests := []struct {
 		name  string
@@ -601,4 +599,40 @@ func Test_safeFileModeConvert(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func Test_toSyftModel_fullPathIsNormalized(t *testing.T) {
+	plain := file.NewCoordinates("/app.jar", "")
+	nested := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/lib/a.jar"}
+	decoded := []file.Coordinates{
+		{RealPath: "/app.jar", FullPath: "/app.jar"},
+		{RealPath: "/app.jar", FullPath: "/elsewhere!/app.jar"},
+		// deeper than a scan goes
+		{RealPath: "/app.jar", FullPath: "/app.jar" + strings.Repeat("!/a.jar", 17)},
+		// an entry name a scan would refuse
+		{RealPath: "/app.jar", FullPath: "/app.jar!/a\nb"},
+		// longer than a path
+		{RealPath: "/app.jar", FullPath: "/app.jar!/" + strings.Repeat("a", 4096)},
+		nested,
+	}
+
+	var files []model.File
+	for _, c := range decoded {
+		files = append(files, model.File{ID: string(c.ID()), Location: c, Unknowns: []string{"x"}})
+	}
+	got := toSyftFiles(files)
+	// a refused chain is dropped, not merged into the outer archive's own entry
+	assert.Equal(t, map[file.Coordinates][]string{plain: {"x"}, nested: {"x"}}, got.Unknowns)
+
+	var locations []file.Location
+	for _, c := range decoded {
+		locations = append(locations, file.NewLocationFromCoordinates(c))
+	}
+	p := toSyftPackage(model.Package{PackageBasicData: model.PackageBasicData{Locations: locations}}, nil)
+	var gotCoordinates []file.Coordinates
+	for _, l := range p.Locations.ToSlice() {
+		gotCoordinates = append(gotCoordinates, l.Coordinates)
+	}
+	// each location keeps its own access path, so only the coordinates are compared
+	assert.ElementsMatch(t, []file.Coordinates{plain, nested}, gotCoordinates)
 }

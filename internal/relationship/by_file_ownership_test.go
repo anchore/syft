@@ -79,6 +79,56 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			},
 		},
 		{
+			name: "package-within-archive-is-not-a-file-owner",
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				nestedOwner := pkg.Package{
+					Locations: file.NewLocationSet(file.NewLocationFromCoordinates(file.Coordinates{
+						RealPath: "/rootfs.tar",
+						FullPath: "/rootfs.tar!/var/lib/rpm/Packages",
+					})),
+					Type: pkg.RpmPkg,
+					Metadata: pkg.RpmDBEntry{
+						Files: []pkg.RpmFileRecord{{Path: "/d/path"}},
+					},
+				}
+				nestedOwner.SetID()
+
+				child := pkg.Package{
+					Locations: file.NewLocationSet(file.NewLocation("/d/path")),
+					Type:      pkg.BinaryPkg,
+				}
+				child.SetID()
+
+				return []pkg.Package{nestedOwner, child}, nil
+			},
+		},
+		{
+			// the archive's own package (when it has one) is found by its path; what is inside it is
+			// linked to that package by CONTAINS, not owned by whoever owns the archive file
+			name: "top-level-owner-of-an-archive-does-not-own-packages-within-it",
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				parent := pkg.Package{
+					Locations: file.NewLocationSet(file.NewLocation("/var/lib/rpm/Packages")),
+					Type:      pkg.RpmPkg,
+					Metadata: pkg.RpmDBEntry{
+						Files: []pkg.RpmFileRecord{{Path: "/opt/bundle.tar"}},
+					},
+				}
+				parent.SetID()
+
+				child := pkg.Package{
+					Locations: file.NewLocationSet(file.NewLocationFromCoordinates(file.Coordinates{
+						RealPath: "/opt/bundle.tar",
+						FullPath: "/opt/bundle.tar!/lib/thing.jar",
+					})),
+					Type: pkg.JavaPkg,
+				}
+				child.SetID()
+
+				return []pkg.Package{parent, child}, nil
+			},
+		},
+		{
 			name: "only-real-file-owner-gets-ownership-relationship-not-symlink-owner",
 			resolver: mockFR{
 				translate: map[string]string{
@@ -277,6 +327,46 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 				child.SetID()
 
 				return []pkg.Package{parent, child}, nil
+			},
+		},
+		{
+			// a CPAN distribution owns whatever its .packlist recorded, which is how a distribution that
+			// installed a binary or a shared object is related to the package cataloged from it
+			name: "cpan-distribution-owns-packlist-paths",
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				parent := pkg.Package{
+					Locations: file.NewLocationSet(
+						file.NewLocation("/usr/local/lib/perl5/site_perl/5.40.4/x86_64-linux/auto/Net/SSLeay/.packlist"),
+					),
+					Type: pkg.CpanPkg,
+					Metadata: pkg.CpanDistribution{
+						MainModule: "Net::SSLeay",
+						Files: []string{
+							"/usr/local/lib/perl5/site_perl/5.40.4/x86_64-linux/Net/SSLeay.pm",
+							"/usr/local/lib/perl5/site_perl/5.40.4/x86_64-linux/auto/Net/SSLeay/SSLeay.so",
+						},
+					},
+				}
+				parent.SetID()
+
+				child := pkg.Package{
+					Locations: file.NewLocationSet(
+						file.NewLocation("/usr/local/lib/perl5/site_perl/5.40.4/x86_64-linux/auto/Net/SSLeay/SSLeay.so"),
+					),
+					Type: pkg.BinaryPkg,
+				}
+				child.SetID()
+
+				return []pkg.Package{parent, child}, []artifact.Relationship{
+					{
+						From: parent,
+						To:   child,
+						Type: artifact.OwnershipByFileOverlapRelationship,
+						Data: ownershipByFilesMetadata{
+							Files: []string{"/usr/local/lib/perl5/site_perl/5.40.4/x86_64-linux/auto/Net/SSLeay/SSLeay.so"},
+						},
+					},
+				}
 			},
 		},
 	}

@@ -71,7 +71,7 @@ func compareElfBinaryPackages(s *sbom.SBOM) []artifact.ID {
 	pkgsToDelete := make([]artifact.ID, 0)
 	for _, elfPkg := range allElfPackages(s) {
 		for _, loc := range onlyPrimaryEvidenceLocations(elfPkg) {
-			for _, otherPkg := range s.Artifacts.Packages.PackagesByPath(loc.RealPath) {
+			for _, otherPkg := range s.Artifacts.Packages.PackagesByPath(loc.FullNestedPath()) {
 				// we only care about comparing binary packages to each other (not other types)
 				if otherPkg.Type != pkg.BinaryPkg {
 					continue
@@ -130,7 +130,7 @@ func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver
 
 		for _, loc := range libLocations {
 			// are you in our index?
-			realBaseName := path.Base(loc.RealPath)
+			realBaseName := path.Base(loc.FullNestedPath())
 			pkgCollection := index.owningLibraryPackage(realBaseName)
 			if pkgCollection.PackageCount() < 1 {
 				addRelationship(

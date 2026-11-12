@@ -75,7 +75,7 @@ func mergeShardsInto(merged *pkg.SafeTensorsModelInfo, shards []pkg.SafeTensorsM
 	seenKV := map[string]bool{}
 	for _, s := range shards {
 		shardTensorTotal += s.TensorCount
-		merged.Parameters += s.Parameters
+		merged.Parameters = saturatingAdd(merged.Parameters, s.Parameters)
 		firstNonEmpty(&merged.Quantization, s.Quantization)
 		for _, kv := range s.UserMetadata {
 			if seenKV[kv.Key] {

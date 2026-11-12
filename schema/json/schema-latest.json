@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.1.10/document",
+  "$id": "anchore.io/schema/syft/json/16.1.13/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -716,11 +716,15 @@
       "properties": {
         "path": {
           "type": "string",
-          "description": "RealPath is the canonical absolute form of the path accessed (all symbolic links have been followed and relative path components like '.' and '..' have been removed)."
+          "description": "RealPath is the canonical absolute form of the path accessed (all symbolic links have been followed and relative path components like '.' and '..' have been removed). For a file found within an archive, it is the real path of the outermost archive on the scanned filesystem."
         },
         "layerID": {
           "type": "string",
-          "description": "FileSystemID is an ID representing and entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank."
+          "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in."
+        },
+        "fullPath": {
+          "type": "string",
+          "description": "FullPath is the full path to the file: RealPath, then for a file within an archive a \"!/\"-delimited chain of entry paths through any nested archives, ending with the file's own entry path (e.g. \"/app.war!/WEB-INF/lib/dep.jar!/META-INF/MANIFEST.MF\"). Each segment is a real path (links resolved) relative to the archive before it. For a file not within an archive it is blank, so coordinates outside archives are unchanged by the field (in JSON, equality and ID)."
         }
       },
       "type": "object",
@@ -728,6 +732,72 @@
         "path"
       ],
       "description": "Coordinates contains the minimal information needed to describe how to find a file within any possible source object (e.g."
+    },
+    "CpanDistribution": {
+      "properties": {
+        "dist": {
+          "type": "string",
+          "description": "Dist is the distvname install.json recorded (e.g. URI-5.35), the raw value the package name and\nversion were recovered from"
+        },
+        "mainModule": {
+          "type": "string",
+          "description": "MainModule is the module name recovered from the .packlist path (e.g. LWP for libwww-perl).\nEmpty when the name came from install.json, which is authoritative. Set, it means the name is the\ninstaller's NAME and may not be the distribution name."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author is the PAUSE ID of the distribution author (e.g. OALDERS), parsed out of Path"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path is the raw PAUSE path of the release archive (e.g. O/OA/OALDERS/URI-5.35.tar.gz)"
+        },
+        "modules": {
+          "items": {
+            "$ref": "#/$defs/CpanModule"
+          },
+          "type": "array",
+          "description": "Modules are the modules this distribution provides, sorted by name"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Files are the paths the .packlist recorded as installed by this distribution, kept in the\npacklist's own order and unfiltered: a path the packlist claims and the filesystem lacks means the\nfile was removed or overwritten out from under the installer, which is signal rather than noise"
+        }
+      },
+      "type": "object",
+      "description": "CpanDistribution describes a CPAN distribution installed on disk, as recorded by a CPAN client's install.json and by the .packlist an installer wrote."
+    },
+    "CpanModule": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the module name as it would be used in a perl `use` statement (e.g. URI::Escape)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the module version, which may differ from the distribution version"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "description": "CpanModule is a single perl module provided by a CPAN distribution."
+    },
+    "CpanUnpackedRelease": {
+      "properties": {
+        "modules": {
+          "items": {
+            "$ref": "#/$defs/CpanModule"
+          },
+          "type": "array",
+          "description": "Modules are the modules the release declares it provides, sorted by name"
+        }
+      },
+      "type": "object",
+      "description": "CpanUnpackedRelease describes an unpacked CPAN release found on disk, read from the release's own META.json or META.yml."
     },
     "DartPubspec": {
       "properties": {
@@ -1398,6 +1468,13 @@
         "elfSecurityFeatures": {
           "$ref": "#/$defs/ELFSecurityFeatures",
           "description": "ELFSecurityFeatures contains ELF-specific security hardening information when Format is ELF."
+        },
+        "identifiers": {
+          "items": {
+            "$ref": "#/$defs/ExecutableIdentifier"
+          },
+          "type": "array",
+          "description": "Identifiers lists self-declared build identifiers found in the binary (e.g. ELF GNU build IDs or Go build IDs)."
         }
       },
       "type": "object",
@@ -1408,6 +1485,24 @@
         "importedLibraries"
       ],
       "description": "Executable contains metadata about binary files and their security features."
+    },
+    "ExecutableIdentifier": {
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "Kind identifies the type and source of the identifier."
+        },
+        "value": {
+          "type": "string",
+          "description": "Value is the identifier in the conventional text form for its Kind (e.g. lowercase hex for an ELF GNU build ID)."
+        }
+      },
+      "type": "object",
+      "required": [
+        "kind",
+        "value"
+      ],
+      "description": "ExecutableIdentifier is a self-declared build identifier used to correlate a binary with its build or debug information."
     },
     "File": {
       "properties": {
@@ -1662,7 +1757,7 @@
             "type": "array"
           },
           "type": "object",
-          "description": "Symbols are the function symbols from this module that are compiled into the binary, extracted from\nthe binary symbol table (pclntab) and grouped by the import path of the package that owns them. Each\nvalue is the sorted, deduplicated list of symbol names local to that package, i.e. with the import\npath prefix stripped (e.g. import path \"github.com/foo/bar\" -\u003e \"(*Type).Method\"). The fully qualified\nname is the import path, a \".\", and the local name. One exception: the binary's main package appears\nunder the key \"main\" (the name the linker assigns), not its original source import path, which is not\nrecoverable from the binary. Populated only when the golang cataloger's capture-symbols scope covers\nthis package: the \"all\" scope populates every module package plus the synthetic stdlib package, while\nthe \"stdlib\" scope populates only the stdlib package."
+          "description": "Symbols are the function symbols from this module that are compiled into the binary, extracted from\nthe binary symbol table (pclntab) and grouped by the import path of the package that owns them. Each\nvalue is the sorted, deduplicated list of symbol names local to that package, i.e. with the import\npath prefix stripped (e.g. import path \"github.com/foo/bar\" -\u003e \"(*Type).Method\"). The fully qualified\nname is the import path, a \".\", and the local name. One exception: the binary's main package appears\nunder the key \"main\" (the name the linker assigns), not its original source import path, which is not\nrecoverable from the binary. Populated only when the golang cataloger's capture-symbols scope covers\nthis package: the \"all\" scope populates every module package plus the synthetic stdlib package, the\n\"extended-stdlib\" scope populates the stdlib package plus every module under golang.org/x/, and the\n\"stdlib\" scope populates only the stdlib package. The capture-symbols-modules glob patterns populate\nany additional modules they match."
         }
       },
       "type": "object",
@@ -2478,15 +2573,19 @@
       "properties": {
         "path": {
           "type": "string",
-          "description": "RealPath is the canonical absolute form of the path accessed (all symbolic links have been followed and relative path components like '.' and '..' have been removed)."
+          "description": "RealPath is the canonical absolute form of the path accessed (all symbolic links have been followed and relative path components like '.' and '..' have been removed). For a file found within an archive, it is the real path of the outermost archive on the scanned filesystem."
         },
         "layerID": {
           "type": "string",
-          "description": "FileSystemID is an ID representing and entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank."
+          "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in."
+        },
+        "fullPath": {
+          "type": "string",
+          "description": "FullPath is the full path to the file: RealPath, then for a file within an archive a \"!/\"-delimited chain of entry paths through any nested archives, ending with the file's own entry path (e.g. \"/app.war!/WEB-INF/lib/dep.jar!/META-INF/MANIFEST.MF\"). Each segment is a real path (links resolved) relative to the archive before it. For a file not within an archive it is blank, so coordinates outside archives are unchanged by the field (in JSON, equality and ID)."
         },
         "accessPath": {
           "type": "string",
-          "description": "AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path)"
+          "description": "AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path). For a file within an archive, it is a full path (see Coordinates.FullPath)."
         },
         "annotations": {
           "additionalProperties": {
@@ -2771,6 +2870,12 @@
             },
             {
               "$ref": "#/$defs/CondaMetadataEntry"
+            },
+            {
+              "$ref": "#/$defs/CpanDistribution"
+            },
+            {
+              "$ref": "#/$defs/CpanUnpackedRelease"
             },
             {
               "$ref": "#/$defs/DartPubspec"

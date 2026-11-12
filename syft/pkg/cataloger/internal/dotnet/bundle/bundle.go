@@ -1,18 +1,188 @@
 package bundle
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
+
+	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
+)
+
+const (
+	// maxBundleSearchSize bounds how far into a file findSignatureOffset looks for the bundle marker.
+	//
+	// The marker sits inside the executable structure, so the search legitimately covers a whole
+	// single-file bundle, which routinely runs past 100MB and can reach a few hundred for an app that
+	// embeds sizable assets. Clamping to the file length alone is not enough: a mostly empty file costs
+	// almost nothing inside a compressed layer, so a small artifact can still authorize an unbounded
+	// amount of reading. The trade-off is that a bundle larger than this loses its deps.json rather than
+	// being cataloged, which is the correct direction to fail. This mirrors maxDeclaredSectionSize in
+	// syft/internal/elfutil. What the search holds in memory is bounded separately, by
+	// markerSearchWindowSize, so raising this costs time rather than resident bytes.
+	maxBundleSearchSize = 512 * intFile.MB
+
+	// markerSearchWindowSize is how much of a file findSignatureOffset holds at once.
+	markerSearchWindowSize = 256 * intFile.KB
+
+	// bundleHeaderOffsetSize is the width of the little-endian header offset stored immediately before
+	// the marker.
+	bundleHeaderOffsetSize = 8
+
+	// maxDepsJSONSize bounds an embedded deps.json. These are dependency manifests, so real ones are
+	// measured in KB even for large applications.
+	maxDepsJSONSize = 3 * intFile.MB
+
+	// minManifestEntrySize is the smallest a single manifest entry can be: an 8 byte offset, an 8 byte
+	// size, a 1 byte file type, and at least 1 byte for the length-prefixed relative path.
+	minManifestEntrySize = 18
+
+	// minManifestEntrySizeV6 adds the 8 byte compressed size field that V6+ bundles carry.
+	minManifestEntrySizeV6 = minManifestEntrySize + 8
 )
 
 // dotNetBundleSignature is the SHA-256 hash of ".net core bundle" used to identify single-file bundles.
-var dotNetBundleSignature = []byte{
+var dotNetBundleSignature = [32]byte{
 	0x8b, 0x12, 0x02, 0xb9, 0x6a, 0x61, 0x20, 0x38,
 	0x72, 0x7b, 0x93, 0x02, 0x14, 0xd7, 0xa0, 0x32,
 	0x13, 0xf5, 0xb9, 0xe6, 0xef, 0xae, 0x33, 0x18,
 	0xee, 0x3b, 0x2d, 0xce, 0x24, 0xb3, 0x6a, 0xae,
+}
+
+// markerSearchOverlap is how much of each search window carries over into the next: the bytes a marker
+// could straddle the boundary with, plus the offset that precedes it. Retaining both is what lets a
+// windowed search give the same answer as reading the file whole - a marker split across two reads is
+// still matched, and the offset in front of it is always in the same window as the match.
+const markerSearchOverlap = bundleHeaderOffsetSize + len(dotNetBundleSignature) - 1
+
+// the slide at the end of findSignatureOffset carries markerSearchOverlap bytes into the next window and
+// advances by the rest, so a window no wider than the overlap would take a negative slice index and never
+// move. The window is five orders of magnitude clear of that today; this is what refuses to compile if
+// anyone shrinks it to the marker's own scale, which is the tempting thing to do to make a test cheaper.
+// The -1 is what makes equality fail too: the window has to exceed the overlap, not merely match it.
+const _ = uint(markerSearchWindowSize - markerSearchOverlap - 1)
+
+// ExtractDepsJSON returns the deps.json embedded in the .NET single-file bundle in r, or "" if r carries no
+// bundle marker.
+//
+// searchLimit is where the caller's format parsing says the executable structure ends, which is as far into
+// the file as the marker can be. It is only ever an optimization: it comes from user-controlled header
+// fields, so it may describe far more than the file holds or overflow negative. A limit that makes no sense
+// falls back to searching the whole file rather than searching nothing, since treating it as authoritative
+// would let one bogus header field hide a bundle from us entirely.
+func ExtractDepsJSON(r unionreader.UnionReader, searchLimit int64) (string, error) {
+	headerOffset, err := findBundleHeaderOffset(r, searchLimit)
+	if err != nil || headerOffset == 0 {
+		return "", err
+	}
+
+	return readDepsJSONFromBundleHeader(r, headerOffset)
+}
+
+// findBundleHeaderOffset searches the start of r for the .NET single-file bundle signature and returns the
+// bundle header offset stored in the 8 bytes immediately before it.
+//
+// Three outcomes are distinct on purpose, because collapsing any two of them loses information the caller
+// needs: 0 means there is no bundle here, an error means we could not tell, and a positive offset is the
+// answer. In particular the apphost ships the signature compiled in with a zero offset placeholder and only
+// gets a real one written when it is published as a single file, so a zero offset is the ordinary
+// framework-dependent executable rather than a malformed one.
+func findBundleHeaderOffset(r unionreader.UnionReader, searchLimit int64) (int64, error) {
+	// the length has to be established before anything is sized against it, and it has to be a length the
+	// reader can actually back: ReaderSize confirms it by reading the last byte, which is what keeps a
+	// reader that over-reports (a squashfs block that decompresses short does exactly that) from being
+	// treated as authoritative below
+	size, ok := intFile.ReaderSize(r)
+	if !ok {
+		return 0, errors.New("unable to determine the file's size, so the bundle marker search cannot be bounded")
+	}
+
+	// a limit that overflowed negative or overshoots the file tells us nothing, so fall back to the file
+	// itself rather than trusting it; either way the absolute cap is what bounds the allocation
+	limit := size
+	if searchLimit > 0 && searchLimit < size {
+		limit = searchLimit
+	}
+
+	// clamping is recorded rather than just logged: if the marker then turns up missing we cannot claim
+	// there is no bundle, only that we declined to look everywhere it could have been
+	var clamped bool
+	if limit > maxBundleSearchSize {
+		limit = maxBundleSearchSize
+		clamped = true
+	}
+
+	headerOffset, found, err := findSignatureOffset(r, limit)
+	if err != nil {
+		return 0, err
+	}
+	if !found {
+		if clamped {
+			return 0, fmt.Errorf("no bundle marker in the first %d bytes and the rest of the %d byte file was not searched", maxBundleSearchSize, size)
+		}
+		return 0, nil
+	}
+
+	if headerOffset == 0 {
+		// the marker is compiled into every apphost; only publishing as a single file fills in the offset
+		return 0, nil
+	}
+
+	// the offset comes straight out of the file, so it is the least trustworthy value here: everything
+	// downstream seeks to it and reads structures from it
+	if headerOffset < 0 || headerOffset >= size {
+		return 0, fmt.Errorf("bundle header offset %d lies outside the file (%d bytes)", headerOffset, size)
+	}
+
+	return headerOffset, nil
+}
+
+// findSignatureOffset searches the first limit bytes of r for the bundle marker and returns the header
+// offset stored in the 8 bytes immediately before it, or false if the marker is not there.
+func findSignatureOffset(r unionreader.UnionReader, limit int64) (int64, bool, error) {
+	// nothing shorter than the marker plus the offset in front of it can hold a usable match
+	if limit < int64(bundleHeaderOffsetSize+len(dotNetBundleSignature)) {
+		return 0, false, nil
+	}
+
+	buf := make([]byte, min(int64(markerSearchWindowSize), limit))
+
+	var (
+		windowStart int64 // offset in the file that buf[0] holds
+		filled      int   // bytes of buf that hold file content
+	)
+
+	for {
+		// a short read is not fatal: the marker may well be in what we did get. ReadAt reports a short
+		// read as io.EOF, and may report a full one that way too, so the count is what says how much
+		// there is to search.
+		want := min(int64(len(buf)-filled), limit-windowStart-int64(filled))
+		n, err := r.ReadAt(buf[filled:int64(filled)+want], windowStart+int64(filled))
+		filled += n
+		if err != nil && !errors.Is(err, io.EOF) {
+			return 0, false, err
+		}
+
+		if idx := bytes.Index(buf[:filled], dotNetBundleSignature[:]); idx >= 0 {
+			// only reachable in the first window: after a slide the overlap guarantees that a match not
+			// already seen begins at least bundleHeaderOffsetSize into the buffer
+			if idx < bundleHeaderOffsetSize {
+				return 0, false, nil
+			}
+			return int64(binary.LittleEndian.Uint64(buf[idx-bundleHeaderOffsetSize : idx])), true, nil
+		}
+
+		// a buffer the read could not fill means the reader ran out before the limit did
+		if filled < len(buf) || windowStart+int64(filled) >= limit {
+			return 0, false, nil
+		}
+
+		copy(buf, buf[filled-markerSearchOverlap:filled])
+		windowStart += int64(filled - markerSearchOverlap)
+		filled = markerSearchOverlap
+	}
 }
 
 // dotNetBundleHeader represents the fixed portion of the bundle header (version 1+)
@@ -31,7 +201,9 @@ type dotNetBundleHeaderV2 struct {
 	Flags                   uint64
 }
 
-// dotNetFileType represents the type of bundled file in the manifest
+// dotNetFileType represents the type of bundled file in the manifest, as of V2 bundles (.NET 5+).
+// note: V1 bundles (.NET Core 3.x) predate the unknown member at the head of this enum, so every type there is
+// one less than the values below (e.g. deps.json is 2, not 3). see depsJSONFileType().
 type dotNetFileType uint8
 
 const (
@@ -43,8 +215,8 @@ const (
 	dotNetFileTypeSymbols
 )
 
-// ReadDepsJSONFromBundleHeader parses the bundle header at the given offset and extracts deps.json content.
-func ReadDepsJSONFromBundleHeader(r io.ReadSeeker, headerOffset int64) (string, error) {
+// readDepsJSONFromBundleHeader parses the bundle header at the given offset and extracts deps.json content.
+func readDepsJSONFromBundleHeader(r unionreader.UnionReader, headerOffset int64) (string, error) {
 	if _, err := r.Seek(headerOffset, io.SeekStart); err != nil {
 		return "", err
 	}
@@ -91,7 +263,7 @@ func read7BitEncodedInt(r io.Reader) (int, error) {
 	shift := 0
 	for {
 		var b [1]byte
-		if _, err := r.Read(b[:]); err != nil {
+		if _, err := io.ReadFull(r, b[:]); err != nil {
 			return 0, err
 		}
 		result |= int(b[0]&0x7F) << shift
@@ -103,26 +275,88 @@ func read7BitEncodedInt(r io.Reader) (int, error) {
 			return 0, errors.New("invalid 7-bit encoded int")
 		}
 	}
+
+	// the shift above can carry past int32 where int is 32 bits, and a negative length would seek callers
+	// backwards and let a manifest walk re-read the same bytes for every file it claims
+	if result < 0 {
+		return 0, errors.New("negative 7-bit encoded int")
+	}
+
 	return result, nil
 }
 
 // readDepsJSONAtOffset reads deps.json content at a specific offset using seeks (avoiding loading entire file)
-func readDepsJSONAtOffset(r io.ReadSeeker, offset, size int64) (string, error) {
-	if size <= 0 || size > 3*1024*1024 { // 3MB max deps.json size in dotnet bundle
+func readDepsJSONAtOffset(r unionreader.UnionReader, offset, size int64) (string, error) {
+	if size <= 0 {
 		return "", nil
 	}
-	if _, err := r.Seek(offset, io.SeekStart); err != nil {
-		return "", fmt.Errorf("failed to seek to deps.json at offset %d: %w", offset, err)
+
+	// an oversized deps.json is reported rather than dropped: this is the file's whole dependency list, so
+	// returning "" here would hand back an SBOM that looks complete and silently is not
+	if size > maxDepsJSONSize {
+		return "", fmt.Errorf("embedded deps.json of %d bytes is past the %d byte limit", size, maxDepsJSONSize)
 	}
+
 	data := make([]byte, size)
-	if _, err := io.ReadFull(r, data); err != nil {
-		return "", fmt.Errorf("failed to read deps.json (%d bytes): %w", size, err)
+	// ReadAt leaves the caller's cursor alone and reports a short read as io.EOF, so the count is what says
+	// whether the whole document was there
+	if n, err := r.ReadAt(data, offset); err != nil && int64(n) < size {
+		return "", fmt.Errorf("failed to read deps.json (%d bytes at offset %d): %w", size, offset, err)
 	}
 	return string(data), nil
 }
 
+// depsJSONFileType returns the manifest file type that marks deps.json for the given bundle version. V1 bundles
+// (.NET Core 3.x) have no unknown member in the file type enum, so all of their types are shifted down by one --
+// reading them with the V2+ values silently matches runtimeconfig.json instead.
+func depsJSONFileType(majorVersion uint32) dotNetFileType {
+	if majorVersion < 2 {
+		return dotNetFileTypeDepsJSON - 1
+	}
+	return dotNetFileTypeDepsJSON
+}
+
+// checkManifestFits rejects a manifest whose declared entry count could not fit in the bytes left after
+// the current position, which means the count came from a malformed header.
+func checkManifestFits(r unionreader.UnionReader, numFiles, minEntrySize int64) error {
+	pos, err := r.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return err
+	}
+
+	end, ok := intFile.ReaderSize(r)
+	if !ok {
+		return errors.New("unable to determine the file's size, so the manifest entry count cannot be weighed against it")
+	}
+
+	if remaining := end - pos; numFiles > remaining/minEntrySize {
+		return fmt.Errorf("manifest claims %d entries but only %d bytes remain", numFiles, remaining)
+	}
+
+	return nil
+}
+
 // findDepsJSONInManifest parses manifest entries to find deps.json (for V1 bundles or fallback)
-func findDepsJSONInManifest(r io.ReadSeeker, numFiles int32, majorVersion uint32) (string, error) {
+func findDepsJSONInManifest(r unionreader.UnionReader, numFiles int32, majorVersion uint32) (string, error) {
+	depsJSONType := depsJSONFileType(majorVersion)
+
+	if numFiles < 0 {
+		return "", fmt.Errorf("negative embedded file count: %d", numFiles)
+	}
+
+	// numFiles is a header field, so it can claim up to 2^31-1 entries. The walk terminates either way,
+	// since every iteration reads forward and eventually hits EOF, but a count the remaining bytes could
+	// not possibly hold means the header is malformed rather than describing a manifest worth hundreds of
+	// millions of reads.
+	minEntrySize := int64(minManifestEntrySize)
+	if majorVersion >= 6 {
+		minEntrySize = minManifestEntrySizeV6
+	}
+
+	if err := checkManifestFits(r, int64(numFiles), minEntrySize); err != nil {
+		return "", err
+	}
+
 	for i := int32(0); i < numFiles; i++ {
 		var offset, size int64
 
@@ -151,7 +385,7 @@ func findDepsJSONInManifest(r io.ReadSeeker, numFiles int32, majorVersion uint32
 			return "", err
 		}
 
-		if fileType == dotNetFileTypeDepsJSON && size > 0 {
+		if fileType == depsJSONType && size > 0 {
 			// save current position to resume manifest parsing if needed
 			currentPos, err := r.Seek(0, io.SeekCurrent)
 			if err != nil {

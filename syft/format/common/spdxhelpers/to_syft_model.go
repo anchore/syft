@@ -34,7 +34,12 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 		return nil, errors.New("cannot convert SPDX document to Syft model because document is nil")
 	}
 
+	removeNilElements(doc)
+
 	spdxIDMap := make(map[string]any)
+
+	// found before the root package and its relationships are removed
+	sourceFile := findSourceFile(doc)
 
 	s := &sbom.SBOM{
 		Source: extractSource(spdxIDMap, doc),
@@ -48,11 +53,33 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 
 	collectSyftPackages(s, spdxIDMap, doc)
 
-	collectSyftFiles(s, spdxIDMap, doc)
+	collectSyftFiles(s, spdxIDMap, doc, sourceFile)
 
 	s.Relationships = toSyftRelationships(spdxIDMap, doc)
 
 	return s, nil
+}
+
+// removeNilElements drops null entries from the document's lists. A JSON null (or an element the SPDX version
+// converter cannot map) decodes to a nil pointer, and the rest of the conversion dereferences these elements.
+func removeNilElements(doc *spdx.Document) {
+	doc.Packages = withoutNil(doc.Packages)
+	for _, p := range doc.Packages {
+		p.Files = withoutNil(p.Files)
+		p.PackageExternalReferences = withoutNil(p.PackageExternalReferences)
+	}
+	doc.Files = withoutNil(doc.Files)
+	doc.Relationships = withoutNil(doc.Relationships)
+}
+
+func withoutNil[T any](items []*T) []*T {
+	var out []*T
+	for _, item := range items {
+		if item != nil {
+			out = append(out, item)
+		}
+	}
+	return out
 }
 
 func isDirectory(name string) bool {
@@ -83,20 +110,30 @@ func removeRelationships(relationships []*spdx.Relationship, spdxID spdx.Element
 }
 
 func findRootPackages(doc *spdx.Document) (out []*spdx.Package) {
+	// index the DESCRIBES / DESCRIBED_BY relationships once, counting how many
+	// times each element is described by the document, so that the result
+	// matches the previous packages x relationships scan exactly (one entry per
+	// matching relationship) without the quadratic cost.
+	describedCount := make(map[spdx.ElementID]int)
+	for _, r := range doc.Relationships {
+		if r == nil {
+			continue
+		}
+		switch {
+		case r.RefA.ElementRefID == "DOCUMENT" && r.Relationship == spdx.RelationshipDescribes:
+			describedCount[r.RefB.ElementRefID]++
+		case r.RefB.ElementRefID == "DOCUMENT" && r.Relationship == spdx.RelationshipDescribedBy:
+			describedCount[r.RefA.ElementRefID]++
+		}
+	}
+	if len(describedCount) == 0 {
+		return nil
+	}
 	for _, p := range doc.Packages {
-		for _, r := range doc.Relationships {
-			describes := r.RefA.ElementRefID == "DOCUMENT" &&
-				r.Relationship == spdx.RelationshipDescribes &&
-				r.RefB.ElementRefID == p.PackageSPDXIdentifier
-
-			describedBy := r.RefB.ElementRefID == "DOCUMENT" &&
-				r.Relationship == spdx.RelationshipDescribedBy &&
-				r.RefA.ElementRefID == p.PackageSPDXIdentifier
-
-			if !describes && !describedBy {
-				continue
-			}
-
+		if p == nil {
+			continue
+		}
+		for i := 0; i < describedCount[p.PackageSPDXIdentifier]; i++ {
 			out = append(out, p)
 		}
 	}
@@ -113,12 +150,24 @@ func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Descript
 	}
 
 	p := rootPackages[0]
+	rootType := syftRootType(p.PackageSPDXIdentifier)
 
-	switch p.PrimaryPackagePurpose {
+	purpose := p.PrimaryPackagePurpose
+	if purpose == "" {
+		// SPDX 2.1 and 2.2 have no primary package purpose, so fall back to the source type syft puts in the root's ID
+		purpose = syftRootPurpose(rootType)
+	}
+
+	switch purpose {
 	case spdxPrimaryPurposeContainer:
 		src = containerSource(p)
 	case spdxPrimaryPurposeFile:
 		src = fileSource(p)
+	case spdxPrimaryPurposeOther:
+		// syft writes a root package even for a source it knows nothing about, which is not a package in the SBOM
+		if rootType != prefixUnknown {
+			return src
+		}
 	default:
 		return src
 	}
@@ -129,6 +178,30 @@ func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Descript
 	doc.Relationships = removeRelationships(doc.Relationships, p.PackageSPDXIdentifier)
 
 	return src
+}
+
+// syftRootType returns the source type syft encodes in a root package ID ("DocumentRoot-<type>-<name>"), or "" for
+// any other ID.
+func syftRootType(id spdx.ElementID) string {
+	rest, ok := strings.CutPrefix(string(id), "DocumentRoot-")
+	if !ok {
+		return ""
+	}
+	rootType, _, _ := strings.Cut(rest, "-")
+	return rootType
+}
+
+// syftRootPurpose returns the primary package purpose syft writes for a root package of the given source type.
+func syftRootPurpose(rootType string) string {
+	switch rootType {
+	case prefixImage, prefixOCIModel, prefixSnap:
+		return spdxPrimaryPurposeContainer
+	case prefixDirectory, prefixFile:
+		return spdxPrimaryPurposeFile
+	case prefixUnknown:
+		return spdxPrimaryPurposeOther
+	}
+	return ""
 }
 
 func containerSource(p *spdx.Package) source.Description {
@@ -191,7 +264,7 @@ func fileSource(p *spdx.Package) source.Description {
 	}
 
 	supplier := ""
-	if p.PackageSupplier.Supplier != helpers.NOASSERTION {
+	if p.PackageSupplier != nil && p.PackageSupplier.Supplier != helpers.NOASSERTION {
 		supplier = p.PackageSupplier.Supplier
 	}
 
@@ -309,24 +382,120 @@ func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Docum
 	}
 }
 
-func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document) {
+// findSourceFile returns the file the root package DESCRIBES when it CONTAINS files: an archive scanned as the source
+// is the scanned root, so what it contains is at the root rather than within an archive.
+func findSourceFile(doc *spdx.Document) spdx.ElementID {
+	roots := findRootPackages(doc)
+	if len(roots) != 1 {
+		return ""
+	}
+	var described spdx.ElementID
+	containers := map[spdx.ElementID]bool{}
+	for _, r := range doc.Relationships {
+		switch helpers.RelationshipType(r.Relationship) {
+		case helpers.DescribesRelationship:
+			if r.RefA.ElementRefID == roots[0].PackageSPDXIdentifier {
+				described = r.RefB.ElementRefID
+			}
+		case helpers.ContainsRelationship:
+			containers[r.RefA.ElementRefID] = true
+		}
+	}
+	if !containers[described] {
+		return ""
+	}
+	return described
+}
+
+func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document, sourceFile spdx.ElementID) {
+	files := map[spdx.ElementID]*spdx.File{}
 	for _, p := range doc.Packages {
 		for _, f := range p.Files {
-			l := toSyftLocation(f)
-			spdxIDMap[string(f.FileSPDXIdentifier)] = l
+			files[f.FileSPDXIdentifier] = f
+		}
+	}
+	for _, f := range doc.Files {
+		files[f.FileSPDXIdentifier] = f
+	}
 
-			s.Artifacts.FileMetadata[l.Coordinates] = toFileMetadata(f)
-			s.Artifacts.FileDigests[l.Coordinates] = toFileDigests(f)
+	nested := newNestedFiles[spdx.ElementID]()
+	for id, f := range files {
+		nested.own[id] = toSyftCoordinates(f)
+	}
+	if c, ok := nested.own[sourceFile]; ok {
+		// the scanned root
+		c.RealPath = ""
+		nested.own[sourceFile] = c
+	}
+	for _, r := range doc.Relationships {
+		container, entry := r.RefA.ElementRefID, r.RefB.ElementRefID
+		switch helpers.RelationshipType(r.Relationship) {
+		case helpers.ContainsRelationship:
+		case helpers.ContainedByRelationship:
+			container, entry = entry, container
+		default:
+			continue
+		}
+		// the scanned root holds what is at the root, not within an archive
+		if files[container] != nil && files[entry] != nil && !isScanRoot(nested.own[container]) {
+			nested.container[entry] = container
 		}
 	}
 
-	for _, f := range doc.Files {
-		l := toSyftLocation(f)
-		spdxIDMap[string(f.FileSPDXIdentifier)] = l
+	for id, f := range files {
+		c, ok := nested.coordinates(id)
+		if !ok {
+			continue
+		}
+		l := file.NewLocationFromCoordinates(c)
+		spdxIDMap[string(id)] = l
 
 		s.Artifacts.FileMetadata[l.Coordinates] = toFileMetadata(f)
 		s.Artifacts.FileDigests[l.Coordinates] = toFileDigests(f)
 	}
+}
+
+// nestedFiles resolves the coordinates of files within archives, where an archive file CONTAINS a file
+// named by its path within the archive.
+type nestedFiles[K comparable] struct {
+	own       map[K]file.Coordinates
+	container map[K]K
+	resolved  map[K]file.Coordinates
+	refused   map[K]bool
+}
+
+func newNestedFiles[K comparable]() nestedFiles[K] {
+	return nestedFiles[K]{own: map[K]file.Coordinates{}, container: map[K]K{}, resolved: map[K]file.Coordinates{}, refused: map[K]bool{}}
+}
+
+// coordinates reports false for a file within a chain a scan would refuse (a bad name, too deep, too long), and
+// for everything within it. Such a file is dropped rather than moved, since no scan put it anywhere else.
+func (n nestedFiles[K]) coordinates(id K) (file.Coordinates, bool) {
+	// walk up to a resolved or outermost file, then resolve back down, so a long chain costs no stack
+	chain := []K{id}
+	for {
+		next, ok := n.container[chain[len(chain)-1]]
+		if _, resolved := n.resolved[chain[len(chain)-1]]; resolved || !ok {
+			break
+		}
+		// a containment cycle ends where it started
+		delete(n.container, chain[len(chain)-1])
+		chain = append(chain, next)
+	}
+	for i := len(chain) - 1; i >= 0; i-- {
+		if _, ok := n.resolved[chain[i]]; ok {
+			continue
+		}
+		c := n.own[chain[i]]
+		if i+1 < len(chain) {
+			container := chain[i+1]
+			nested, ok := internal.NestedCoordinates(n.resolved[container], c.RealPath)
+			n.refused[chain[i]] = !ok || n.refused[container]
+			c = nested
+		}
+		n.resolved[chain[i]] = c
+	}
+	return n.resolved[id], !n.refused[id]
 }
 
 func toFileDigests(f *spdx.File) (digests []file.Digest) {
@@ -382,6 +551,10 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 		}
 		a := spdxIDMap[string(r.RefA.ElementRefID)]
 		b := spdxIDMap[string(r.RefB.ElementRefID)]
+		if rel, ok := fileContainsRelationship(helpers.RelationshipType(r.Relationship), a, b); ok {
+			out = append(out, rel)
+			continue
+		}
 		from, fromOk := a.(pkg.Package)
 		toPackage, toPackageOk := b.(pkg.Package)
 		toLocation, toLocationOk := b.(file.Location)
@@ -435,6 +608,31 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 	return out
 }
 
+// fileContainsRelationship decodes an archive file containing a file or package within it.
+func fileContainsRelationship(typ helpers.RelationshipType, a, b any) (artifact.Relationship, bool) {
+	switch typ {
+	case helpers.ContainsRelationship:
+	case helpers.ContainedByRelationship:
+		a, b = b, a
+	default:
+		return artifact.Relationship{}, false
+	}
+	container, ok := a.(file.Location)
+	if !ok || isScanRoot(container.Coordinates) {
+		return artifact.Relationship{}, false
+	}
+	var entry artifact.Identifiable
+	switch to := b.(type) {
+	case file.Location:
+		entry = to.Coordinates
+	case pkg.Package:
+		entry = to
+	default:
+		return artifact.Relationship{}, false
+	}
+	return artifact.Relationship{From: container.Coordinates, To: entry, Type: artifact.ContainsRelationship}, true
+}
+
 // collectPackageFileRelationships add relationships for direct files
 func collectPackageFileRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out []artifact.Relationship) {
 	for _, p := range doc.Packages {
@@ -460,23 +658,22 @@ func collectPackageFileRelationships(spdxIDMap map[string]any, doc *spdx.Documen
 }
 
 func toSyftCoordinates(f *spdx.File) file.Coordinates {
-	const layerIDPrefix = "layerID: "
-	var fileSystemID string
-	if strings.HasPrefix(f.FileComment, layerIDPrefix) {
-		fileSystemID = strings.TrimPrefix(f.FileComment, layerIDPrefix)
-	}
-	if strings.HasPrefix(string(f.FileSPDXIdentifier), layerIDPrefix) {
-		fileSystemID = strings.TrimPrefix(string(f.FileSPDXIdentifier), layerIDPrefix)
-	}
-	return file.Coordinates{
-		RealPath:     f.FileName,
-		FileSystemID: fileSystemID,
-	}
+	return coordinatesFromFile(f.FileName, f.FileComment, string(f.FileSPDXIdentifier))
 }
 
-func toSyftLocation(f *spdx.File) file.Location {
-	l := file.NewVirtualLocationFromCoordinates(toSyftCoordinates(f), f.FileName)
-	return l
+func coordinatesFromFile(name, comment, id string) file.Coordinates {
+	// the scanned root
+	if name == "." {
+		name = ""
+	}
+	c := file.NewCoordinates(name, "")
+	if v, ok := strings.CutPrefix(comment, layerIDCommentPrefix); ok {
+		c.FileSystemID = v
+	}
+	if v, ok := strings.CutPrefix(id, layerIDCommentPrefix); ok {
+		c.FileSystemID = v
+	}
+	return c
 }
 
 func requireAndTrimPrefix(val any, prefix string) string {

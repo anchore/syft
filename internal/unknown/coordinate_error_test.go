@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -168,9 +169,7 @@ func Test_Join(t *testing.T) {
 }
 
 func Test_flatten(t *testing.T) {
-	coords := file.Coordinates{
-		RealPath: "real/path",
-	}
+	coords := file.NewCoordinates("real/path", "")
 	e1 := fmt.Errorf("e1")
 	e2 := fmt.Errorf("e2")
 	c1 := New(coords, fmt.Errorf("c1"))
@@ -233,4 +232,12 @@ func Test_Append(t *testing.T) {
 	e2 = Append(e1, file.NewLocation("l2"), nil)
 	e3 = Appendf(e2, file.NewLocation("l3"), "%s", "e3")
 	require.Equal(t, "l1: e1\nl3: e3", e3.Error())
+}
+
+func Test_ExtractCoordinateErrors_keepsNilUnwrap(t *testing.T) {
+	// sync.PanicError unwraps to nil when the panic value is not an error
+	err := sync.PanicError{Value: "x"}
+	unknowns, remaining := ExtractCoordinateErrors(err)
+	require.Empty(t, unknowns)
+	require.Equal(t, err, remaining)
 }

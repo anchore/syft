@@ -33,7 +33,7 @@ type LocationData struct {
 	// note: it is IMPORTANT to ignore anything but the coordinates for a Location when considering the ID (hash value)
 	// since the coordinates are the minimally correct ID for a location (symlinks should not come into play)
 
-	// AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path)
+	// AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path). For a file within an archive, it is a full path (see Coordinates.FullPath).
 	AccessPath string `hash:"ignore" json:"accessPath"`
 
 	// ref is the stereoscope file reference relative to the stereoscope.FileCatalog that has more information about this location.
@@ -110,12 +110,12 @@ func NewVirtualLocation(realPath, accessPath string) Location {
 		}}
 }
 
-// NewLocationFromCoordinates creates a new location for the given Coordinates.
+// NewLocationFromCoordinates creates a new location for the given Coordinates, accessed by their full path.
 func NewLocationFromCoordinates(coordinates Coordinates) Location {
 	return Location{
 		LocationData: LocationData{
 			Coordinates: coordinates,
-			AccessPath:  coordinates.RealPath,
+			AccessPath:  coordinates.FullNestedPath(),
 		},
 		LocationMetadata: LocationMetadata{
 			Annotations: map[string]string{},
@@ -141,6 +141,26 @@ func NewLocationFromImage(accessPath string, ref file.Reference, img *image.Imag
 		LocationData: LocationData{
 			Coordinates: Coordinates{
 				RealPath:     string(ref.RealPath),
+				FileSystemID: layer.Metadata.Digest,
+			},
+			AccessPath: accessPath,
+			ref:        ref,
+		},
+		LocationMetadata: LocationMetadata{
+			Annotations: map[string]string{},
+		},
+	}
+}
+
+// NewVirtualLocationFromImage creates a new Location surfaced at realPath but whose contents and metadata are
+// described by the given reference. Note that RealPath may differ from ref.RealPath; callers must not assume the two
+// agree for these locations. The FileSystemID comes from the given ref's layer.
+func NewVirtualLocationFromImage(realPath, accessPath string, ref file.Reference, img *image.Image) Location {
+	layer := img.FileCatalog.Layer(ref)
+	return Location{
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     realPath,
 				FileSystemID: layer.Metadata.Digest,
 			},
 			AccessPath: accessPath,
@@ -185,11 +205,13 @@ func NewVirtualLocationFromDirectory(responsePath, responseAccessPath string, re
 	}
 }
 
+// Path is the path this location was accessed by, or its full path (see Coordinates.FullNestedPath). For a
+// file within an archive both are full paths, so use LocalPath for path arithmetic against the resolver.
 func (l Location) Path() string {
 	if l.AccessPath != "" {
 		return l.AccessPath
 	}
-	return l.RealPath
+	return l.FullNestedPath()
 }
 
 func (l Location) String() string {
@@ -200,8 +222,12 @@ func (l Location) String() string {
 
 	str += fmt.Sprintf("RealPath=%q", l.RealPath)
 
-	if l.AccessPath != "" && l.AccessPath != l.RealPath {
+	if l.AccessPath != "" {
 		str += fmt.Sprintf(" AccessPath=%q", l.AccessPath)
+	}
+
+	if l.FullNestedPath() != l.RealPath {
+		str += fmt.Sprintf(" FullPath=%q", l.FullNestedPath())
 	}
 
 	if l.FileSystemID != "" {
@@ -211,7 +237,7 @@ func (l Location) String() string {
 }
 
 func (l Location) Equals(other Location) bool {
-	return l.RealPath == other.RealPath &&
+	return l.FullNestedPath() == other.FullNestedPath() &&
 		l.AccessPath == other.AccessPath &&
 		l.FileSystemID == other.FileSystemID
 }

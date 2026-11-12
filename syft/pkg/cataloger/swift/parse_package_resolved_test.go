@@ -122,8 +122,7 @@ func TestParsePackageResolved_empty(t *testing.T) {
 
 	dir := t.TempDir()
 	fixture = filepath.Join(dir, "Package.resolved")
-	_, err := os.Create(fixture)
-	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(fixture, nil, 0600))
 
 	pkgtest.TestFileParser(t, fixture, parsePackageResolved, nil, nil)
 }

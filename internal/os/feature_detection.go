@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -48,7 +49,7 @@ func findRhelFeatures(resolver file.Resolver, release *linux.Release) error {
 	for _, contentManifestFile := range contentManifestFiles {
 		found, err := fileMatchesAny(resolver, contentManifestFile, rhelEUSPatterns...)
 		if err != nil {
-			return fmt.Errorf("unable to read content manifest from %s: %w", contentManifestFile.RealPath, err)
+			return fmt.Errorf("unable to read content manifest from %s: %w", contentManifestFile.FullNestedPath(), err)
 		}
 		if found {
 			release.ExtendedSupport = true
@@ -162,9 +163,9 @@ func hasActiveUbuntuESMService(resolver file.Resolver) (bool, error) {
 func hasEnabledESMServiceInStatus(resolver file.Resolver, location file.Location) (bool, error) {
 	contents, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		return false, fmt.Errorf("unable to read ubuntu-advantage status from %s: %w", location.RealPath, err)
+		return false, fmt.Errorf("unable to read ubuntu-advantage status from %s: %w", location.FullNestedPath(), err)
 	}
-	defer internal.CloseAndLogError(contents, location.RealPath)
+	defer internal.CloseAndLogError(contents, location.FullNestedPath())
 
 	var status struct {
 		Services []struct {
@@ -173,7 +174,7 @@ func hasEnabledESMServiceInStatus(resolver file.Resolver, location file.Location
 		} `json:"services"`
 	}
 	if err := json.NewDecoder(contents).Decode(&status); err != nil {
-		return false, fmt.Errorf("unable to parse ubuntu-advantage status from %s: %w", location.RealPath, err)
+		return false, fmt.Errorf("unable to parse ubuntu-advantage status from %s: %w", location.FullNestedPath(), err)
 	}
 
 	// pro status values are enabled/disabled/n-a/warning/—; only "enabled" proves the stream is active.
@@ -191,19 +192,16 @@ func hasInstalledESMPackage(packages *pkg.Collection) bool {
 	if packages == nil {
 		return false
 	}
-	for p := range packages.Enumerate(pkg.DebPkg) {
-		if esmVersionPattern.MatchString(p.Version) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(packages.Sorted(pkg.DebPkg), func(p pkg.Package) bool {
+		return esmVersionPattern.MatchString(p.Version)
+	})
 }
 
 func fileMatchesAny(resolver file.Resolver, location file.Location, patterns ...*regexp.Regexp) (bool, error) {
 	contents, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		return false, fmt.Errorf("unable to read %s: %w", location.RealPath, err)
+		return false, fmt.Errorf("unable to read %s: %w", location.FullNestedPath(), err)
 	}
-	defer internal.CloseAndLogError(contents, location.RealPath)
+	defer internal.CloseAndLogError(contents, location.FullNestedPath())
 	return internal.MatchAnyFromReader(contents, patterns...)
 }

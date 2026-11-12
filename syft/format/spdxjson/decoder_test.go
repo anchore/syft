@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -182,4 +183,38 @@ func TestDecoder_Identify(t *testing.T) {
 			assert.Equal(t, test.version, formatVersion)
 		})
 	}
+}
+
+func TestDecoder_DecodeNullElements(t *testing.T) {
+	// a JSON null in these lists (or an SPDX 2.1 package the version converter cannot map) decodes to a nil pointer.
+	// a null entry directly in "packages" is not covered: for SPDX 2.2 and 2.3 it panics inside spdx/tools-golang
+	for _, doc := range []string{
+		`{"spdxVersion":"SPDX-2.1","packages":[{}]}`,
+		`{"spdxVersion":"SPDX-2.3","files":[null]}`,
+		`{"spdxVersion":"SPDX-2.3","packages":[{"SPDXID":"SPDXRef-a","name":"a","files":[null]}]}`,
+		`{"spdxVersion":"SPDX-2.3","packages":[{"SPDXID":"SPDXRef-a","name":"a","externalRefs":[null]}]}`,
+	} {
+		t.Run(doc, func(t *testing.T) {
+			assert.NotPanics(t, func() {
+				_, _, _, _ = NewFormatDecoder().Decode(strings.NewReader(doc))
+			})
+		})
+	}
+}
+
+func TestDecoder_DecodeFileRootWithoutSupplier(t *testing.T) {
+	// the package supplier is optional in SPDX, including on the package the document describes
+	f, err := os.Open("testdata/spdx/file-root-without-supplier.spdx.json")
+	require.NoError(t, err)
+	defer f.Close()
+
+	s, _, _, err := NewFormatDecoder().Decode(f)
+	require.NoError(t, err)
+	assert.Equal(t, "app.tar.gz", s.Source.Name)
+
+	var names []string
+	for _, p := range s.Artifacts.Packages.Sorted() {
+		names = append(names, p.Name)
+	}
+	assert.Equal(t, []string{"requests"}, names)
 }

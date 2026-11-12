@@ -15,7 +15,9 @@ application: # AUTO-GENERATED - application-level config keys
   - key: dotnet.relax-dll-claims-when-bundling-detected
     description: show all packages from the deps.json if bundling tooling is present as a dependency (e.g. ILRepack)
   - key: golang.capture-symbols
-    description: 'capture function symbols from the binary symbol table (pclntab). valid values are: "none" (disabled), "stdlib" (only the synthetic stdlib package), and "all" (all module packages plus stdlib)'
+    description: 'capture function symbols from the binary symbol table (pclntab). valid values are: "none" (disabled), "stdlib" (only the synthetic stdlib package), "extended-stdlib" (stdlib plus every module under golang.org/x/), and "all" (all module packages plus stdlib)'
+  - key: golang.capture-symbols-modules
+    description: glob patterns matched against go module paths (e.g. github.com/klauspost/**) that should have symbols captured in addition to whatever capture-symbols selects. ** crosses path separators, * does not. a trailing major version suffix is ignored when matching, so github.com/foo/* covers github.com/foo/bar/v2; spelling a suffix out in the pattern selects only that major version. this can only widen the selection, never narrow it, and is inert when capture-symbols is none
   - key: golang.local-mod-cache-dir
     description: specify an explicit go mod cache directory, if unset this defaults to $GOPATH/pkg/mod or $HOME/go/pkg/mod
   - key: golang.local-vendor-dir

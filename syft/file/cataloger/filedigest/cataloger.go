@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"errors"
 	"fmt"
+	"runtime/debug"
 
 	"github.com/dustin/go-humanize"
 
@@ -41,15 +42,27 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 		locations = intCataloger.AllRegularFiles(ctx, resolver)
 	} else {
 		for _, c := range coordinates {
-			locs, err := resolver.FilesByPath(c.RealPath)
+			locs, err := resolver.FilesByPath(c.FullNestedPath())
 			if err != nil {
-				return nil, fmt.Errorf("unable to get file locations for path %q: %w", c.RealPath, err)
+				return nil, fmt.Errorf("unable to get file locations for path %q: %w", c.FullNestedPath(), err)
 			}
 			locations = append(locations, locs...)
 		}
 	}
 
-	prog := catalogingProgress(int64(len(locations)))
+	// symlinks resolve to the same file, so drop repeated coordinates to avoid hashing the same contents more than once
+	seen := make(map[file.Coordinates]struct{}, len(locations))
+	unique := locations[:0]
+	for _, l := range locations {
+		if _, ok := seen[l.Coordinates]; ok {
+			continue
+		}
+		seen[l.Coordinates] = struct{}{}
+		unique = append(unique, l)
+	}
+	locations = unique
+
+	prog := catalogingProgress(ctx, int64(len(locations)))
 
 	err := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(locations), func(location file.Location) ([]file.Digest, error) {
 		result, err := i.catalogLocation(ctx, resolver, location)
@@ -58,10 +71,10 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 			return nil, nil
 		}
 
-		prog.AtomicStage.Set(location.Path())
+		prog.AtomicStage.Set(location.FullNestedPath())
 
 		if internal.IsErrPathPermission(err) {
-			log.Debugf("file digests cataloger skipping %q: %+v", location.RealPath, err)
+			log.Debugf("file digests cataloger skipping %q: %+v", location.FullNestedPath(), err)
 			return nil, unknown.New(location, err)
 		}
 
@@ -87,7 +100,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 	return results, err
 }
 
-func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver, location file.Location) ([]file.Digest, error) {
+func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver, location file.Location) (digests []file.Digest, err error) {
 	meta, err := resolver.FileMetadataByLocation(location)
 	if err != nil {
 		return nil, err
@@ -102,17 +115,26 @@ func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver,
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(contentReader, location.AccessPath)
+	defer internal.CloseAndLogError(contentReader, location.FullNestedPath())
 
-	digests, err := intFile.NewDigestsFromFile(ctx, contentReader, i.hashes)
+	defer func() {
+		if r := recover(); r != nil {
+			// the caller records this as an unknown for the location instead of failing the whole SBOM
+			log.WithFields("path", location.FullNestedPath(), "panic", r).Debug("recovered from panic while digesting file")
+			log.Tracef("file digest panic stack:\n%s", debug.Stack())
+			digests, err = nil, fmt.Errorf("recovered from panic while digesting file: %v", r)
+		}
+	}()
+
+	digests, err = intFile.NewDigestsFromFile(ctx, contentReader, i.hashes)
 	if err != nil {
-		return nil, internal.ErrPath{Context: "digests-cataloger", Path: location.RealPath, Err: err}
+		return nil, internal.ErrPath{Context: "digests-cataloger", Path: location.FullNestedPath(), Err: err}
 	}
 
 	return digests, nil
 }
 
-func catalogingProgress(locations int64) *monitor.TaskProgress {
+func catalogingProgress(ctx context.Context, locations int64) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "File digests",
@@ -120,5 +142,5 @@ func catalogingProgress(locations int64) *monitor.TaskProgress {
 		ParentID: monitor.TopLevelCatalogingTaskID,
 	}
 
-	return bus.StartCatalogerTask(info, locations, "")
+	return bus.StartCatalogerTask(ctx, info, locations, "")
 }

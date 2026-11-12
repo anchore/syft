@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"sync"
 
 	"github.com/mholt/archives"
@@ -24,7 +25,10 @@ import (
 	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ source.Source = (*fileSource)(nil)
+var (
+	_ source.Source       = (*fileSource)(nil)
+	_ source.PathExcluder = (*fileSource)(nil)
+)
 
 type Config struct {
 	Path               string
@@ -66,8 +70,14 @@ func New(cfg Config) (source.Source, error) {
 		return nil, fmt.Errorf("given path is a directory: %q", cfg.Path)
 	}
 
+	mimeType := stereoFile.MIMEType(f)
+
 	var digests []file.Digest
 	if len(cfg.DigestAlgorithms) > 0 {
+		// reading the MIME type moved past the start of the file
+		if _, err := f.Seek(0, io.SeekStart); err != nil {
+			return nil, fmt.Errorf("unable to seek file=%q: %w", cfg.Path, err)
+		}
 		digests, err = intFile.NewDigestsFromFile(context.TODO(), f, cfg.DigestAlgorithms)
 		if err != nil {
 			return nil, fmt.Errorf("unable to calculate digests for file=%q: %w", cfg.Path, err)
@@ -94,7 +104,7 @@ func New(cfg Config) (source.Source, error) {
 		analysisPath:     analysisPath,
 		digestForVersion: versionDigest,
 		digests:          digests,
-		mimeType:         stereoFile.MIMEType(f),
+		mimeType:         mimeType,
 	}, nil
 }
 
@@ -153,7 +163,7 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 
 	if isArchiveAnalysis := fi.IsDir(); isArchiveAnalysis {
 		// this is an analysis of an archive file... we should scan the directory where the archive contents
-		res, err := fileresolver.NewFromDirectory(s.analysisPath, "", exclusionFunctions...)
+		res, err := fileresolver.NewFromDirectory(s.analysisPath, s.analysisPath, exclusionFunctions...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 		}
@@ -170,6 +180,11 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 
 	s.resolver = res
 	return s.resolver, nil
+}
+
+// ExcludedPaths returns the exclusion patterns this source was configured with.
+func (s fileSource) ExcludedPaths() []string {
+	return slices.Clone(s.config.Exclude.Paths)
 }
 
 func (s *fileSource) Close() error {
@@ -214,6 +229,11 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 
 	envelopedUnarchiver, _, err := intFile.IdentifyArchive(context.Background(), path, nil)
 	if unarchiver, ok := envelopedUnarchiver.(archives.Extractor); err == nil && ok {
+		if isZipWithRarName(path, envelopedUnarchiver) {
+			log.Debugf("source path has a .rar name but zip content (e.g. a Java resource adapter archive); analyzing it as a single file")
+			return analysisPath, cleanupFn, nil
+		}
+
 		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
 		if err != nil {
 			return "", cleanupFn, fmt.Errorf("unable to unarchive source file: %w", err)
@@ -223,6 +243,25 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 	}
 
 	return analysisPath, cleanupFn, nil
+}
+
+// isZipWithRarName reports whether the archive format was identified as RAR from the file name while the file
+// content is a zip archive. Archive identification above uses the file name only, and ".rar" is also the extension
+// of Java resource adapter archives (JCA), which are zip files. Such a file is left for the java cataloger to read,
+// the same way .jar, .war and .ear files are, instead of being handed to the RAR extractor, which cannot read it.
+func isZipWithRarName(path string, format archives.Format) bool {
+	if _, ok := format.(archives.Rar); !ok {
+		return false
+	}
+
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	match, err := archives.Zip{}.Match(context.Background(), "", f)
+	return err == nil && match.ByStream
 }
 
 func digestOfFileContents(path string) string {

@@ -37,7 +37,7 @@ var (
 func parseDpkgDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	metadata, err := parseDpkgStatus(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to catalog dpkg DB=%q: %w", reader.RealPath, err)
+		return nil, nil, fmt.Errorf("unable to catalog dpkg DB=%q: %w", reader.FullNestedPath(), err)
 	}
 
 	dbLoc := reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
@@ -61,7 +61,7 @@ func findDpkgInfoFiles(name string, resolver file.Resolver, dbLocation file.Loca
 	// and the md5sum information is under /var/lib/dpkg/info/; however, for distroless the installed
 	// package info is across multiple files under /var/lib/dpkg/status.d/ and the md5sums are contained in
 	// the same directory
-	searchPath := path.Dir(dbLocation.RealPath)
+	searchPath := path.Dir(dbLocation.LocalPath())
 
 	if !strings.HasSuffix(searchPath, "status.d") {
 		searchPath = path.Join(searchPath, "info")
@@ -141,7 +141,12 @@ func (d *dpkgExtractedMetadata) toDpkgEntry() pkg.DpkgDBEntry {
 
 	// there may be an optional conffiles section that we should persist as files
 	if d.Conffiles != "" {
-		entry.Files = parseDpkgConffileInfo(strings.NewReader(d.Conffiles))
+		var err error
+		entry.Files, err = parseDpkgConffileInfo(strings.NewReader(d.Conffiles))
+		if err != nil {
+			// toDpkgEntry has no error return, a log line is all that's available here
+			log.Debugf("dpkg status conffiles field for package %q: %v", d.Package, err)
+		}
 	}
 
 	if entry.Files == nil {
@@ -178,9 +183,11 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (*dpkgExtractedMetadata, error) 
 	}
 
 	sourceName, sourceVersion := extractSourceVersion(raw.Source)
+	if sourceName != "" {
+		raw.Source = sourceName
+	}
 	if sourceVersion != "" {
 		raw.SourceVersion = sourceVersion
-		raw.Source = sourceName
 	}
 
 	if raw.Package == "" {
@@ -258,8 +265,14 @@ func extractAllFields(reader *bufio.Reader) (map[string]any, error) {
 }
 
 // If the source entry string is of the form "<name> (<version>)" then parse and return the components, if
-// of the "<name>" form, then return name and nil
+// of the "<name>" form, then return name and nil. Yocto (opkg/ipk) instead writes the bitbake recipe filename
+// ("<name>_<version>.bb"), which is split the same way.
 func extractSourceVersion(source string) (string, string) {
+	if recipe, ok := strings.CutSuffix(source, ".bb"); ok && !strings.ContainsAny(recipe, " (") {
+		// bitbake reserves "_" as the recipe name / version separator
+		name, version, _ := strings.Cut(recipe, "_")
+		return name, version
+	}
 	// special handling for the Source field since it has formatted data
 	match := internal.MatchNamedCaptureGroups(sourceRegexp, source)
 	return match["name"], match["version"]

@@ -6,6 +6,7 @@ import (
 	"debug/macho"
 	"debug/pe"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -22,6 +23,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -48,6 +50,17 @@ type Classifier struct {
 
 	// CPEs are the specific CPEs we want to include for this binary with updated version information
 	CPEs []cpe.CPE `json:"cpes"`
+
+	// Type optionally overrides the package type reported for matches; when unset pkg.BinaryPkg is used
+	Type pkg.Type `json:"-"`
+}
+
+// PackageType is the package type reported for matches of this classifier, defaulting to pkg.BinaryPkg.
+func (cfg Classifier) PackageType() pkg.Type {
+	if cfg.Type == "" {
+		return pkg.BinaryPkg
+	}
+	return cfg.Type
 }
 
 func (cfg Classifier) MarshalJSON() ([]byte, error) {
@@ -149,11 +162,11 @@ func (c ContextualEvidenceMatchers) FileContentsVersionMatcher(patterns ...strin
 func FileNameTemplateVersionMatcher(fileNamePattern, contentTemplate, catalogerName string) EvidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
 	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
-		if !pat.MatchString(context.Location.RealPath) {
+		if !pat.MatchString(context.Location.LocalPath()) {
 			return nil, nil
 		}
 
-		filepathNamedGroupValues := internal.MatchNamedCaptureGroups(pat, context.Location.RealPath)
+		filepathNamedGroupValues := internal.MatchNamedCaptureGroups(pat, context.Location.LocalPath())
 
 		// versions like 3.5 should not match any character, but explicit dot
 		for k, v := range filepathNamedGroupValues {
@@ -315,7 +328,7 @@ func MatchPath(path string) EvidenceMatcher {
 		panic("invalid pattern")
 	}
 	return func(_ Classifier, context MatcherContext) ([]pkg.Package, error) {
-		if doublestar.MatchUnvalidated(path, context.Location.RealPath) {
+		if doublestar.MatchUnvalidated(path, context.Location.LocalPath()) {
 			return []pkg.Package{}, nil // return non-nil
 		}
 		return nil, nil
@@ -326,7 +339,7 @@ func MatchPath(path string) EvidenceMatcher {
 // relative to a primary file, for example: a VERSION file in the same or a parent directory to another binary
 func SupportingEvidenceMatcher(relativePathGlob string, evidenceMatcher EvidenceMatcher) EvidenceMatcher {
 	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
-		f := path.Dir(context.Location.RealPath)
+		f := path.Dir(context.Location.LocalPath())
 		f = path.Join(f, relativePathGlob)
 		f = path.Clean(f)
 		// this would ideally be RelativeFileByPath but with a glob search:
@@ -363,13 +376,23 @@ func sharedLibraries(context MatcherContext) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(contents, context.Location.RealPath)
+	defer internal.CloseAndLogError(contents, context.Location.FullNestedPath())
 
-	e, _ := elf.NewFile(contents)
+	e, err := elfutil.NewFile(contents)
+	if err != nil {
+		// this function tries ELF, then Mach-O, then PE, so "not an ELF" is the expected case and stays
+		// quiet. debug/elf reports a wrong magic as an *elf.FormatError, but a file too short to hold a
+		// header as a bare EOF, so both count as "not an ELF" here. Anything else means a real ELF was
+		// dropped, and nothing downstream would report it.
+		var fmtErr *elf.FormatError
+		if !errors.As(err, &fmtErr) && !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
+			log.WithFields("file", context.Location.FullNestedPath(), "error", err).Debug("unable to parse ELF binary")
+		}
+	}
 	if e != nil {
 		symbols, err := e.ImportedLibraries()
 		if err != nil {
-			log.Debugf("unable to read elf binary at: %s -- %s", context.Location.RealPath, err)
+			log.Debugf("unable to read elf binary at: %s -- %s", context.Location.FullNestedPath(), err)
 		}
 		return symbols, nil
 	}
@@ -381,7 +404,7 @@ func sharedLibraries(context MatcherContext) ([]string, error) {
 	if m != nil {
 		symbols, err := m.ImportedLibraries()
 		if err != nil {
-			log.Debugf("unable to read macho binary at: %s -- %s", context.Location.RealPath, err)
+			log.Debugf("unable to read macho binary at: %s -- %s", context.Location.FullNestedPath(), err)
 		}
 		return symbols, nil
 	}
@@ -393,7 +416,7 @@ func sharedLibraries(context MatcherContext) ([]string, error) {
 	if p != nil {
 		symbols, err := p.ImportedLibraries()
 		if err != nil {
-			log.Debugf("unable to read pe binary at: %s -- %s", context.Location.RealPath, err)
+			log.Debugf("unable to read pe binary at: %s -- %s", context.Location.FullNestedPath(), err)
 		}
 		return symbols, nil
 	}
@@ -420,7 +443,7 @@ func collectSupportingEvidence(classifier Classifier, context MatcherContext, re
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(rdr, relativeFile.Path())
+	defer internal.CloseAndLogError(rdr, relativeFile.FullNestedPath())
 	ur, err := unionreader.GetUnionReader(rdr)
 	if err != nil {
 		return nil, err

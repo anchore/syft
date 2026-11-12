@@ -83,7 +83,7 @@ func parseMixLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 		}
 
 		if name == "" {
-			log.WithFields("path", reader.RealPath).Debug("skipping empty package name from mix.lock file")
+			log.WithFields("path", reader.FullNestedPath()).Debug("skipping empty package name from mix.lock file")
 			errs = unknown.Appendf(errs, reader, "skipping empty package name from mix.lock file, for line: %d: %s", lineNum, line)
 			continue
 		}

@@ -53,12 +53,14 @@ type bunWorkspace struct {
 }
 
 type genericBunLockAdapter struct {
-	cfg CatalogerConfig
+	cfg             CatalogerConfig
+	licenseResolver javascriptLicenseResolver
 }
 
 func newGenericBunLockAdapter(cfg CatalogerConfig) genericBunLockAdapter {
 	return genericBunLockAdapter{
-		cfg: cfg,
+		cfg:             cfg,
+		licenseResolver: newJavascriptLicenseResolver(cfg),
 	}
 }
 
@@ -106,7 +108,7 @@ func (a genericBunLockAdapter) parseBunLock(ctx context.Context, resolver file.R
 		if devOnlyPkgs[p.Name] && !a.cfg.IncludeDevDependencies {
 			continue
 		}
-		packages = append(packages, newBunPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Metadata))
+		packages = append(packages, newBunPackage(ctx, a.licenseResolver, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Metadata))
 	}
 
 	pkg.Sort(packages)

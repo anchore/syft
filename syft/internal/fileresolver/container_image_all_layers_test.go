@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -91,6 +92,7 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageAllLayers(img)
@@ -201,6 +203,7 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageAllLayers(img)
@@ -249,6 +252,7 @@ func Test_imageAllLayersResolver_FilesByMIMEType(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.fixtureName, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureName)
 
 			resolver, err := NewFromContainerImageAllLayers(img)
@@ -266,6 +270,7 @@ func Test_imageAllLayersResolver_FilesByMIMEType(t *testing.T) {
 }
 
 func Test_imageAllLayersResolver_hasFilesystemIDInLocation(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-duplicate-path")
 
 	resolver, err := NewFromContainerImageAllLayers(img)
@@ -326,6 +331,7 @@ func TestAllLayersImageResolver_FilesContents(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageAllLayers(img)
@@ -353,6 +359,7 @@ func TestAllLayersImageResolver_FilesContents(t *testing.T) {
 
 func TestAllLayersImageResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 	resolver, err := NewFromContainerImageAllLayers(img)
@@ -500,6 +507,7 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageAllLayers(img)
@@ -514,6 +522,7 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 }
 
 func TestAllLayersResolver_AllLocations(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-files-deleted")
 
 	resolver, err := NewFromContainerImageAllLayers(img)

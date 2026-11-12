@@ -32,12 +32,15 @@ type parsedData struct {
 	pkg.ApkDBEntry
 }
 
+const maxApkDBFieldSize = 10 * 1024 * 1024
+
 // parseApkDB parses packages from a given APK "installed" flat-file DB. For more
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
 //nolint:funlen
 func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
+	scanner.Buffer(nil, maxApkDBFieldSize)
 
 	var errs error
 	var apks []parsedData
@@ -123,7 +126,7 @@ func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Enviro
 	// This should get fixed with https://gitlab.alpinelinux.org/alpine/apk-tools/-/issues/10875
 	if r == nil {
 		// find the repositories file from the relative directory of the DB file
-		releases := findReleases(resolver, reader.RealPath)
+		releases := findReleases(resolver, reader.LocalPath())
 
 		if len(releases) > 0 {
 			r = &releases[0]
@@ -157,10 +160,10 @@ func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
 
 	reposReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		log.Tracef("unable to fetch contents for APK repositories file %q: %+v", reposLocation, err)
+		log.Tracef("unable to fetch contents for APK repositories file %q: %+v", location.FullNestedPath(), err)
 		return nil
 	}
-	defer internal.CloseAndLogError(reposReader, location.RealPath)
+	defer internal.CloseAndLogError(reposReader, location.FullNestedPath())
 
 	return parseReleasesFromAPKRepository(file.LocationReadCloser{
 		Location:   location,
@@ -173,7 +176,7 @@ func parseReleasesFromAPKRepository(reader file.LocationReadCloser) []linux.Rele
 
 	reposB, err := io.ReadAll(reader) //nolint:gocritic // regex matching requires full buffer
 	if err != nil {
-		log.Tracef("unable to read APK repositories file %q: %+v", reader.RealPath, err)
+		log.Tracef("unable to read APK repositories file %q: %+v", reader.FullNestedPath(), err)
 		return nil
 	}
 
@@ -267,6 +270,10 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		ctx.indexOfLatestDirectory = len(ctx.files) - 1
 	case "M":
 		i := ctx.indexOfLatestDirectory
+		if i < 0 {
+			log.Debugf("APK field %q appears before any directory entry", f.name)
+			return
+		}
 		latest := ctx.files[i]
 
 		var ok bool
@@ -293,6 +300,10 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		ctx.indexOfLatestRegularFile = len(ctx.files) - 1
 	case "a":
 		i := ctx.indexOfLatestRegularFile
+		if i < 0 {
+			log.Debugf("APK field %q appears before any file entry", f.name)
+			return
+		}
 		latest := ctx.files[i]
 
 		var ok bool
@@ -306,6 +317,10 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		ctx.files[i] = latest
 	case "Z":
 		i := ctx.indexOfLatestRegularFile
+		if i < 0 {
+			log.Debugf("APK field %q appears before any file entry", f.name)
+			return
+		}
 		latest := ctx.files[i]
 		latest.Digest = processChecksum(f.value)
 

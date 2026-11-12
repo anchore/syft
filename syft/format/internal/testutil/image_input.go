@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -19,6 +20,7 @@ import (
 	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
+//nolint:goconst // fixture data: the repeated names and versions are what the golden files assert against, so they read better spelled out than behind constants
 func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBOM {
 	t.Helper()
 	catalog := pkg.NewCollection()
@@ -34,6 +36,7 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 	case true:
 		img = imagetest.GetGoldenFixtureImage(t, testImage)
 	default:
+		testutils.SkipWithoutLinuxContainers(t)
 		img = imagetest.GetFixtureImage(t, "docker-archive", testImage)
 	}
 
@@ -95,6 +98,7 @@ func changeToDirectoryWithGoldenFixture(t testing.TB, testImage string) func() {
 	return fn
 }
 
+//nolint:goconst // fixture data: the repeated names and versions are what the golden files assert against, so they read better spelled out than behind constants
 func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 	// TODO: this helper function is coupled to the image-simple fixture, which seems like a bad idea
 	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)

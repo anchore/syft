@@ -1,7 +1,6 @@
 package gentoo
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"path"
@@ -25,14 +24,14 @@ var (
 
 // parses individual CONTENTS files from the portage flat-file store (e.g. /var/db/pkg/*/*/CONTENTS).
 func parsePortageContents(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	cpvMatch := cpvRe.FindStringSubmatch(reader.RealPath)
+	cpvMatch := cpvRe.FindStringSubmatch(reader.LocalPath())
 	if cpvMatch == nil {
-		return nil, nil, fmt.Errorf("failed to match package and version in %s", reader.RealPath)
+		return nil, nil, fmt.Errorf("failed to match package and version in %s", reader.FullNestedPath())
 	}
 
 	name, version := cpvMatch[1], cpvMatch[2]
 	if name == "" || version == "" {
-		log.WithFields("path", reader.RealPath).Debug("failed to parse portage name and version")
+		log.WithFields("path", reader.FullNestedPath()).Debug("failed to parse portage name and version")
 		return nil, nil, fmt.Errorf("failed to parse portage name and version")
 	}
 
@@ -65,17 +64,18 @@ func parsePortageContents(ctx context.Context, resolver file.Resolver, _ *generi
 func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) {
 	contentsReader, err := resolver.FileContentsByLocation(dbLocation)
 	if err != nil {
-		log.WithFields("path", dbLocation.RealPath, "error", err).Debug("failed to fetch portage contents")
+		log.WithFields("path", dbLocation.FullNestedPath(), "error", err).Debug("failed to fetch portage contents")
 		return
 	}
-	defer internal.CloseAndLogError(contentsReader, dbLocation.RealPath)
+	defer internal.CloseAndLogError(contentsReader, dbLocation.FullNestedPath())
 
-	scanner := bufio.NewScanner(contentsReader)
+	scanner := internal.NewLineScanner(contentsReader)
 	for scanner.Scan() {
 		line := strings.Trim(scanner.Text(), "\n")
 		fields := strings.Split(line, " ")
 
-		if fields[0] == "obj" {
+		// an obj line is "obj <path> <md5> <mtime>"
+		if len(fields) >= 3 && fields[0] == "obj" {
 			record := pkg.PortageFileRecord{
 				Path: fields[1],
 			}
@@ -86,10 +86,13 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.Porta
 			entry.Files = append(entry.Files, record)
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		log.WithFields("path", dbLocation.FullNestedPath(), "error", err).Debug("failed to fully read portage contents")
+	}
 }
 
 func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) (pkg.LicenseSet, []file.Location) {
-	parentPath := filepath.Dir(dbLocation.RealPath)
+	parentPath := filepath.Dir(dbLocation.LocalPath())
 
 	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "LICENSE"))
 
@@ -99,10 +102,10 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 
 	licenseReader, err := resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.WithFields("path", dbLocation.RealPath, "error", err).Debug("failed to fetch portage LICENSE")
+		log.WithFields("path", dbLocation.FullNestedPath(), "error", err).Debug("failed to fetch portage LICENSE")
 		return pkg.NewLicenseSet(), nil
 	}
-	defer internal.CloseAndLogError(licenseReader, location.RealPath)
+	defer internal.CloseAndLogError(licenseReader, location.FullNestedPath())
 
 	og, spdxExpression := extractLicenses(resolver, location, licenseReader)
 	entry.Licenses = og
@@ -112,7 +115,7 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 }
 
 func addSize(resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) []file.Location {
-	parentPath := filepath.Dir(dbLocation.RealPath)
+	parentPath := filepath.Dir(dbLocation.LocalPath())
 
 	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "SIZE"))
 
@@ -122,18 +125,21 @@ func addSize(resolver file.Resolver, dbLocation file.Location, entry *pkg.Portag
 
 	sizeReader, err := resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.WithFields("path", dbLocation.RealPath, "error", err).Debug("failed to fetch portage SIZE")
+		log.WithFields("path", dbLocation.FullNestedPath(), "error", err).Debug("failed to fetch portage SIZE")
 		return nil
 	}
-	defer internal.CloseAndLogError(sizeReader, location.RealPath)
+	defer internal.CloseAndLogError(sizeReader, location.FullNestedPath())
 
-	scanner := bufio.NewScanner(sizeReader)
+	scanner := internal.NewLineScanner(sizeReader)
 	for scanner.Scan() {
 		line := strings.Trim(scanner.Text(), "\n")
 		size, err := strconv.Atoi(line)
 		if err == nil {
 			entry.InstalledSize = size
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.WithFields("path", location.FullNestedPath(), "error", err).Debug("failed to fully read portage SIZE")
 	}
 
 	return []file.Location{location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)}

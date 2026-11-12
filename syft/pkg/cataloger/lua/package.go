@@ -13,7 +13,7 @@ import (
 func newLuaRocksPackage(ctx context.Context, resolver file.Resolver, u luaRocksPackage, indexLocation file.Location) pkg.Package {
 	license := pkg.NewLicensesFromLocationWithContext(ctx, indexLocation, u.License)
 	if len(license) == 0 {
-		license = licenses.FindInDirs(ctx, resolver, path.Dir(indexLocation.Path()))
+		license = licenses.FindInDirs(ctx, resolver, path.Dir(indexLocation.LocalPath()))
 	}
 	p := pkg.Package{
 		Name:      u.Name,

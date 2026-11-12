@@ -3,7 +3,6 @@ package bitnami
 import (
 	"fmt"
 	"path"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -62,7 +61,7 @@ func packageFiles(relationships []artifact.Relationship, p pkg.Package, baseDire
 					// note: the file.Location is from the SBOM, and all files within the Bitnami SBOM by convention
 					// are relative to the /opt/bitnami/PRODUCT directory, so we need to prepend the base directory
 					// so that it's relative to the path found within the container image.
-					result = append(result, path.Join(baseDirectory, value.RealPath))
+					result = append(result, path.Join(baseDirectory, value.LocalPath()))
 				}
 			}
 		}
@@ -73,7 +72,7 @@ func packageFiles(relationships []artifact.Relationship, p pkg.Package, baseDire
 
 // mainPkgFiles returns the files owned by the main package in the SPDX file.
 func mainPkgFiles(resolver file.Resolver, spdxFilePath string, secondaryPkgsFiles []string) ([]string, error) {
-	ownedPathGlob := fmt.Sprintf("%s/**", filepath.Dir(spdxFilePath))
+	ownedPathGlob := fmt.Sprintf("%s/**", path.Dir(spdxFilePath))
 	ownedLocations, err := resolver.FilesByGlob(ownedPathGlob)
 	if err != nil {
 		return nil, err

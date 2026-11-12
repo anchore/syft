@@ -15,7 +15,7 @@ func newPackageFromUsageStatement(use, comment string, location file.Location) (
 	name, version := parseStepUsageStatement(use, comment)
 
 	if name == "" {
-		log.WithFields("file", location.RealPath, "statement", use).Trace("unable to parse github action usage statement")
+		log.WithFields("file", location.FullNestedPath(), "statement", use).Trace("unable to parse github action usage statement")
 		return nil, fmt.Errorf("unable to parse github action usage statement")
 	}
 
@@ -87,6 +87,13 @@ func packageURL(name, version string) string {
 	var qualifiers packageurl.Qualifiers
 	var subPath string
 	var namespace string
+
+	// docker:// references are OCI images, not GitHub repos.
+	// They don't fit the pkg:github PURL shape, so skip them entirely
+	// (same treatment as local composite actions below).
+	if strings.HasPrefix(name, "docker:") {
+		return ""
+	}
 
 	fields := strings.SplitN(name, "/", 3)
 	switch len(fields) {

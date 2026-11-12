@@ -1,10 +1,14 @@
 package arch
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -12,7 +16,23 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
+const bombFixture = "testdata/installed/var/lib/pacman/local/bombpkg-1.0-1/mtree"
+
+// writeBombFixture generates bombpkg's mtree: one line over maxMtreeLines, so the cataloger rejects
+// it while walking testdata/installed. Generated rather than committed so the size that makes it a
+// bomb tracks the constant instead of hiding in a gzip blob.
+func writeBombFixture(t *testing.T) {
+	t.Helper()
+
+	listing := append([]byte("#mtree\n"), bytes.Repeat([]byte("./f\n"), maxMtreeLines+1)...)
+	compressed, err := io.ReadAll(gzipOf(t, listing))
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(bombFixture, compressed, 0o600))
+}
+
 func TestAlpmUnknowns(t *testing.T) {
+	writeBombFixture(t)
+
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "testdata/installed").
 		WithCompareOptions(cmpopts.IgnoreFields(pkg.AlpmFileRecord{}, "Time")).
@@ -21,11 +41,14 @@ func TestAlpmUnknowns(t *testing.T) {
 }
 
 func TestAlpmCataloger(t *testing.T) {
+	writeBombFixture(t)
+
 	gmpDbLocation := file.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")
 	treeSitterDbLocation := file.NewLocation("var/lib/pacman/local/tree-sitter-0.22.6-1/desc")
 	emacsDbLocation := file.NewLocation("var/lib/pacman/local/emacs-29.3-3/desc")
 	fuzzyDbLocation := file.NewLocation("var/lib/pacman/local/fuzzy-1.2-3/desc")
 	madeupDbLocation := file.NewLocation("var/lib/pacman/local/madeup-20.30-4/desc")
+	bombDbLocation := file.NewLocation("var/lib/pacman/local/bombpkg-1.0-1/desc")
 	ctx := context.TODO()
 
 	treeSitterPkg := pkg.Package{
@@ -116,6 +139,26 @@ func TestAlpmCataloger(t *testing.T) {
 			Files:   []pkg.AlpmFileRecord{},
 			Backup:  []pkg.AlpmFileRecord{},
 			Depends: []string{"libtree-sitter.so"},
+		},
+	}
+
+	// bombPkg's listing exceeds maxMtreeLines, so it emits with an empty file list, not dropped
+	bombPkg := pkg.Package{
+		Name:      "bombpkg",
+		Version:   "1.0-1",
+		Type:      pkg.AlpmPkg,
+		FoundBy:   "alpm-db-cataloger",
+		Locations: file.NewLocationSet(bombDbLocation),
+		Metadata: pkg.AlpmDBEntry{
+			BasePackage:  "bombpkg",
+			Package:      "bombpkg",
+			Version:      "1.0-1",
+			Description:  "Package whose mtree listing exceeds the parser's line bound",
+			Architecture: "x86_64",
+			Size:         1,
+			Reason:       1,
+			Files:        []pkg.AlpmFileRecord{},
+			Backup:       []pkg.AlpmFileRecord{},
 		},
 	}
 
@@ -283,6 +326,7 @@ func TestAlpmCataloger(t *testing.T) {
 		fuzzyPkg,
 		madeupPkg,
 		gmpPkg,
+		bombPkg,
 	}
 
 	expectedRelationships := []artifact.Relationship{

@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -13,7 +14,7 @@ func TestSplitFilepath(t *testing.T) {
 		path     string
 		expected []string
 	}{
-		{path: "a/b/c", expected: []string{"a", "b", "c"}},
+		{path: filepath.Join("a", "b", "c"), expected: []string{"a", "b", "c"}},
 	}
 
 	for _, test := range tests {

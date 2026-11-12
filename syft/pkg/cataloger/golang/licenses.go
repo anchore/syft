@@ -111,8 +111,9 @@ func (c *goLicenseResolver) getLicenses(ctx context.Context, resolver file.Resol
 		}
 	}
 
-	// download from remote sources
-	if c.opts.SearchRemoteLicenses {
+	// download from remote sources; standard library and toolchain paths are not publishable
+	// module paths, so neither a proxy nor a repository has anything to resolve for them
+	if c.opts.SearchRemoteLicenses && !isStandardImportPath(moduleName) {
 		pkgLicenses, err = c.getLicensesFromRemote(ctx, moduleName, moduleVersion)
 		if err != nil {
 			log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Debug("unable to read golang licenses remote")
@@ -238,13 +239,13 @@ func (c *goLicenseResolver) findLicensesInSource(ctx context.Context, resolver f
 
 func (c *goLicenseResolver) parseLicenseFromLocation(ctx context.Context, l file.Location, resolver file.Resolver) ([]pkg.License, error) {
 	var out []pkg.License
-	fileName := path.Base(l.RealPath)
+	fileName := path.Base(l.FullNestedPath())
 	if licenses.IsLicenseFile(fileName) {
 		contents, err := resolver.FileContentsByLocation(l)
 		if err != nil {
 			return nil, err
 		}
-		defer internal.CloseAndLogError(contents, l.RealPath)
+		defer internal.CloseAndLogError(contents, l.FullNestedPath())
 		out = pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(l, contents))
 	}
 	return out, nil

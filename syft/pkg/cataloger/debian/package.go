@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -61,38 +63,82 @@ func newDpkgPackage(ctx context.Context, d dpkgExtractedMetadata, dbLocation fil
 	return p
 }
 
+// a declared License field holds a single expression, a few hundred bytes at most in practice. Anything
+// much larger only feeds the expression parser (which recurses on parentheses) attacker-sized input.
+const maxDeclaredLicenseLen = 4096
+
+var (
+	// opkg/ipkg (Yocto via bitbake) declare licenses with "&" for AND and "|" for OR
+	bitbakeLicenseOperators = strings.NewReplacer("&", " AND ", "|", " OR ")
+	tightenParens           = strings.NewReplacer("( ", "(", " )", ")")
+	licenseListSeparators   = strings.NewReplacer("(", " ", ")", " ")
+)
+
 // extractDeclaredLicenses converts a License field from the status DB into a license set. Returns nil
 // for empty input so standard dpkg entries (which never declare License inline) incur no allocation.
-// Mirrors the alpine cataloger's approach: keep the value whole if it parses as a valid SPDX expression,
-// otherwise split on whitespace to handle space-separated lists.
 func extractDeclaredLicenses(ctx context.Context, raw string, dbLocation file.Location) []pkg.License {
+	values := declaredLicenseValues(raw)
+	if len(values) == 0 {
+		return nil
+	}
+	return pkg.NewLicensesFromLocationWithContext(ctx, dbLocation, values...)
+}
+
+// declaredLicenseValues converts an inline License field (opkg status DB or an archive control file) into
+// license values. Bitbake operators are rewritten to SPDX ones and the value is kept whole if it then parses
+// as a valid SPDX expression (mirroring the alpine cataloger), otherwise it is treated as a list of license
+// names with operators and grouping dropped.
+func declaredLicenseValues(raw string) []string {
+	raw = strings.TrimSpace(raw)
 	if raw == "" {
 		return nil
 	}
-	licenseStrings := []string{raw}
-	if _, err := license.ParseExpression(raw); err != nil {
-		licenseStrings = strings.Fields(raw)
+	if len(raw) > maxDeclaredLicenseLen {
+		log.WithFields("length", len(raw)).Debug("ignoring oversized declared license field")
+		return nil
 	}
-	return pkg.NewLicensesFromLocationWithContext(ctx, dbLocation, licenseStrings...)
+
+	expr := tightenParens.Replace(strings.Join(strings.Fields(bitbakeLicenseOperators.Replace(raw)), " "))
+	if _, err := license.ParseExpression(expr); err == nil {
+		return []string{expr}
+	}
+
+	var values []string
+	seen := strset.New()
+	for _, field := range strings.Fields(licenseListSeparators.Replace(expr)) {
+		if field == "AND" || field == "OR" || seen.Has(field) {
+			continue
+		}
+		seen.Add(field)
+		values = append(values, field)
+	}
+	return values
 }
 
 func newDebArchivePackage(ctx context.Context, location file.Location, metadata pkg.DpkgArchiveEntry, licenseStrings []string) pkg.Package {
 	p := pkg.Package{
-		Name:     metadata.Package,
-		Version:  metadata.Version,
-		Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, licenseStrings...)...),
-		Type:     pkg.DebPkg,
-		PURL: packageURL(
-			pkg.DpkgDBEntry(metadata),
-			// we don't know the distro information, but since this is a deb file then we can reasonably assume it is a debian-based distro
-			&linux.Release{IDLike: []string{"debian"}},
-		),
+		Name:      metadata.Package,
+		Version:   metadata.Version,
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, licenseStrings...)...),
+		Type:      pkg.DebPkg,
+		PURL:      packageURL(pkg.DpkgDBEntry(metadata), archiveDistro(location)),
 		Metadata:  metadata,
 		Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 	}
 
 	p.SetID()
 	return p
+}
+
+// archiveDistro guesses the distro an archive was built for. We don't know the distro information, but a .deb
+// can reasonably be assumed to target a debian-based distro. An .ipk targets opkg-based distros (Yocto,
+// OpenWrt) which have no purl type, so it gets no distro and therefore no PURL, the same as packages found in
+// an opkg status DB.
+func archiveDistro(location file.Location) *linux.Release {
+	if strings.EqualFold(path.Ext(location.Path()), ".ipk") {
+		return nil
+	}
+	return &linux.Release{IDLike: []string{"debian"}}
 }
 
 // PackageURL returns the PURL for the specific Debian package (see https://github.com/package-url/purl-spec)
@@ -141,7 +187,7 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 	copyrightReader, copyrightLocation := fetchCopyrightContents(resolver, dbLocation, metadata)
 	var licenseStrs []string
 	if copyrightReader != nil && copyrightLocation != nil {
-		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.AccessPath)
+		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.FullNestedPath())
 		// attach the licenses
 		licenseStrs = parseLicensesFromCopyright(copyrightReader)
 		for _, licenseStr := range licenseStrs {
@@ -154,7 +200,7 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 	if len(licenseStrs) == 0 {
 		sr, sl := fetchCopyrightContents(resolver, dbLocation, metadata)
 		if sr != nil && sl != nil {
-			defer internal.CloseAndLogError(sr, sl.AccessPath)
+			defer internal.CloseAndLogError(sr, sl.FullNestedPath())
 			p.Licenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(*sl, sr))...)
 		}
 	}
@@ -200,9 +246,13 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 	md5Reader, md5Location := fetchMd5Contents(resolver, dbLocation, m)
 
 	if md5Reader != nil && md5Location != nil {
-		defer internal.CloseAndLogError(md5Reader, md5Location.AccessPath)
+		defer internal.CloseAndLogError(md5Reader, md5Location.FullNestedPath())
 		// attach the file list
-		files = append(files, parseDpkgMD5Info(md5Reader)...)
+		records, err := parseDpkgMD5Info(md5Reader)
+		if err != nil {
+			log.Debugf("dpkg md5sums file %q: %v", md5Location.FullNestedPath(), err)
+		}
+		files = append(files, records...)
 
 		// keep a record of the file where this was discovered
 		locations = append(locations, *md5Location)
@@ -211,9 +261,13 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 	conffilesReader, conffilesLocation := fetchConffileContents(resolver, dbLocation, m)
 
 	if conffilesReader != nil && conffilesLocation != nil {
-		defer internal.CloseAndLogError(conffilesReader, conffilesLocation.AccessPath)
+		defer internal.CloseAndLogError(conffilesReader, conffilesLocation.FullNestedPath())
 		// attach the file list
-		files = append(files, parseDpkgConffileInfo(conffilesReader)...)
+		records, err := parseDpkgConffileInfo(conffilesReader)
+		if err != nil {
+			log.Debugf("dpkg conffiles file %q: %v", conffilesLocation.FullNestedPath(), err)
+		}
+		files = append(files, records...)
 
 		// keep a record of the file where this was discovered
 		locations = append(locations, *conffilesLocation)
@@ -234,7 +288,7 @@ func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.Dp
 	// and the md5sum information is under /var/lib/dpkg/info/; however, for distroless the installed
 	// package info is across multiple files under /var/lib/dpkg/status.d/ and the md5sums are contained in
 	// the same directory
-	searchPath := filepath.Dir(dbLocation.RealPath)
+	searchPath := filepath.Dir(dbLocation.LocalPath())
 
 	if !strings.HasSuffix(searchPath, "status.d") {
 		searchPath = path.Join(searchPath, "info")
@@ -273,7 +327,7 @@ func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, m p
 		return nil, nil
 	}
 
-	parentPath := filepath.Dir(dbLocation.RealPath)
+	parentPath := filepath.Dir(dbLocation.LocalPath())
 
 	// look for /var/lib/dpkg/info/NAME:ARCH.conffiles
 	name := md5Key(m)

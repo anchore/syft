@@ -53,6 +53,20 @@ test_hash_sha256() {
 
 run_test_case test_hash_sha256
 
+# verify 256 digest of a file when openssl is the only available hash tool
+test_hash_sha256_openssl() {
+  target=./testdata/assets/valid/syft_1.5.0_linux_arm64.tar.gz
+
+  # hide the other hash tools (within subshells) so that hash_sha256 falls back to openssl
+  actual=$(is_command() { [ "$1" = "openssl" ]; }; hash_sha256 "${target}")
+  assertEquals "8d57abb57a0dae3ff23c8f0df1f51951b7772822e0d560e860d6f68c24ef6d3d" "${actual}" "mismatched checksum"
+
+  actual=$(is_command() { [ "$1" = "openssl" ]; }; hash_sha256 < "${target}")
+  assertEquals "8d57abb57a0dae3ff23c8f0df1f51951b7772822e0d560e860d6f68c24ef6d3d" "${actual}" "mismatched checksum (stdin)"
+}
+
+run_test_case test_hash_sha256_openssl
+
 # verify 256 digest of a file relative to the checksums file
 test_hash_sha256_verify() {
 

@@ -17,6 +17,7 @@ import (
 
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
@@ -251,6 +252,58 @@ func TestDecompressedModuleReader(t *testing.T) {
 			assert.Equal(t, koBytes, b, "decompressed bytes should match original .ko bytes")
 		})
 	}
+}
+
+// wrapUnionReader adapts a byte slice to the reader set decompressedModuleReader takes.
+func wrapUnionReader(data []byte) unionreader.UnionReader {
+	br := bytes.NewReader(data)
+	return struct {
+		io.ReadCloser
+		io.ReaderAt
+		io.Seeker
+	}{
+		ReadCloser: io.NopCloser(br),
+		ReaderAt:   br,
+		Seeker:     br,
+	}
+}
+
+func TestDecompressedModuleReader_boundsDecompressedSize(t *testing.T) {
+	koBytes := minimalKOBytes([]string{"name=test", "vermagic=5.15.0 SMP mod_unload"})
+	compressed := gzCompress(koBytes)
+
+	t.Run("rejects a module that expands past the cap", func(t *testing.T) {
+		_, err := decompressedModuleReaderWithLimit(testContext(t), "/test.ko.gz",
+			wrapUnionReader(compressed), int64(len(koBytes)-1))
+
+		require.ErrorContains(t, err, "larger than the max allowed size")
+	})
+
+	t.Run("a module at exactly the cap is accepted whole", func(t *testing.T) {
+		// the byte-for-byte assert is the point: a "did not error" check would miss a truncating read
+		got, err := decompressedModuleReaderWithLimit(testContext(t), "/test.ko.gz",
+			wrapUnionReader(compressed), int64(len(koBytes)))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = got.Close() })
+
+		b, err := io.ReadAll(got)
+		require.NoError(t, err)
+		assert.Equal(t, koBytes, b, "at-cap module must come back byte for byte")
+	})
+
+	t.Run("the partial spill is cleaned up when the cap is hit", func(t *testing.T) {
+		// otherwise repeated hostile modules exhaust the disk anyway, which is what the cap prevents
+		dir := t.TempDir()
+		ctx := tmpdir.WithValue(context.Background(), tmpdir.FromPath(dir))
+
+		_, err := decompressedModuleReaderWithLimit(ctx, "/test.ko.gz",
+			wrapUnionReader(compressed), int64(len(koBytes)-1))
+		require.Error(t, err)
+
+		entries, err := os.ReadDir(dir)
+		require.NoError(t, err)
+		assert.Empty(t, entries, "temp spill should be removed when the module is rejected")
+	})
 }
 
 func TestDecompressedModuleReader_TempFileRemovedOnClose(t *testing.T) {

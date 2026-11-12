@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -22,9 +23,10 @@ func Test_defaultDir(t *testing.T) {
 	homeDir := filepath.Join(tmpDir, "fake-home")
 
 	tests := []struct {
-		name     string
-		env      map[string]string
-		expected string
+		name          string
+		env           map[string]string
+		expected      string
+		skipOnWindows bool
 	}{
 		{
 			name: "no-xdg",
@@ -32,6 +34,8 @@ func Test_defaultDir(t *testing.T) {
 				"HOME": homeDir,
 			},
 			expected: homeDir,
+			// xdg falls back to LOCALAPPDATA on windows, not HOME
+			skipOnWindows: true,
 		},
 		{
 			name: "xdg-cache",
@@ -59,6 +63,9 @@ func Test_defaultDir(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			if test.skipOnWindows && runtime.GOOS == "windows" {
+				t.Skip("posix-only cache dir fallback")
+			}
 			restoreCache(t)
 
 			for k, v := range test.env {

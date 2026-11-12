@@ -401,6 +401,16 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			expects: nil,
 		},
 		{
+			// pom-less groovy 4 jars (all real ones) must resolve to the apache group, same as the purl
+			name: "groovy 4 without pom metadata",
+			pkg: pkg.Package{
+				Name:     "groovy",
+				Version:  "4.0.33",
+				Metadata: pkg.JavaArchive{Manifest: &pkg.JavaManifest{}},
+			},
+			expects: []string{"org.apache.groovy"},
+		},
+		{
 			name: "no manifest or pom info",
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{},
@@ -562,7 +572,7 @@ func Test_groupIDsFromJavaManifest(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := groupIDsFromJavaManifest(test.name, &test.manifest)
+			got := groupIDsFromJavaManifest(test.name, "", &test.manifest)
 			require.Equal(t, test.expected, got)
 		})
 	}

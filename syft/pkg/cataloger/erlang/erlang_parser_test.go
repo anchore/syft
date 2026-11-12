@@ -2,6 +2,7 @@ package erlang
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -96,6 +97,11 @@ func Test_parseErlang(t *testing.T) {
 	{ foo, bar }
 ]}`,
 		},
+		{
+			name: "string with an escaped quote",
+			content: `
+{escaped, ["a\"b"]}`,
+		},
 	}
 
 	for _, test := range tests {
@@ -109,6 +115,49 @@ func Test_parseErlang(t *testing.T) {
 			}
 
 			assert.IsType(t, erlangNode{}, value)
+		})
+	}
+}
+
+func Test_parseErlangString_escapedByte(t *testing.T) {
+	// a backslash escape mid-string used to always error out, since the bounds
+	// check at the escape site was inverted (len(data) >= *i is true for
+	// almost every position, not just an out-of-range one).
+	data := []byte(`"a\"b"`)
+	i := 0
+	got, err := parseErlangString(data, &i)
+	require.NoError(t, err)
+	assert.Equal(t, `a"b`, got.String())
+}
+
+func TestParseErlang_deepNesting(t *testing.T) {
+	// 4MB of '[' overflowed the goroutine stack (fatal, not recoverable) before nesting was bounded
+	_, err := parseErlang(strings.NewReader(strings.Repeat("[a,", 4<<20)))
+	require.ErrorIs(t, err, errTooDeep)
+	// the error echoes a clipped window of the single-line input, not the whole thing
+	assert.Less(t, len(err.Error()), 1024)
+}
+
+func Test_parseErlang_truncated(t *testing.T) {
+	// each of these read past the end of the input before end-of-input was checked
+	tests := []struct {
+		name    string
+		content string
+		wantErr require.ErrorAssertionFunc
+	}{
+		{name: "whitespace only", content: " ", wantErr: require.Error},
+		{name: "unterminated list", content: "[a", wantErr: require.Error},
+		{name: "unterminated empty list", content: "[ ", wantErr: require.Error},
+		{name: "lone binary string opener", content: "<", wantErr: require.Error},
+		{name: "comment ending in CR", content: "%\r", wantErr: require.NoError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var err error
+			require.NotPanics(t, func() {
+				_, err = parseErlang(strings.NewReader(tt.content))
+			})
+			tt.wantErr(t, err)
 		})
 	}
 }

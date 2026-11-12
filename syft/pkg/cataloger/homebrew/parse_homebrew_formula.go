@@ -1,11 +1,11 @@
 package homebrew
 
 import (
-	"bufio"
 	"context"
 	"path"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -25,7 +25,7 @@ type parsedHomebrewData struct {
 func parseHomebrewFormula(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pd, err := parseFormulaFile(reader)
 	if err != nil {
-		log.WithFields("path", reader.RealPath).Trace("failed to parse formula")
+		log.WithFields("path", reader.FullNestedPath()).Trace("failed to parse formula")
 		return nil, nil, err
 	}
 
@@ -46,7 +46,7 @@ func parseHomebrewFormula(ctx context.Context, resolver file.Resolver, _ *generi
 func parseFormulaFile(reader file.LocationReadCloser) (*parsedHomebrewData, error) {
 	pd := parsedHomebrewData{}
 
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if strings.Contains(line, "class ") && strings.Contains(line, " < Formula") {
@@ -69,7 +69,7 @@ func parseFormulaFile(reader file.LocationReadCloser) (*parsedHomebrewData, erro
 		}
 	}
 
-	pd.Tap = getTapFromPath(reader.RealPath)
+	pd.Tap = getTapFromPath(reader.LocalPath())
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func parseFormulaFile(reader file.LocationReadCloser) (*parsedHomebrewData, erro
 		return &pd, nil
 	}
 
-	pd.Name, pd.Version = getNameAndVersionFromPath(reader.RealPath)
+	pd.Name, pd.Version = getNameAndVersionFromPath(reader.LocalPath())
 
 	return &pd, nil
 }

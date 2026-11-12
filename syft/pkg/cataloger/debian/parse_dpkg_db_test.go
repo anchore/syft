@@ -366,6 +366,16 @@ func TestSourceVersionExtract(t *testing.T) {
 			input:    "",
 			expected: []string{"", ""},
 		},
+		{
+			name:     "bitbake recipe with version",
+			input:    "zlib_1.3.2.bb",
+			expected: []string{"zlib", "1.3.2"},
+		},
+		{
+			name:     "bitbake recipe without version",
+			input:    "packagegroup-core-boot.bb",
+			expected: []string{"packagegroup-core-boot", ""},
+		},
 	}
 
 	for _, test := range tests {

@@ -17,7 +17,7 @@ FROM --platform=linux/amd64 rockylinux:9 AS rpm-downloader
 # $ rpm -qp --qf '%{NAME}-%{VERSION}-%{RELEASE} %{RSAHEADER:pgpsig}\n' basesystem-11-13.el9.0.1.noarch.rpm
 #   basesystem-11-13.el9.0.1 RSA/SHA256, Thu Feb 29 17:37:22 2024, Key ID 702d426d350d275d
 
-RUN curl -O https://dl.rockylinux.org/vault/rocky/9.3/BaseOS/x86_64/os/Packages/b/basesystem-11-13.el9.0.1.noarch.rpm
+RUN curl -fO https://dl.rockylinux.org/vault/rocky/9.3/BaseOS/x86_64/os/Packages/b/basesystem-11-13.el9.0.1.noarch.rpm
 
 FROM scratch
 

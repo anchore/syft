@@ -64,16 +64,16 @@ func TestLicenseSet_Add(t *testing.T) {
 		{
 			name: "deduplicate licenses with locations",
 			licenses: []License{
-				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"})),
-				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"})),
-				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "2"})),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.NewCoordinates("/place", "1"))),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.NewCoordinates("/place", "1"))),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.NewCoordinates("/place", "2"))),
 			},
 			want: []License{
 				NewLicenseFromLocationsWithContext(
 					ctx,
 					"MIT",
-					file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"}),
-					file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "2"}),
+					file.NewLocationFromCoordinates(file.NewCoordinates("/place", "1")),
+					file.NewLocationFromCoordinates(file.NewCoordinates("/place", "2")),
 				),
 			},
 		},
@@ -81,15 +81,15 @@ func TestLicenseSet_Add(t *testing.T) {
 			name: "same licenses with different locations",
 			licenses: []License{
 				NewLicenseWithContext(ctx, "MIT"),
-				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "2"})),
-				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"})),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.NewCoordinates("/place", "2"))),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.NewCoordinates("/place", "1"))),
 			},
 			want: []License{
 				NewLicenseFromLocationsWithContext(
 					ctx,
 					"MIT",
-					file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"}),
-					file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "2"}),
+					file.NewLocationFromCoordinates(file.NewCoordinates("/place", "1")),
+					file.NewLocationFromCoordinates(file.NewCoordinates("/place", "2")),
 				),
 			},
 		},

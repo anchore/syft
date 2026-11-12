@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -82,10 +82,9 @@ func parseSystemManifest(_ context.Context, _ file.Resolver, _ *generic.Environm
 
 		// Handle architecture suffixes if present
 		currentMetadata := snapMetadata
-		if strings.Contains(name, ":") {
-			archParts := strings.SplitN(name, ":", 2)
-			name = archParts[0]
-			currentMetadata.Architecture = archParts[1]
+		if n, arch, ok := strings.Cut(name, ":"); ok {
+			name = n
+			currentMetadata.Architecture = arch
 		}
 
 		debPkg := newDebianPackageFromSnap(

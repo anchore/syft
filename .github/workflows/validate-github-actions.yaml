@@ -25,7 +25,7 @@ jobs:
           persist-credentials: false
 
       - name: "Run zizmor"
-        uses: zizmorcore/zizmor-action@6599ee8b7a49aef6a770f63d261d214911a7ce02 # v0.6.0
+        uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
         with:
           # there is a pass/fail gate as a repo ruleset (if there is no ruleset configured then the action will pass by default)
           advanced-security: true

@@ -61,7 +61,8 @@ func (c *Collection) Package(id artifact.ID) *Package {
 	return &p
 }
 
-// PackagesByPath returns all packages that were discovered from the given path.
+// PackagesByPath returns all packages that were discovered from the given path: a file's full path or
+// access path. A package found within an archive is not returned for the archive's own path.
 func (c *Collection) PackagesByPath(path string) []Package {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -158,17 +159,20 @@ func (c *Collection) addTypeToIndex(p Package) {
 func (c *Collection) addPathsToIndex(p Package) {
 	// note: write lock must be held by caller
 
-	observedPaths := strset.New()
-	for _, l := range p.Locations.ToSlice() {
-		if l.RealPath != "" && !observedPaths.Has(l.RealPath) {
-			c.addPathToIndex(p.id, l.RealPath)
-			observedPaths.Add(l.RealPath)
-		}
-		if l.AccessPath != "" && l.RealPath != l.AccessPath && !observedPaths.Has(l.AccessPath) {
-			c.addPathToIndex(p.id, l.AccessPath)
-			observedPaths.Add(l.AccessPath)
-		}
+	for _, path := range indexedPaths(p) {
+		c.addPathToIndex(p.id, path)
 	}
+}
+
+// indexedPaths are the paths a package is found by: each location's full path and access path. The real
+// path of a nested location is the outermost archive, so it is left out.
+func indexedPaths(p Package) []string {
+	paths := strset.New()
+	for _, l := range p.Locations.ToSlice() {
+		paths.Add(l.AccessPath, l.FullNestedPath())
+	}
+	paths.Remove("")
+	return paths.List()
 }
 
 func (c *Collection) addPathToIndex(id artifact.ID, path string) {
@@ -223,16 +227,8 @@ func (c *Collection) deleteTypeFromIndex(p Package) {
 func (c *Collection) deletePathsFromIndex(p Package) {
 	// note: write lock must be held by caller
 
-	observedPaths := strset.New()
-	for _, l := range p.Locations.ToSlice() {
-		if l.RealPath != "" && !observedPaths.Has(l.RealPath) {
-			c.deletePathFromIndex(p.id, l.RealPath)
-			observedPaths.Add(l.RealPath)
-		}
-		if l.AccessPath != "" && l.RealPath != l.AccessPath && !observedPaths.Has(l.AccessPath) {
-			c.deletePathFromIndex(p.id, l.AccessPath)
-			observedPaths.Add(l.AccessPath)
-		}
+	for _, path := range indexedPaths(p) {
+		c.deletePathFromIndex(p.id, path)
 	}
 }
 
@@ -299,19 +295,56 @@ func (c *Collection) Sorted(types ...Type) (pkgs []Package) {
 	return pkgs
 }
 
+// orderedIDSetIndexThreshold is the number of elements beyond which an orderedIDSet maintains a hash
+// index for membership checks. Below this size a linear scan of the contiguous slice is competitive
+// with a map lookup and avoids allocating a map for the many small (often single-element) sets held
+// by the name and path indexes. Above it, the linear scan is what makes bulk insertion quadratic.
+const orderedIDSetIndexThreshold = 16
+
 type orderedIDSet struct {
 	slice []artifact.ID
+
+	// index is nil until the set grows beyond orderedIDSetIndexThreshold, after which it is kept in
+	// sync with slice and used to answer membership checks in constant time.
+	index map[artifact.ID]struct{}
+}
+
+func (s *orderedIDSet) contains(id artifact.ID) bool {
+	if s.index != nil {
+		_, exists := s.index[id]
+		return exists
+	}
+
+	for _, existingID := range s.slice {
+		if existingID == id {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *orderedIDSet) add(ids ...artifact.ID) {
-loopNewIDs:
 	for _, newID := range ids {
-		for _, existingID := range s.slice {
-			if existingID == newID {
-				continue loopNewIDs
-			}
+		if s.contains(newID) {
+			continue
 		}
+
 		s.slice = append(s.slice, newID)
+
+		switch {
+		case s.index != nil:
+			s.index[newID] = struct{}{}
+		case len(s.slice) > orderedIDSetIndexThreshold:
+			s.buildIndex()
+		}
+	}
+}
+
+func (s *orderedIDSet) buildIndex() {
+	s.index = make(map[artifact.ID]struct{}, len(s.slice))
+	for _, id := range s.slice {
+		s.index[id] = struct{}{}
 	}
 }
 
@@ -319,6 +352,7 @@ func (s *orderedIDSet) delete(id artifact.ID) {
 	for i, existingID := range s.slice {
 		if existingID == id {
 			s.slice = append(s.slice[:i], s.slice[i+1:]...)
+			delete(s.index, id) // no-op when the index has not been built
 			return
 		}
 	}

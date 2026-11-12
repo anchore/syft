@@ -1,0 +1,57 @@
+---
+lockfileVersion: '9.0'
+
+importers:
+
+  .:
+    configDependencies: {}
+    packageManagerDependencies:
+      pnpm:
+        specifier: 12.0.0-rc.3
+        version: 12.0.0-rc.3
+
+packages:
+
+  '@pnpm/exe.linux-x64@12.0.0-rc.3':
+    resolution: {integrity: sha512-/6xWaYfp6MEaJF+7AZIfCMp/fZX2jZlTLh2KVBEH0QOWk1ktaBlKNIJEgT4m6mieOLhNYMzCfLJImMbJDK1IwA==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  pnpm@12.0.0-rc.3:
+    resolution: {integrity: sha512-JZ9fDGH+WLdRdTEikN3UxeZe6bpDY7dYwV0RX0+OrJ927vc72XbId4IJXeT++ebNFA9cF3IQ1swiXHEd/Maq0Q==}
+    engines: {node: '>=18.*'}
+    hasBin: true
+
+snapshots:
+
+  '@pnpm/exe.linux-x64@12.0.0-rc.3':
+    optional: true
+
+  pnpm@12.0.0-rc.3:
+    optionalDependencies:
+      '@pnpm/exe.linux-x64': 12.0.0-rc.3
+
+---
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      minimist:
+        specifier: 1.2.0
+        version: 1.2.0
+
+packages:
+
+  minimist@1.2.0:
+    resolution: {integrity: sha512-7Wl+Jz+IGWuSdgsQEJ4JunV0si/iMhg42MnQQG6h1R6TNeVenp4U9x5CC5v/gYqz/fENLQITAWXidNtVL0NNbw==}
+
+snapshots:
+
+  minimist@1.2.0: {}

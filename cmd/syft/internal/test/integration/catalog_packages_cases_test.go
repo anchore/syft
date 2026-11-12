@@ -524,4 +524,12 @@ var commonTestCases = []testCase{
 			"kong": "3.7.0-0",
 		},
 	},
+	{
+		name:        "find cpan distribution",
+		pkgType:     pkg.CpanPkg,
+		pkgLanguage: pkg.Perl,
+		pkgInfo: map[string]string{
+			"URI": "5.35",
+		},
+	},
 }

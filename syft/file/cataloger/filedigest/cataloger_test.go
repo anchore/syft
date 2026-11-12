@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,6 +16,8 @@ import (
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
@@ -91,6 +94,7 @@ func TestDigestsCataloger(t *testing.T) {
 func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 	testImage := "image-file-type-mix"
 
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
 	src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
@@ -161,6 +165,7 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 func TestFileDigestCataloger_GivenCoordinates(t *testing.T) {
 	testImage := "image-file-type-mix"
 
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
 	c := NewCataloger([]crypto.Hash{crypto.SHA256})
@@ -201,4 +206,67 @@ func TestFileDigestCataloger_GivenCoordinates(t *testing.T) {
 		})
 	}
 
+}
+
+// countingResolver records how many times each coordinate's contents are opened
+type countingResolver struct {
+	file.Resolver
+	lock   sync.Mutex
+	counts map[file.Coordinates]int
+}
+
+func (r *countingResolver) FileContentsByLocation(l file.Location) (io.ReadCloser, error) {
+	r.lock.Lock()
+	r.counts[l.Coordinates]++
+	r.lock.Unlock()
+	return r.Resolver.FileContentsByLocation(l)
+}
+
+func TestDigestsCataloger_hashesEachCoordinateOnce(t *testing.T) {
+	testImage := "image-file-type-mix"
+
+	testutils.SkipWithoutLinuxContainers(t)
+	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
+
+	src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+		Reference: testImage,
+	})
+
+	resolver, err := src.FileResolver(source.SquashedScope)
+	require.NoError(t, err)
+
+	// /symlink-1 and /file-1.txt both resolve to the same coordinates
+	counter := &countingResolver{Resolver: resolver, counts: make(map[file.Coordinates]int)}
+
+	actual, err := NewCataloger([]crypto.Hash{crypto.MD5}).Catalog(context.Background(), counter)
+	require.NoError(t, err)
+	require.NotEmpty(t, actual)
+
+	for c, n := range counter.counts {
+		assert.Equal(t, 1, n, "contents of %+v opened %d times", c, n)
+	}
+}
+
+type panicReader struct{}
+
+func (panicReader) Read([]byte) (int, error) { panic("boom") }
+
+type panickingContentsResolver struct {
+	*file.MockResolver
+}
+
+func (r panickingContentsResolver) FileContentsByLocation(file.Location) (io.ReadCloser, error) {
+	return io.NopCloser(panicReader{}), nil
+}
+
+func TestDigestsCataloger_panicBecomesUnknown(t *testing.T) {
+	resolver := panickingContentsResolver{file.NewMockResolverForPaths("cataloger_test.go")}
+
+	results, err := NewCataloger([]crypto.Hash{crypto.SHA256}).Catalog(context.Background(), resolver, file.NewLocation("cataloger_test.go").Coordinates)
+
+	require.Empty(t, results)
+	unknowns, remaining := unknown.ExtractCoordinateErrors(err)
+	require.NoError(t, remaining)
+	require.Len(t, unknowns, 1)
+	require.ErrorContains(t, unknowns[0].Reason, "recovered from panic while digesting file: boom")
 }

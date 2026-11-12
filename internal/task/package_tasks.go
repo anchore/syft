@@ -27,6 +27,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/lua"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/ocaml"
+	"github.com/anchore/syft/syft/pkg/cataloger/perl"
 	"github.com/anchore/syft/syft/pkg/cataloger/php"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
 	"github.com/anchore/syft/syft/pkg/cataloger/r"
@@ -132,6 +133,10 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(swift.NewSwiftPackageManagerCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "swift", "spm"),
 		newSimplePackageTaskFactory(swipl.NewSwiplPackCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "swipl", "pack"),
 		newSimplePackageTaskFactory(ocaml.NewOpamPackageManagerCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "ocaml", "opam"),
+		// note: no image tag -- an unpacked release's own META.json describes a distribution present on
+		// disk but not installed into the interpreter's @INC, and declared information is not cataloged
+		// inside container images
+		newSimplePackageTaskFactory(perl.NewCpanMetaCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "perl", "cpan"),
 
 		// language-specific package for both image and directory scans (but not necessarily declared) ////////////////////////////////////////
 		newPackageTaskFactory(
@@ -162,6 +167,7 @@ func DefaultPackageTaskFactories() Factories {
 			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "nix",
 		),
 		newSimplePackageTaskFactory(lua.NewPackageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "lua"),
+		newSimplePackageTaskFactory(perl.NewCpanInstalledCataloger, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "perl", "cpan"),
 
 		// other package catalogers ///////////////////////////////////////////////////////////////////////////
 		newPackageTaskFactory(

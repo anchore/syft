@@ -125,6 +125,7 @@ tasks:
     desc: Run tests for pipeline utils
     cmds:
       - cmd: .github/scripts/labeler_test.py
+      - cmd: go test -C .make ./...
 
   snapshot-smoke-test:
     desc: Run a smoke test on the snapshot builds + docker images

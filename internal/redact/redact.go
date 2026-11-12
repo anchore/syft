@@ -13,6 +13,14 @@ func Set(s redact.Store) {
 	store = s
 }
 
+// Reset clears the global redaction store. It must only be called once a command
+// run has fully finished (nothing left to Add or Apply), so that a later run can
+// Set its own store. Calling it while a run is in flight would let a second Set
+// split secrets across two stores and leak the ones in the dropped store.
+func Reset() {
+	store = nil
+}
+
 func Get() redact.Store {
 	return store
 }

@@ -563,6 +563,26 @@ func Test_parseVersion(t *testing.T) {
 			want:    "1.0a1.post2.dev3+local.1",
 		},
 		{
+			name:    "epoch",
+			version: "== 1!2.0.0",
+			want:    "1!2.0.0",
+		},
+		{
+			name:    "epoch with all segments combined",
+			version: "== 1!1.0a1.post2.dev3+local.1",
+			want:    "1!1.0a1.post2.dev3+local.1",
+		},
+		{
+			name:    "arbitrary equality with epoch",
+			version: "=== 1!2.0.0",
+			want:    "1!2.0.0",
+		},
+		{
+			name:    "bare exclusion is not a pin",
+			version: "!= 1.1.0",
+			want:    "",
+		},
+		{
 			name:    "resolve lowest, simple constraint",
 			version: " >= 1.0.0 ",
 			guess:   true,

@@ -141,6 +141,22 @@ from-images:
       - /usr/bin/deno
 
   - name: deno
+    version: 1.11.3
+    images:
+      - ref: denoland/deno:1.11.3@sha256:340d071dc71c8403c75713694db04f59b8cb7f6c7244798cd7447d55f2750596
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
+    version: 1.11.4
+    images:
+      - ref: denoland/deno:1.11.4@sha256:8e9a449a50b71c779ad1c10ec79055b20a331e78a3852818fac47bc3e85b49f4
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
     version: 1.16.4
     images:
       - ref: denoland/deno:1.16.4@sha256:027868eb6f079ef290957bcda05280a6b08ff86baf549bc6eff5c17467a44d41
@@ -184,6 +200,14 @@ from-images:
     version: 2.6.3
     images:
       - ref: denoland/deno:2.6.3
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
+    version: 2.9.2
+    images:
+      - ref: denoland/deno:ubuntu-2.9.2@sha256:0d27941f871700ebd95953c36fb1a817135c20f5afe3a645935672dfab72b2e9
         platform: linux/amd64
     paths:
       - /usr/bin/deno
@@ -1180,6 +1204,22 @@ from-images:
       - /usr/local/bin/pilot-discovery
 
   - name: istio_pilot-discovery
+    version: 1.19.0-rc.0
+    images:
+      - ref: istio/pilot:1.19.0-rc.0@sha256:09c3c80be369a9724f11e1edfc60cc0b4d58612a6a99ac7314f620254986b159
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-discovery
+
+  - name: istio_pilot-discovery
+    version: 1.15.0-beta.0
+    images:
+      - ref: istio/pilot:1.15.0-beta.0@sha256:07a1fd1b14ce51c47f0051f597e9b581020a2e5cc53d144592e85f3fa07bbef6
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-discovery
+
+  - name: istio_pilot-discovery
     version: 1.10-dev
     images:
       - ref: istio/pilot:377977f494e3a37d4c77818a77fe677a4e3eb1a5@sha256:c4466fe97d981d31e84a367f1a1df1f7f976b45b96a73483ba04725414aa96e9
@@ -1196,6 +1236,14 @@ from-images:
       - /usr/local/bin/pilot-discovery
 
   - name: istio_pilot-discovery
+    version: 1.5.0-alpha.0
+    images:
+      - ref: istio/pilot:1.5.0-alpha.0@sha256:b372bcbacd5af241afe097bd017e16773514b6ba17152ca02b7d5285e290b110
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-discovery
+
+  - name: istio_pilot-discovery
     version: 1.3.8
     images:
       - ref: istio/pilot:1.3.8@sha256:e86394d237e1626f117cadea3588c5182d63b6a8712f9763ee419d4c72e7669b
@@ -1207,6 +1255,14 @@ from-images:
     version: 1.1.17
     images:
       - ref: istio/pilot:1.1.17@sha256:79a39ea04dbf7f9e36be80439d44f82968073eea307a58a6b073b551063ec629
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-discovery
+
+  - name: istio_pilot-discovery
+    version: 1.0.0-snapshot.0
+    images:
+      - ref: istio/pilot:1.0.0-snapshot.0@sha256:3b32619b36014eeafaad8199d8af48f7725e9e75a01c0b1abfba1d7166e53b66
         platform: linux/amd64
     paths:
       - /usr/local/bin/pilot-discovery
@@ -1244,6 +1300,22 @@ from-images:
       - /usr/local/bin/pilot-agent
 
   - name: istio_pilot-agent
+    version: 1.19.0-rc.0
+    images:
+      - ref: istio/proxyv2:1.19.0-rc.0@sha256:8c23abb1663e83ec19cac1e3de46c3cf7e942329936463646ca7a8d8088806b4
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-agent
+
+  - name: istio_pilot-agent
+    version: 1.15.0-beta.0
+    images:
+      - ref: istio/proxyv2:1.15.0-beta.0@sha256:9f54e6fa64c6ef6bb8b3e72e513c4f0415f1576ae755b4fe9a5be8c8b38694de
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-agent
+
+  - name: istio_pilot-agent
     version: 1.10-dev
     images:
       - ref: istio/proxyv2:377977f494e3a37d4c77818a77fe677a4e3eb1a5@sha256:336fd56493fb69a260483adc6a77d773e8c2cba42ac116bfd52d56c16d91f92b
@@ -1260,9 +1332,25 @@ from-images:
       - /usr/local/bin/pilot-agent
 
   - name: istio_pilot-agent
+    version: 1.5.0-alpha.0
+    images:
+      - ref: istio/proxyv2:1.5.0-alpha.0@sha256:6d31b7e373622b2d483124bdc46974ff7b39c9b3fff8a9dc73a47d91344a24f6
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-agent
+
+  - name: istio_pilot-agent
     version: 1.1.17
     images:
       - ref: istio/proxyv2:1.1.17@sha256:f97470c9b3124c19069ce9b773198da0efddbeea85dd33f88e2fb4f3b0c55e31
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-agent
+
+  - name: istio_pilot-agent
+    version: 1.0.0-snapshot.0
+    images:
+      - ref: istio/proxyv2:1.0.0-snapshot.0@sha256:13c352cd8b82c326d6e36a8d0a1eed9debe6b1816e30cfe79970d316c9e59714
         platform: linux/amd64
     paths:
       - /usr/local/bin/pilot-agent
@@ -1295,6 +1383,30 @@ from-images:
     version: 12.2.0-258092
     images:
       - ref: grafana/grafana-oss-dev:12.2.0-258092@sha256:b76f1efbd96da374567c6ee65b3d0de11351bca4cf84afce2e28ee44ac99ea47
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 12.4.3-security-02
+    images:
+      - ref: grafana/grafana:12.4.3-security-02@sha256:fe5bc62ae401120c48b4cd50db122a632bfca8d48a7115a32cc7c9b80c19dc48
+        platform: linux/arm
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 12.0.0-security-01
+    images:
+      - ref: grafana/grafana:12.0.0-security-01@sha256:6fc2fee54f8551a3ae452a2dd14fd524143026e46a0f06b0302c79117fe89fcf
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 11.0.5-security-01
+    images:
+      - ref: grafana/grafana:11.0.5-security-01@sha256:0ba037897c6f22f26b7d289eb1f651ed4d9d552ea454ace60307ecd0585cbee1
         platform: linux/amd64
     paths:
       - /usr/share/grafana/bin/grafana
@@ -1467,6 +1579,27 @@ from-images:
     paths:
       - /usr/lib/x86_64-linux-gnu/libkrb5.so.26.0.0
 
+  - version: 1.40.1
+    images:
+      - ref: envoyproxy/envoy:v1.40.1@sha256:713bb146f1a7c97ebc70e13d259f77ff36f2c5d00f3145677816af5af9bd1530
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.40.0
+    images:
+      - ref: envoyproxy/envoy:v1.40.0@sha256:459f2a6404c340fe6afccd69d85527012d47f3c036765493e6f8f3113fa384de
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.37.1
+    images:
+      - ref: envoyproxy/envoy:v1.37.1@sha256:29496a88fba9c4c9cdef4afe8fec70f536c5ba111b1c2bddbc5436b091ceca33
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
   - version: 1.36.4
     images:
       - ref: envoyproxy/envoy:v1.36.4@sha256:ae31562b8cede20913a2d3d6a4f44c8479a50551e033cb8ef7bb8e38cec4b573
@@ -1546,8 +1679,16 @@ from-images:
 
   - version: 1.9.6
     images:
-      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:1405cc613bd95b2c6edd8b2a152510ae91c7e62aea4698500d23b2145960ab9c
+      # note: per-platform manifest digests (not the index digest) -- the extraction step creates a
+      # container from the ref alone, so each platform needs its own uniquely addressable ref
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:0939639a1f338a9eaaa490fd38b4a7881e47a7fd1a473baf8749ce15952b55b8
         platform: linux/amd64
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:5fb823cc617cbfbee4b250ad5e059c23078ea63e9a7e6acb6d4d30e4456eb0be
+        platform: linux/arm64
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:dcea8d021e15cf27f59249ee0cfd211559ef9eb60b10651c3af299499848cf8b
+        platform: linux/arm
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:fc53a604eb2d17fa0cf7a3f266d052c2f32fb97209869057d6826d1815cf622d
+        platform: linux/s390x
     paths:
       - /nginx-ingress-controller
 

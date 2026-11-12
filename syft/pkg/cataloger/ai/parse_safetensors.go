@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
+	"math/bits"
 	"sort"
 	"strings"
 
@@ -15,9 +17,7 @@ import (
 
 // SafeTensors file format: [8 bytes u64 LE header size] [N bytes JSON header] [tensor data].
 // Reference: https://github.com/huggingface/safetensors#format
-const (
-	maxSafeTensorsHeaderSize = 100 * 1024 * 1024 // 100MB ceiling on header JSON to prevent OOM
-)
+// The header JSON is capped at maxSafeTensorsHeaderSize (see limits.go).
 
 // safeTensorsHeader is the decoded JSON header. Tensor entries live alongside a
 // reserved "__metadata__" key holding a string-to-string producer map. We decode
@@ -84,47 +84,67 @@ func readSafeTensorsHeader(r io.Reader) (*safeTensorsHeader, error) {
 	return h, nil
 }
 
-// parameterCount sums the element counts across all tensors in the header.
-func (h *safeTensorsHeader) parameterCount() uint64 {
-	var total uint64
-	for _, t := range h.tensors {
-		count := uint64(1)
-		for _, dim := range t.Shape {
-			if dim <= 0 {
-				count = 0
-				break
-			}
-			count *= uint64(dim)
-		}
-		total += count
+// modelInfo returns the metadata derivable from the header bytes alone. Naming,
+// licenses and ShardCount are left to the merge processor.
+func (h *safeTensorsHeader) modelInfo() pkg.SafeTensorsModelInfo {
+	params, dtype := h.parameterStats()
+	return pkg.SafeTensorsModelInfo{
+		Format:       "safetensors",
+		TensorCount:  uint64(len(h.tensors)),
+		Parameters:   params,
+		Quantization: normalizeDType(dtype),
+		UserMetadata: userMetadataKeyValues(h.metadata),
+		MetadataHash: h.metadataHash(),
 	}
-	return total
 }
 
-// dominantDType returns the dtype that accounts for the largest fraction of parameters.
-// For mixed-precision models the "dominant" dtype is still a useful summary.
-func (h *safeTensorsHeader) dominantDType() string {
+// parameterStats sums the element counts across all tensors and returns the
+// dtype that accounts for the largest share of them. For mixed-precision models
+// the "dominant" dtype is still a useful summary. Totals saturate rather than wrap.
+func (h *safeTensorsHeader) parameterStats() (total uint64, dominantDType string) {
 	sizeByDType := make(map[string]uint64)
 	for _, t := range h.tensors {
-		count := uint64(1)
-		for _, dim := range t.Shape {
-			if dim <= 0 {
-				count = 0
-				break
-			}
-			count *= uint64(dim)
+		count, ok := tensorElements(t.Shape)
+		if !ok {
+			continue
 		}
-		sizeByDType[t.DType] += count
+		total = saturatingAdd(total, count)
+		sizeByDType[t.DType] = saturatingAdd(sizeByDType[t.DType], count)
 	}
-	var best string
 	var bestSize uint64
 	for dtype, size := range sizeByDType {
-		if size > bestSize || (size == bestSize && dtype < best) {
-			best = dtype
+		if size > bestSize || (size == bestSize && dtype < dominantDType) {
+			dominantDType = dtype
 			bestSize = size
 		}
 	}
-	return best
+	return total, dominantDType
+}
+
+// tensorElements returns the element count for a shape, or ok=false on a
+// non-positive dim or when the product overflows uint64.
+func tensorElements(shape []int64) (uint64, bool) {
+	n := uint64(1)
+	for _, d := range shape {
+		if d <= 0 {
+			return 0, false
+		}
+		hi, lo := bits.Mul64(n, uint64(d))
+		if hi != 0 {
+			return 0, false
+		}
+		n = lo
+	}
+	return n, true
+}
+
+// saturatingAdd returns a+b, clamped to math.MaxUint64 instead of wrapping.
+func saturatingAdd(a, b uint64) uint64 {
+	sum, carry := bits.Add64(a, b, 0)
+	if carry != 0 {
+		return math.MaxUint64
+	}
+	return sum
 }
 
 // metadataHash returns a stable xxhash64 over the logical tensor content

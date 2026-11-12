@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -87,11 +88,13 @@ func parseInstalledFiles(reader io.Reader, location, sitePackagesRootPath string
 		}
 
 		if location != "" && sitePackagesRootPath != "" {
-			joinedPath := filepath.Join(filepath.Dir(location), line)
+			joinedPath := path.Join(path.Dir(location), line)
+			// the path package has no Rel, and filepath.Rel hands back host separators on windows
 			line, err = filepath.Rel(sitePackagesRootPath, joinedPath)
 			if err != nil {
 				return nil, err
 			}
+			line = filepath.ToSlash(line)
 		}
 
 		installedFile := pkg.PythonFileRecord{

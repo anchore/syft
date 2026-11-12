@@ -31,7 +31,7 @@ func MockRepo(t *testing.T, dir string) (url string) {
 
 	t.Cleanup(server.Close)
 
-	matches, err := doublestar.Glob(os.DirFS(dir), filepath.Join("**", "*.pom"))
+	matches, err := doublestar.Glob(os.DirFS(dir), "**/*.pom")
 	require.NoError(t, err)
 
 	for _, match := range matches {

@@ -2,6 +2,7 @@ package unionreader
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"strings"
 	"sync"
@@ -120,12 +121,14 @@ func TestReaderAtAdapter_ReadAt(t *testing.T) {
 				expectedStr: "",
 			},
 			{
+				// io.ReaderAt requires a non-nil error whenever it returns fewer than len(p) bytes, so a
+				// buffer that runs off the end of the file reports io.EOF alongside what it did read
 				name:        "partial read",
 				data:        "Hello",
 				offset:      2,
 				bufSize:     10,
 				expectedN:   3,
-				expectedErr: nil,
+				expectedErr: io.EOF,
 				expectedStr: "llo",
 			},
 			{
@@ -334,4 +337,112 @@ func newReadSeekCloser(rs io.ReadSeeker) *readSeekCloser {
 func (r *readSeekCloser) Close() error {
 	r.closed = true
 	return nil
+}
+
+// scriptedReadSeeker replays a fixed sequence of Read results so tests can express the read shapes a
+// squashfs-backed reader actually produces, none of which an io.ReaderAt may pass through to callers:
+// a short count with a nil error, a full count paired with io.EOF, or a failure partway through a buffer.
+type scriptedReadSeeker struct {
+	reads  []scriptedRead
+	next   int
+	offset int64
+}
+
+type scriptedRead struct {
+	data string
+	err  error
+}
+
+func (r *scriptedReadSeeker) Read(p []byte) (int, error) {
+	if r.next >= len(r.reads) {
+		return 0, io.EOF
+	}
+	read := r.reads[r.next]
+	r.next++
+	n := copy(p, read.data)
+	r.offset += int64(n)
+	return n, read.err
+}
+
+func (r *scriptedReadSeeker) Seek(offset int64, whence int) (int64, error) {
+	if whence == io.SeekCurrent {
+		return r.offset, nil
+	}
+	r.offset = offset
+	return offset, nil
+}
+
+func (r *scriptedReadSeeker) Close() error { return nil }
+
+func TestReaderAtAdapter_ReadAtHonorsReaderAtContract(t *testing.T) {
+	errBoom := errors.New("boom")
+
+	tests := []struct {
+		name        string
+		reads       []scriptedRead
+		bufSize     int
+		expectedN   int
+		expectedErr error
+		expectedStr string
+	}{
+		{
+			// before io.ReadFull the caller got the first 3 bytes and a nil error, and any parser sizing a
+			// struct off the result read zero padding it had no way to detect
+			name:        "fills the buffer across short reads",
+			reads:       []scriptedRead{{data: "abc"}, {data: "def"}, {data: "ghi"}},
+			bufSize:     9,
+			expectedN:   9,
+			expectedErr: nil,
+			expectedStr: "abcdefghi",
+		},
+		{
+			// squashfs pairs io.EOF with a full buffer when a read lands exactly on the end of the file;
+			// bytes.Reader.ReadAt returns nil there, and callers that treat any error as fatal rely on it
+			name:        "drops io.EOF when the read still filled the buffer",
+			reads:       []scriptedRead{{data: "abc"}, {data: "def", err: io.EOF}},
+			bufSize:     6,
+			expectedN:   6,
+			expectedErr: nil,
+			expectedStr: "abcdef",
+		},
+		{
+			// a short tail must surface as io.EOF rather than io.ErrUnexpectedEOF so callers comparing
+			// against io.EOF keep working
+			name:        "reports a short tail as io.EOF",
+			reads:       []scriptedRead{{data: "abc"}, {data: "de", err: io.EOF}},
+			bufSize:     10,
+			expectedN:   5,
+			expectedErr: io.EOF,
+			expectedStr: "abcde",
+		},
+		{
+			// the io.ErrUnexpectedEOF remap must not swallow a real read failure, and the byte count has to
+			// survive it, otherwise callers cannot tell how much of the buffer is trustworthy
+			name:        "propagates a failure partway through the buffer",
+			reads:       []scriptedRead{{data: "abc"}, {data: "", err: errBoom}},
+			bufSize:     10,
+			expectedN:   3,
+			expectedErr: errBoom,
+			expectedStr: "abc",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := &scriptedReadSeeker{reads: tt.reads}
+			adapter := newReaderAtAdapter(reader)
+
+			buf := make([]byte, tt.bufSize)
+			n, err := adapter.ReadAt(buf, 7)
+
+			require.ErrorIs(t, err, tt.expectedErr)
+			assert.Equal(t, tt.expectedN, n)
+			assert.Equal(t, tt.expectedStr, string(buf[:n]))
+
+			// the position must be restored even though the read spanned multiple underlying calls
+			pos, err := adapter.Seek(0, io.SeekCurrent)
+			require.NoError(t, err)
+			assert.Zero(t, pos)
+		})
+	}
 }

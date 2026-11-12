@@ -3,10 +3,12 @@ package cpegenerate
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	_ "embed"
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -139,14 +141,27 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 // generate the minimal set of representative CPEs, which implies that optional fields should not be included
 // (such as target SW).
 func FromPackageAttributes(p pkg.Package) []cpe.CPE {
-	// ML models should not have CPEs as they are not traditional software packages
-	// and don't fit the vulnerability model used for software packages.
-	if p.Type == pkg.ModelPkg {
+	switch p.Type {
+	case pkg.KbPkg:
+		// Microsoft KB packages are patches, not products: the name is an MSRC product ID and the
+		// version a KB number, neither of which maps onto a CPE vendor, product or version. They are
+		// matched against MSRC data by name and version, so a generated CPE is only noise, and one
+		// that NVD-based matching could misread.
+		return nil
+	case pkg.ModelPkg:
+		// ML models should not have CPEs as they are not traditional software packages
+		// and don't fit the vulnerability model used for software packages.
 		return nil
 	}
 
-	vendors := candidateVendors(p)
-	products := candidateProducts(p)
+	// real CPE fields are short, and every byte of a field is paid once per generated CPE (key building and regex
+	// validation), so a hostile name or version is not worth generating candidates for at all.
+	if len(p.Name) > maxCandidateFieldLength || len(p.Version) > maxCandidateFieldLength {
+		return nil
+	}
+
+	vendors := boundCandidates(candidateVendors(p))
+	products := boundCandidates(candidateProducts(p))
 	targetSWs := candidateTargetSw(p)
 	if len(products) == 0 {
 		return nil
@@ -183,10 +198,48 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 	return result
 }
 
-func candidateTargetSw(p pkg.Package) []string {
-	if p.Type == pkg.WordpressPluginPkg {
-		return []string{"wordpress"}
+// maxCandidateFieldLength bounds the name, version, and each vendor and product candidate that reaches the
+// cross-product in FromPackageAttributes. Real values are well under this.
+const maxCandidateFieldLength = 512
+
+// maxCandidates bounds how many vendor and product candidates each feed the cross-product in FromPackageAttributes,
+// so a single package yields at most maxCandidates² CPEs. Some sources add a candidate per input element with no bound
+// of their own (e.g. one vendor per java groupID segment, one product per .NET executable), and real packages produce
+// a dozen or so candidates at most.
+const maxCandidates = 64
+
+// boundCandidates drops candidates longer than maxCandidateFieldLength and keeps at most maxCandidates of the rest.
+// Candidates are ordered shortest first (then lexically) so that truncation is deterministic and keeps the short,
+// generic values that tend to be real vendors and products.
+func boundCandidates(candidates []string) []string {
+	candidates = slices.DeleteFunc(candidates, func(c string) bool {
+		return len(c) > maxCandidateFieldLength
+	})
+	if len(candidates) <= maxCandidates {
+		return candidates
 	}
+	slices.SortFunc(candidates, func(a, b string) int {
+		return cmp.Or(cmp.Compare(len(a), len(b)), strings.Compare(a, b))
+	})
+	return candidates[:maxCandidates]
+}
+
+func candidateTargetSw(p pkg.Package) []string {
+	switch {
+	case p.Type == pkg.WordpressPluginPkg:
+		return []string{"wordpress"}
+	case p.Type == pkg.RustPkg:
+		return []string{"rust"}
+	case p.Language == pkg.Perl:
+		// NVD records CPAN distributions with perl in target_sw, e.g.
+		// cpe:2.3:a:mojolicious:mojolicious:*:*:*:*:*:perl:*:*
+		return []string{"perl"}
+	case p.Type == pkg.TerraformPkg:
+		// NVD records terraform providers with the provider type in target_sw, e.g.
+		// cpe:2.3:a:hashicorp:terraform_provider:*:*:*:*:*:vault:*:*
+		return candidateTargetSwForTerraformProvider(p)
+	}
+
 	return []string{cpe.Any}
 }
 
@@ -217,29 +270,7 @@ func candidateVendors(p pkg.Package) []string {
 		}
 	}
 
-	switch p.Metadata.(type) {
-	case pkg.DotnetDepsEntry, pkg.DotnetPackagesLockEntry, pkg.DotnetPortableExecutableEntry:
-		vendors.clear()
-		vendors.union(candidateVendorsForDotnet(p))
-	case pkg.RpmDBEntry, pkg.RpmArchive:
-		vendors.union(candidateVendorsForRPM(p))
-	case pkg.RubyGemspec:
-		vendors.union(candidateVendorsForRuby(p))
-	case pkg.PythonPackage:
-		vendors.union(candidateVendorsForPython(p))
-	case pkg.JavaArchive:
-		vendors.union(candidateVendorsForJava(p))
-	case pkg.ApkDBEntry:
-		vendors.union(candidateVendorsForAPK(p))
-	case pkg.NpmPackage:
-		vendors.union(candidateVendorsForJavascript(p))
-	case pkg.PEBinary:
-		// Add PE-specific vendor hints (e.g. ghostscript -> artifex)
-		vendors.union(candidateVendorsForPE(p))
-	case pkg.WordpressPluginEntry:
-		vendors.clear()
-		vendors.union(candidateVendorsForWordpressPlugin(p))
-	}
+	vendors = candidateVendorsByType(p, vendors)
 
 	if p.Type == pkg.BinaryPkg && endsWithNumber(p.Name) {
 		// add binary package digit-suffix variations (e.g. Qt5 -> Qt)
@@ -253,6 +284,11 @@ func candidateVendors(p pkg.Package) []string {
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
 	addDelimiterVariations(vendors)
+
+	// rust vendor name needs to be added after the `addDelimiterVariations` call as `-project` suffix is used otherwise
+	if p.Language == pkg.Rust {
+		vendors.addValue(p.Name + "_project")
+	}
 
 	// generate sub-selections of each candidate based on separators (e.g. jenkins-ci -> [jenkins, jenkins-ci])
 	addAllSubSelections(vendors)
@@ -275,6 +311,36 @@ func candidateVendors(p pkg.Package) []string {
 	}
 
 	return uniqueVendors
+}
+
+func candidateVendorsByType(p pkg.Package, vendors fieldCandidateSet) fieldCandidateSet {
+	switch p.Metadata.(type) {
+	case pkg.DotnetDepsEntry, pkg.DotnetPackagesLockEntry, pkg.DotnetPortableExecutableEntry:
+		vendors.clear()
+		vendors.union(candidateVendorsForDotnet(p))
+	case pkg.RpmDBEntry, pkg.RpmArchive:
+		vendors.union(candidateVendorsForRPM(p))
+	case pkg.RubyGemspec:
+		vendors.union(candidateVendorsForRuby(p))
+	case pkg.PythonPackage:
+		vendors.union(candidateVendorsForPython(p))
+	case pkg.JavaArchive:
+		vendors.union(candidateVendorsForJava(p))
+	case pkg.ApkDBEntry:
+		vendors.union(candidateVendorsForAPK(p))
+	case pkg.NpmPackage:
+		vendors.union(candidateVendorsForJavascript(p))
+	case pkg.PEBinary:
+		// Add PE-specific vendor hints (e.g. ghostscript -> artifex)
+		vendors.union(candidateVendorsForPE(p))
+	case pkg.WordpressPluginEntry:
+		vendors.clear()
+		vendors.union(candidateVendorsForWordpressPlugin(p))
+	case pkg.TerraformLockProviderEntry:
+		vendors.clear()
+		vendors.union(candidateVendorsForTerraformProvider(p))
+	}
+	return vendors
 }
 
 func candidateProducts(p pkg.Package) []string {
@@ -318,6 +384,9 @@ func candidateProductSet(p pkg.Package) fieldCandidateSet {
 	case pkg.WordpressPluginEntry:
 		products.clear()
 		products.union(candidateProductsForWordpressPlugin(p))
+	case pkg.TerraformLockProviderEntry:
+		products.clear()
+		products.union(candidateProductsForTerraformProvider(p))
 	}
 
 	// it is never OK to have candidates with these values ["" and "*"] (since CPEs will match any other value)
@@ -345,13 +414,19 @@ func addAllSubSelections(fields fieldCandidateSet) {
 	}
 }
 
+// maxSubSelections bounds how many prefixes generateSubSelections returns. Each prefix becomes a vendor candidate, so
+// without a bound a name with N separators yields O(N) vendors of O(N) length each (quadratic in time and memory).
+// Real package names rarely exceed a handful of segments.
+const maxSubSelections = 10
+
 // generateSubSelections attempts to split a field by hyphens and underscores and return a list of sensible sub-selections
-// that can be used as product or vendor candidates. E.g. jenkins-ci-tools -> [jenkins-ci-tools, jenkins-ci, jenkins].
+// that can be used as product or vendor candidates. E.g. jenkins-ci-tools -> [jenkins, jenkins-ci, jenkins-ci-tools].
+// At most maxSubSelections prefixes are returned, shortest first.
 func generateSubSelections(field string) (results []string) {
 	scanner := bufio.NewScanner(strings.NewReader(field))
 	scanner.Split(scanByHyphenOrUnderscore)
 	var lastToken uint8
-	for scanner.Scan() {
+	for len(results) < maxSubSelections && scanner.Scan() {
 		rawCandidate := scanner.Text()
 		if len(rawCandidate) == 0 {
 			break

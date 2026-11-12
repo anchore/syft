@@ -3,7 +3,6 @@ package binary
 import (
 	"bytes"
 	"context"
-	"debug/elf"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -14,6 +13,7 @@ import (
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -99,9 +99,9 @@ func (c *elfPackageCataloger) Catalog(ctx context.Context, resolver file.Resolve
 func parseElfPackageNotes(resolver file.Resolver, location file.Location, c *elfPackageCataloger) (*elfBinaryPackageNotes, elfPackageKey, error) {
 	reader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		return nil, elfPackageKey{}, fmt.Errorf("unable to get binary contents %q: %w", location.Path(), err)
+		return nil, elfPackageKey{}, fmt.Errorf("unable to get binary contents %q: %w", location.FullNestedPath(), err)
 	}
-	defer internal.CloseAndLogError(reader, location.AccessPath)
+	defer internal.CloseAndLogError(reader, location.FullNestedPath())
 
 	notes, err := c.parseElfNotes(file.LocationReadCloser{
 		Location:   location,
@@ -109,7 +109,7 @@ func parseElfPackageNotes(resolver file.Resolver, location file.Location, c *elf
 	})
 
 	if err != nil {
-		log.WithFields("file", location.Path(), "error", err).Trace("unable to parse ELF notes")
+		log.WithFields("file", location.FullNestedPath(), "error", err).Trace("unable to parse ELF notes")
 		return nil, elfPackageKey{}, err
 	}
 
@@ -146,9 +146,9 @@ func getELFNotes(r file.LocationReadCloser) (*elfBinaryPackageNotes, error) {
 		return nil, fmt.Errorf("unable to get union reader for binary: %w", err)
 	}
 
-	f, err := elf.NewFile(unionReader)
+	f, err := elfutil.NewFile(unionReader)
 	if f == nil || err != nil {
-		log.WithFields("file", r.Location.Path(), "error", err).Trace("unable to parse binary as ELF")
+		log.WithFields("file", r.Location.FullNestedPath(), "error", err).Trace("unable to parse binary as ELF")
 		return nil, nil
 	}
 
@@ -182,7 +182,7 @@ func getELFNotes(r file.LocationReadCloser) (*elfBinaryPackageNotes, error) {
 			if metadata, err = unmarshalELFPackageNotesPayload(newPayload); err == nil {
 				return metadata, nil
 			}
-			log.WithFields("file", r.Location.Path(), "error", err).Trace("unable to unmarshal ELF package notes as JSON")
+			log.WithFields("file", r.Location.FullNestedPath(), "error", err).Trace("unable to unmarshal ELF package notes as JSON")
 		}
 	}
 

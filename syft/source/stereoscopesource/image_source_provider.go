@@ -6,6 +6,7 @@ import (
 	"github.com/anchore/go-collections"
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -29,6 +30,10 @@ func (l stereoscopeImageSourceProvider) Name() string {
 }
 
 func (l stereoscopeImageSourceProvider) Provide(ctx context.Context) (source.Source, error) {
+	if !internal.EagerLayerSquashes(ctx) {
+		// lower layer squashes are only built if something reads them, so a squashed scan never pays for them
+		ctx = image.WithLazyLayerSquashes(ctx)
+	}
 	img, err := l.stereoscopeProvider.Provide(ctx)
 	if err != nil {
 		return nil, err

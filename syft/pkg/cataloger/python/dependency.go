@@ -15,7 +15,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
-func poetryLockDependencySpecifier(p pkg.Package) dependency.Specification { //nolint:dupl // this is very similar to the uv lock dependency specifier, but should remain separate
+func poetryLockDependencySpecifier(p pkg.Package) dependency.Specification {
 	meta, ok := p.Metadata.(pkg.PythonPoetryLockEntry)
 	if !ok {
 		log.Tracef("cataloger failed to extract poetry lock metadata for package %+v", p.Name)
@@ -287,7 +287,7 @@ func collectPackages(pkgsBySitePackageAndName map[string]map[string]pkg.Package,
 
 func deriveSitePackageDir(p pkg.Package) string {
 	for _, l := range packagePrimaryLocations(p) {
-		sitePackageDir := extractSitePackageDir(l.RealPath)
+		sitePackageDir := extractSitePackageDir(l.LocalPath())
 		if sitePackageDir != "" {
 			return sitePackageDir
 		}

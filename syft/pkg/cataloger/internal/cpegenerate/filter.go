@@ -14,6 +14,7 @@ type filterFn func(cpe cpe.Attributes, p pkg.Package) bool
 
 var cpeFilters = []filterFn{
 	disallowJiraClientServerMismatch,
+	disallowTomcatServerCPEForEmbeddedEL,
 	disallowJenkinsServerCPEForPluginPackage,
 	disallowJenkinsCPEsNotAssociatedWithJenkins,
 	disallowNonParseableCPEs,
@@ -70,4 +71,19 @@ func disallowJiraClientServerMismatch(c cpe.Attributes, p pkg.Package) bool {
 		}
 	}
 	return false
+}
+
+// disallowTomcatServerCPEForEmbeddedEL prevents the server-level Tomcat CPE from being
+// assigned to the EL-only embedded artifact. Keep its artifact-specific CPE candidates.
+func disallowTomcatServerCPEForEmbeddedEL(c cpe.Attributes, p pkg.Package) bool {
+	if c.Vendor != "apache" || c.Product != "tomcat" {
+		return false
+	}
+
+	metadata, ok := p.Metadata.(pkg.JavaArchive)
+	if !ok || metadata.PomProperties == nil {
+		return false
+	}
+
+	return metadata.PomProperties.GroupID == "org.apache.tomcat.embed" && metadata.PomProperties.ArtifactID == "tomcat-embed-el"
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"iter"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -167,7 +168,7 @@ func getLogicalKey(managedBinaryPath string) (*LogicalEntryKey, error) {
 		OrgName:  items[0],
 		Version:  items[1],
 		Platform: items[2],
-		Filename: filepath.Join(items[3:]...),
+		Filename: path.Join(items[3:]...), // posix, since this is part of the logical key
 	}, nil
 }
 

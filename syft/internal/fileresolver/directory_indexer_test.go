@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -18,6 +17,7 @@ import (
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/internal/windows"
 )
 
 type indexerMock struct {
@@ -138,6 +138,9 @@ func TestDirectoryIndexer_handleFileAccessErr(t *testing.T) {
 }
 
 func TestDirectoryIndexer_IncludeRootPathInIndex(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("indexes the posix filesystem root")
+	}
 	filterFn := func(_, path string, _ os.FileInfo, _ error) error {
 		if path != "/" {
 			return fs.SkipDir
@@ -206,11 +209,7 @@ func TestDirectoryIndexer_index(t *testing.T) {
 			info, err := os.Stat(test.path)
 			assert.NoError(t, err)
 
-			// note: the index uses absolute paths, so assertions MUST keep this in mind
-			cwd, err := os.Getwd()
-			require.NoError(t, err)
-
-			p := file.Path(path.Join(cwd, test.path))
+			p := indexedPath(t, test.path)
 			assert.Equal(t, true, tree.HasPath(p))
 			exists, ref, err := tree.File(p)
 			assert.Equal(t, true, exists)
@@ -226,6 +225,9 @@ func TestDirectoryIndexer_index(t *testing.T) {
 }
 
 func TestDirectoryIndexer_index_for_AncestorSymlinks(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fixture relies on symlinks, which git does not check out as links on windows by default")
+	}
 	// note: this test is testing the effects from NewFromDirectory, indexTree, and addPathToIndex
 	_, filename, _, ok := runtime.Caller(0)
 	require.True(t, ok)
@@ -256,11 +258,7 @@ func TestDirectoryIndexer_index_for_AncestorSymlinks(t *testing.T) {
 			info, err := os.Stat(test.path)
 			assert.NoError(t, err)
 
-			// note: the index uses absolute paths, so assertions MUST keep this in mind
-			cwd, err := os.Getwd()
-			require.NoError(t, err)
-
-			p := file.Path(path.Join(cwd, test.path))
+			p := indexedPath(t, test.path)
 			assert.Equal(t, true, tree.HasPath(p))
 			exists, ref, err := tree.File(p)
 			assert.Equal(t, true, exists)
@@ -286,7 +284,49 @@ func TestDirectoryIndexer_index_survive_badSymlink(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestDirectoryIndexer_index_survive_inaccessibleSymlinkTarget(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("relies on symlinks and posix permissions")
+	}
+	// a symlink that resolves into a directory we don't have permission to traverse should be skipped
+	// with a warning like any other inaccessible path, not abort the entire scan (see #3286).
+	if os.Geteuid() == 0 {
+		t.Skip("cannot run as root: root bypasses the directory permissions that trigger the bug")
+	}
+
+	// resolve any symlinks in the temp path (e.g. macOS /var -> /private/var) so the indexer root is a
+	// real path -- otherwise indexing takes the symlinked-branch code path and never reaches the bug.
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	require.NoError(t, err)
+
+	// root/
+	// ├── restricted/           (chmod 0000 -- cannot be traversed)
+	// │   └── nested/
+	// │       └── target.txt
+	// └── link -> root/restricted/nested/target.txt
+	nested := filepath.Join(root, "restricted", "nested")
+	require.NoError(t, os.MkdirAll(nested, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(nested, "target.txt"), []byte("hello"), 0o644))
+	require.NoError(t, os.Symlink(filepath.Join(root, "restricted", "nested", "target.txt"), filepath.Join(root, "link")))
+
+	restricted := filepath.Join(root, "restricted")
+	require.NoError(t, os.Chmod(restricted, 0o000))
+	// restore permissions so t.TempDir cleanup can remove the tree
+	t.Cleanup(func() { _ = os.Chmod(restricted, 0o755) })
+
+	// base is empty, matching a plain `syft <path>` invocation (the reporter's scenario)
+	indexer := newDirectoryIndexer(root, "")
+	_, _, err = indexer.build()
+	require.NoError(t, err)
+
+	// the inaccessible path should be recorded rather than silently dropped
+	require.NotEmpty(t, indexer.errPaths)
+}
+
 func TestDirectoryIndexer_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fixture relies on symlinks, which git does not check out as links on windows by default")
+	}
 	var observedPaths []string
 	pathObserver := func(_, p string, _ os.FileInfo, _ error) error {
 		fields := strings.Split(p, "testdata/symlinks-prune-indexing")
@@ -394,6 +434,11 @@ func TestDirectoryIndexer_IndexesAllTypes(t *testing.T) {
 }
 
 func Test_allContainedPaths(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// ponytail: production passes native windows paths here, which these posix cases don't represent.
+		// Ancestor indexing for a root reached through a symlink is likely broken on windows; fix separately.
+		t.Skip("cases are posix paths")
+	}
 
 	tests := []struct {
 		name string
@@ -449,6 +494,9 @@ func Test_allContainedPaths(t *testing.T) {
 }
 
 func Test_relativePath(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("exercises a posix-only test helper")
+	}
 	tests := []struct {
 		name      string
 		basePath  string
@@ -511,4 +559,18 @@ func relativePath(basePath, givenPath string) string {
 	}
 
 	return relPath
+}
+
+// indexedPath returns how the given cwd-relative path is keyed in the index (absolute and always posix)
+func indexedPath(t *testing.T, rel string) file.Path {
+	t.Helper()
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	// filepath (not path): cwd is a native host path, so it must be joined with the host separator before
+	// being converted to the posix form the index is keyed on
+	p := filepath.Join(cwd, rel)
+	if windows.HostRunningOnWindows() {
+		p = windows.ToPosix(p)
+	}
+	return file.Path(p)
 }

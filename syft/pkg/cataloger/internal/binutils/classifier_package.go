@@ -35,7 +35,7 @@ func NewClassifierPackage(classifier Classifier, location file.Location, matchMe
 		Locations: file.NewLocationSet(
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		Type:    pkg.BinaryPkg,
+		Type:    classifier.PackageType(),
 		CPEs:    cpes,
 		FoundBy: catalogerName,
 		Metadata: pkg.BinarySignature{

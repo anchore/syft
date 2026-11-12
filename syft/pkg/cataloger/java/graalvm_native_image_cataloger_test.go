@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -11,8 +12,11 @@ import (
 	"path"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -264,4 +268,290 @@ func verifyRelationshipFields(t *testing.T, expected, actual []artifact.Relation
 	for i := range expected {
 		require.Equal(t, expected[i].Type, actual[i].Type)
 	}
+}
+
+// buildMinimalPE64 assembles the smallest PE64 debug/pe will parse, with DataDirectory[0] set to the
+// given RVA and size. The point of the fixture is that size can claim far more than totalSize.
+//
+// newPE uses the directory's VirtualAddress directly as a file offset, so no sections are needed and
+// exportRVA doubles as the offset the read starts from.
+func buildMinimalPE64(exportRVA, exportSize uint32, totalSize int) []byte {
+	const peHdrOff = 0x40
+	buf := make([]byte, totalSize)
+	copy(buf, []byte{'M', 'Z'})
+	binary.LittleEndian.PutUint32(buf[0x3c:], peHdrOff)
+
+	p := buf[peHdrOff:]
+	copy(p, []byte{'P', 'E', 0, 0})
+	// COFF file header
+	binary.LittleEndian.PutUint16(p[4:], 0x8664) // Machine = AMD64
+	binary.LittleEndian.PutUint16(p[20:], 240)   // SizeOfOptionalHeader
+	binary.LittleEndian.PutUint16(p[22:], 0x22)  // Characteristics: executable image
+
+	// optional header (PE32+)
+	oh := p[24:]
+	binary.LittleEndian.PutUint16(oh[0:], 0x20b) // Magic = PE32+
+	binary.LittleEndian.PutUint32(oh[108:], 16)  // NumberOfRvaAndSizes
+	// DataDirectory[0] = export table
+	binary.LittleEndian.PutUint32(oh[112:], exportRVA)
+	binary.LittleEndian.PutUint32(oh[116:], exportSize)
+
+	return buf
+}
+
+// readSizeRecorder records the largest single read requested of it. A small allocation is not enough on
+// its own; no single read may exceed the file size either, whatever the headers claim.
+type readSizeRecorder struct {
+	*bytes.Reader
+	maxRead int
+}
+
+func (r *readSizeRecorder) Read(p []byte) (int, error) {
+	if len(p) > r.maxRead {
+		r.maxRead = len(p)
+	}
+	return r.Reader.Read(p)
+}
+
+func (r *readSizeRecorder) ReadAt(p []byte, off int64) (int, error) {
+	if len(p) > r.maxRead {
+		r.maxRead = len(p)
+	}
+	return r.Reader.ReadAt(p, off)
+}
+
+func TestNewPE_ExportDirectorySizeIsNotAllocatedUpFront(t *testing.T) {
+	// Size is a user-controlled uint32 that used to size a make([]byte, Size) before the read, so a small
+	// file claiming 4GB reserved 4GB.
+	const totalSize = 8192
+	data := buildMinimalPE64(0x1000, 0xFFFFFFFF, totalSize)
+	r := &readSizeRecorder{Reader: bytes.NewReader(data)}
+
+	var err error
+	allocated := testutils.MeasureAlloc(t, func() {
+		_, err = newPE("oversized-export-dir.exe", r)
+	})
+
+	require.Error(t, err, "an export directory the file cannot satisfy must not read as successful")
+	require.ErrorContains(t, err, "byte limit")
+
+	t.Logf("allocated %d bytes for a directory declaring %d in a %d byte file",
+		allocated, uint64(0xFFFFFFFF), totalSize)
+	require.Less(t, allocated, uint64(intFile.MB),
+		"the declared size must not be reserved before the read confirms the bytes exist")
+	assert.LessOrEqual(t, r.maxRead, totalSize,
+		"no single read may exceed the file size, regardless of what the headers claim")
+}
+
+func TestNewPE_ExportDirectoryWithinFileIsRead(t *testing.T) {
+	// exportRVA=0x1000 in an 8192 byte file leaves exactly 4096 bytes for the directory to claim
+	const exportRVA = 0x1000
+	const totalSize = 8192
+	const remaining = totalSize - exportRVA
+
+	tests := []struct {
+		name       string
+		exportSize uint32
+		wantErr    bool
+	}{
+		{name: "well within the file", exportSize: 64, wantErr: false},
+		// pins the boundary the not-enough-bytes check must not break: every byte remaining is available
+		{name: "exactly the bytes remaining", exportSize: remaining, wantErr: false},
+		{name: "one byte past what remains", exportSize: remaining + 1, wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data := buildMinimalPE64(exportRVA, tt.exportSize, totalSize)
+
+			ni, err := newPE("ok.exe", bytes.NewReader(data))
+			if tt.wantErr {
+				require.Error(t, err, "the bound must not allow reading past what the file has")
+				return
+			}
+			require.NoError(t, err, "the bound must not reject an export directory that really is present")
+			require.NotNil(t, ni)
+		})
+	}
+}
+
+func TestDecompressSbom_RejectsOutOfRangeOffsets(t *testing.T) {
+	// every offset and length here is read out of the binary, so each must be rejected rather than wrapped
+	// into a value that passes a bound and panics on the slice. wantErrMsg pins which of the three guards fires
+	const sbomLengthOverflowsMsg = "the 'sbom_length' symbol overflows the binary"
+	const sbomOverflowsMsg = "the sbom symbol overflows the binary"
+
+	tests := []struct {
+		name         string
+		bufLen       int
+		sbomStart    uint64
+		lengthStart  uint64
+		storedLength uint64
+		wantErrMsg   string
+	}{
+		{
+			name:        "length offset wraps past the end of the buffer",
+			bufLen:      64,
+			lengthStart: ^uint64(0) - 3, // lengthStart+8 wraps to 4, which compares as in range
+			wantErrMsg:  sbomLengthOverflowsMsg,
+		},
+		{
+			name:        "length offset starts beyond the buffer",
+			bufLen:      64,
+			lengthStart: 100,
+			wantErrMsg:  sbomLengthOverflowsMsg,
+		},
+		{
+			name:         "stored length wraps past the end of the buffer",
+			bufLen:       64,
+			sbomStart:    16,
+			lengthStart:  0,
+			storedLength: ^uint64(0) - 3, // sbomStart+storedLength wraps to 12
+			wantErrMsg:   sbomOverflowsMsg,
+		},
+		{
+			name:         "stored length runs past the end of the buffer",
+			bufLen:       64,
+			sbomStart:    16,
+			lengthStart:  0,
+			storedLength: 1000,
+			wantErrMsg:   sbomOverflowsMsg,
+		},
+		{
+			name:        "sbom offset starts beyond the buffer",
+			bufLen:      64,
+			sbomStart:   ^uint64(0) - 3,
+			lengthStart: 0,
+			wantErrMsg:  sbomOverflowsMsg,
+		},
+		{
+			name:        "length field straddles the end of the buffer",
+			bufLen:      64,
+			lengthStart: 60,
+			wantErrMsg:  sbomLengthOverflowsMsg,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dataBuf := make([]byte, tt.bufLen)
+			// subtract rather than add, for the same reason the code under test has to: lengthStart is deliberately
+			// large enough to wrap
+			if tt.lengthStart <= uint64(tt.bufLen) && uint64(tt.bufLen)-tt.lengthStart >= 8 {
+				binary.LittleEndian.PutUint64(dataBuf[tt.lengthStart:], tt.storedLength)
+			}
+
+			var err error
+			require.NotPanics(t, func() {
+				_, _, err = decompressSbom(dataBuf, tt.sbomStart, tt.lengthStart)
+			})
+			require.ErrorContains(t, err, tt.wantErrMsg)
+		})
+	}
+}
+
+func TestDecompressSbom_RejectsStreamExpandingPastTheLimit(t *testing.T) {
+	// zeros stand in for any uniform, highly compressible payload: they expand about 1000x, far past what
+	// real JSON does
+	tests := []struct {
+		name             string
+		decompressedSize int
+		wantRejected     bool
+	}{
+		{
+			name:             "one byte past the limit is rejected",
+			decompressedSize: nativeImageMaxDecompressedSbomSize + 1,
+			wantRejected:     true,
+		},
+		{
+			// pins the other side: tightening the LimitedReader by one byte would reject a legal payload
+			name:             "exactly at the limit falls through to the decoder",
+			decompressedSize: nativeImageMaxDecompressedSbomSize,
+			wantRejected:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var compressed bytes.Buffer
+			z := gzip.NewWriter(&compressed)
+			_, err := z.Write(make([]byte, tt.decompressedSize))
+			require.NoError(t, err)
+			require.NoError(t, z.Close())
+
+			t.Logf("%d compressed bytes expand to %d (%dx)", compressed.Len(), tt.decompressedSize,
+				tt.decompressedSize/compressed.Len())
+
+			dataBuf := append(compressed.Bytes(), make([]byte, 8)...)
+			lengthStart := uint64(compressed.Len())
+			binary.LittleEndian.PutUint64(dataBuf[lengthStart:], lengthStart)
+
+			var decompressErr error
+			allocated := testutils.MeasureAlloc(t, func() {
+				_, _, decompressErr = decompressSbom(dataBuf, 0, lengthStart)
+			})
+			err = decompressErr
+			require.Error(t, err, "zeros are never a valid SBOM, so this errors either way")
+			if tt.wantRejected {
+				require.Contains(t, err.Error(), "decompresses past",
+					"hitting the bound should say so, not report a parse failure")
+				t.Logf("allocated %d bytes rejecting a stream past the limit", allocated)
+				// generous on purpose: -race roughly doubles the allocation counted here, and the point is catching an
+				// unbounded blowup, not pinning a multiple
+				require.Less(t, allocated, uint64(8*nativeImageMaxDecompressedSbomSize),
+					"rejecting an oversized stream must not retain multiples of the limit in memory")
+				return
+			}
+			require.NotContains(t, err.Error(), "decompresses past",
+				"a stream sitting exactly on the limit must reach the decoder, not be capped away")
+		})
+	}
+}
+
+// the other tests compute their sizes FROM nativeImageMaxDecompressedSbomSize, so raising it leaves them
+// green. This is the one assertion that does not.
+func TestNativeImageMaxDecompressedSbomSize_Ceiling(t *testing.T) {
+	require.LessOrEqual(t, int64(nativeImageMaxDecompressedSbomSize), int64(64*intFile.MB),
+		"the ceiling is what stands between a gzip bomb and an OOM; raising it needs a new argument here")
+}
+
+func TestDecompressSbom_AcceptsLargeSbom(t *testing.T) {
+	// the size limit must not truncate a genuinely large SBOM. Distinct names, versions, purls and hashes
+	// keep this shaped like a real CycloneDX document rather than a uniform payload.
+	const components = 20000
+
+	var sb bytes.Buffer
+	sb.WriteString(`{"bomFormat":"CycloneDX","specVersion":"1.5","version":1,"components":[`)
+	for i := 0; i < components; i++ {
+		if i > 0 {
+			sb.WriteString(",")
+		}
+		// a sha256-shaped value keeps the entropy (and so the compression ratio) realistic
+		hash := sha256.Sum256([]byte(fmt.Sprintf("component-%d", i)))
+		fmt.Fprintf(&sb, `{"type":"library","name":"lib-%d","version":"%d.%d.%d",`+
+			`"purl":"pkg:maven/com.example.group%d/lib-%d@%d.%d.%d",`+
+			`"hashes":[{"alg":"SHA-256","content":"%x"}]}`,
+			i, i%20, i%7, i%13, i%50, i, i%20, i%7, i%13, hash)
+	}
+	sb.WriteString(`]}`)
+
+	raw := sb.Bytes()
+	var compressed bytes.Buffer
+	z := gzip.NewWriter(&compressed)
+	_, err := z.Write(raw)
+	require.NoError(t, err)
+	require.NoError(t, z.Close())
+
+	t.Logf("%d components: %d bytes of JSON, %d compressed (%dx), limit %d",
+		components, len(raw), compressed.Len(), len(raw)/compressed.Len(), nativeImageMaxDecompressedSbomSize)
+	require.Less(t, int64(len(raw)), int64(nativeImageMaxDecompressedSbomSize),
+		"a real SBOM of this size must sit well inside the limit, otherwise the limit is too low")
+
+	dataBuf := append(compressed.Bytes(), make([]byte, 8)...)
+	lengthStart := uint64(compressed.Len())
+	binary.LittleEndian.PutUint64(dataBuf[lengthStart:], lengthStart)
+
+	pkgs, _, err := decompressSbom(dataBuf, 0, lengthStart)
+	require.NoError(t, err, "a large SBOM at a realistic ratio must not be rejected")
+	require.Len(t, pkgs, components)
 }

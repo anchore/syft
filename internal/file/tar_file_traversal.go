@@ -70,7 +70,7 @@ func ExtractGlobsFromTarToUniqueTempFile(ctx context.Context, archivePath, dir s
 		}
 		defer internal.CloseAndLogError(packedFile, archivePath)
 
-		if err := safeCopy(tempFile, packedFile); err != nil {
+		if err := SafeCopy(tempFile, packedFile); err != nil {
 			return fmt.Errorf("unable to copy source=%q for tar=%q: %w", file.Name(), archivePath, err)
 		}
 
@@ -84,7 +84,8 @@ func ExtractGlobsFromTarToUniqueTempFile(ctx context.Context, archivePath, dir s
 
 func matchesAnyGlob(name string, globs ...string) bool {
 	for _, glob := range globs {
-		if matches, err := doublestar.PathMatch(glob, name); err == nil && matches {
+		// tar entry names are always posix, so don't match with the host separator (PathMatch)
+		if matches, err := doublestar.Match(glob, name); err == nil && matches {
 			return true
 		}
 	}

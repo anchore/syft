@@ -1,12 +1,13 @@
 package r
 
 import (
-	"bufio"
 	"context"
 	"io"
 	"regexp"
 	"strings"
 
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -105,7 +106,7 @@ func extractFieldsFromDescriptionFile(reader io.Reader) map[string]string {
 	result := make(map[string]string)
 	key := ""
 	var valueFragment strings.Builder
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -138,6 +139,9 @@ func extractFieldsFromDescriptionFile(reader io.Reader) map[string]string {
 	}
 	if key != "" {
 		result[key] = valueFragment.String()
+	}
+	if err := scanner.Err(); err != nil {
+		log.WithFields("error", err).Debug("failed to fully read R DESCRIPTION file")
 	}
 	return result
 }

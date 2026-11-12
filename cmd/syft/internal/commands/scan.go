@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"strings"
@@ -181,6 +182,10 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 	if err != nil {
 		return err
 	}
+	// output files are opened up front; release them if we bail out before writing
+	if c, ok := writer.(io.Closer); ok {
+		defer func() { _ = c.Close() }()
+	}
 
 	sources := opts.From
 	if len(sources) == 0 {
@@ -253,6 +258,11 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 			return nil, fmt.Errorf("invalid hash algorithm: %w", err)
 		}
 		cfg = cfg.WithDigestAlgorithms(hashers...)
+	}
+
+	if source.ParseScope(opts.Scope) != source.SquashedScope {
+		// every other scope reads each layer's squash, which is cheaper to build while the image is read
+		ctx = internal.WithEagerLayerSquashes(ctx)
 	}
 
 	src, err := syft.GetSource(ctx, userInput, cfg)

@@ -1,10 +1,11 @@
 package java
 
 import (
-	"bufio"
 	"context"
+	"fmt"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -22,7 +23,7 @@ func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environm
 	var pkgs []pkg.Package
 
 	// Create a new scanner to read the file
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 
 	// Create slices to hold the dependencies and plugins
 	dependencies := []lockfileDependency{}
@@ -33,6 +34,11 @@ func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environm
 
 		// Trim leading and trailing whitespace from the line
 		line = strings.TrimSpace(line)
+
+		// skip comment lines (e.g. the header gradle writes), which may contain ':' and '=' characters
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
 
 		groupNameVersion := line
 		groupNameVersion = strings.Split(groupNameVersion, "=")[0]
@@ -45,6 +51,7 @@ func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environm
 			dependencies = append(dependencies, dep)
 		}
 	}
+	scanErr := scanner.Err()
 
 	// map the dependencies
 	for _, dep := range dependencies {
@@ -72,5 +79,8 @@ func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environm
 		pkgs = append(pkgs, mappedPkg)
 	}
 
+	if scanErr != nil {
+		return pkgs, nil, fmt.Errorf("unable to read gradle lockfile: %w", scanErr)
+	}
 	return pkgs, nil, nil
 }

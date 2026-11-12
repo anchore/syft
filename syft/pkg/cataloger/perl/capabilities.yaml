@@ -1,0 +1,128 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: perl # MANUAL
+    name: perl-cpan-meta-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/perl/cataloger.go
+      function: NewCpanMetaCataloger
+    selectors: # AUTO-GENERATED
+      - cpan
+      - declared
+      - directory
+      - language
+      - package
+      - perl
+    parsers: # AUTO-GENERATED structure
+      - function: parseReleaseMeta
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/META.json'
+            - '**/META.yml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.CpanUnpackedRelease
+        package_types: # AUTO-GENERATED
+          - cpan
+        purl_types: # AUTO-GENERATED
+          - cpan
+        json_schema_types: # AUTO-GENERATED
+          - CpanUnpackedRelease
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+            comment: the x_spdx_expression or license field of an unpacked release's own META.json or META.yml
+          - name: dependency.depth
+            default: []
+            comment: release meta prereqs are not resolved; only installed evidence produces edges
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: perl # MANUAL
+    name: perl-cpan-installed-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/perl/cataloger.go
+      function: NewCpanInstalledCataloger
+    selectors: # AUTO-GENERATED
+      - cpan
+      - directory
+      - image
+      - installed
+      - language
+      - package
+      - perl
+    parsers: # AUTO-GENERATED structure
+      - function: parsePacklist
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/auto/**/.packlist'
+        metadata_types: # AUTO-GENERATED
+          - pkg.CpanDistribution
+        package_types: # AUTO-GENERATED
+          - cpan
+        purl_types: # AUTO-GENERATED
+          - cpan
+        json_schema_types: # AUTO-GENERATED
+          - CpanDistribution
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+            comment: a packlist carries no metadata beyond the file list
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: true
+            comment: the packlist is a file list, and it is surfaced through OwnedFiles so ownership relationships are emitted
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parseInstallJSON
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/.meta/*/install.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.CpanDistribution
+        package_types: # AUTO-GENERATED
+          - cpan
+        purl_types: # AUTO-GENERATED
+          - cpan
+        json_schema_types: # AUTO-GENERATED
+          - CpanDistribution
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+            comment: the x_spdx_expression or license field of the MYMETA.json written beside install.json
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+            comment: prereqs are resolved across every cataloged distribution, so the graph is the full installed closure
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+              - build
+            comment: develop and test prereqs describe how the distribution was authored, not what a deployed copy needs
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

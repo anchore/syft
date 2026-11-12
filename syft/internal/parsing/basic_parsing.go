@@ -22,6 +22,15 @@ func SkipWhitespace(data []byte, i *int) {
 	}
 }
 
+// MaxDepth bounds nesting in the recursive hand-written parsers. Real files nest a handful of levels; without a
+// bound, deep input overflows the goroutine stack, which is fatal rather than a recoverable panic.
+const MaxDepth = 1000
+
+// errorContext is how many bytes of each echoed line PrintError keeps around the error column, so an error in a
+// huge single-line input stays small (and does not copy the file into the SBOM as an unknown).
+const errorContext = 80
+
+// PrintError describes where in data offset i is, echoing up to two lines of context clipped around the column.
 func PrintError(data []byte, i int) string {
 	line := 1
 	char := 1
@@ -57,15 +66,23 @@ func PrintError(data []byte, i int) string {
 
 	sep := ": "
 
-	lines := ""
-	if len(prev) > 1 {
-		lines += fmt.Sprintf("%s%s%s\n", l1, sep, prev[len(prev)-2])
-	}
-	if len(prev) > 0 {
-		lines += fmt.Sprintf("%s%s%s\n", l2, sep, prev[len(prev)-1])
+	start := max(0, char-1-errorContext/2)
+	clip := func(s string) string {
+		if start >= len(s) {
+			return ""
+		}
+		return s[start:min(len(s), start+errorContext)]
 	}
 
-	pointer := strings.Repeat(" ", len(l2)+len(sep)+char-1) + "^"
+	lines := ""
+	if len(prev) > 1 {
+		lines += fmt.Sprintf("%s%s%s\n", l1, sep, clip(prev[len(prev)-2]))
+	}
+	if len(prev) > 0 {
+		lines += fmt.Sprintf("%s%s%s\n", l2, sep, clip(prev[len(prev)-1]))
+	}
+
+	pointer := strings.Repeat(" ", len(l2)+len(sep)+char-1-start) + "^"
 
 	return fmt.Sprintf("line: %v, char: %v\n%s%s", line, char, lines, pointer)
 }
