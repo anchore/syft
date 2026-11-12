@@ -200,7 +200,13 @@ func Supplier(p pkg.Package) (typ string, author string) {
 	return typ, parseAndFormatPersonOrOrg(author)
 }
 
-var nameEmailURLPattern = regexp.MustCompile(`^(?P<name>[^<>()]*)( <(?P<email>[^@<>]+@[^@<>]+)>)?( \((?P<url>.*)\))?$`)
+// nameEmailURLPattern captures whatever is between the angle brackets as the email candidate, which is
+// validated separately against emailPattern so that an unusable email does not discard the name with it.
+var nameEmailURLPattern = regexp.MustCompile(`^(?P<name>[^<>]*?)( <(?P<email>[^<>]*)>)?( \((?P<url>.*)\))?$`)
+
+// emailPattern accepts any local part and domain (hyphenated, multi-label, or single-label), but no
+// whitespace: the value is written verbatim into the SPDX originator and supplier fields.
+var emailPattern = regexp.MustCompile(`^[^@<>\s]+@[^@<>\s]+$`)
 
 func parseAndFormatPersonOrOrg(s string) string {
 	name, email, _ := parseNameEmailURL(s)
@@ -212,6 +218,10 @@ func parseNameEmailURL(s string) (name, email, url string) {
 	name = strings.TrimSpace(fields["name"])
 	email = strings.TrimSpace(fields["email"])
 	url = strings.TrimSpace(fields["url"])
+
+	if !emailPattern.MatchString(email) {
+		email = ""
+	}
 
 	if email == "" {
 		if approximatesAsEmail(url) {
