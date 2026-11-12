@@ -241,3 +241,32 @@ func TestDpkgCataloger_statusAndStatusDir(t *testing.T) {
 		}).
 		TestCataloger(t, NewDBCataloger())
 }
+
+// when several layers are cataloged the status file is seen once per layer, as a package per layer that share an ID
+// and collapse into one downstream. The merge must keep that true.
+func Test_mergeStatusDirDuplicates_statusInSeveralLayers(t *testing.T) {
+	statusInLayer := func(layer string) pkg.Package {
+		p := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status")
+		p.Locations = file.NewLocationSet(
+			file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/var/lib/dpkg/status", FileSystemID: layer}).
+				WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
+		p.SetID()
+		return p
+	}
+	lower, upper := statusInLayer("sha256:lower"), statusInLayer("sha256:upper")
+	require.Equal(t, lower.ID(), upper.ID(), "the same status entry in two layers shares an ID before merging")
+
+	got, _, err := mergeStatusDirDuplicates([]pkg.Package{
+		lower,
+		dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip"),
+		upper,
+	}, nil, nil)
+	require.NoError(t, err)
+
+	require.Len(t, got, 2, "one package per layer the status file was seen in")
+	assert.Equal(t, got[0].ID(), got[1].ID(), "both must still collapse into one package downstream")
+	for _, p := range got {
+		assert.Equal(t, []string{"/var/lib/dpkg/status", "/var/lib/dpkg/status.d/gzip"}, locationPaths(p))
+	}
+}

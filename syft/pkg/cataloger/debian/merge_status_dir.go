@@ -24,9 +24,12 @@ type dpkgEntryKey struct {
 // mergeStatusDirDuplicates folds packages described by a status.d/<name> file into the package described by the
 // status file of the same dpkg database, when both describe the same name, version and architecture. Some images
 // record every installed package in both places, which would otherwise report each package twice.
+//
+// When several layers are cataloged, the status file can be seen once per layer. Every one of those packages receives
+// the status.d locations, so they keep a common ID and still collapse into one package downstream.
 func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 	// packages read from a status file, by identity
-	fromStatus := make(map[dpkgEntryKey]int)
+	fromStatus := make(map[dpkgEntryKey][]int)
 	// packages read from a status.d directory, by index
 	fromStatusDir := make(map[int]dpkgEntryKey)
 	for i, p := range pkgs {
@@ -37,21 +40,22 @@ func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, 
 		case inStatusDir:
 			fromStatusDir[i] = key
 		default:
-			fromStatus[key] = i
+			fromStatus[key] = append(fromStatus[key], i)
 		}
 	}
 
 	targets := make(map[int]struct{})
 	for i, key := range fromStatusDir {
-		target, exists := fromStatus[key]
-		if !exists {
+		if len(fromStatus[key]) == 0 {
 			// only described in status.d, so there is nothing to merge it into
 			delete(fromStatusDir, i)
 			continue
 		}
-		pkgs[target].Locations.Add(pkgs[i].Locations.ToSlice()...)
-		pkgs[target].Licenses.Add(pkgs[i].Licenses.ToSlice()...)
-		targets[target] = struct{}{}
+		for _, target := range fromStatus[key] {
+			pkgs[target].Locations.Add(pkgs[i].Locations.ToSlice()...)
+			pkgs[target].Licenses.Add(pkgs[i].Licenses.ToSlice()...)
+			targets[target] = struct{}{}
+		}
 	}
 	if len(fromStatusDir) == 0 {
 		return pkgs, rels, err
