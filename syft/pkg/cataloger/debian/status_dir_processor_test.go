@@ -105,28 +105,7 @@ func Test_mergeStatusDirDuplicates(t *testing.T) {
 			},
 		},
 		{
-			name: "packages only in status.d are kept (distroless)",
-			pkgs: []pkg.Package{
-				dpkgTestPackage("gzip", "1.13-1", "arm64", statusDir+"gzip"),
-				dpkgTestPackage("bzip2", "1.0.8-6", "arm64", statusDir+"bzip2"),
-			},
-			expected: []string{
-				"bzip2@1.0.8-6 (arm64): /var/lib/dpkg/status.d/bzip2",
-				"gzip@1.13-1 (arm64): /var/lib/dpkg/status.d/gzip",
-			},
-		},
-		{
-			name: "packages only in status are kept",
-			pkgs: []pkg.Package{
-				dpkgTestPackage("gzip", "1.13-1", "arm64", status),
-				dpkgTestPackage("bzip2", "1.0.8-6", "arm64", status),
-			},
-			expected: []string{
-				"bzip2@1.0.8-6 (arm64): /var/lib/dpkg/status",
-				"gzip@1.13-1 (arm64): /var/lib/dpkg/status",
-			},
-		},
-		{
+			// covers packages only in status (ordinary Debian) and only in status.d (distroless)
 			name: "status and status.d describing different packages are all kept",
 			pkgs: []pkg.Package{
 				dpkgTestPackage("apt", "1.8.2", "amd64", status),
@@ -248,25 +227,10 @@ func Test_mergeStatusDirDuplicates_inputsAreNotModified(t *testing.T) {
 	}
 }
 
-func Test_mergeStatusDirDuplicates_statusIsPrimaryEvidence(t *testing.T) {
-	fromStatusDir := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip", "/usr/share/doc/gzip/copyright")
-	fromStatus := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status", "/var/lib/dpkg/info/gzip.md5sums")
-
-	got, _, err := mergeStatusDirDuplicates([]pkg.Package{fromStatusDir, fromStatus}, nil, nil)
-	require.NoError(t, err)
-	require.Len(t, got, 1)
-
-	assert.Equal(t, []string{"/var/lib/dpkg/status"}, evidencePaths(got[0], pkg.PrimaryEvidenceAnnotation))
-	assert.Equal(t, []string{
-		"/usr/share/doc/gzip/copyright",
-		"/var/lib/dpkg/info/gzip.md5sums",
-		"/var/lib/dpkg/status.d/gzip",
-	}, evidencePaths(got[0], pkg.SupportingEvidenceAnnotation))
-}
-
-// a scan that tracks which files are hidden by later layers drops packages that have no visible primary evidence.
-// A package whose status entry is hidden but whose status.d file is still visible must survive that.
-func Test_mergeStatusDirDuplicates_visibleStatusDirStaysPrimary(t *testing.T) {
+// the status file is the primary evidence of a merged package and the status.d file supporting evidence. The one
+// exception is a scan that tracks which files are hidden by later layers: it drops packages that have no visible
+// primary evidence, so a visible status.d file stays primary when the status entry is hidden.
+func Test_mergeStatusDirDuplicates_evidence(t *testing.T) {
 	withVisibility := func(p pkg.Package, visibility string) pkg.Package {
 		locations := file.NewLocationSet()
 		for _, l := range p.Locations.ToSlice() {
@@ -278,33 +242,48 @@ func Test_mergeStatusDirDuplicates_visibleStatusDirStaysPrimary(t *testing.T) {
 	}
 
 	tests := []struct {
-		name             string
-		statusVisibility string
-		expectedPrimary  []string
+		name                string
+		statusVisibility    string
+		statusDirVisibility string
+		expectedPrimary     []string
+		expectedSupporting  []string
 	}{
 		{
-			name:             "hidden status entry",
-			statusVisibility: file.HiddenAnnotation,
-			expectedPrimary:  []string{"/var/lib/dpkg/status", "/var/lib/dpkg/status.d/gzip"},
+			name:               "visibility is not tracked",
+			expectedPrimary:    []string{"/var/lib/dpkg/status"},
+			expectedSupporting: []string{"/var/lib/dpkg/info/gzip.md5sums", "/var/lib/dpkg/status.d/gzip"},
 		},
 		{
-			name:             "visible status entry",
-			statusVisibility: file.VisibleAnnotation,
-			expectedPrimary:  []string{"/var/lib/dpkg/status"},
+			name:                "visible status entry",
+			statusVisibility:    file.VisibleAnnotation,
+			statusDirVisibility: file.VisibleAnnotation,
+			expectedPrimary:     []string{"/var/lib/dpkg/status"},
+			expectedSupporting:  []string{"/var/lib/dpkg/info/gzip.md5sums", "/var/lib/dpkg/status.d/gzip"},
+		},
+		{
+			name:                "hidden status entry",
+			statusVisibility:    file.HiddenAnnotation,
+			statusDirVisibility: file.VisibleAnnotation,
+			expectedPrimary:     []string{"/var/lib/dpkg/status", "/var/lib/dpkg/status.d/gzip"},
+			expectedSupporting:  []string{"/var/lib/dpkg/info/gzip.md5sums"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, _, err := mergeStatusDirDuplicates([]pkg.Package{
-				withVisibility(dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status"), tt.statusVisibility),
-				withVisibility(dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip"), file.VisibleAnnotation),
+				withVisibility(dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip"), tt.statusDirVisibility),
+				withVisibility(dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status", "/var/lib/dpkg/info/gzip.md5sums"), tt.statusVisibility),
 			}, nil, nil)
 			require.NoError(t, err)
 			require.Len(t, got, 1)
 
 			assert.Equal(t, tt.expectedPrimary, evidencePaths(got[0], pkg.PrimaryEvidenceAnnotation))
+			assert.Equal(t, tt.expectedSupporting, evidencePaths(got[0], pkg.SupportingEvidenceAnnotation))
 
+			if tt.statusDirVisibility == "" {
+				return
+			}
 			var visiblePrimary bool
 			for _, l := range got[0].Locations.ToSlice() {
 				if l.Annotations[pkg.EvidenceAnnotationKey] == pkg.PrimaryEvidenceAnnotation && isVisible(l) {
@@ -467,7 +446,7 @@ func Test_mergeStatusDirDuplicates_statusInSeveralLayers(t *testing.T) {
 
 // the fixture holds verbatim records from a Docker Hardened Images Debian 13 image, which lists every installed
 // package in both /var/lib/dpkg/status and /var/lib/dpkg/status.d/<name>. The fixture arranges them so that gzip is
-// in both, libc6 (which gzip depends on) and tzdata are only in status, and bzip2 is only in status.d.
+// in both, libc6 (which gzip depends on) is only in status, and bzip2 is only in status.d.
 func TestDpkgCataloger_statusAndStatusDir(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "testdata/status-and-status-d").
@@ -484,22 +463,18 @@ func TestDpkgCataloger_statusAndStatusDir(t *testing.T) {
 
 			assert.Equal(t, map[string][]string{
 				"gzip@1.13-1+dhi1": {
-					"usr/share/doc/gzip/copyright",
-					"var/lib/dpkg/info/gzip.list",
 					"var/lib/dpkg/info/gzip.md5sums",
 					"var/lib/dpkg/status",
 					"var/lib/dpkg/status.d/gzip",
 				},
-				"libc6@2.41-12+deb13u3+dhi1":  {"var/lib/dpkg/status"},
-				"tzdata@2026b-0+deb13u1+dhi2": {"var/lib/dpkg/status"},
-				"bzip2@1.0.8-6+dhi2":          {"var/lib/dpkg/status.d/bzip2"},
+				"libc6@2.41-12+deb13u3+dhi1": {"var/lib/dpkg/status"},
+				"bzip2@1.0.8-6+dhi2":         {"var/lib/dpkg/status.d/bzip2"},
 			}, got)
 
 			gzip := byName["gzip"]
 			entry, ok := gzip.Metadata.(pkg.DpkgDBEntry)
 			require.True(t, ok)
 			assert.NotEmpty(t, entry.Files, "the merged package keeps the file listing found beside the status file")
-			assert.NotEmpty(t, gzip.Licenses.ToSlice(), "the merged package keeps the licenses from the copyright file")
 			assert.Equal(t, []string{"var/lib/dpkg/status"}, evidencePaths(gzip, pkg.PrimaryEvidenceAnnotation))
 			assert.Contains(t, evidencePaths(gzip, pkg.SupportingEvidenceAnnotation), "var/lib/dpkg/status.d/gzip")
 

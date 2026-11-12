@@ -15,6 +15,8 @@ func NewDBCataloger() pkg.Cataloger {
 		// note: these globs have been intentionally split up in order to improve search performance,
 		// please do NOT combine into: "**/var/lib/dpkg/{status,status.d/*}"
 		WithParserByGlobs(parseDpkgDB, "**/lib/dpkg/status", "**/lib/dpkg/status.d/*", "**/lib/opkg/info/*.control", "**/lib/opkg/status").
+		// registration order is execution order: the merge has to precede dependency resolution, so that
+		// relationships are only created for the packages that are kept
 		WithProcessors(mergeStatusDirDuplicates, dependency.Processor(dbEntryDependencySpecifier))
 }
 
