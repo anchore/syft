@@ -1,6 +1,7 @@
 package debian
 
 import (
+	"maps"
 	"path"
 	"sort"
 	"strings"
@@ -136,17 +137,15 @@ func mergeStatusDirPackage(fromStatus, fromStatusDir pkg.Package, statusVisible 
 	statusDirLocation, ok := primaryEvidence(fromStatusDir)
 	keepPrimary := ok && isVisible(statusDirLocation) && !statusVisible
 
-	locations := file.NewLocationSet(fromStatus.Locations.ToSlice()...)
+	locations := file.NewLocationSet()
+	for _, l := range fromStatus.Locations.ToSlice() {
+		locations.Add(withCopiedAnnotations(l))
+	}
 	for _, l := range fromStatusDir.Locations.ToSlice() {
-		// annotations are a map shared with the package being folded in, so they are copied before use
-		annotations := make(map[string]string, len(l.Annotations))
-		for k, v := range l.Annotations {
-			annotations[k] = v
+		l = withCopiedAnnotations(l)
+		if !keepPrimary && l.Annotations[pkg.EvidenceAnnotationKey] == pkg.PrimaryEvidenceAnnotation {
+			l.Annotations[pkg.EvidenceAnnotationKey] = pkg.SupportingEvidenceAnnotation
 		}
-		if !keepPrimary && annotations[pkg.EvidenceAnnotationKey] == pkg.PrimaryEvidenceAnnotation {
-			annotations[pkg.EvidenceAnnotationKey] = pkg.SupportingEvidenceAnnotation
-		}
-		l.Annotations = annotations
 		locations.Add(l)
 	}
 	fromStatus.Locations = locations
@@ -165,6 +164,15 @@ func mergeStatusDirPackage(fromStatus, fromStatusDir pkg.Package, statusVisible 
 	}
 
 	return fromStatus
+}
+
+// withCopiedAnnotations returns the location with its own copy of the annotations, which are otherwise a map shared
+// with every copy of the location.
+func withCopiedAnnotations(l file.Location) file.Location {
+	annotations := make(map[string]string, len(l.Annotations))
+	maps.Copy(annotations, l.Annotations)
+	l.Annotations = annotations
+	return l
 }
 
 // mergeDpkgFileRecords returns the existing records plus any additional records for paths not already present,

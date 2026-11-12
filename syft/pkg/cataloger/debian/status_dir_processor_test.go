@@ -227,8 +227,10 @@ func Test_mergeStatusDirDuplicates_inputsAreNotModified(t *testing.T) {
 
 	assert.Equal(t, []string{"/var/lib/dpkg/status"}, locationPaths(fromStatus))
 	assert.Equal(t, []string{"/var/lib/dpkg/status.d/gzip"}, evidencePaths(fromStatusDir, pkg.PrimaryEvidenceAnnotation))
-	for _, l := range fromStatusDir.Locations.ToSlice() {
-		assert.NotContains(t, l.Annotations, "changed")
+	for _, input := range []pkg.Package{fromStatus, fromStatusDir} {
+		for _, l := range input.Locations.ToSlice() {
+			assert.NotContains(t, l.Annotations, "changed", l.RealPath)
+		}
 	}
 }
 
