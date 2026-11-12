@@ -1,6 +1,7 @@
 package debian
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sort"
@@ -38,10 +39,30 @@ func dpkgTestPackage(name, version, arch, dbPath string, evidence ...string) pkg
 	return p
 }
 
+// dpkgTestPackageAt is dpkgTestPackage with full control over the database location.
+func dpkgTestPackageAt(name, version, arch string, dbLocation file.Location) pkg.Package {
+	p := dpkgTestPackage(name, version, arch, dbLocation.RealPath)
+	p.Locations = file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+	p.SetID()
+	return p
+}
+
 func locationPaths(p pkg.Package) []string {
 	var paths []string
 	for _, l := range p.Locations.ToSlice() {
 		paths = append(paths, l.RealPath)
+	}
+	sort.Strings(paths)
+	return paths
+}
+
+// evidencePaths returns the location paths of a package carrying the given evidence annotation.
+func evidencePaths(p pkg.Package, evidence string) []string {
+	var paths []string
+	for _, l := range p.Locations.ToSlice() {
+		if l.Annotations[pkg.EvidenceAnnotationKey] == evidence {
+			paths = append(paths, l.RealPath)
+		}
 	}
 	sort.Strings(paths)
 	return paths
@@ -152,7 +173,9 @@ func Test_mergeStatusDirDuplicates(t *testing.T) {
 			},
 		},
 		{
-			name: "opkg databases are left alone",
+			// opkg shares this cataloger and metadata type, and describes each package in both its status file and
+			// an info/<name>.control file. Those are not a status.d directory, so they are out of scope here.
+			name: "an opkg status entry and its info control file are not merged",
 			pkgs: []pkg.Package{
 				dpkgTestPackage("gzip", "1.13-1", "arm64", "/usr/lib/opkg/status"),
 				dpkgTestPackage("gzip", "1.13-1", "arm64", "/usr/lib/opkg/info/gzip.control"),
@@ -191,70 +214,239 @@ func Test_mergeStatusDirDuplicates(t *testing.T) {
 func Test_mergeStatusDirDuplicates_mergedPackageID(t *testing.T) {
 	fromStatus := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status")
 	fromStatusDir := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip")
-	originalID := fromStatus.ID()
 
 	got, _, err := mergeStatusDirDuplicates([]pkg.Package{fromStatus, fromStatusDir}, nil, nil)
 	require.NoError(t, err)
 	require.Len(t, got, 1)
 
-	// the ID covers locations, so it must be recomputed once the status.d location is added
-	expected := got[0]
-	expected.SetID()
+	// the ID covers locations, so it matches neither input...
+	assert.NotEqual(t, fromStatus.ID(), got[0].ID())
+	assert.NotEqual(t, fromStatusDir.ID(), got[0].ID())
+
+	// ...but the ID of a package found with both locations to begin with
+	expected := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status", "/var/lib/dpkg/status.d/gzip")
 	assert.Equal(t, expected.ID(), got[0].ID())
-	assert.NotEqual(t, originalID, got[0].ID())
 }
 
-// the fixture holds verbatim records from a Docker Hardened Images Debian 13 image, which lists every installed
-// package in both /var/lib/dpkg/status and /var/lib/dpkg/status.d/<name>. The fixture arranges them so that gzip is
-// in both, tzdata is only in status, and bzip2 is only in status.d.
-func TestDpkgCataloger_statusAndStatusDir(t *testing.T) {
-	pkgtest.NewCatalogTester().
-		FromDirectory(t, "testdata/status-and-status-d").
-		WithErrorAssertion(require.NoError).
-		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
-			got := make(map[string][]string)
-			for _, p := range pkgs {
-				key := p.Name + "@" + p.Version
-				require.NotContains(t, got, key, "package reported more than once")
-				got[key] = locationPaths(p)
-			}
+func Test_mergeStatusDirDuplicates_inputsAreNotModified(t *testing.T) {
+	fromStatus := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status")
+	fromStatusDir := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip", "/usr/share/doc/gzip/copyright")
 
-			assert.Equal(t, map[string][]string{
-				"gzip@1.13-1+dhi1": {
-					"var/lib/dpkg/info/gzip.list",
-					"var/lib/dpkg/info/gzip.md5sums",
-					"var/lib/dpkg/status",
-					"var/lib/dpkg/status.d/gzip",
-				},
-				"tzdata@2026b-0+deb13u1+dhi2": {"var/lib/dpkg/status"},
-				"bzip2@1.0.8-6+dhi2":          {"var/lib/dpkg/status.d/bzip2"},
-			}, got)
+	got, _, err := mergeStatusDirDuplicates([]pkg.Package{fromStatusDir, fromStatus}, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
 
-			for _, p := range pkgs {
-				if p.Name != "gzip" {
-					continue
+	// annotations are a map, so a change to the merged package must not reach the packages it was built from
+	for _, l := range got[0].Locations.ToSlice() {
+		l.Annotations["changed"] = "true"
+	}
+
+	assert.Equal(t, []string{"/var/lib/dpkg/status"}, locationPaths(fromStatus))
+	assert.Equal(t, []string{"/var/lib/dpkg/status.d/gzip"}, evidencePaths(fromStatusDir, pkg.PrimaryEvidenceAnnotation))
+	for _, l := range fromStatusDir.Locations.ToSlice() {
+		assert.NotContains(t, l.Annotations, "changed")
+	}
+}
+
+func Test_mergeStatusDirDuplicates_statusIsPrimaryEvidence(t *testing.T) {
+	fromStatusDir := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip", "/usr/share/doc/gzip/copyright")
+	fromStatus := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status", "/var/lib/dpkg/info/gzip.md5sums")
+
+	got, _, err := mergeStatusDirDuplicates([]pkg.Package{fromStatusDir, fromStatus}, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.Equal(t, []string{"/var/lib/dpkg/status"}, evidencePaths(got[0], pkg.PrimaryEvidenceAnnotation))
+	assert.Equal(t, []string{
+		"/usr/share/doc/gzip/copyright",
+		"/var/lib/dpkg/info/gzip.md5sums",
+		"/var/lib/dpkg/status.d/gzip",
+	}, evidencePaths(got[0], pkg.SupportingEvidenceAnnotation))
+}
+
+// a scan that tracks which files are hidden by later layers drops packages that have no visible primary evidence.
+// A package whose status entry is hidden but whose status.d file is still visible must survive that.
+func Test_mergeStatusDirDuplicates_visibleStatusDirStaysPrimary(t *testing.T) {
+	withVisibility := func(p pkg.Package, visibility string) pkg.Package {
+		locations := file.NewLocationSet()
+		for _, l := range p.Locations.ToSlice() {
+			locations.Add(l.WithAnnotation(file.VisibleAnnotationKey, visibility))
+		}
+		p.Locations = locations
+		p.SetID()
+		return p
+	}
+
+	tests := []struct {
+		name             string
+		statusVisibility string
+		expectedPrimary  []string
+	}{
+		{
+			name:             "hidden status entry",
+			statusVisibility: file.HiddenAnnotation,
+			expectedPrimary:  []string{"/var/lib/dpkg/status", "/var/lib/dpkg/status.d/gzip"},
+		},
+		{
+			name:             "visible status entry",
+			statusVisibility: file.VisibleAnnotation,
+			expectedPrimary:  []string{"/var/lib/dpkg/status"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, _, err := mergeStatusDirDuplicates([]pkg.Package{
+				withVisibility(dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status"), tt.statusVisibility),
+				withVisibility(dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip"), file.VisibleAnnotation),
+			}, nil, nil)
+			require.NoError(t, err)
+			require.Len(t, got, 1)
+
+			assert.Equal(t, tt.expectedPrimary, evidencePaths(got[0], pkg.PrimaryEvidenceAnnotation))
+
+			var visiblePrimary bool
+			for _, l := range got[0].Locations.ToSlice() {
+				if l.Annotations[pkg.EvidenceAnnotationKey] == pkg.PrimaryEvidenceAnnotation && isVisible(l) {
+					visiblePrimary = true
 				}
-				entry, ok := p.Metadata.(pkg.DpkgDBEntry)
-				require.True(t, ok)
-				assert.NotEmpty(t, entry.Files, "the merged package keeps the file listing found beside the status file")
-				assert.Equal(t, []string{"var/lib/dpkg/status"}, evidencePaths(p, pkg.PrimaryEvidenceAnnotation))
-				assert.Contains(t, evidencePaths(p, pkg.SupportingEvidenceAnnotation), "var/lib/dpkg/status.d/gzip")
 			}
-		}).
-		TestCataloger(t, NewDBCataloger())
+			assert.True(t, visiblePrimary, "the merged package needs visible primary evidence to be kept")
+		})
+	}
+}
+
+func Test_mergeStatusDirDuplicates_fileListing(t *testing.T) {
+	record := func(p string) pkg.DpkgFileRecord {
+		return pkg.DpkgFileRecord{Path: p, Digest: &file.Digest{Algorithm: "md5", Value: "d41d8cd98f00b204e9800998ecf8427e"}}
+	}
+	withFiles := func(p pkg.Package, files ...pkg.DpkgFileRecord) pkg.Package {
+		entry := p.Metadata.(pkg.DpkgDBEntry)
+		entry.Files = files
+		p.Metadata = entry
+		p.SetID()
+		return p
+	}
+
+	tests := []struct {
+		name          string
+		statusFiles   []pkg.DpkgFileRecord
+		statusDFiles  []pkg.DpkgFileRecord
+		expectedPaths []string
+	}{
+		{
+			name:          "listing only beside the status.d file is kept",
+			statusDFiles:  []pkg.DpkgFileRecord{record("/usr/bin/gzip"), record("/usr/bin/gunzip")},
+			expectedPaths: []string{"/usr/bin/gunzip", "/usr/bin/gzip"},
+		},
+		{
+			name:          "listing only beside the status file is kept",
+			statusFiles:   []pkg.DpkgFileRecord{record("/usr/bin/gzip")},
+			expectedPaths: []string{"/usr/bin/gzip"},
+		},
+		{
+			name:          "listings are combined without repeating a path",
+			statusFiles:   []pkg.DpkgFileRecord{record("/usr/bin/gzip"), record("/usr/bin/zcat")},
+			statusDFiles:  []pkg.DpkgFileRecord{record("/usr/bin/gunzip"), record("/usr/bin/gzip")},
+			expectedPaths: []string{"/usr/bin/gunzip", "/usr/bin/gzip", "/usr/bin/zcat"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, _, err := mergeStatusDirDuplicates([]pkg.Package{
+				withFiles(dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip"), tt.statusDFiles...),
+				withFiles(dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status"), tt.statusFiles...),
+			}, nil, nil)
+			require.NoError(t, err)
+			require.Len(t, got, 1)
+
+			var paths []string
+			for _, f := range got[0].Metadata.(pkg.DpkgDBEntry).Files {
+				paths = append(paths, f.Path)
+			}
+			assert.Equal(t, tt.expectedPaths, paths)
+		})
+	}
+}
+
+func Test_mergeStatusDirDuplicates_licenses(t *testing.T) {
+	ctx := context.TODO()
+	fromStatus := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status")
+	fromStatus.Licenses = pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "GPL-3.0-or-later"))
+	fromStatus.SetID()
+	fromStatusDir := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip")
+	fromStatusDir.Licenses = pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "FSFAP"))
+	fromStatusDir.SetID()
+
+	got, _, err := mergeStatusDirDuplicates([]pkg.Package{fromStatus, fromStatusDir}, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	var values []string
+	for _, l := range got[0].Licenses.ToSlice() {
+		values = append(values, l.Value)
+	}
+	sort.Strings(values)
+	assert.Equal(t, []string{"FSFAP", "GPL-3.0-or-later"}, values)
+}
+
+// a dpkg database within an archive has the archive as its real path, so the path within the archive is what
+// identifies the database directory.
+func Test_mergeStatusDirDuplicates_withinArchive(t *testing.T) {
+	nested := func(archive, entry string) file.Location {
+		return file.NewLocationFromCoordinates(file.Coordinates{
+			RealPath: archive,
+			FullPath: archive + file.ArchivePathSeparator + entry,
+		})
+	}
+	fullPaths := func(p pkg.Package) []string {
+		var paths []string
+		for _, l := range p.Locations.ToSlice() {
+			paths = append(paths, l.FullNestedPath())
+		}
+		sort.Strings(paths)
+		return paths
+	}
+
+	t.Run("same archive", func(t *testing.T) {
+		got, _, err := mergeStatusDirDuplicates([]pkg.Package{
+			dpkgTestPackageAt("gzip", "1.13-1", "arm64", nested("/rootfs.tar", "var/lib/dpkg/status")),
+			dpkgTestPackageAt("gzip", "1.13-1", "arm64", nested("/rootfs.tar", "var/lib/dpkg/status.d/gzip")),
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		assert.Equal(t, []string{
+			"/rootfs.tar!/var/lib/dpkg/status",
+			"/rootfs.tar!/var/lib/dpkg/status.d/gzip",
+		}, fullPaths(got[0]))
+	})
+
+	t.Run("different archives", func(t *testing.T) {
+		got, _, err := mergeStatusDirDuplicates([]pkg.Package{
+			dpkgTestPackageAt("gzip", "1.13-1", "arm64", nested("/one.tar", "var/lib/dpkg/status")),
+			dpkgTestPackageAt("gzip", "1.13-1", "arm64", nested("/two.tar", "var/lib/dpkg/status.d/gzip")),
+		}, nil, nil)
+		require.NoError(t, err)
+		assert.Len(t, got, 2)
+	})
+
+	t.Run("archive and the filesystem around it", func(t *testing.T) {
+		got, _, err := mergeStatusDirDuplicates([]pkg.Package{
+			dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status"),
+			dpkgTestPackageAt("gzip", "1.13-1", "arm64", nested("/rootfs.tar", "var/lib/dpkg/status.d/gzip")),
+		}, nil, nil)
+		require.NoError(t, err)
+		assert.Len(t, got, 2)
+	})
 }
 
 // when several layers are cataloged the status file is seen once per layer, as a package per layer that share an ID
 // and collapse into one downstream. The merge must keep that true.
 func Test_mergeStatusDirDuplicates_statusInSeveralLayers(t *testing.T) {
 	statusInLayer := func(layer string) pkg.Package {
-		p := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status")
-		p.Locations = file.NewLocationSet(
-			file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/var/lib/dpkg/status", FileSystemID: layer}).
-				WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-		)
-		p.SetID()
-		return p
+		return dpkgTestPackageAt("gzip", "1.13-1", "arm64",
+			file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/var/lib/dpkg/status", FileSystemID: layer}))
 	}
 	lower, upper := statusInLayer("sha256:lower"), statusInLayer("sha256:upper")
 	require.Equal(t, lower.ID(), upper.ID(), "the same status entry in two layers shares an ID before merging")
@@ -273,33 +465,59 @@ func Test_mergeStatusDirDuplicates_statusInSeveralLayers(t *testing.T) {
 	}
 }
 
-// evidencePaths returns the location paths of a package carrying the given evidence annotation.
-func evidencePaths(p pkg.Package, evidence string) []string {
-	var paths []string
-	for _, l := range p.Locations.ToSlice() {
-		if l.Annotations[pkg.EvidenceAnnotationKey] == evidence {
-			paths = append(paths, l.RealPath)
-		}
-	}
-	sort.Strings(paths)
-	return paths
-}
+// the fixture holds verbatim records from a Docker Hardened Images Debian 13 image, which lists every installed
+// package in both /var/lib/dpkg/status and /var/lib/dpkg/status.d/<name>. The fixture arranges them so that gzip is
+// in both, libc6 (which gzip depends on) and tzdata are only in status, and bzip2 is only in status.d.
+func TestDpkgCataloger_statusAndStatusDir(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/status-and-status-d").
+		WithErrorAssertion(require.NoError).
+		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+			got := make(map[string][]string)
+			byName := make(map[string]pkg.Package)
+			for _, p := range pkgs {
+				key := p.Name + "@" + p.Version
+				require.NotContains(t, got, key, "package reported more than once")
+				got[key] = locationPaths(p)
+				byName[p.Name] = p
+			}
 
-func Test_mergeStatusDirDuplicates_statusIsPrimaryEvidence(t *testing.T) {
-	fromStatusDir := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip", "/usr/share/doc/gzip/copyright")
-	fromStatus := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status", "/var/lib/dpkg/info/gzip.md5sums")
+			assert.Equal(t, map[string][]string{
+				"gzip@1.13-1+dhi1": {
+					"usr/share/doc/gzip/copyright",
+					"var/lib/dpkg/info/gzip.list",
+					"var/lib/dpkg/info/gzip.md5sums",
+					"var/lib/dpkg/status",
+					"var/lib/dpkg/status.d/gzip",
+				},
+				"libc6@2.41-12+deb13u3+dhi1":  {"var/lib/dpkg/status"},
+				"tzdata@2026b-0+deb13u1+dhi2": {"var/lib/dpkg/status"},
+				"bzip2@1.0.8-6+dhi2":          {"var/lib/dpkg/status.d/bzip2"},
+			}, got)
 
-	got, _, err := mergeStatusDirDuplicates([]pkg.Package{fromStatusDir, fromStatus}, nil, nil)
-	require.NoError(t, err)
-	require.Len(t, got, 1)
+			gzip := byName["gzip"]
+			entry, ok := gzip.Metadata.(pkg.DpkgDBEntry)
+			require.True(t, ok)
+			assert.NotEmpty(t, entry.Files, "the merged package keeps the file listing found beside the status file")
+			assert.NotEmpty(t, gzip.Licenses.ToSlice(), "the merged package keeps the licenses from the copyright file")
+			assert.Equal(t, []string{"var/lib/dpkg/status"}, evidencePaths(gzip, pkg.PrimaryEvidenceAnnotation))
+			assert.Contains(t, evidencePaths(gzip, pkg.SupportingEvidenceAnnotation), "var/lib/dpkg/status.d/gzip")
 
-	assert.Equal(t, []string{"/var/lib/dpkg/status"}, evidencePaths(got[0], pkg.PrimaryEvidenceAnnotation))
-	assert.Equal(t, []string{
-		"/usr/share/doc/gzip/copyright",
-		"/var/lib/dpkg/info/gzip.md5sums",
-		"/var/lib/dpkg/status.d/gzip",
-	}, evidencePaths(got[0], pkg.SupportingEvidenceAnnotation))
-
-	// the package that was folded in is left as it was found
-	assert.Equal(t, []string{"/var/lib/dpkg/status.d/gzip"}, evidencePaths(fromStatusDir, pkg.PrimaryEvidenceAnnotation))
+			// dependencies are resolved after the merge, so the dependency of gzip on libc6 is reported once and
+			// points at the merged package
+			var dependencies []string
+			for _, r := range relationships {
+				if r.Type != artifact.DependencyOfRelationship {
+					continue
+				}
+				from, to := r.From.(pkg.Package), r.To.(pkg.Package)
+				dependencies = append(dependencies, from.Name+" -> "+to.Name)
+				if to.Name == "gzip" {
+					assert.Equal(t, gzip.ID(), to.ID())
+				}
+			}
+			sort.Strings(dependencies)
+			assert.Equal(t, []string{"libc6 -> bzip2", "libc6 -> gzip"}, dependencies)
+		}).
+		TestCataloger(t, NewDBCataloger())
 }

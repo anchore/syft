@@ -1,0 +1,70 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: GNU Gzip
+Upstream-Contact: http://www.gnu.org/software/gzip/
+Source: https://ftp.gnu.org/gnu/gzip
+
+Files: *
+Copyright: 1999-2023 Free Software Foundation, Inc.
+           1992-1993 Jean-loup Gailly and Mark Adler
+License: GPL-3+
+
+Files: debian/*
+Copyright: 1995-2017 Bdale Garbee <bdale@gag.com>
+License: GPL-3+
+
+Files: doc/* NEWS README
+Copyright: 1999-2023 Free Software Foundation, Inc. http://fsf.org/
+           1992-1993 Jean-loup Gailly
+License: GFDL-1.3+-no-invariant
+
+Files: gzip.1 zless.1
+Copyright: 1998-2023 Free Software Foundation, Inc.
+           1992-1993 Jean-loup Gailly
+License: FSF-manpages
+
+License: GPL-3+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3, or (at your option)
+ any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ .
+ On Debian GNU/Linux systems, the complete text of the GNU General
+ Public License can be found in `/usr/share/common-licenses/GPL-3'.
+
+License: GFDL-1.3+-no-invariant
+ Permission is granted to copy, distribute and/or modify this document
+ under the terms of the GNU Free Documentation License, Version 1.3 or
+ any later version published by the Free Software Foundation; with no
+ Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+ Texts.
+ .
+ On Debian GNU/Linux systems, the complete text of the GNU Free Documentation
+ License can be found in `/usr/share/common-licenses/GFDL-3'.
+
+License: FSF-manpages
+ Permission is granted to make and distribute verbatim copies of
+ this manual provided the copyright notice and this permission notice
+ are preserved on all copies.
+ .
+ Permission is granted to process this file through troff and print the
+ results, provided the printed document carries copying permission
+ notice identical to this one except for the removal of this paragraph
+ (this paragraph not being relevant to the printed manual).
+ .
+ Permission is granted to copy and distribute modified versions of this
+ manual under the conditions for verbatim copying, provided that the entire
+ resulting derived work is distributed under the terms of a permission
+ notice identical to this one.
+ .
+ Permission is granted to copy and distribute translations of this manual
+ into another language, under the above conditions for modified versions,
+ except that this permission notice may be stated in a translation approved
+ by the Foundation.

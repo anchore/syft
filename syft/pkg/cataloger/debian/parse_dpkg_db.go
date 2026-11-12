@@ -63,7 +63,7 @@ func findDpkgInfoFiles(name string, resolver file.Resolver, dbLocation file.Loca
 	// the same directory
 	searchPath := path.Dir(dbLocation.LocalPath())
 
-	if !strings.HasSuffix(searchPath, "status.d") {
+	if !strings.HasSuffix(searchPath, statusDirName) {
 		searchPath = path.Join(searchPath, "info")
 	}
 
