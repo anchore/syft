@@ -37,59 +37,39 @@ type dpkgEntryKey struct {
 // When several layers are cataloged, the status file can be seen once per layer. Every one of those packages receives
 // the status.d package, so they keep a common ID and still collapse into one package downstream.
 func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
-	// packages read from a status file, by identity
-	fromStatus := make(map[dpkgEntryKey][]int)
-	// indexes of packages read from a status.d directory, in package order so that merging is deterministic
-	var fromStatusDir []int
-	keys := make(map[int]dpkgEntryKey)
-	for i, p := range pkgs {
-		key, inStatusDir, ok := dpkgKey(p)
-		switch {
-		case !ok:
-			continue
-		case inStatusDir:
-			fromStatusDir = append(fromStatusDir, i)
-			keys[i] = key
-		default:
-			fromStatus[key] = append(fromStatus[key], i)
-		}
-	}
-
-	// every copy of a status entry must agree on the evidence of the status.d entry, since copies from different
-	// layers share an ID and only the first annotation seen survives when they collapse downstream
-	statusVisible := make(map[dpkgEntryKey]bool)
-	for key, targets := range fromStatus {
-		for _, target := range targets {
-			if l, ok := primaryEvidence(pkgs[target]); ok && isVisible(l) {
-				statusVisible[key] = true
-			}
-		}
-	}
-
-	merged := make(map[int]pkg.Package)
-	// status.d packages folded into a status package, which are no longer reported on their own
+	// the package that each package was merged into, and the status.d packages no longer reported on their own
+	mergedInto := make(map[int]pkg.Package)
 	dropped := make(map[int]bool)
-	for _, i := range fromStatusDir {
-		key := keys[i]
-		if len(fromStatus[key]) == 0 {
-			// only described in status.d, so there is nothing to merge it into
+	for _, e := range groupDpkgEntries(pkgs) {
+		if len(e.status) == 0 || len(e.statusDir) == 0 {
 			continue
 		}
-		dropped[i] = true
-		for _, target := range fromStatus[key] {
-			into, alreadyMerged := merged[target]
-			if !alreadyMerged {
-				into = pkgs[target]
+
+		// copies of the status entry from different layers share an ID, and only the first annotation seen survives
+		// when they collapse downstream, so they must all agree on the evidence of the status.d entry
+		statusVisible := false
+		for _, i := range e.status {
+			if l, ok := primaryEvidence(pkgs[i]); ok && isVisible(l) {
+				statusVisible = true
 			}
-			merged[target] = mergeStatusDirPackage(into, pkgs[i], statusVisible[key])
+		}
+
+		for _, target := range e.status {
+			m := pkgs[target]
+			for _, i := range e.statusDir {
+				m = mergeStatusDirPackage(m, pkgs[i], statusVisible)
+			}
+			m.SetID()
+			mergedInto[target] = m
+		}
+		for _, i := range e.statusDir {
+			dropped[i] = true
+			// every status copy carries the same merged ID, so any of them will do
+			mergedInto[i] = mergedInto[e.status[0]]
 		}
 	}
 	if len(dropped) == 0 {
 		return pkgs, rels, err
-	}
-	for target, m := range merged {
-		m.SetID()
-		merged[target] = m
 	}
 
 	kept := make([]pkg.Package, 0, len(pkgs)-len(dropped))
@@ -97,33 +77,51 @@ func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, 
 		if dropped[i] {
 			continue
 		}
-		if m, isMerged := merged[i]; isMerged {
+		if m, isMerged := mergedInto[i]; isMerged {
 			p = m
 		}
 		kept = append(kept, p)
 	}
 
-	return kept, followMergedPackages(rels, pkgs, func(i int) (pkg.Package, bool) {
-		if dropped[i] {
-			// every status copy of the entry carries the same merged ID, so any of them will do
-			return merged[fromStatus[keys[i]][0]], true
+	return kept, followMergedPackages(rels, pkgs, mergedInto), err
+}
+
+// dpkgEntry holds the indexes of the packages describing one dpkg entry, in package order so that merging is
+// deterministic.
+type dpkgEntry struct {
+	status, statusDir []int
+}
+
+func groupDpkgEntries(pkgs []pkg.Package) map[dpkgEntryKey]*dpkgEntry {
+	entries := make(map[dpkgEntryKey]*dpkgEntry)
+	for i, p := range pkgs {
+		key, inStatusDir, ok := dpkgKey(p)
+		if !ok {
+			continue
 		}
-		m, isMerged := merged[i]
-		return m, isMerged
-	}), err
+		e := entries[key]
+		if e == nil {
+			e = &dpkgEntry{}
+			entries[key] = e
+		}
+		if inStatusDir {
+			e.statusDir = append(e.statusDir, i)
+		} else {
+			e.status = append(e.status, i)
+		}
+	}
+	return entries
 }
 
 // followMergedPackages points relationships at the package that each package was merged into, since merging drops
 // status.d packages and changes the ID of the status packages they were folded into.
-func followMergedPackages(rels []artifact.Relationship, pkgs []pkg.Package, mergedInto func(i int) (pkg.Package, bool)) []artifact.Relationship {
+func followMergedPackages(rels []artifact.Relationship, pkgs []pkg.Package, mergedInto map[int]pkg.Package) []artifact.Relationship {
 	if len(rels) == 0 {
 		return rels
 	}
 	idx := relationship.NewIndex(rels...)
-	for i, p := range pkgs {
-		if m, ok := mergedInto(i); ok {
-			idx.Replace(p.ID(), m)
-		}
+	for i, m := range mergedInto {
+		idx.Replace(pkgs[i].ID(), m)
 	}
 	return idx.All()
 }
