@@ -25,6 +25,8 @@ type dpkgEntryKey struct {
 // status file of the same dpkg database, when both describe the same name, version and architecture. Some images
 // record every installed package in both places, which would otherwise report each package twice.
 //
+// The status file stays the primary evidence of the merged package, and the status.d file becomes supporting evidence.
+//
 // When several layers are cataloged, the status file can be seen once per layer. Every one of those packages receives
 // the status.d locations, so they keep a common ID and still collapse into one package downstream.
 func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
@@ -52,7 +54,7 @@ func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, 
 			continue
 		}
 		for _, target := range fromStatus[key] {
-			pkgs[target].Locations.Add(pkgs[i].Locations.ToSlice()...)
+			pkgs[target].Locations.Add(asSupportingEvidence(pkgs[i].Locations.ToSlice())...)
 			pkgs[target].Licenses.Add(pkgs[i].Licenses.ToSlice()...)
 			targets[target] = struct{}{}
 		}
@@ -102,6 +104,24 @@ func dpkgKey(p pkg.Package) (dpkgEntryKey, bool, bool) {
 		version:      p.Version,
 		architecture: entry.Architecture,
 	}, inStatusDir, true
+}
+
+// asSupportingEvidence returns copies of the given locations with any primary evidence marked as supporting.
+func asSupportingEvidence(locations []file.Location) []file.Location {
+	supporting := make([]file.Location, 0, len(locations))
+	for _, l := range locations {
+		if l.Annotations[pkg.EvidenceAnnotationKey] == pkg.PrimaryEvidenceAnnotation {
+			// the annotations map is shared with the original location, so it is copied before changing it
+			annotations := make(map[string]string, len(l.Annotations))
+			for k, v := range l.Annotations {
+				annotations[k] = v
+			}
+			annotations[pkg.EvidenceAnnotationKey] = pkg.SupportingEvidenceAnnotation
+			l.Annotations = annotations
+		}
+		supporting = append(supporting, l)
+	}
+	return supporting
 }
 
 func primaryEvidence(p pkg.Package) (file.Location, bool) {

@@ -237,6 +237,8 @@ func TestDpkgCataloger_statusAndStatusDir(t *testing.T) {
 				entry, ok := p.Metadata.(pkg.DpkgDBEntry)
 				require.True(t, ok)
 				assert.NotEmpty(t, entry.Files, "the merged package keeps the file listing found beside the status file")
+				assert.Equal(t, []string{"var/lib/dpkg/status"}, evidencePaths(p, pkg.PrimaryEvidenceAnnotation))
+				assert.Contains(t, evidencePaths(p, pkg.SupportingEvidenceAnnotation), "var/lib/dpkg/status.d/gzip")
 			}
 		}).
 		TestCataloger(t, NewDBCataloger())
@@ -269,4 +271,35 @@ func Test_mergeStatusDirDuplicates_statusInSeveralLayers(t *testing.T) {
 	for _, p := range got {
 		assert.Equal(t, []string{"/var/lib/dpkg/status", "/var/lib/dpkg/status.d/gzip"}, locationPaths(p))
 	}
+}
+
+// evidencePaths returns the location paths of a package carrying the given evidence annotation.
+func evidencePaths(p pkg.Package, evidence string) []string {
+	var paths []string
+	for _, l := range p.Locations.ToSlice() {
+		if l.Annotations[pkg.EvidenceAnnotationKey] == evidence {
+			paths = append(paths, l.RealPath)
+		}
+	}
+	sort.Strings(paths)
+	return paths
+}
+
+func Test_mergeStatusDirDuplicates_statusIsPrimaryEvidence(t *testing.T) {
+	fromStatusDir := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status.d/gzip", "/usr/share/doc/gzip/copyright")
+	fromStatus := dpkgTestPackage("gzip", "1.13-1", "arm64", "/var/lib/dpkg/status", "/var/lib/dpkg/info/gzip.md5sums")
+
+	got, _, err := mergeStatusDirDuplicates([]pkg.Package{fromStatusDir, fromStatus}, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.Equal(t, []string{"/var/lib/dpkg/status"}, evidencePaths(got[0], pkg.PrimaryEvidenceAnnotation))
+	assert.Equal(t, []string{
+		"/usr/share/doc/gzip/copyright",
+		"/var/lib/dpkg/info/gzip.md5sums",
+		"/var/lib/dpkg/status.d/gzip",
+	}, evidencePaths(got[0], pkg.SupportingEvidenceAnnotation))
+
+	// the package that was folded in is left as it was found
+	assert.Equal(t, []string{"/var/lib/dpkg/status.d/gzip"}, evidencePaths(fromStatusDir, pkg.PrimaryEvidenceAnnotation))
 }
