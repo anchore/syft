@@ -51,6 +51,17 @@ func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, 
 		}
 	}
 
+	// every copy of a status entry must agree on the evidence of the status.d entry, since copies from different
+	// layers share an ID and only the first annotation seen survives when they collapse downstream
+	statusVisible := make(map[dpkgEntryKey]bool)
+	for key, targets := range fromStatus {
+		for _, target := range targets {
+			if l, ok := primaryEvidence(pkgs[target]); ok && isVisible(l) {
+				statusVisible[key] = true
+			}
+		}
+	}
+
 	merged := make(map[int]pkg.Package)
 	for i, key := range fromStatusDir {
 		if len(fromStatus[key]) == 0 {
@@ -63,7 +74,7 @@ func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, 
 			if !alreadyMerged {
 				into = pkgs[target]
 			}
-			merged[target] = mergeStatusDirPackage(into, pkgs[i])
+			merged[target] = mergeStatusDirPackage(into, pkgs[i], statusVisible[key])
 		}
 	}
 	if len(fromStatusDir) == 0 {
@@ -87,14 +98,12 @@ func mergeStatusDirDuplicates(pkgs []pkg.Package, rels []artifact.Relationship, 
 
 // mergeStatusDirPackage returns the package read from the status file with the evidence, licenses and file listing
 // of the same package read from status.d folded into it. The remaining metadata of the status entry is kept as is.
-func mergeStatusDirPackage(fromStatus, fromStatusDir pkg.Package) pkg.Package {
-	// when the status file is not visible in the final filesystem but the status.d file is, the status.d file is
-	// what shows that the package is still installed, so it has to stay primary evidence
-	statusLocation, _ := primaryEvidence(fromStatus)
-	keepPrimary := false
-	if statusDirLocation, ok := primaryEvidence(fromStatusDir); ok {
-		keepPrimary = isVisible(statusDirLocation) && !isVisible(statusLocation)
-	}
+// statusVisible reports whether any copy of the status entry is visible in the final filesystem.
+func mergeStatusDirPackage(fromStatus, fromStatusDir pkg.Package, statusVisible bool) pkg.Package {
+	// when no copy of the status entry is visible in the final filesystem but the status.d file is, the status.d file
+	// is what shows that the package is still installed, so it has to stay primary evidence
+	statusDirLocation, ok := primaryEvidence(fromStatusDir)
+	keepPrimary := ok && isVisible(statusDirLocation) && !statusVisible
 
 	locations := file.NewLocationSet(fromStatus.Locations.ToSlice()...)
 	for _, l := range fromStatusDir.Locations.ToSlice() {

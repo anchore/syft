@@ -496,3 +496,26 @@ func TestDpkgCataloger_statusAndStatusDir(t *testing.T) {
 		}).
 		TestCataloger(t, NewDBCataloger())
 }
+
+// when several layers are cataloged, an older copy of the status file is hidden and the newest is visible. All copies
+// share an ID and collapse downstream, where the first annotation seen for a location wins. So every copy must agree
+// on the evidence of the status.d location, or the merged result depends on parse completion order.
+func Test_mergeStatusDirDuplicates_evidenceAgreesAcrossLayers(t *testing.T) {
+	at := func(realPath, layer, visibility string) file.Location {
+		return file.NewLocationFromCoordinates(file.Coordinates{RealPath: realPath, FileSystemID: layer}).
+			WithAnnotation(file.VisibleAnnotationKey, visibility)
+	}
+	lower := dpkgTestPackageAt("gzip", "1.13-1", "arm64", at("/var/lib/dpkg/status", "sha256:lower", file.HiddenAnnotation))
+	upper := dpkgTestPackageAt("gzip", "1.13-1", "arm64", at("/var/lib/dpkg/status", "sha256:upper", file.VisibleAnnotation))
+	statusDir := dpkgTestPackageAt("gzip", "1.13-1", "arm64", at("/var/lib/dpkg/status.d/gzip", "sha256:base", file.VisibleAnnotation))
+
+	got, _, err := mergeStatusDirDuplicates([]pkg.Package{lower, statusDir, upper}, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+	require.Equal(t, got[0].ID(), got[1].ID())
+
+	// a visible status entry exists, so status.d is supporting on every copy
+	for i, p := range got {
+		assert.Equal(t, []string{"/var/lib/dpkg/status.d/gzip"}, evidencePaths(p, pkg.SupportingEvidenceAnnotation), "status copy %d", i)
+	}
+}
