@@ -101,6 +101,37 @@ func TestCycloneDxSourcePackageEncoder(t *testing.T) {
 	)
 }
 
+func TestCycloneDxLocations_SpecVersions(t *testing.T) {
+	s, _ := testutil.LocationsInput(t)
+	tests := []struct {
+		version         string
+		wantOccurrences bool
+	}{
+		{version: "1.4"},
+		{version: "1.5", wantOccurrences: true},
+		{version: "1.6", wantOccurrences: true},
+		{version: "1.7", wantOccurrences: true},
+		{version: cyclonedxutil.DefaultVersion, wantOccurrences: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.version, func(t *testing.T) {
+			enc, err := NewFormatEncoderWithConfig(EncoderConfig{Version: tt.version})
+			require.NoError(t, err)
+
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, s))
+
+			assert.Equal(t, tt.wantOccurrences, strings.Contains(buf.String(), "<occurrences>"))
+			assert.Equal(t, tt.wantOccurrences, strings.Contains(buf.String(), "<evidence>"))
+
+			// the additional context of an occurrence would be written as an attribute the schema does not allow,
+			// so an XML document of any spec version states the layer in the syft:location properties
+			assert.NotContains(t, buf.String(), "additionalContext")
+			assert.Contains(t, buf.String(), `"syft:location:`)
+		})
+	}
+}
+
 func TestCycloneDxLocations_RoundTrip(t *testing.T) {
 	for _, version := range []string{"1.4", "1.5", "1.6", "1.7", cyclonedxutil.DefaultVersion} {
 		t.Run(version, func(t *testing.T) {

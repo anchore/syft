@@ -31,6 +31,7 @@
         <property name="syft:package:language">python</property>
         <property name="syft:package:type">python</property>
         <property name="syft:package:metadataType">python-package</property>
+        <property name="syft:location:0:path">/some/path/pkg1</property>
       </properties>
       <evidence>
         <occurrences>
@@ -49,6 +50,7 @@
         <property name="syft:package:foundBy">the-cataloger-2</property>
         <property name="syft:package:type">deb</property>
         <property name="syft:package:metadataType">dpkg-db-entry</property>
+        <property name="syft:location:0:path">/some/path/pkg1</property>
         <property name="syft:metadata:installedSize">0</property>
       </properties>
       <evidence>

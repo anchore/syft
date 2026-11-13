@@ -42,14 +42,13 @@ func (e Encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		// leaves the emptied evidence element behind, so drop it rather than emit an empty element
 		dropEvidence(bom.Components)
 	}
-	if e.version >= cyclonedx.SpecVersion1_7 {
+	if e.locationsAsOccurrences() {
 		// evidence occurrences are the standard home for package locations and state everything the syft:location
 		// properties do, so the properties are not written as well
 		dropProperties(bom.Components, locationPropertyPrefix)
 	} else {
-		// older spec versions keep the syft:location properties so that documents pinned to those versions stay
-		// backwards compatible; the layer and the path within an archive are stated there, and the additional context
-		// of an occurrence only exists from spec 1.6, so the occurrences are one per distinct path
+		// the syft:location properties are kept, and state the layer and the path within an archive, so the
+		// occurrences are one per distinct path
 		dropOccurrenceContext(bom.Components)
 	}
 	enc := cyclonedx.NewBOMEncoder(writer, e.format)
@@ -81,6 +80,15 @@ func dropProperties(components *[]cyclonedx.Component, prefix string) {
 		}
 		c.Properties = &properties
 	}
+}
+
+// locationsAsOccurrences is true where evidence occurrences alone can state the locations of a package, which takes
+// the additional context of an occurrence. Documents of spec versions before 1.7 keep the syft:location properties so
+// that documents pinned to those versions stay backwards compatible. cyclonedx-go writes the additional context of
+// an occurrence as an XML attribute where the schema has an element, so an XML document keeps the properties rather
+// than be invalid.
+func (e Encoder) locationsAsOccurrences() bool {
+	return e.version >= cyclonedx.SpecVersion1_7 && e.format != cyclonedx.BOMFileFormatXML
 }
 
 func dropOccurrenceContext(components *[]cyclonedx.Component) {
