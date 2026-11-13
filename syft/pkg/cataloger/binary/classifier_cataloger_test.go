@@ -3324,6 +3324,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 // must stay truncated: it sorts below the release in semver and would corrupt
 // version-range matching. Suffix-free binaries match exactly as before, and
 // trailing non-version text (or NUL padding) is never absorbed into the version.
+// Libraries that only carry libavcodec/libavformat API idents are not reported.
 func Test_Cataloger_ffmpeg_versionSuffix(t *testing.T) {
 	// collect the ffmpeg classifiers under test, keyed by their FileGlob
 	classifiers := map[string]binutils.Classifier{}
@@ -3390,6 +3391,27 @@ func Test_Cataloger_ffmpeg_versionSuffix(t *testing.T) {
 			fileGlob: "**/libav*",
 			data:     "FFmpeg version 9.0.3\x00libavformat.so",
 			want:     "9.0.3",
+		},
+		{
+			// "Lavc"/"Lavf" idents carry the libavcodec/libavformat API version, which is
+			// versioned independently of FFmpeg releases, so they must not be reported as
+			// the ffmpeg version. The diagnostic text has no release number either.
+			name:     "library with only libavcodec and libavformat idents not reported",
+			fileGlob: "**/libav*",
+			data:     "Lavc62.28.102\x00Lavf62.12.102\x00Please update your FFmpeg version to the newest one from Git",
+			want:     "",
+		},
+		{
+			name:     "library with only libavformat ident not reported",
+			fileGlob: "**/libav*",
+			data:     "Lavf62.12.102",
+			want:     "",
+		},
+		{
+			name:     "library release version used even when libavcodec ident appears first",
+			fileGlob: "**/libav*",
+			data:     "Lavc61.19.101\x00FFmpeg version 7.1.1",
+			want:     "7.1.1",
 		},
 		{
 			name:     "libswresample build metadata preserved",

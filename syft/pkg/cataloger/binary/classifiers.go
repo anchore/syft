@@ -984,8 +984,8 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "ffmpeg-library",
 			FileGlob: "**/libav*",
-			EvidenceMatcher: binutils.MatchAny(
-				// Primary pattern: FFmpeg version found in most libraries.
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// FFmpeg version found in most libraries.
 				// The optional "+" suffix preserves semver build metadata (e.g. a
 				// backported-patch stamp like "9.0.3+dev.9.0.2.p1.eb9cef3") instead of
 				// truncating to X.Y[.Z]. Build metadata compares equal to its core
@@ -993,11 +993,11 @@ func DefaultClassifiers() []binutils.Classifier {
 				// pre-release suffix (e.g. a distro revision "6.1.1-3ubuntu5") is
 				// deliberately NOT captured: it sorts below the release in semver and
 				// would corrupt version-range matching, so it stays truncated as before.
-				m.FileContentsVersionMatcher(`(?m)FFmpeg version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)`),
-				// Fallback: library-specific version patterns for libavcodec and libavformat
-				m.FileContentsVersionMatcher(`(?m)Lavc(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-				m.FileContentsVersionMatcher(`(?m)Lavf(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-			),
+				// Library idents such as "Lavc62.28.102" or "Lavf62.12.102" are not used
+				// as a fallback: they carry the libavcodec/libavformat API version, which
+				// is versioned independently of FFmpeg releases and would produce a wrong
+				// ffmpeg PURL and CPE.
+				`(?m)FFmpeg version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)`),
 			Package: "ffmpeg",
 			PURL:    mustPURL("pkg:generic/ffmpeg@version"),
 			CPEs:    singleCPE("cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
