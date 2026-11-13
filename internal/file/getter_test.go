@@ -1,8 +1,6 @@
 package file
 
 import (
-	"archive/tar"
-	"bytes"
 	"context"
 	"crypto/x509"
 	"fmt"
@@ -10,10 +8,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/clio"
 )
@@ -59,94 +60,56 @@ func TestGetter_GetFile(t *testing.T) {
 	}
 }
 
-func TestGetter_GetToDir_FilterNonArchivesWired(t *testing.T) {
-	testCases := []struct {
-		name   string
-		source string
-		assert assert.ErrorAssertionFunc
-	}{
-		{
-			name:   "error out on non-archive sources",
-			source: "http://localhost/something.txt",
-			assert: assertErrNonArchiveSource,
-		},
-	}
+func TestGetter_GetFile_WritesContentWithUserAgent(t *testing.T) {
+	requestPath := "/foo"
+	var gotUserAgent string
 
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			test.assert(t, NewGetter(testID, nil).GetToDir(t.TempDir(), test.source))
+	server := newTestServer(t, func(mux *http.ServeMux) {
+		mux.HandleFunc(requestPath, func(w http.ResponseWriter, req *http.Request) {
+			gotUserAgent = req.UserAgent()
+			_, _ = w.Write(testFileContent)
 		})
-	}
+	})
+	t.Cleanup(server.Close)
+
+	monitor := progress.NewManual(-1)
+	dst := path.Join(t.TempDir(), "nested", "some-destination-file")
+
+	err := NewGetter(testID, getClient(t, server)).GetFile(dst, createRequestURL(t, server, requestPath), monitor)
+	require.NoError(t, err)
+
+	got, err := os.ReadFile(dst)
+	require.NoError(t, err)
+	assert.Equal(t, testFileContent, got)
+	assert.Equal(t, "test-app v0.5.3", gotUserAgent)
+	assert.Equal(t, int64(len(testFileContent)), monitor.Current())
 }
 
-func TestGetter_validateHttpSource(t *testing.T) {
+func TestGetter_GetFile_Errors(t *testing.T) {
+	server := newTestServer(t, withResponseForPath(t, "/foo", testFileContent))
+	t.Cleanup(server.Close)
+
 	testCases := []struct {
-		name   string
-		source string
-		assert assert.ErrorAssertionFunc
+		name    string
+		src     string
+		wantErr string
 	}{
 		{
-			name:   "error out on non-archive sources",
-			source: "http://localhost/something.txt",
-			assert: assertErrNonArchiveSource,
+			name:    "non-200 response",
+			src:     createRequestURL(t, server, "/missing"),
+			wantErr: "404 Not Found",
 		},
 		{
-			name:   "filter out non-archive sources with get param",
-			source: "https://localhost/vulnerability-db_v3_2021-11-21T08:15:44Z.txt?checksum=sha256%3Ac402d01fa909a3fa85a5c6733ef27a3a51a9105b6c62b9152adbd24c08358911",
-			assert: assertErrNonArchiveSource,
-		},
-		{
-			name:   "ignore non http-https input",
-			source: "s3://bucket/something.txt",
-			assert: assert.NoError,
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			test.assert(t, validateHTTPSource(test.source))
-		})
-	}
-}
-
-func TestGetter_GetToDir_CertConcerns(t *testing.T) {
-	testCases := []struct {
-		name          string
-		prepareClient func(*http.Client)
-		assert        assert.ErrorAssertionFunc
-	}{
-
-		{
-			name:   "client trusts server's CA",
-			assert: assert.NoError,
-		},
-		{
-			name:          "client doesn't trust server's CA",
-			prepareClient: removeTrustedCAs,
-			assert:        assertUnknownAuthorityError,
+			name:    "unsupported scheme",
+			src:     "s3://bucket/something.snap",
+			wantErr: `unsupported URL scheme "s3"`,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			requestPath := "/foo.tar"
-			tarball := createTarball("foo", testFileContent)
-
-			server := newTestServer(t, withResponseForPath(t, requestPath, tarball))
-			t.Cleanup(server.Close)
-
-			httpClient := getClient(t, server)
-			if tc.prepareClient != nil {
-				tc.prepareClient(httpClient)
-			}
-
-			getter := NewGetter(testID, httpClient)
-			requestURL := createRequestURL(t, server, requestPath)
-
-			tempDir := t.TempDir()
-
-			err := getter.GetToDir(tempDir, requestURL)
-			tc.assert(t, err)
+			err := NewGetter(testID, getClient(t, server)).GetFile(path.Join(t.TempDir(), "dst"), tc.src)
+			assert.ErrorContains(t, err, tc.wantErr)
 		})
 	}
 }
@@ -155,27 +118,8 @@ func assertUnknownAuthorityError(t assert.TestingT, err error, _ ...any) bool {
 	return assert.ErrorAs(t, err, &x509.UnknownAuthorityError{})
 }
 
-func assertErrNonArchiveSource(t assert.TestingT, err error, _ ...any) bool {
-	return assert.ErrorIs(t, err, ErrNonArchiveSource)
-}
-
 func removeTrustedCAs(client *http.Client) {
 	client.Transport.(*http.Transport).TLSClientConfig.RootCAs = x509.NewCertPool()
-}
-
-// createTarball makes a single-file tarball and returns it as a byte slice.
-func createTarball(filename string, content []byte) []byte {
-	tarBuffer := new(bytes.Buffer)
-	tarWriter := tar.NewWriter(tarBuffer)
-	tarWriter.WriteHeader(&tar.Header{
-		Name: filename,
-		Size: int64(len(content)),
-		Mode: 0600,
-	})
-	tarWriter.Write(content)
-	tarWriter.Close()
-
-	return tarBuffer.Bytes()
 }
 
 type muxOption func(mux *http.ServeMux)
