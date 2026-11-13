@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -125,7 +124,7 @@ func Test_evidenceLocationsRoundTrip(t *testing.T) {
 		locations = append(locations, file.NewLocationFromCoordinates(c))
 	}
 
-	encoded := EncodeComponent(pkg.Package{Name: "example", Locations: file.NewLocationSet(locations...)}, "", sortLocations)
+	encoded := EncodeComponent(pkg.Package{Name: "example", Locations: file.NewLocationSet(locations...)}, "", file.LocationSorter(nil))
 	require.Equal(t, evidenceWithOccurrences("/opt/example", "/usr/bin/example"), encoded.Evidence)
 
 	// the encoder writes each location as both a syft:location property and an evidence occurrence; decoding must
@@ -157,13 +156,6 @@ func Test_decodeEvidenceLocations_memoryIsProportionalToInput(t *testing.T) {
 
 	assert.Less(t, large, small*20, "decoding 10x the occurrences allocated %d bytes, up from %d", large, small)
 	assert.Less(t, large, uint64(20_000*1024), "decoding allocated more than 1KiB per occurrence")
-}
-
-func sortLocations(a, b file.Location) int {
-	if c := strings.Compare(a.RealPath, b.RealPath); c != 0 {
-		return c
-	}
-	return strings.Compare(a.FileSystemID, b.FileSystemID)
 }
 
 func evidenceWithOccurrences(locations ...string) *cyclonedx.Evidence {
