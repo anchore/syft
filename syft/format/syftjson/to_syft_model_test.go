@@ -554,12 +554,14 @@ func Test_deduplicateErrors(t *testing.T) {
 }
 
 func Test_safeFileModeConvert(t *testing.T) {
-	tests := []struct {
+	type testCase struct {
 		name    string
 		val     int
 		want    fs.FileMode
 		wantErr bool
-	}{
+	}
+
+	tests := []testCase{
 		{
 			// fs.go ModePerm 511 = FileMode = 0777 // Unix permission bits :192
 			name:    "valid perm",
@@ -573,18 +575,29 @@ func Test_safeFileModeConvert(t *testing.T) {
 			want:    os.FileMode(0o1000000777), // 134218239
 			wantErr: false,
 		},
-		{
-			name:    "outside int32 high",
-			val:     int(math.MaxInt32) + 1,
-			want:    0,
-			wantErr: true,
-		},
-		{
-			name:    "outside int32 low",
-			val:     int(math.MinInt32) - 1,
-			want:    0,
-			wantErr: true,
-		},
+	}
+
+	// Where int is 32 bits wide, no int value lies outside the int32 range, so
+	// these two cases cannot be built at all. The bounds come from int64
+	// variables rather than constants, because a constant that does not fit in
+	// an int is a compile error on those platforms, not a skipped test.
+	if math.MaxInt > math.MaxInt32 {
+		maxInt32 := int64(math.MaxInt32)
+		minInt32 := int64(math.MinInt32)
+		tests = append(tests,
+			testCase{
+				name:    "outside int32 high",
+				val:     int(maxInt32 + 1),
+				want:    0,
+				wantErr: true,
+			},
+			testCase{
+				name:    "outside int32 low",
+				val:     int(minInt32 - 1),
+				want:    0,
+				wantErr: true,
+			},
+		)
 	}
 
 	for _, tt := range tests {
