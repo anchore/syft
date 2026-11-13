@@ -153,6 +153,75 @@ func TestCycloneDxSourcePackageEncoder_SpecVersions(t *testing.T) {
 	}
 }
 
+func TestCycloneDxLocations_SpecVersions(t *testing.T) {
+	s, _ := testutil.LocationsInput(t)
+	tests := []struct {
+		version         string
+		wantOccurrences bool
+		wantContext     bool
+		wantProperties  bool
+	}{
+		{version: "1.3", wantProperties: true},
+		{version: "1.4", wantProperties: true},
+		{version: "1.5", wantOccurrences: true, wantProperties: true},
+		{version: "1.6", wantOccurrences: true, wantProperties: true},
+		{version: "1.7", wantOccurrences: true, wantContext: true},
+		{version: cyclonedxutil.DefaultVersion, wantOccurrences: true, wantContext: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.version, func(t *testing.T) {
+			enc, err := NewFormatEncoderWithConfig(EncoderConfig{Version: tt.version})
+			require.NoError(t, err)
+
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, s))
+
+			// evidence occurrences only exist from spec 1.5, and no emptied evidence element is left behind before that
+			assert.Equal(t, tt.wantOccurrences, strings.Contains(buf.String(), `"occurrences"`))
+			assert.Equal(t, tt.wantOccurrences, strings.Contains(buf.String(), `"evidence"`))
+
+			// from spec 1.7 the occurrences are the only place locations are written, so they state the layer and
+			// the full path; documents of older spec versions state those in the syft:location properties they keep
+			assert.Equal(t, tt.wantContext, strings.Contains(buf.String(), `"additionalContext"`))
+			assert.Equal(t, tt.wantProperties, strings.Contains(buf.String(), `"syft:location:`))
+
+			// without the additional context there is one occurrence per distinct path
+			wantExampleOccurrences := 0
+			switch {
+			case tt.wantContext:
+				wantExampleOccurrences = 2
+			case tt.wantOccurrences:
+				wantExampleOccurrences = 1
+			}
+			assert.Equal(t, wantExampleOccurrences, strings.Count(buf.String(), `"location":"/usr/bin/example"`))
+		})
+	}
+}
+
+func TestCycloneDxLocations_RoundTrip(t *testing.T) {
+	for _, version := range []string{"1.4", "1.5", "1.6", "1.7", cyclonedxutil.DefaultVersion} {
+		t.Run(version, func(t *testing.T) {
+			s, want := testutil.LocationsInput(t)
+
+			cfg := DefaultEncoderConfig()
+			cfg.Version = version
+			enc, err := NewFormatEncoderWithConfig(cfg)
+			require.NoError(t, err)
+
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, s))
+
+			decoded, _, _, err := NewFormatDecoder().Decode(bytes.NewReader(buf.Bytes()))
+			require.NoError(t, err)
+
+			pkgs := decoded.Artifacts.Packages.PackagesByName(testutil.LocationsInputPackageName)
+			require.Len(t, pkgs, 1)
+			// a file found in several layers is a location per layer, each with its layer
+			assert.ElementsMatch(t, want, pkgs[0].Locations.CoordinateSet().ToSlice())
+		})
+	}
+}
+
 func redactor(values ...string) testutil.Redactor {
 	return testutil.NewRedactions().
 		WithValuesRedacted(values...).

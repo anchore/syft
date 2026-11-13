@@ -53,12 +53,15 @@
         {
           "name": "syft:package:metadataType",
           "value": "python-package"
-        },
-        {
-          "name": "syft:location:0:path",
-          "value": "/some/path/pkg1"
         }
-      ]
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "/some/path/pkg1"
+          }
+        ]
+      }
     },
     {
       "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=39392bb5e270f669",
@@ -81,14 +84,17 @@
           "value": "dpkg-db-entry"
         },
         {
-          "name": "syft:location:0:path",
-          "value": "/some/path/pkg1"
-        },
-        {
           "name": "syft:metadata:installedSize",
           "value": "0"
         }
-      ]
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "/some/path/pkg1"
+          }
+        ]
+      }
     },
     {
       "bom-ref": "os:debian@1.2.3",

@@ -61,6 +61,7 @@ func EncodeComponent(p pkg.Package, supplier string, locationSorter func(a, b fi
 		Description:        encodeDescription(p),
 		ExternalReferences: encodeExternalReferences(p),
 		Properties:         properties,
+		Evidence:           encodeEvidence(locations),
 		BOMRef:             DeriveBomRef(p),
 	}
 }
@@ -102,7 +103,7 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 
 	p := &pkg.Package{
 		Version:   c.Version,
-		Locations: decodeLocations(values),
+		Locations: decodeLocations(values, c.Evidence),
 		Licenses:  pkg.NewLicenseSet(decodeLicenses(c)...),
 		CPEs:      decodeCPEs(c),
 	}
@@ -204,12 +205,13 @@ func setPackageName(p *pkg.Package, c *cyclonedx.Component) {
 	p.Name = name
 }
 
-func decodeLocations(vals map[string]string) file.LocationSet {
+func decodeLocations(vals map[string]string, evidence *cyclonedx.Evidence) file.LocationSet {
 	v := Decode(reflect.TypeFor[[]file.Location](), vals, "syft:location", CycloneDXFields)
 	out, ok := v.([]file.Location)
 	if !ok {
 		out = nil
 	}
+	out = append(out, decodeEvidenceLocations(evidence, out)...)
 	return file.NewLocationSet(out...)
 }
 

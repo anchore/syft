@@ -21,18 +21,38 @@ func TestDecoder_Decode(t *testing.T) {
 		err      bool
 		distro   string
 		packages []string
+		// locations are the location paths expected for a package, by package name
+		locations map[string][]string
 	}{
 		{
 			name:     "dir-scan",
 			file:     "snapshot/TestCycloneDxDirectoryEncoder.golden",
 			distro:   "debian:1.2.3",
 			packages: []string{"package-1:1.0.1", "package-2:2.0.1"},
+			locations: map[string][]string{
+				"package-1": {"/some/path/pkg1"},
+				"package-2": {"/some/path/pkg1"},
+			},
 		},
 		{
 			name:     "image-scan",
 			file:     "snapshot/TestCycloneDxImageEncoder.golden",
 			distro:   "debian:1.2.3",
 			packages: []string{"package-1:1.0.1", "package-2:2.0.1"},
+			locations: map[string][]string{
+				"package-1": {"/somefile-1.txt"},
+				"package-2": {"/somefile-2.txt"},
+			},
+		},
+		{
+			// an unmodified document from cdxgen 12.8.4 (`cdxgen -t js`) for a project whose src/index.js requires
+			// lodash: the locations of a document syft did not write come from its evidence occurrences
+			name:     "third-party-evidence-occurrences",
+			file:     "cdxgen-evidence-occurrences.json",
+			packages: []string{"evidence-demo:1.0.0", "lodash:4.17.21"},
+			locations: map[string][]string{
+				"lodash": {"/src/index.js"},
+			},
 		},
 		{
 			name: "not-an-sbom",
@@ -72,11 +92,13 @@ func TestDecoder_Decode(t *testing.T) {
 			assert.Equal(t, ID, decodeID)
 			assert.Equal(t, formatVersion, decodeVersion)
 
-			split := strings.SplitN(test.distro, ":", 2)
-			distroName := split[0]
-			distroVersion := split[1]
-			assert.Equal(t, bom.Artifacts.LinuxDistribution.ID, distroName)
-			assert.Equal(t, bom.Artifacts.LinuxDistribution.Version, distroVersion)
+			if test.distro != "" {
+				split := strings.SplitN(test.distro, ":", 2)
+				distroName := split[0]
+				distroVersion := split[1]
+				assert.Equal(t, bom.Artifacts.LinuxDistribution.ID, distroName)
+				assert.Equal(t, bom.Artifacts.LinuxDistribution.Version, distroVersion)
+			}
 
 			var pkgs []string
 			for p := range bom.Artifacts.Packages.Enumerate() {
@@ -84,6 +106,16 @@ func TestDecoder_Decode(t *testing.T) {
 			}
 
 			assert.ElementsMatch(t, test.packages, pkgs)
+
+			for name, want := range test.locations {
+				var got []string
+				for _, p := range bom.Artifacts.Packages.PackagesByName(name) {
+					for _, l := range p.Locations.ToSlice() {
+						got = append(got, l.RealPath)
+					}
+				}
+				assert.ElementsMatch(t, want, got, "locations of %s", name)
+			}
 		})
 	}
 }

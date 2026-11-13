@@ -278,6 +278,8 @@ func Test_decodeComponent(t *testing.T) {
 		wantLanguage pkg.Language
 		wantMetadata any
 		wantPURL     string
+		// wantLocations are the coordinates of the decoded locations, in any order
+		wantLocations []file.Coordinates
 	}{
 		{
 			name: "derive language from pURL if missing",
@@ -429,11 +431,64 @@ func Test_decodeComponent(t *testing.T) {
 			},
 			wantPURL: "pkg:maven/org.apache.logging.log4j/log4j@2.0.4",
 		},
+		{
+			name: "decode locations from evidence occurrences",
+			component: cyclonedx.Component{
+				Name:     "example",
+				Evidence: evidenceWithOccurrences("/usr/bin/example", "/opt/example"),
+			},
+			wantLocations: []file.Coordinates{
+				file.NewCoordinates("/opt/example", ""),
+				file.NewCoordinates("/usr/bin/example", ""),
+			},
+		},
+		{
+			name: "combine locations from syft properties and evidence occurrences",
+			component: cyclonedx.Component{
+				Name: "example",
+				Properties: &[]cyclonedx.Property{
+					{Name: "syft:location:0:path", Value: "/usr/lib/example"},
+				},
+				Evidence: evidenceWithOccurrences("/usr/bin/example"),
+			},
+			wantLocations: []file.Coordinates{
+				file.NewCoordinates("/usr/bin/example", ""),
+				file.NewCoordinates("/usr/lib/example", ""),
+			},
+		},
+		{
+			name: "evidence occurrence does not repeat a path already in syft properties",
+			component: cyclonedx.Component{
+				Name: "example",
+				Properties: &[]cyclonedx.Property{
+					{Name: "syft:location:0:layerID", Value: "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59"},
+					{Name: "syft:location:0:path", Value: "/usr/bin/example"},
+				},
+				Evidence: evidenceWithOccurrences("/usr/bin/example", "/opt/example"),
+			},
+			wantLocations: []file.Coordinates{
+				file.NewCoordinates("/opt/example", ""),
+				file.NewCoordinates("/usr/bin/example", "sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59"),
+			},
+		},
+		{
+			name: "ignore empty and repeated evidence occurrences",
+			component: cyclonedx.Component{
+				Name:     "example",
+				Evidence: evidenceWithOccurrences("/usr/bin/example", "", "/usr/bin/example"),
+			},
+			wantLocations: []file.Coordinates{
+				file.NewCoordinates("/usr/bin/example", ""),
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := decodeComponent(&tt.component)
+			if tt.wantLocations != nil {
+				assert.ElementsMatch(t, tt.wantLocations, p.Locations.CoordinateSet().ToSlice())
+			}
 			if tt.wantLanguage != "" {
 				assert.Equal(t, tt.wantLanguage, p.Language)
 			}
@@ -445,7 +500,7 @@ func Test_decodeComponent(t *testing.T) {
 				assert.Equal(t, tt.wantPURL, p.PURL, "purl should match")
 			}
 
-			if tt.wantMetadata == nil && tt.wantLanguage == "" && tt.wantPURL == "" {
+			if tt.wantMetadata == nil && tt.wantLanguage == "" && tt.wantPURL == "" && tt.wantLocations == nil {
 				t.Fatal("this is a useless test, please remove it")
 			}
 		})

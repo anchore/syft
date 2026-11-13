@@ -49,10 +49,6 @@
           "value": "dpkg-db-entry"
         },
         {
-          "name": "syft:location:0:path",
-          "value": "/var/lib/dpkg/status"
-        },
-        {
           "name": "syft:metadata:installedSize",
           "value": "0"
         },
@@ -64,7 +60,14 @@
           "name": "syft:metadata:sourceVersion",
           "value": "1:2.4.47-2"
         }
-      ]
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "/var/lib/dpkg/status"
+          }
+        ]
+      }
     },
     {
       "bom-ref": "pkg:rpm/centos/bind-export-libs@9.11.13-3.el8?arch=x86_64&distro=centos-8&epoch=32&package-id=6008fca05ca7b418&upstream=bind-9.11.13-3.el8.src.rpm",
@@ -92,10 +95,6 @@
           "value": "rpm-db-entry"
         },
         {
-          "name": "syft:location:0:path",
-          "value": "/var/lib/rpm/Packages"
-        },
-        {
           "name": "syft:metadata:epoch",
           "value": "32"
         },
@@ -111,7 +110,14 @@
           "name": "syft:metadata:sourceRpm",
           "value": "bind-9.11.13-3.el8.src.rpm"
         }
-      ]
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "/var/lib/rpm/Packages"
+          }
+        ]
+      }
     },
     {
       "bom-ref": "pkg:apk/alpine/busybox@1.35.0-r17?arch=x86_64&distro=alpine-3.16.3&package-id=aa74af1190de1c40",
@@ -133,10 +139,6 @@
           "value": "apk-db-entry"
         },
         {
-          "name": "syft:location:0:path",
-          "value": "/lib/apk/db/installed"
-        },
-        {
           "name": "syft:metadata:installedSize",
           "value": "0"
         },
@@ -148,7 +150,14 @@
           "name": "syft:metadata:size",
           "value": "0"
         }
-      ]
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "/lib/apk/db/installed"
+          }
+        ]
+      }
     },
     {
       "bom-ref": "pkg:alpm/arch/gcc-libs@13.2.1-3?arch=x86_64&distro=arch-rolling&package-id=58a2fcf749a9a3cc&upstream=gcc",
@@ -170,10 +179,6 @@
           "value": "alpm-db-entry"
         },
         {
-          "name": "syft:location:0:path",
-          "value": "/var/lib/pacman/local/gcc-libs-13.2.1-3/desc"
-        },
-        {
           "name": "syft:metadata:architecture",
           "value": "x86_64"
         },
@@ -193,7 +198,14 @@
           "name": "syft:metadata:version",
           "value": "13.2.1-3"
         }
-      ]
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "/var/lib/pacman/local/gcc-libs-13.2.1-3/desc"
+          }
+        ]
+      }
     },
     {
       "bom-ref": "pkg:apk/alpine/libc-utils@0.7.2-r3?arch=x86_64&distro=alpine-3.16.3&package-id=16a8c7b19fde6f4f&upstream=libc-dev",
@@ -215,10 +227,6 @@
           "value": "apk-db-entry"
         },
         {
-          "name": "syft:location:0:path",
-          "value": "/lib/apk/db/installed"
-        },
-        {
           "name": "syft:metadata:installedSize",
           "value": "0"
         },
@@ -230,7 +238,14 @@
           "name": "syft:metadata:size",
           "value": "0"
         }
-      ]
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "/lib/apk/db/installed"
+          }
+        ]
+      }
     },
     {
       "bom-ref": "pkg:deb/debian/libpam-runtime@1.5.2-6%2Bdeb12u1?arch=all&distro=debian-12&package-id=7b4ddc97df57aec4&upstream=pam",
@@ -258,10 +273,6 @@
           "value": "dpkg-db-entry"
         },
         {
-          "name": "syft:location:0:path",
-          "value": "/var/lib/dpkg/status"
-        },
-        {
           "name": "syft:metadata:installedSize",
           "value": "0"
         },
@@ -269,7 +280,14 @@
           "name": "syft:metadata:source",
           "value": "pam"
         }
-      ]
+      ],
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "/var/lib/dpkg/status"
+          }
+        ]
+      }
     }
   ]
 }
