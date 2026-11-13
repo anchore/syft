@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -251,5 +253,25 @@ func TestParseUvLockWithLicenseEnrichment(t *testing.T) {
 			uvLockParser := newUvLockParser(tc.config)
 			pkgtest.TestFileParser(t, fixture, uvLockParser.parseUvLock, tc.expectedPackages, nil)
 		})
+	}
+}
+
+func TestExtractUvExtrasIsSortedByName(t *testing.T) {
+	p := uvPackage{
+		OptionalDependencies: map[string]uvDependencies{
+			"socks":  {{Name: "socksio"}},
+			"brotli": {{Name: "brotli"}, {Name: "brotlicffi"}},
+			"http2":  {{Name: "h2"}},
+			"cli":    {{Name: "click"}, {Name: "rich"}},
+		},
+	}
+
+	// map iteration order is randomized, so check many runs rather than one
+	for i := 0; i < 50; i++ {
+		var names []string
+		for _, e := range extractUvExtras(p) {
+			names = append(names, e.Name)
+		}
+		assert.Equal(t, []string{"brotli", "cli", "http2", "socks"}, names)
 	}
 }

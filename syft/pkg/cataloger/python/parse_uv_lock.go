@@ -137,6 +137,9 @@ func extractUvExtras(p uvPackage) []pkg.PythonUvLockExtraEntry {
 			Dependencies: extraDeps,
 		})
 	}
+	sort.Slice(extras, func(i, j int) bool {
+		return extras[i].Name < extras[j].Name
+	})
 	return extras
 }
 
