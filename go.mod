@@ -100,7 +100,7 @@ require (
 	golang.org/x/time v0.16.0
 	golang.org/x/tools v0.52.0
 	howett.net/plist v1.0.1
-	modernc.org/sqlite v1.61.0
+	modernc.org/sqlite v1.61.1
 )
 
 require github.com/github/go-spdx/v2 v2.8.0
