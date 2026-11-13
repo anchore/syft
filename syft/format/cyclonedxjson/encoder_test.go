@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil"
 	"github.com/anchore/syft/syft/format/internal/testutil"
 	"github.com/anchore/syft/syft/pkg"
@@ -155,18 +154,19 @@ func TestCycloneDxSourcePackageEncoder_SpecVersions(t *testing.T) {
 }
 
 func TestCycloneDxLocations_SpecVersions(t *testing.T) {
-	s := testutil.SourcePackagesInput(t, t.TempDir())
+	s, _ := testutil.LocationsInput(t)
 	tests := []struct {
 		version         string
 		wantOccurrences bool
+		wantContext     bool
 		wantProperties  bool
 	}{
-		{version: "1.3", wantOccurrences: false, wantProperties: true},
-		{version: "1.4", wantOccurrences: false, wantProperties: true},
+		{version: "1.3", wantProperties: true},
+		{version: "1.4", wantProperties: true},
 		{version: "1.5", wantOccurrences: true, wantProperties: true},
 		{version: "1.6", wantOccurrences: true, wantProperties: true},
-		{version: "1.7", wantOccurrences: true, wantProperties: false},
-		{version: cyclonedxutil.DefaultVersion, wantOccurrences: true, wantProperties: false},
+		{version: "1.7", wantOccurrences: true, wantContext: true},
+		{version: cyclonedxutil.DefaultVersion, wantOccurrences: true, wantContext: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.version, func(t *testing.T) {
@@ -180,47 +180,32 @@ func TestCycloneDxLocations_SpecVersions(t *testing.T) {
 			assert.Equal(t, tt.wantOccurrences, strings.Contains(buf.String(), `"occurrences"`))
 			assert.Equal(t, tt.wantOccurrences, strings.Contains(buf.String(), `"evidence"`))
 
-			// from spec 1.7 the occurrences are the only place locations are written; documents of older spec
-			// versions keep the syft:location properties
+			// from spec 1.7 the occurrences are the only place locations are written, so they state the layer and
+			// the full path; documents of older spec versions state those in the syft:location properties they keep
+			assert.Equal(t, tt.wantContext, strings.Contains(buf.String(), `"additionalContext"`))
 			assert.Equal(t, tt.wantProperties, strings.Contains(buf.String(), `"syft:location:`))
+
+			// without the additional context there is one occurrence per distinct path
+			wantExampleOccurrences := 0
+			switch {
+			case tt.wantContext:
+				wantExampleOccurrences = 2
+			case tt.wantOccurrences:
+				wantExampleOccurrences = 1
+			}
+			assert.Equal(t, wantExampleOccurrences, strings.Count(buf.String(), `"location":"/usr/bin/example"`))
 		})
 	}
 }
 
 func TestCycloneDxLocations_RoundTrip(t *testing.T) {
-	locations := []file.Coordinates{
-		file.NewCoordinates("/opt/example", "sha256:layer-1"),
-		file.NewCoordinates("/usr/bin/example", "sha256:layer-1"),
-		file.NewCoordinates("/usr/bin/example", "sha256:layer-2"),
-	}
-	// an occurrence carries only a path, so a document without syft:location properties decodes to one location
-	// per distinct path
-	paths := []file.Coordinates{
-		file.NewCoordinates("/opt/example", ""),
-		file.NewCoordinates("/usr/bin/example", ""),
-	}
+	for _, version := range []string{"1.4", "1.5", "1.6", "1.7", cyclonedxutil.DefaultVersion} {
+		t.Run(version, func(t *testing.T) {
+			s, want := testutil.LocationsInput(t)
 
-	tests := []struct {
-		version string
-		want    []file.Coordinates
-	}{
-		{version: "1.4", want: locations},
-		{version: "1.5", want: locations},
-		{version: "1.6", want: locations},
-		{version: "1.7", want: paths},
-		{version: cyclonedxutil.DefaultVersion, want: paths},
-	}
-	for _, tt := range tests {
-		t.Run(tt.version, func(t *testing.T) {
-			s := testutil.DirectoryInput(t, t.TempDir())
-			p := pkg.Package{Name: "example", Version: "1.0.0", Type: pkg.BinaryPkg}
-			for _, c := range locations {
-				p.Locations.Add(file.NewLocationFromCoordinates(c))
-			}
-			p.SetID()
-			s.Artifacts.Packages.Add(p)
-
-			enc, err := NewFormatEncoderWithConfig(EncoderConfig{Version: tt.version})
+			cfg := DefaultEncoderConfig()
+			cfg.Version = version
+			enc, err := NewFormatEncoderWithConfig(cfg)
 			require.NoError(t, err)
 
 			var buf bytes.Buffer
@@ -229,9 +214,10 @@ func TestCycloneDxLocations_RoundTrip(t *testing.T) {
 			decoded, _, _, err := NewFormatDecoder().Decode(bytes.NewReader(buf.Bytes()))
 			require.NoError(t, err)
 
-			pkgs := decoded.Artifacts.Packages.PackagesByName("example")
+			pkgs := decoded.Artifacts.Packages.PackagesByName(testutil.LocationsInputPackageName)
 			require.Len(t, pkgs, 1)
-			assert.ElementsMatch(t, tt.want, pkgs[0].Locations.CoordinateSet().ToSlice())
+			// a file found in several layers is a location per layer, each with its layer
+			assert.ElementsMatch(t, want, pkgs[0].Locations.CoordinateSet().ToSlice())
 		})
 	}
 }

@@ -31,16 +31,19 @@ func Test_encodeEvidence(t *testing.T) {
 			want: evidenceWithOccurrences("/opt/example", "/usr/bin/example"),
 		},
 		{
-			name: "a path found in several layers is one occurrence",
+			name: "a path found in several layers is an occurrence per layer",
 			locations: []file.Location{
 				file.NewLocationFromCoordinates(file.NewCoordinates("/usr/bin/example", "sha256:layer-1")),
 				file.NewLocationFromCoordinates(file.NewCoordinates("/usr/bin/example", "sha256:layer-2")),
 			},
-			want: evidenceWithOccurrences("/usr/bin/example"),
+			want: &cyclonedx.Evidence{Occurrences: &[]cyclonedx.EvidenceOccurrence{
+				{Location: "/usr/bin/example", AdditionalContext: "layerID: sha256:layer-1"},
+				{Location: "/usr/bin/example", AdditionalContext: "layerID: sha256:layer-2"},
+			}},
 		},
 		{
-			// an occurrence is a path on the scanned filesystem, so packages found within one archive share the
-			// archive as their occurrence
+			// the location of an occurrence is a path on the scanned filesystem, so packages found within one archive
+			// share the archive as their location and are told apart by the full path in the additional context
 			name: "a file within an archive is an occurrence of the outermost archive",
 			locations: []file.Location{
 				file.NewLocationFromCoordinates(file.Coordinates{
@@ -48,11 +51,15 @@ func Test_encodeEvidence(t *testing.T) {
 					FullPath: "/app.war!/WEB-INF/lib/dep.jar",
 				}),
 				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath: "/app.war",
-					FullPath: "/app.war!/WEB-INF/lib/other.jar!/META-INF/MANIFEST.MF",
+					RealPath:     "/app.war",
+					FileSystemID: "sha256:layer-1",
+					FullPath:     "/app.war!/WEB-INF/lib/other.jar!/META-INF/MANIFEST.MF",
 				}),
 			},
-			want: evidenceWithOccurrences("/app.war"),
+			want: &cyclonedx.Evidence{Occurrences: &[]cyclonedx.EvidenceOccurrence{
+				{Location: "/app.war", AdditionalContext: "fullPath: /app.war!/WEB-INF/lib/dep.jar"},
+				{Location: "/app.war", AdditionalContext: "layerID: sha256:layer-1; fullPath: /app.war!/WEB-INF/lib/other.jar!/META-INF/MANIFEST.MF"},
+			}},
 		},
 		{
 			name: "a location without a path is not an occurrence",
@@ -129,6 +136,35 @@ func Test_decodeEvidenceLocations(t *testing.T) {
 			},
 		},
 		{
+			name: "the layer and the full path of an occurrence come from its additional context",
+			evidence: &cyclonedx.Evidence{Occurrences: &[]cyclonedx.EvidenceOccurrence{
+				{Location: "/usr/bin/example", AdditionalContext: "layerID: sha256:layer-1"},
+				{Location: "/usr/bin/example", AdditionalContext: "layerID: sha256:layer-2"},
+				{Location: "/usr/bin/example", AdditionalContext: "layerID: sha256:layer-2"},
+				{Location: "/app.war", AdditionalContext: "fullPath: /app.war!/WEB-INF/lib/dep.jar"},
+				{Location: "/app.war", AdditionalContext: "layerID: sha256:layer-1; fullPath: /app.war!/WEB-INF/lib/other.jar"},
+			}},
+			want: []file.Location{
+				file.NewLocationFromCoordinates(file.NewCoordinates("/usr/bin/example", "sha256:layer-1")),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/usr/bin/example", "sha256:layer-2")),
+				file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/dep.jar"}),
+				file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/app.war", FileSystemID: "sha256:layer-1", FullPath: "/app.war!/WEB-INF/lib/other.jar"}),
+			},
+		},
+		{
+			// other tools use the additional context for things like code snippets, and a full path has to be
+			// within the location it is the full path of
+			name: "additional context that does not describe the location is ignored",
+			evidence: &cyclonedx.Evidence{Occurrences: &[]cyclonedx.EvidenceOccurrence{
+				{Location: "src/index.js", AdditionalContext: "const _ = require('lodash')"},
+				{Location: "/app.war", AdditionalContext: "fullPath: /etc/passwd"},
+			}},
+			want: []file.Location{
+				file.NewLocation("/src/index.js"),
+				file.NewLocation("/app.war"),
+			},
+		},
+		{
 			name:     "a relative occurrence for a known path is skipped",
 			evidence: evidenceWithOccurrences("usr/bin/example"),
 			known: []file.Location{
@@ -149,6 +185,7 @@ func Test_evidenceLocationsRoundTrip(t *testing.T) {
 		file.NewCoordinates("/opt/example", "sha256:layer-1"),
 		file.NewCoordinates("/usr/bin/example", "sha256:layer-1"),
 		file.NewCoordinates("/usr/bin/example", "sha256:layer-2"),
+		{RealPath: "/app.war", FileSystemID: "sha256:layer-2", FullPath: "/app.war!/WEB-INF/lib/dep.jar"},
 	}
 
 	var locations []file.Location
@@ -157,12 +194,22 @@ func Test_evidenceLocationsRoundTrip(t *testing.T) {
 	}
 
 	encoded := EncodeComponent(pkg.Package{Name: "example", Locations: file.NewLocationSet(locations...)}, "", file.LocationSorter(nil))
-	require.Equal(t, evidenceWithOccurrences("/opt/example", "/usr/bin/example"), encoded.Evidence)
+	require.NotNil(t, encoded.Evidence)
+	require.Len(t, *encoded.Evidence.Occurrences, len(want))
 
-	// the encoder writes each location as both a syft:location property and an evidence occurrence; decoding must
-	// yield each location once
-	decoded := decodeComponent(&encoded)
-	assert.ElementsMatch(t, want, decoded.Locations.CoordinateSet().ToSlice())
+	t.Run("properties and occurrences", func(t *testing.T) {
+		// each location is both a syft:location property and an evidence occurrence; decoding must yield each
+		// location once
+		decoded := decodeComponent(&encoded)
+		assert.ElementsMatch(t, want, decoded.Locations.CoordinateSet().ToSlice())
+	})
+
+	t.Run("occurrences alone", func(t *testing.T) {
+		// the occurrences state everything the syft:location properties do
+		onlyOccurrences := cyclonedx.Component{Name: encoded.Name, Evidence: encoded.Evidence}
+		decoded := decodeComponent(&onlyOccurrences)
+		assert.ElementsMatch(t, want, decoded.Locations.CoordinateSet().ToSlice())
+	})
 }
 
 // the occurrences come from an SBOM that may not be trusted, so decoding them may not cost more than a fixed amount

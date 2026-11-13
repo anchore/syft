@@ -35,7 +35,7 @@
       </properties>
       <evidence>
         <occurrences>
-          <occurrence>
+          <occurrence additionalContext="layerID: sha256:redacted">
             <location>/somefile-1.txt</location>
           </occurrence>
         </occurrences>
@@ -54,7 +54,7 @@
       </properties>
       <evidence>
         <occurrences>
-          <occurrence>
+          <occurrence additionalContext="layerID: sha256:redacted">
             <location>/somefile-2.txt</location>
           </occurrence>
         </occurrences>

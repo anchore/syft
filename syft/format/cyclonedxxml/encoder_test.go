@@ -101,6 +101,30 @@ func TestCycloneDxSourcePackageEncoder(t *testing.T) {
 	)
 }
 
+func TestCycloneDxLocations_RoundTrip(t *testing.T) {
+	for _, version := range []string{"1.4", "1.5", "1.6", "1.7", cyclonedxutil.DefaultVersion} {
+		t.Run(version, func(t *testing.T) {
+			s, want := testutil.LocationsInput(t)
+
+			cfg := DefaultEncoderConfig()
+			cfg.Version = version
+			enc, err := NewFormatEncoderWithConfig(cfg)
+			require.NoError(t, err)
+
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, s))
+
+			decoded, _, _, err := NewFormatDecoder().Decode(bytes.NewReader(buf.Bytes()))
+			require.NoError(t, err)
+
+			pkgs := decoded.Artifacts.Packages.PackagesByName(testutil.LocationsInputPackageName)
+			require.Len(t, pkgs, 1)
+			// a file found in several layers is a location per layer, each with its layer
+			assert.ElementsMatch(t, want, pkgs[0].Locations.CoordinateSet().ToSlice())
+		})
+	}
+}
+
 func redactor(values ...string) testutil.Redactor {
 	return testutil.NewRedactions().
 		WithValuesRedacted(values...).

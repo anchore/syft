@@ -59,7 +59,8 @@
       "evidence": {
         "occurrences": [
           {
-            "location": "/somefile-1.txt"
+            "location": "/somefile-1.txt",
+            "additionalContext": "layerID: sha256:redacted"
           }
         ]
       }
@@ -92,7 +93,8 @@
       "evidence": {
         "occurrences": [
           {
-            "location": "/somefile-2.txt"
+            "location": "/somefile-2.txt",
+            "additionalContext": "layerID: sha256:redacted"
           }
         ]
       }

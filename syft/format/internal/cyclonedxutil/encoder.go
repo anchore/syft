@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/syft/format/common/cyclonedxhelpers"
 	"github.com/anchore/syft/syft/sbom"
@@ -42,9 +43,14 @@ func (e Encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		dropEvidence(bom.Components)
 	}
 	if e.version >= cyclonedx.SpecVersion1_7 {
-		// evidence occurrences are the standard home for package locations; older spec versions keep the syft:location
-		// properties alongside them so that documents pinned to those versions stay backwards compatible
+		// evidence occurrences are the standard home for package locations and state everything the syft:location
+		// properties do, so the properties are not written as well
 		dropProperties(bom.Components, locationPropertyPrefix)
+	} else {
+		// older spec versions keep the syft:location properties so that documents pinned to those versions stay
+		// backwards compatible; the layer and the path within an archive are stated there, and the additional context
+		// of an occurrence only exists from spec 1.6, so the occurrences are one per distinct path
+		dropOccurrenceContext(bom.Components)
 	}
 	enc := cyclonedx.NewBOMEncoder(writer, e.format)
 	enc.SetPretty(e.pretty)
@@ -74,6 +80,30 @@ func dropProperties(components *[]cyclonedx.Component, prefix string) {
 			continue
 		}
 		c.Properties = &properties
+	}
+}
+
+func dropOccurrenceContext(components *[]cyclonedx.Component) {
+	if components == nil {
+		return
+	}
+	for i := range *components {
+		c := &(*components)[i]
+		dropOccurrenceContext(c.Components)
+		if c.Evidence == nil || c.Evidence.Occurrences == nil {
+			continue
+		}
+		var occurrences []cyclonedx.EvidenceOccurrence
+		paths := strset.New()
+		for _, o := range *c.Evidence.Occurrences {
+			if paths.Has(o.Location) {
+				continue
+			}
+			paths.Add(o.Location)
+			o.AdditionalContext = ""
+			occurrences = append(occurrences, o)
+		}
+		c.Evidence.Occurrences = &occurrences
 	}
 }
 
