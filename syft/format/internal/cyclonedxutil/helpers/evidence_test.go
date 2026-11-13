@@ -39,6 +39,22 @@ func Test_encodeEvidence(t *testing.T) {
 			want: evidenceWithOccurrences("/usr/bin/example"),
 		},
 		{
+			// an occurrence is a path on the scanned filesystem, so packages found within one archive share the
+			// archive as their occurrence
+			name: "a file within an archive is an occurrence of the outermost archive",
+			locations: []file.Location{
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath: "/app.war",
+					FullPath: "/app.war!/WEB-INF/lib/dep.jar",
+				}),
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath: "/app.war",
+					FullPath: "/app.war!/WEB-INF/lib/other.jar!/META-INF/MANIFEST.MF",
+				}),
+			},
+			want: evidenceWithOccurrences("/app.war"),
+		},
+		{
 			name: "a location without a path is not an occurrence",
 			locations: []file.Location{
 				file.NewLocation(""),
@@ -100,7 +116,23 @@ func Test_decodeEvidenceLocations(t *testing.T) {
 				{Location: "src/index.js", Line: new(7)},
 			}},
 			want: []file.Location{
-				file.NewLocation("src/index.js"),
+				file.NewLocation("/src/index.js"),
+			},
+		},
+		{
+			// file components are decoded with rooted names, and a package location must name the same file
+			name:     "a relative occurrence is rooted",
+			evidence: evidenceWithOccurrences("src/index.js", "/src/index.js", "/opt/example"),
+			want: []file.Location{
+				file.NewLocation("/src/index.js"),
+				file.NewLocation("/opt/example"),
+			},
+		},
+		{
+			name:     "a relative occurrence for a known path is skipped",
+			evidence: evidenceWithOccurrences("usr/bin/example"),
+			known: []file.Location{
+				file.NewLocationFromCoordinates(file.NewCoordinates("/usr/bin/example", "sha256:layer-1")),
 			},
 		},
 	}

@@ -3,6 +3,7 @@ package cyclonedxutil
 import (
 	"io"
 	"slices"
+	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
@@ -40,11 +41,40 @@ func (e Encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		// leaves the emptied evidence element behind, so drop it rather than emit an empty element
 		dropEvidence(bom.Components)
 	}
+	if e.version >= cyclonedx.SpecVersion1_7 {
+		// evidence occurrences are the standard home for package locations; older spec versions keep the syft:location
+		// properties alongside them so that documents pinned to those versions stay backwards compatible
+		dropProperties(bom.Components, locationPropertyPrefix)
+	}
 	enc := cyclonedx.NewBOMEncoder(writer, e.format)
 	enc.SetPretty(e.pretty)
 	enc.SetEscapeHTML(false)
 
 	return enc.EncodeVersion(bom, e.version)
+}
+
+// locationPropertyPrefix is the prefix of the names of the properties that describe the locations of a package
+const locationPropertyPrefix = "syft:location:"
+
+func dropProperties(components *[]cyclonedx.Component, prefix string) {
+	if components == nil {
+		return
+	}
+	for i := range *components {
+		c := &(*components)[i]
+		dropProperties(c.Components, prefix)
+		if c.Properties == nil {
+			continue
+		}
+		properties := slices.DeleteFunc(*c.Properties, func(p cyclonedx.Property) bool {
+			return strings.HasPrefix(p.Name, prefix)
+		})
+		if len(properties) == 0 {
+			c.Properties = nil
+			continue
+		}
+		c.Properties = &properties
+	}
 }
 
 func dropEvidence(components *[]cyclonedx.Component) {

@@ -53,10 +53,6 @@
         {
           "name": "syft:package:metadataType",
           "value": "python-package"
-        },
-        {
-          "name": "syft:location:0:path",
-          "value": "/some/path/pkg1"
         }
       ],
       "evidence": {
@@ -86,10 +82,6 @@
         {
           "name": "syft:package:metadataType",
           "value": "dpkg-db-entry"
-        },
-        {
-          "name": "syft:location:0:path",
-          "value": "/some/path/pkg1"
         },
         {
           "name": "syft:metadata:installedSize",

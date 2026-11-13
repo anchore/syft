@@ -29,12 +29,20 @@ func TestDecoder_Decode(t *testing.T) {
 			file:     "snapshot/TestCycloneDxDirectoryEncoder.golden",
 			distro:   "debian:1.2.3",
 			packages: []string{"package-1:1.0.1", "package-2:2.0.1"},
+			locations: map[string][]string{
+				"package-1": {"/some/path/pkg1"},
+				"package-2": {"/some/path/pkg1"},
+			},
 		},
 		{
 			name:     "image-scan",
 			file:     "snapshot/TestCycloneDxImageEncoder.golden",
 			distro:   "debian:1.2.3",
 			packages: []string{"package-1:1.0.1", "package-2:2.0.1"},
+			locations: map[string][]string{
+				"package-1": {"/somefile-1.txt"},
+				"package-2": {"/somefile-2.txt"},
+			},
 		},
 		{
 			// an unmodified document from cdxgen 12.8.4 (`cdxgen -t js`) for a project whose src/index.js requires
@@ -43,7 +51,7 @@ func TestDecoder_Decode(t *testing.T) {
 			file:     "cdxgen-evidence-occurrences.json",
 			packages: []string{"evidence-demo:1.0.0", "lodash:4.17.21"},
 			locations: map[string][]string{
-				"lodash": {"src/index.js"},
+				"lodash": {"/src/index.js"},
 			},
 		},
 		{

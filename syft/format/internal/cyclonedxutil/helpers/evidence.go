@@ -1,6 +1,8 @@
 package helpers
 
 import (
+	"strings"
+
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/scylladb/go-set/strset"
 
@@ -8,8 +10,10 @@ import (
 )
 
 // encodeEvidence expresses the package locations as CycloneDX evidence occurrences, the standard field other tools
-// read. An occurrence carries only a path, so the same locations are also written as syft:location properties, which
-// keep the layer and annotations; each distinct path is written once no matter how many layers it was found in.
+// read. An occurrence carries only a path: each distinct real path is written once, no matter how many layers it was
+// found in. A file within an archive is written as the real path of the outermost archive (the path that exists on
+// the scanned filesystem), so every package found within one archive has that archive as its occurrence. The layer,
+// the path within an archive and the annotations are only carried by syft:location properties.
 func encodeEvidence(locations []file.Location) *cyclonedx.Evidence {
 	var occurrences []cyclonedx.EvidenceOccurrence
 	paths := strset.New()
@@ -29,7 +33,8 @@ func encodeEvidence(locations []file.Location) *cyclonedx.Evidence {
 // decodeEvidenceLocations returns a location for each distinct evidence occurrence path that none of the known
 // locations already covers. The known locations are the ones decoded from syft:location properties: they describe a
 // path more fully than an occurrence can (layer, annotations) and never compare equal to a location built from an
-// occurrence, so an occurrence for the same path would otherwise be a second location for one file.
+// occurrence, so an occurrence for the same path would otherwise be a second location for one file. Occurrence paths
+// are rooted, as the names of file components are, so that a package location and the file it names agree.
 func decodeEvidenceLocations(evidence *cyclonedx.Evidence, known []file.Location) []file.Location {
 	if evidence == nil || evidence.Occurrences == nil {
 		return nil
@@ -37,16 +42,24 @@ func decodeEvidenceLocations(evidence *cyclonedx.Evidence, known []file.Location
 
 	paths := strset.New()
 	for _, l := range known {
-		paths.Add(l.RealPath)
+		paths.Add(rootedPath(l.RealPath))
 	}
 
 	var locations []file.Location
 	for _, occurrence := range *evidence.Occurrences {
-		if occurrence.Location == "" || paths.Has(occurrence.Location) {
+		if occurrence.Location == "" {
 			continue
 		}
-		paths.Add(occurrence.Location)
-		locations = append(locations, file.NewLocation(occurrence.Location))
+		path := rootedPath(occurrence.Location)
+		if paths.Has(path) {
+			continue
+		}
+		paths.Add(path)
+		locations = append(locations, file.NewLocation(path))
 	}
 	return locations
+}
+
+func rootedPath(path string) string {
+	return "/" + strings.TrimPrefix(path, "/")
 }
