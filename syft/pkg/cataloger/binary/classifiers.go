@@ -110,12 +110,16 @@ func DefaultClassifiers() []binutils.Classifier {
 				// [NUL]GIT_VERSION_INFO[NUL]__init__[NUL]1.12.6[NUL]branch[NUL]commit
 				// [NUL]GIT_VERSION_INFO[NUL]__init__[NUL]verify_methods[NUL]1.11.9[NUL]branch[NUL]commit
 				// [NUL][NUL]__init__[NUL]1.10.11[NUL]verify_methods[NUL]
-				m.FileContentsVersionMatcher(`\x00__init__\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00(branch|verify_methods)`),
-				m.FileContentsVersionMatcher(`(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00branch\x00`),
-				// [NUL]verify_methods[NUL]Task cannot be serialized[NUL]1.9.0-alpha1[NUL]BigInt[NUL]
-				m.FileContentsVersionMatcher(`\x00verify_methods\x00.{0,30}(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00BigInt`),
-				// unknown option `%s`[NUL]1.8.5[NUL]julia version %s
-				m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00julia version`),
+				// [NUL]1.9.0-beta3[NUL]__init__[NUL]verify_methods
+				// arm64/ppc64le put NUL runs between strings, what precedes the version varies: only the trailing token is anchored
+				// single-digit major (fine while julia is 1.x): on ppc64le 1.9.0-beta3 a run of ASCII '0's precedes the version
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00+(branch|verify_methods|__init__)\x00`),
+				// [NUL]Task cannot be serialized[NUL]1.9.0-alpha1[NUL]BigInt[NUL]   (amd64)
+				// [NUL x8]1.9.0-alpha1[NUL x4]Precompile file header verification checks failed.[NUL x6]BigInt[NUL]   (arm64)
+				// NUL runs follow the version on arm64/ppc64le; arm64: no NUL-delimited verify_methods nearby, a string before BigInt
+				m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00+([^\x00]+\x00+)?BigInt\x00`),
+				// unknown option `%s`[NUL]1.8.5[NUL]julia version %s   (arm64/ppc64le: [NUL x5]1.8.5[NUL x3]julia version)
+				m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00+julia version`),
 			),
 			Package: "julia",
 			PURL:    mustPURL("pkg:generic/julia@version"),
@@ -130,11 +134,13 @@ func DefaultClassifiers() []binutils.Classifier {
 				// libjulia.so
 				`^libjulia\.so(\.[0-9])?(\.[0-9])?$`,
 				binutils.MatchAny(
-					// unknown option `%s`[NUL]1.5.4[NUL]julia version %s
-					m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00julia version`),
+					// unknown option `%s`[NUL]1.5.4[NUL]julia version %s   (arm64/ppc64le: [NUL x5]1.5.4[NUL x3]julia version)
+					m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00+julia version`),
 					// [NUL]#kw#[NUL]1.3.1[NUL]BigInt
 					// [NUL]#kw#[NUL]0.7.0-beta2[NUL]_require_dependencies
 					m.FileContentsVersionMatcher(`\x00#kw#\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00(BigInt|_require_dependencies)`),
+					// [NUL x7]1.3.1[NUL x3]Precompile file header verification checks failed.[NUL x6]BigInt[NUL]   (arm64, no #kw# nearby)
+					m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00+([^\x00]+\x00+)?BigInt\x00`),
 					// [NUL]ObjectIdDict[NUL]0.6.4[NUL]jl_sysimg_cpu_target
 					m.FileContentsVersionMatcher(`\x00ObjectIdDict\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00jl_sysimg_cpu_target`),
 					// [NUL]require[NUL]0.4.6[NUL]core2
