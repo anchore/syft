@@ -726,7 +726,7 @@ func TestParseApkDBAllowsLargeFieldValues(t *testing.T) {
 		"A:x86_64",
 		"S:1",
 		"I:1",
-		"T:" + strings.Repeat("a", 70*1024),
+		"T:" + strings.Repeat("a", 15*1024*1024),
 		"",
 	}, "\n")
 	reader := file.NewLocationReadCloser(file.NewLocation("large-installed-db"), io.NopCloser(strings.NewReader(contents)))

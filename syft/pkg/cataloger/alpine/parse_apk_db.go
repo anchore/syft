@@ -3,6 +3,7 @@ package alpine
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -32,15 +33,12 @@ type parsedData struct {
 	pkg.ApkDBEntry
 }
 
-const maxApkDBFieldSize = 10 * 1024 * 1024
-
 // parseApkDB parses packages from a given APK "installed" flat-file DB. For more
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
 //nolint:funlen
 func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	scanner := bufio.NewScanner(reader)
-	scanner.Buffer(nil, maxApkDBFieldSize)
+	bufferedReader := bufio.NewReader(reader)
 
 	var errs error
 	var apks []parsedData
@@ -64,8 +62,16 @@ func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Enviro
 		apks = append(apks, p)
 	}
 
-	for scanner.Scan() {
-		line := scanner.Text()
+	for {
+		line, err := bufferedReader.ReadString('\n')
+		if len(line) == 0 && err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, nil, fmt.Errorf("failed to parse APK installed DB file: %w", err)
+		}
+
+		line = strings.TrimRight(line, "\r\n")
 
 		if line == "" {
 			// i.e. apk entry separator
@@ -109,10 +115,6 @@ func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Enviro
 		// collection yet; but we've now reached the end of scanning, so let's be sure to
 		// add currentEntry to the collection.
 		appendApk(currentEntry)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse APK installed DB file: %w", err)
 	}
 
 	var r *linux.Release
