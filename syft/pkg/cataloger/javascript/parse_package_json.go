@@ -20,7 +20,11 @@ import (
 )
 
 // integrity check
-var _ generic.Parser = parsePackageJSON
+var _ generic.Parser = packageJSONParser{}.parsePackageJSON
+
+type packageJSONParser struct {
+	cfg CatalogerConfig
+}
 
 // packageJSON represents a JavaScript package.json file
 type packageJSON struct {
@@ -59,7 +63,7 @@ type repository struct {
 var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
 
 // parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
-func parsePackageJSON(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (j packageJSONParser) parsePackageJSON(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	dec := json.NewDecoder(reader)
 
@@ -75,7 +79,7 @@ func parsePackageJSON(ctx context.Context, resolver file.Resolver, _ *generic.En
 		// a compliance filter later will remove these packages based on compliance rules
 		pkgs = append(
 			pkgs,
-			newPackageJSONPackage(ctx, resolver, p, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			newPackageJSONPackage(ctx, resolver, j.cfg, p, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		)
 	}
 

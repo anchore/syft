@@ -3,6 +3,9 @@
 configs: # AUTO-GENERATED - config structs and their fields
   javascript.CatalogerConfig:
     fields:
+      - key: SearchLocalLicenses
+        description: SearchLocalLicenses searches sibling license files when package.json declares no license.
+        app_key: javascript.search-local-licenses
       - key: SearchRemoteLicenses
         description: SearchRemoteLicenses enables querying the NPM registry API to retrieve license information for packages that are missing license data in their local metadata.
         app_key: javascript.search-remote-licenses
@@ -206,7 +209,8 @@ catalogers:
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
       file: syft/pkg/cataloger/javascript/cataloger.go
-      function: NewPackageCataloger
+      function: NewPackageCatalogerWithConfig
+    config: javascript.CatalogerConfig # AUTO-GENERATED
     selectors: # AUTO-GENERATED
       - image
       - installed
@@ -231,6 +235,7 @@ catalogers:
         capabilities: # MANUAL - preserved across regeneration
           - name: license
             default: true
+            comment: Declared package.json licenses are always collected. Sibling license-file discovery requires SearchLocalLicenses.
           - name: dependency.depth
             default:
               - direct
