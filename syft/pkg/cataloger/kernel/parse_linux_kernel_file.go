@@ -24,23 +24,35 @@ func parseLinuxKernelFile(_ context.Context, _ file.Resolver, _ *generic.Environ
 		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)
 	}
 	magicType, err := magic.GetType(unionReader)
+	if err == nil && len(magicType) > 0 && magicType[0] == linuxKernelMagicName {
+		metadata := parseLinuxKernelMetadata(magicType)
+		if metadata.Version == "" {
+			return nil, nil, nil
+		}
+
+		return []pkg.Package{
+			newLinuxKernelPackage(
+				metadata,
+				reader.Location,
+			),
+		}, nil, nil
+	}
+
+	// deitch/magic only recognizes x86 kernel images; fall back to detecting
+	// arm64 images (raw, compressed, or EFI-zboot-wrapped) ourselves.
+	if metadata, ok := parseARM64LinuxKernelImage(unionReader); ok {
+		return []pkg.Package{
+			newLinuxKernelPackage(
+				metadata,
+				reader.Location,
+			),
+		}, nil, nil
+	}
+
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get magic type for file: %w", err)
 	}
-	if len(magicType) < 1 || magicType[0] != linuxKernelMagicName {
-		return nil, nil, nil
-	}
-	metadata := parseLinuxKernelMetadata(magicType)
-	if metadata.Version == "" {
-		return nil, nil, nil
-	}
-
-	return []pkg.Package{
-		newLinuxKernelPackage(
-			metadata,
-			reader.Location,
-		),
-	}, nil, nil
+	return nil, nil, nil
 }
 
 func parseLinuxKernelMetadata(magicType []string) (p pkg.LinuxKernel) {
