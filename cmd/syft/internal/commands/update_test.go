@@ -5,8 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	hashiVersion "github.com/hashicorp/go-version"
+
 	"github.com/anchore/clio"
-	hashiVersion "github.com/anchore/go-version"
 	"github.com/anchore/syft/cmd/syft/internal"
 )
 
