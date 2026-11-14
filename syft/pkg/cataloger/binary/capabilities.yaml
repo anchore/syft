@@ -568,6 +568,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/git'
+        packages:
+          - class: git-binary
+            name: git
+            purl: pkg:generic/git
+            cpes:
+              - cpe:2.3:a:git-scm:git:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/fluent-bit'
         packages:
           - class: fluent-bit-binary

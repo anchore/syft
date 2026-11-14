@@ -832,6 +832,17 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:gnu:gcc:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:    "git-binary",
+			FileGlob: "**/git",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// git/2.49.1[NUL]
+				`git/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "git",
+			PURL:    mustPURL("pkg:generic/git@version"),
+			CPEs:    singleCPE("cpe:2.3:a:git-scm:git:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "fluent-bit-binary",
 			FileGlob: "**/fluent-bit",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
