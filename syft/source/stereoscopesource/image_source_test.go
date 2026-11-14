@@ -130,11 +130,79 @@ func Test_Describe(t *testing.T) {
 				Name: "user input",
 			},
 		},
+		{
+			name: "latest tag is replaced by manifest digest",
+			source: stereoscopeImageSource{
+				id: "some-id",
+				metadata: source.ImageMetadata{
+					UserInput:      "alpine:latest",
+					ManifestDigest: "sha256:abc",
+				},
+			},
+			expected: source.Description{
+				ID:      "some-id",
+				Name:    "alpine",
+				Version: "sha256:abc",
+			},
+		},
+		{
+			name: "non-latest tag is kept",
+			source: stereoscopeImageSource{
+				id: "some-id",
+				metadata: source.ImageMetadata{
+					UserInput:      "alpine:3.20",
+					ManifestDigest: "sha256:abc",
+				},
+			},
+			expected: source.Description{
+				ID:      "some-id",
+				Name:    "alpine",
+				Version: "3.20",
+			},
+		},
+		{
+			name: "latest alias version is kept",
+			source: stereoscopeImageSource{
+				id: "some-id",
+				config: ImageConfig{
+					Alias: source.Alias{Version: "latest"},
+				},
+				metadata: source.ImageMetadata{
+					UserInput:      "alpine:latest",
+					ManifestDigest: "sha256:abc",
+				},
+			},
+			expected: source.Description{
+				ID:      "some-id",
+				Name:    "alpine",
+				Version: "latest",
+			},
+		},
+		{
+			name: "latest alias version is kept over non-latest tag",
+			source: stereoscopeImageSource{
+				id: "some-id",
+				config: ImageConfig{
+					Alias: source.Alias{Version: "latest"},
+				},
+				metadata: source.ImageMetadata{
+					UserInput:      "alpine:3.20",
+					ManifestDigest: "sha256:abc",
+				},
+			},
+			expected: source.Description{
+				ID:      "some-id",
+				Name:    "alpine",
+				Version: "latest",
+			},
+		},
 	}
 
 	for _, test := range tests {
-		got := test.source.Describe()
-		got.Metadata = nil // might want to test this, but do not to determine if the user input is userd
-		require.Equal(t, test.expected, got)
+		t.Run(test.name, func(t *testing.T) {
+			got := test.source.Describe()
+			got.Metadata = nil // might want to test this, but do not to determine if the user input is userd
+			require.Equal(t, test.expected, got)
+		})
 	}
 }
