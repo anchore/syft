@@ -26,7 +26,7 @@ const (
 	//      --hash=sha256:e9535b8c84dc9571a48999094fda7f33e63c3f1b74f3e5f3ac0105a58405bb65  # some comment
 
 	// namePattern matches: requests[security]
-	namePattern = `(?P<name>\w[\w\[\],\s-_\.]+)`
+	namePattern = `(?P<name>\w[\w\[\],\s-_\.]*)`
 
 	// versionConstraintPattern matches: == 2.8.*
 	// the version token accepts every character PEP 440 versions can contain: digits and letters,
@@ -133,7 +133,7 @@ func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Re
 
 		req := newRequirement(line)
 		if req == nil {
-			log.WithFields("path", reader.RealPath, "line", line).Debug("unable to parse requirements.txt line")
+			log.WithFields("path", reader.FullNestedPath(), "line", line).Debug("unable to parse requirements.txt line")
 			errs = unknown.Appendf(errs, reader, "unable to parse requirements.txt line: %q", line)
 			continue
 		}
@@ -142,7 +142,7 @@ func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Re
 		version := parseVersion(req.VersionConstraint, rp.cfg.GuessUnpinnedRequirements)
 
 		if version == "" {
-			log.WithFields("path", reader.RealPath, "line", line).Trace("unable to determine package version in requirements.txt line")
+			log.WithFields("path", reader.FullNestedPath(), "line", line).Trace("unable to determine package version in requirements.txt line")
 			errs = unknown.Appendf(errs, reader, "unable to determine package version in requirements.txt line: %q", line)
 			continue
 		}

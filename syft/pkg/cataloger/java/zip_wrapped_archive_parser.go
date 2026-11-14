@@ -35,7 +35,7 @@ func (gzp genericZipWrappedJavaArchiveParser) parseZipWrappedJavaArchive(ctx con
 	if td == nil {
 		return nil, nil, fmt.Errorf("no temp dir factory in context")
 	}
-	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(td, reader.Path(), reader)
+	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(td, reader.FullNestedPath(), reader)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {

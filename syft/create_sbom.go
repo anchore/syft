@@ -10,6 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/go-sync"
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
@@ -38,7 +39,7 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 
 	srcMetadata := src.Describe()
 
-	taskGroups, audit, err := cfg.makeTaskGroups(srcMetadata)
+	taskGroups, audit, err := cfg.makeTaskGroups(srcMetadata, sourceExclusions(src))
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +58,9 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 				Search:         cfg.Search,
 				Relationships:  cfg.Relationships,
 				DataGeneration: cfg.DataGeneration,
-				Packages:       cfg.Packages,
+				Packages:       cfg.packagesWithArchiveSearch(),
 				Files:          cfg.Files,
+				Archive:        cfg.Archive,
 				Licenses:       cfg.Licenses,
 				Catalogers:     *audit,
 				ExtraConfigs:   cfg.ToolConfiguration,
@@ -88,8 +90,8 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 		}
 	}
 
-	catalogingProgress := monitorCatalogingTask(src.ID(), taskGroups)
-	packageCatalogingProgress := monitorPackageCatalogingTask()
+	catalogingProgress := monitorCatalogingTask(ctx, src.ID(), taskGroups)
+	packageCatalogingProgress := monitorPackageCatalogingTask(ctx)
 
 	builder := sbomsync.NewBuilder(&s, monitorPackageCount(packageCatalogingProgress))
 	for i := range taskGroups {
@@ -111,6 +113,14 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 func setupContext(ctx context.Context, cfg *CreateSBOMConfig) (context.Context, error) {
 	// configure parallel executors
 	ctx = setContextExecutors(ctx, cfg)
+
+	// one progress row per cataloger for the whole scan, however many archives it is run against
+	ctx = bus.WithCatalogerTaskRegistry(ctx)
+
+	// the archive cataloger task recurses into jars too, so the java cataloger must not unarchive them itself
+	if cfg.Archive.MaxDepth != 0 {
+		ctx = archive.WithNestedCataloging(ctx)
+	}
 
 	// configure temp dir factory for catalogers (if not already set)
 	if tmpdir.FromContext(ctx) == nil {
@@ -173,7 +183,7 @@ func monitorPackageCount(prog *monitor.TaskProgress) func(s *sbom.SBOM) {
 	}
 }
 
-func monitorPackageCatalogingTask() *monitor.TaskProgress {
+func monitorPackageCatalogingTask(ctx context.Context) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "Packages",
@@ -183,10 +193,10 @@ func monitorPackageCatalogingTask() *monitor.TaskProgress {
 		ParentID:      monitor.TopLevelCatalogingTaskID,
 	}
 
-	return bus.StartCatalogerTask(info, -1, "")
+	return bus.StartCatalogerTask(ctx, info, -1, "")
 }
 
-func monitorCatalogingTask(srcID artifact.ID, tasks [][]task.Task) *monitor.TaskProgress {
+func monitorCatalogingTask(ctx context.Context, srcID artifact.ID, tasks [][]task.Task) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default:      "Catalog contents",
@@ -203,7 +213,7 @@ func monitorCatalogingTask(srcID artifact.ID, tasks [][]task.Task) *monitor.Task
 		length += int64(len(tg))
 	}
 
-	return bus.StartCatalogerTask(info, length, "")
+	return bus.StartCatalogerTask(ctx, info, length, "")
 }
 
 func formatTaskNames(tasks []task.Task) []string {
@@ -217,4 +227,13 @@ func formatTaskNames(tasks []task.Task) []string {
 	list := set.List()
 	sort.Strings(list)
 	return list
+}
+
+// sourceExclusions returns the exclusion patterns the source was configured with, so the same
+// exclusions apply inside the archives found in it.
+func sourceExclusions(src source.Source) []string {
+	if excluder, ok := src.(source.PathExcluder); ok {
+		return excluder.ExcludedPaths()
+	}
+	return nil
 }

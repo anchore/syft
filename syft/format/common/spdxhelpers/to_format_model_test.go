@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	stfile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/artifact"
@@ -556,7 +558,7 @@ func Test_toFiles(t *testing.T) {
 	tests := []struct {
 		name string
 		in   sbom.SBOM
-		want spdx.File
+		want []string
 	}{
 		{
 			name: "File paths are converted to relative in final SPDX collection",
@@ -584,16 +586,57 @@ func Test_toFiles(t *testing.T) {
 					},
 				},
 			},
-			want: spdx.File{
-				FileName: "some/path",
+			want: []string{"some/path"},
+		},
+		{
+			name: "the scanned root is the root package, not a file",
+			in: sbom.SBOM{Artifacts: sbom.Artifacts{FileMetadata: map[file.Coordinates]file.Metadata{
+				{RealPath: ""}:     {Type: stfile.TypeDirectory},
+				{RealPath: "/etc"}: {Type: stfile.TypeDirectory},
+			}}},
+			want: []string{"etc"},
+		},
+		{
+			name: "a scanned directory is a file",
+			in: sbom.SBOM{
+				Source: source.Description{Metadata: source.DirectoryMetadata{Path: "/dir"}},
+				Artifacts: sbom.Artifacts{FileMetadata: map[file.Coordinates]file.Metadata{
+					{RealPath: ""}:     {Type: stfile.TypeDirectory},
+					{RealPath: "/etc"}: {Type: stfile.TypeDirectory},
+				}},
 			},
+			want: []string{".", "etc"},
+		},
+		{
+			name: "a scanned file is indexed beside its parent directory, which was not scanned",
+			in: sbom.SBOM{
+				Source: source.Description{Metadata: source.FileMetadata{Path: "/dir/go.mod"}},
+				Artifacts: sbom.Artifacts{FileMetadata: map[file.Coordinates]file.Metadata{
+					{RealPath: ""}:        {Type: stfile.TypeDirectory},
+					{RealPath: "/go.mod"}: {Type: stfile.TypeRegular},
+				}},
+			},
+			want: []string{"go.mod"},
+		},
+		{
+			name: "the absolute root is the root package, not a file",
+			in: sbom.SBOM{Artifacts: sbom.Artifacts{FileMetadata: map[file.Coordinates]file.Metadata{
+				{RealPath: "/"}:    {Type: stfile.TypeDirectory},
+				{RealPath: "/etc"}: {Type: stfile.TypeDirectory},
+			}}},
+			want: []string{"etc"},
 		},
 	}
 
 	for _, test := range tests {
-		files := toFiles(test.in)
-		got := files[0]
-		assert.Equal(t, test.want.FileName, got.FileName)
+		t.Run(test.name, func(t *testing.T) {
+			files, _ := toFiles(test.in, toSourceFile(test.in))
+			var names []string
+			for _, f := range files {
+				names = append(names, f.FileName)
+			}
+			assert.Equal(t, test.want, names)
+		})
 	}
 }
 
@@ -762,10 +805,7 @@ func Test_fileIDsForPackage(t *testing.T) {
 		Name: "bogus",
 	}
 
-	c := file.Coordinates{
-		RealPath:     "/path",
-		FileSystemID: "nowhere",
-	}
+	c := file.NewCoordinates("/path", "nowhere")
 
 	docElementId := func(identifiable artifact.Identifiable) spdx.DocElementID {
 		return spdx.DocElementID{
@@ -824,12 +864,29 @@ func Test_fileIDsForPackage(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name: "ignore file-to-package",
+			name: "include an archive file containing a package",
 			relationships: []artifact.Relationship{
 				{
 					From: c,
 					To:   p,
 					Type: artifact.ContainsRelationship,
+				},
+			},
+			expected: []*spdx.Relationship{
+				{
+					Relationship: "CONTAINS",
+					RefA:         docElementId(c),
+					RefB:         docElementId(p),
+				},
+			},
+		},
+		{
+			name: "ignore other file-to-package",
+			relationships: []artifact.Relationship{
+				{
+					From: c,
+					To:   p,
+					Type: artifact.DependencyOfRelationship,
 				},
 			},
 			expected: nil,
@@ -1010,17 +1067,13 @@ func Test_toSPDXID(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "short filename",
-			it: file.Coordinates{
-				RealPath: "/short/path/file.txt",
-			},
+			name:     "short filename",
+			it:       file.NewCoordinates("/short/path/file.txt", ""),
 			expected: "File-short-path-file.txt",
 		},
 		{
-			name: "long filename",
-			it: file.Coordinates{
-				RealPath: "/some/long/path/with/a/lot/of-text/that-contains-a/file.txt",
-			},
+			name:     "long filename",
+			it:       file.NewCoordinates("/some/long/path/with/a/lot/of-text/that-contains-a/file.txt", ""),
 			expected: "File-...a-lot-of-text-that-contains-a-file.txt",
 		},
 		{
@@ -1146,6 +1199,287 @@ func Test_otherLicenses(t *testing.T) {
 	}
 }
 
+func Test_nestedArchiveFiles(t *testing.T) {
+	top := file.NewCoordinates("/etc/os-release", "sha256:layer")
+	inA := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF", FileSystemID: "sha256:layer"}
+	inB := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/b.jar!/odd:na%me.txt", FileSystemID: "sha256:layer"}
+	owned := file.NewCoordinates("/usr/bin/tool", "sha256:layer")
+	a := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/a.jar", FileSystemID: "sha256:layer"}
+	war := file.NewCoordinates("/app.war", "sha256:layer")
+	b := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/b.jar", FileSystemID: "sha256:layer"}
+	topPkg := pkg.Package{Name: "top"}
+	topPkg.SetID()
+	nestedPkg := pkg.Package{Name: "nested"}
+	nestedPkg.SetID()
+
+	sources := []source.Description{
+		{Name: "img", Metadata: source.ImageMetadata{UserInput: "img:latest", ManifestDigest: "sha256:abc"}},
+		{Name: "dir", Metadata: source.DirectoryMetadata{Path: "/dir"}},
+	}
+	for _, src := range sources {
+		t.Run(src.Name, func(t *testing.T) {
+			s := sbom.SBOM{
+				Source: src,
+				Artifacts: sbom.Artifacts{
+					Packages:     pkg.NewCollection(topPkg, nestedPkg),
+					FileMetadata: map[file.Coordinates]file.Metadata{top: {}, inA: {}, inB: {}, owned: {}},
+				},
+				Relationships: []artifact.Relationship{
+					{From: topPkg, To: owned, Type: artifact.ContainsRelationship},
+					{From: a, To: nestedPkg, Type: artifact.ContainsRelationship},
+				},
+			}
+
+			doc := ToFormatModel(s)
+
+			// each archive holding a described file is described too, named by its path in its own container
+			names := map[spdx.ElementID]string{}
+			for _, f := range doc.Files {
+				names[f.FileSPDXIdentifier] = f.FileName
+				assert.Equal(t, "layerID: sha256:layer", f.FileComment)
+			}
+			assert.Equal(t, map[spdx.ElementID]string{
+				toSPDXID(top):   "etc/os-release",
+				toSPDXID(owned): "usr/bin/tool",
+				toSPDXID(war):   "app.war",
+				toSPDXID(a):     "WEB-INF/lib/a.jar",
+				toSPDXID(b):     "WEB-INF/lib/b.jar",
+				toSPDXID(inA):   "META-INF/MANIFEST.MF",
+				toSPDXID(inB):   "odd:na%me.txt",
+			}, names)
+
+			var described []spdx.ElementID
+			var contains [][2]spdx.ElementID
+			for _, r := range doc.Relationships {
+				switch r.Relationship {
+				case string(helpers.DescribesRelationship):
+					described = append(described, r.RefB.ElementRefID)
+				case string(helpers.ContainsRelationship):
+					contains = append(contains, [2]spdx.ElementID{r.RefA.ElementRefID, r.RefB.ElementRefID})
+				}
+			}
+			rootPkg := doc.Packages[len(doc.Packages)-1]
+			root := rootPkg.PackageSPDXIdentifier
+			assert.Equal(t, []spdx.ElementID{root}, described)
+
+			// the root contains every package, but only the files nothing else does: not what is within an archive,
+			// nor an owned file
+			assert.ElementsMatch(t, [][2]spdx.ElementID{
+				{root, toSPDXID(topPkg)},
+				{root, toSPDXID(nestedPkg)},
+				{root, toSPDXID(top)},
+				{root, toSPDXID(war)},
+				{toSPDXID(topPkg), toSPDXID(owned)},
+				{toSPDXID(a), toSPDXID(nestedPkg)},
+				{toSPDXID(war), toSPDXID(a)},
+				{toSPDXID(war), toSPDXID(b)},
+				{toSPDXID(a), toSPDXID(inA)},
+				{toSPDXID(b), toSPDXID(inB)},
+			}, contains)
+
+			// a package containing files must have analyzed them
+			assert.True(t, rootPkg.FilesAnalyzed)
+			assert.NotNil(t, rootPkg.PackageVerificationCode)
+
+			// other tools may instead have the document describe the top-level files directly
+			describesFiles := ToFormatModel(s)
+			for _, r := range describesFiles.Relationships {
+				if r.RefA.ElementRefID == root && (r.RefB.ElementRefID == toSPDXID(top) || r.RefB.ElementRefID == toSPDXID(war)) {
+					r.RefA.ElementRefID = "DOCUMENT"
+					r.Relationship = string(helpers.DescribesRelationship)
+				}
+			}
+
+			for _, d := range []struct {
+				name string
+				doc  *spdx.Document
+			}{
+				{name: "root contains files", doc: doc},
+				{name: "document describes files", doc: describesFiles},
+			} {
+				t.Run(d.name, func(t *testing.T) {
+					decoded, err := ToSyftModel(d.doc)
+					require.NoError(t, err)
+
+					assert.Equal(t, src.Name, decoded.Source.Name)
+					assert.IsType(t, src.Metadata, decoded.Source.Metadata)
+
+					// decoded paths are relative, as SPDX names are
+					relative := func(c file.Coordinates) file.Coordinates {
+						c.RealPath = strings.TrimPrefix(c.RealPath, "/")
+						c.FullPath = strings.TrimPrefix(c.FullPath, "/")
+						return c
+					}
+					var got []file.Coordinates
+					for c := range decoded.Artifacts.FileMetadata {
+						got = append(got, c)
+					}
+					assert.ElementsMatch(t, []file.Coordinates{relative(top), relative(owned), relative(war), relative(a), relative(b), relative(inA), relative(inB)}, got)
+
+					var gotContains []artifact.Relationship
+					for _, r := range decoded.Relationships {
+						_, fromFile := r.From.(file.Coordinates)
+						_, toFile := r.To.(file.Coordinates)
+						if fromFile && toFile {
+							gotContains = append(gotContains, r)
+						}
+					}
+					assert.ElementsMatch(t, []artifact.Relationship{
+						{From: relative(war), To: relative(a), Type: artifact.ContainsRelationship},
+						{From: relative(war), To: relative(b), Type: artifact.ContainsRelationship},
+						{From: relative(a), To: relative(inA), Type: artifact.ContainsRelationship},
+						{From: relative(b), To: relative(inB), Type: artifact.ContainsRelationship},
+					}, gotContains)
+				})
+			}
+		})
+	}
+}
+
+func Test_sourceFile(t *testing.T) {
+	root := file.NewCoordinates("", "")
+	war := file.NewCoordinates("/app.war", "")
+	jar := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/a.jar"}
+	etc := file.NewCoordinates("/etc/os-release", "")
+	p := pkg.Package{Name: "p"}
+	p.SetID()
+
+	tests := []struct {
+		name   string
+		source source.Description
+		files  []file.Coordinates
+		// relationships as "from type to", with the root package as "root"
+		want         []string
+		wantAnalyzed bool
+		// the file types of the file the root package describes
+		wantTypes []string
+		// decoded files, and the file relationships among them, as "from type to"
+		wantFiles    []string
+		wantContains []string
+	}{
+		{
+			name:   "a scanned directory is described, and contains what is at its root",
+			source: source.Description{Name: "dir", Metadata: source.DirectoryMetadata{Path: "/dir"}},
+			files:  []file.Coordinates{root, etc, war, jar},
+			want: []string{
+				"root DESCRIBES .",
+				"root CONTAINS p",
+				". CONTAINS etc/os-release",
+				". CONTAINS app.war",
+				"app.war CONTAINS a.jar",
+			},
+			// the scanned root decodes back to the scanned root, and holds nothing as an archive would
+			wantFiles:    []string{"", "etc/os-release", "app.war", "app.war!/a.jar"},
+			wantContains: []string{"app.war contains app.war!/a.jar"},
+		},
+		{
+			name:   "an extracted archive is described, and contains what is at its root",
+			source: source.Description{Name: "t.tar", Metadata: source.FileMetadata{Path: "/dir/t.tar"}},
+			files:  []file.Coordinates{root, etc},
+			want: []string{
+				"root DESCRIBES t.tar",
+				"root CONTAINS p",
+				"t.tar CONTAINS etc/os-release",
+			},
+			// the scanned root is the directory the archive was extracted to, but describes the archive
+			wantTypes: []string{"ARCHIVE"},
+			// the described archive is the scanned root, holding what is at the root
+			wantFiles: []string{"", "etc/os-release"},
+		},
+		{
+			name:   "an extracted archive takes its file types from its MIME type",
+			source: source.Description{Name: "t.zip", Metadata: source.FileMetadata{Path: "/dir/t.zip", MIMEType: "application/zip"}},
+			files:  []file.Coordinates{root, etc},
+			want: []string{
+				"root DESCRIBES t.zip",
+				"root CONTAINS p",
+				"t.zip CONTAINS etc/os-release",
+			},
+			wantTypes: []string{"APPLICATION", "ARCHIVE"},
+			wantFiles: []string{"", "etc/os-release"},
+		},
+		{
+			name:   "a scanned file is described, but not its parent directory",
+			source: source.Description{Name: "app.war", Metadata: source.FileMetadata{Path: "/dir/app.war"}},
+			files:  []file.Coordinates{root, war, jar},
+			want: []string{
+				"root DESCRIBES app.war",
+				"root CONTAINS p",
+				"app.war CONTAINS a.jar",
+			},
+			// an archive read in place is the scanned root too, so decodes as if it had been extracted
+			wantFiles: []string{"", "a.jar"},
+		},
+		{
+			name:   "without the scanned root, the root package contains what is at its root",
+			source: source.Description{Name: "dir", Metadata: source.DirectoryMetadata{Path: "/dir"}},
+			files:  []file.Coordinates{etc},
+			want: []string{
+				"root CONTAINS p",
+				"root CONTAINS etc/os-release",
+			},
+			wantAnalyzed: true,
+			wantFiles:    []string{"etc/os-release"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			metadata := map[file.Coordinates]file.Metadata{}
+			for _, c := range tt.files {
+				metadata[c] = file.Metadata{}
+			}
+			s := sbom.SBOM{
+				Source:    tt.source,
+				Artifacts: sbom.Artifacts{Packages: pkg.NewCollection(p), FileMetadata: metadata},
+			}
+
+			doc := ToFormatModel(s)
+
+			rootPkg := doc.Packages[len(doc.Packages)-1]
+			names := map[spdx.ElementID]string{rootPkg.PackageSPDXIdentifier: "root", toSPDXID(p): "p"}
+			for _, f := range doc.Files {
+				names[f.FileSPDXIdentifier] = f.FileName
+			}
+			var got []string
+			for _, r := range doc.Relationships {
+				if r.RefA.ElementRefID == "DOCUMENT" {
+					continue
+				}
+				got = append(got, names[r.RefA.ElementRefID]+" "+r.Relationship+" "+names[r.RefB.ElementRefID])
+			}
+			assert.ElementsMatch(t, tt.want, got)
+			assert.Equal(t, tt.wantAnalyzed, rootPkg.FilesAnalyzed)
+			if tt.wantTypes != nil {
+				for _, r := range doc.Relationships {
+					if r.RefA.ElementRefID == rootPkg.PackageSPDXIdentifier && r.Relationship == string(helpers.DescribesRelationship) {
+						i := slices.IndexFunc(doc.Files, func(f *spdx.File) bool { return f.FileSPDXIdentifier == r.RefB.ElementRefID })
+						require.GreaterOrEqual(t, i, 0)
+						assert.Equal(t, tt.wantTypes, doc.Files[i].FileTypes)
+					}
+				}
+			}
+
+			decoded, err := ToSyftModel(doc)
+			require.NoError(t, err)
+
+			var gotFiles []string
+			for c := range decoded.Artifacts.FileMetadata {
+				gotFiles = append(gotFiles, c.FullNestedPath())
+			}
+			assert.ElementsMatch(t, tt.wantFiles, gotFiles)
+
+			var gotContains []string
+			for _, r := range decoded.Relationships {
+				if from, ok := r.From.(file.Coordinates); ok {
+					to, _ := r.To.(file.Coordinates)
+					gotContains = append(gotContains, from.FullNestedPath()+" "+string(r.Type)+" "+to.FullNestedPath())
+				}
+			}
+			assert.ElementsMatch(t, tt.wantContains, gotContains)
+		})
+	}
+}
+
 func Test_toRootPackage_name(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -1190,4 +1524,28 @@ func Test_toRootPackage_name(t *testing.T) {
 			assert.Equal(t, tt.wantPurl, purl)
 		})
 	}
+}
+
+func Test_toFiles_archiveType(t *testing.T) {
+	// a file holding entries is an archive, even when its content starts like something else, such as a Spring Boot
+	// executable jar's launch script
+	jar := file.NewCoordinates("/app.jar", "")
+	s := sbom.SBOM{Artifacts: sbom.Artifacts{FileMetadata: map[file.Coordinates]file.Metadata{
+		jar:                                   {MIMEType: "text/x-shellscript"},
+		file.NewCoordinates("/plain.zip", ""): {MIMEType: "application/zip"},
+		{RealPath: "/app.jar", FullPath: "/app.jar!/lib/b.jar!/c.txt"}: {MIMEType: "text/plain"},
+	}}}
+
+	files, _ := toFiles(s, nil)
+	got := map[string][]string{}
+	for _, f := range files {
+		got[f.FileName] = f.FileTypes
+	}
+	assert.Equal(t, map[string][]string{
+		"app.jar":   {"TEXT", "ARCHIVE"},
+		"plain.zip": {"APPLICATION", "ARCHIVE"},
+		// added only to hold its entry, with no metadata of its own
+		"lib/b.jar": {"ARCHIVE"},
+		"c.txt":     {"TEXT"},
+	}, got)
 }

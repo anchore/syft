@@ -15,11 +15,13 @@ func NewDBCataloger() pkg.Cataloger {
 		// note: these globs have been intentionally split up in order to improve search performance,
 		// please do NOT combine into: "**/var/lib/dpkg/{status,status.d/*}"
 		WithParserByGlobs(parseDpkgDB, "**/lib/dpkg/status", "**/lib/dpkg/status.d/*", "**/lib/opkg/info/*.control", "**/lib/opkg/status").
-		WithProcessors(dependency.Processor(dbEntryDependencySpecifier))
+		// registration order is execution order: the merge has to precede dependency resolution, so that
+		// relationships are only created for the packages that are kept
+		WithProcessors(mergeStatusDirDuplicates, dependency.Processor(dbEntryDependencySpecifier))
 }
 
-// NewArchiveCataloger returns a new Debian package cataloger object capable of parsing .deb archive files
+// NewArchiveCataloger returns a new Debian package cataloger object capable of parsing .deb and .ipk (opkg) archive files
 func NewArchiveCataloger() pkg.Cataloger {
 	return generic.NewCataloger("deb-archive-cataloger").
-		WithParserByGlobs(parseDebArchive, "**/*.deb")
+		WithParserByGlobs(parseDebArchive, "**/*.deb", "**/*.ipk")
 }

@@ -1,8 +1,6 @@
-// WIP in-toto/SBOMit task to enrich package information based on an in-toto attestation.
+// in-toto/SBOMit task to enrich package information based on an in-toto attestation.
 //
 // TODOs (in order of importance):
-// 	- Gating this to be optional instead of running by default.
-// 	- Deciding scope of and adding configurations to this Task.
 // 	- Adding support for explicit (and possibly out of tree) attestations (e.g. stored on a registry or a specific in-tree attestation)
 // 	- Performance testing.
 
@@ -30,18 +28,19 @@ var attestationGlobs = []string{
 	"**/*.att",
 }
 
-func NewSBOMitTask() Task {
+func NewSBOMitTask(cfg CatalogingFactoryConfig) Task {
 	fn := func(_ context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		locations, err := resolver.FilesByGlob(attestationGlobs...)
 		if err != nil {
 			return err
 		}
 
-		log.Infof("sbomit: found %d attestation(s)", len(locations))
+		log.Debugf("sbomit: found %d attestation(s)", len(locations))
 
-		existingByName := catalogedByName(builder)
+		accessor := builder.(sbomsync.Accessor)
 
 		for _, loc := range locations {
+			log.Debugf("sbomit: parsing attestation %s", loc.RealPath)
 			rdr, err := resolver.FileContentsByLocation(loc)
 			if err != nil {
 				log.WithFields("path", loc.RealPath, "error", err).Warn("sbomit: unable to read attestation")
@@ -61,24 +60,24 @@ func NewSBOMitTask() Task {
 			}
 
 			// Do the simplest cases right now.
-			// A@X, A@X -> Add described by attestation to existing Node.
+			// Current, Attestation -> Action
+			// A@X, A@X -> Add an evident-by attestation edge to every existing Node.
 			// ---, A@X -> Add a new package entry.
-			// A@X, A@Y -> Update in place.
+			// A@X, A@Y -> Add a new package entry, leaving the cataloged one untouched.
+			// A@X, A@? -> TODO
 			for _, p := range result.Packages {
-				existing, found := existingByName[p.Name]
+				existing := findPackages(accessor, p)
+				// Add a new package if no package with this (name, version, type) exists.
+				if len(existing) == 0 {
+					addNewPackage(cfg, resolver, builder, loc, p)
+					log.Debugf("sbomit:   [+] %s @ %s", p.Name, p.Version)
+					continue
+				}
 
-				switch {
-				case !found:
-					addNewPackage(builder, loc, p)
-					log.Infof("sbomit:   [A] %s @ %s", p.Name, p.Version)
-
-				case existing.Version == p.Version:
-					markAgreement(builder, loc, existing)
-					log.Infof("sbomit:   [ ] %s @ %s", p.Name, p.Version)
-
-				default:
-					updatePackage(builder, existing, p)
-					log.Infof("sbomit:   [M] %s @ %s -> %s", p.Name, existing.Version, p.Version)
+				// If (name, version, type) already exists, add agreement relationship to each package node.
+				for _, e := range existing {
+					addAttestationEvidence(builder, loc, e, p)
+					log.Debugf("sbomit:   [~] %s @ %s", e.Name, e.Version)
 				}
 			}
 		}
@@ -89,44 +88,48 @@ func NewSBOMitTask() Task {
 	return NewTask("sbomit", fn)
 }
 
-// Return the already cataloged packages, keyed by name.
-func catalogedByName(builder sbomsync.Builder) map[string]pkg.Package {
-	byName := map[string]pkg.Package{}
-
-	accessor, ok := builder.(sbomsync.Accessor)
-	if !ok {
-		return byName
-	}
+// Return the packages already in the SBOM with the given name, version and type.
+func findPackages(accessor sbomsync.Accessor, resolvedPackage resolve.Package) []pkg.Package {
+	var matches []pkg.Package
 
 	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
-		for _, p := range s.Artifacts.Packages.Sorted() {
-			byName[p.Name] = p
+		for _, p := range s.Artifacts.Packages.PackagesByName(resolvedPackage.Name) {
+			if p.Version == resolvedPackage.Version && p.Type == pkg.TypeFromPURL(resolvedPackage.PURL) {
+				matches = append(matches, p)
+			}
 		}
 	})
 
-	return byName
+	return matches
 }
 
-// Record that the attestation also describes an already cataloged package through a new DescribedByRelationship.
-func markAgreement(builder sbomsync.Builder, loc file.Location, existing pkg.Package) {
+// Record that the attestation is evidence for a package (whether cataloged or added by SBOMit) through an
+// EvidentByRelationship, carrying the attestation's evidence and digests for the package.
+func addAttestationEvidence(builder sbomsync.Builder, loc file.Location, target pkg.Package, attested resolve.Package) {
+	evidenceData := make([]map[string]any, 0, len(attested.Evidence))
+	for _, ev := range attested.Evidence {
+		evidenceData = append(evidenceData, map[string]any{
+			"source":   string(ev.Source),
+			"pkgMgr":   ev.PkgMgr,
+			"location": ev.Location, // File path relative to where the attestation ran.
+			"artifact": ev.Artifact,
+			"digests":  digestData(ev.Digests),
+		})
+	}
+
 	builder.AddRelationships(artifact.Relationship{
-		From: existing,
+		From: target,
 		To:   loc.Coordinates,
-		Type: artifact.DescribedByRelationship,
+		Type: artifact.EvidentByRelationship,
+		Data: map[string]any{
+			"kind":     "in-toto-attestation",
+			"evidence": evidenceData,
+		},
 	})
 }
 
-// Update package info while retaining existing relationships.
-func updatePackage(builder sbomsync.Builder, existing pkg.Package, updated resolve.Package) {
-	next := existing
-	next.Version = updated.Version // Update only the version for now
-
-	builder.DeletePackages(existing.ID())
-	builder.AddPackages(next)
-}
-
 // Add a package described by an attestation.
-func addNewPackage(builder sbomsync.Builder, loc file.Location, p resolve.Package) {
+func addNewPackage(cfg CatalogingFactoryConfig, resolver file.Resolver, builder sbomsync.Builder, loc file.Location, p resolve.Package) {
 	syftPkg := pkg.Package{
 		Name:    p.Name,
 		Version: p.Version,
@@ -140,10 +143,22 @@ func addNewPackage(builder sbomsync.Builder, loc file.Location, p resolve.Packag
 	}
 	syftPkg.SetID()
 
+	// finalize package details (e.g. to add CPEs, license, etc.) just like it's done for regular catalogers' packages.
+	pkgs, relationships := finalizePkgCatalogerResults(cfg, resolver, "sbomit", []pkg.Package{syftPkg}, nil)
+	syftPkg = pkgs[0]
 	builder.AddPackages(syftPkg)
-	builder.AddRelationships(artifact.Relationship{
-		From: syftPkg,
-		To:   loc.Coordinates,
-		Type: artifact.DescribedByRelationship,
-	})
+	builder.AddRelationships(relationships...)
+
+	addAttestationEvidence(builder, loc, syftPkg, p)
+}
+
+func digestData(digests []resolve.Digest) []map[string]string {
+	result := make([]map[string]string, 0, len(digests))
+	for _, d := range digests {
+		result = append(result, map[string]string{
+			"algorithm": d.Algorithm,
+			"value":     d.Value,
+		})
+	}
+	return result
 }

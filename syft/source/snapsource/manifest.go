@@ -47,7 +47,7 @@ func parseManifest(resolver file.Resolver) (*snapManifest, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to read snap manifest file: %w", err)
 	}
-	defer internal.CloseAndLogError(reader, manifestFile.RealPath)
+	defer internal.CloseAndLogError(reader, manifestFile.FullNestedPath())
 
 	var manifest snapManifest
 	if err := yaml.NewDecoder(reader).Decode(&manifest); err != nil {

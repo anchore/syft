@@ -43,6 +43,7 @@ type Catalog struct {
 	Relationships relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
 	Compliance    complianceConfig    `yaml:"compliance" json:"compliance" mapstructure:"compliance"`
 	Enrich        []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
+	SBOMit        sbomitConfig        `yaml:"sbomit" json:"sbomit" mapstructure:"sbomit"`
 
 	// ecosystem-specific cataloger configuration
 	Cpp         cppConfig         `yaml:"cpp" json:"cpp" mapstructure:"cpp"`
@@ -91,6 +92,7 @@ func DefaultCatalog() Catalog {
 		Unknowns:      defaultUnknowns(),
 		Source:        defaultSourceConfig(),
 		Parallelism:   cfg.Parallelism,
+		SBOMit:        defaultSBOMit(),
 	}
 }
 
@@ -102,9 +104,11 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithComplianceConfig(cfg.ToComplianceConfig()).
 		WithUnknownsConfig(cfg.ToUnknownsConfig()).
 		WithSearchConfig(cfg.ToSearchConfig()).
+		WithArchiveConfig(cfg.ToArchiveConfig()).
 		WithPackagesConfig(cfg.ToPackagesConfig()).
 		WithLicenseConfig(cfg.ToLicenseConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
+		WithSBOMit(cfg.SBOMit.Enable).
 		WithCatalogerSelection(
 			cataloging.NewSelectionRequest().
 				WithDefaults(cfg.DefaultCatalogers...).
@@ -116,6 +120,15 @@ func (cfg Catalog) ToSearchConfig() cataloging.SearchConfig {
 	return cataloging.SearchConfig{
 		Scope: source.ParseScope(cfg.Scope),
 	}
+}
+
+func (cfg Catalog) ToArchiveConfig() cataloging.ArchiveSearchConfig {
+	return cataloging.DefaultArchiveSearchConfig().
+		WithIncludeIndexedArchives(cfg.Package.SearchIndexedArchives).
+		WithIncludeUnindexedArchives(cfg.Package.SearchUnindexedArchives).
+		WithMaxDepth(cfg.Package.NestedArchiveMaxDepth).
+		WithMaxMemoryBytes(cfg.Package.NestedArchiveMaxMemoryBytes).
+		WithMaxDiskBytes(cfg.Package.NestedArchiveMaxDiskBytes)
 }
 
 func (cfg Catalog) ToRelationshipsConfig() cataloging.RelationshipsConfig {
@@ -136,6 +149,7 @@ func (cfg Catalog) ToComplianceConfig() cataloging.ComplianceConfig {
 
 func (cfg Catalog) ToUnknownsConfig() cataloging.UnknownsConfig {
 	return cataloging.UnknownsConfig{
+		RemoveWhenPackagesDefined:         cfg.Unknowns.RemoveWhenPackagesDefined,
 		IncludeExecutablesWithoutPackages: cfg.Unknowns.ExecutablesWithoutPackages,
 		IncludeUnexpandedArchives:         cfg.Unknowns.UnexpandedArchives,
 	}
@@ -169,10 +183,6 @@ func (cfg Catalog) ToLicenseConfig() cataloging.LicenseConfig {
 }
 
 func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
-	archiveSearch := cataloging.ArchiveSearchConfig{
-		IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,
-		IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
-	}
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
 		Cpp: cpp.DefaultCatalogerConfig().
@@ -219,7 +229,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
 			WithUseNetwork(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Java, task.Maven), cfg.Java.UseNetwork)).
 			WithMavenBaseURL(cfg.Java.MavenURL).
-			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth).
+			WithMaxParentRecursiveDepth(cfg.Java.MaxParentRecursiveDepth).
 			WithResolveTransitiveDependencies(cfg.Java.ResolveTransitiveDependencies),
 	}
 }
