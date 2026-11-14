@@ -152,6 +152,24 @@ func Test_packageURL(t *testing.T) {
 			},
 			expect: "pkg:maven/org.apache.groovy/groovy@4.0.33",
 		},
+		{
+			name: "asm 9 without pom metadata",
+			pkg: pkg.Package{
+				Name:     "asm-commons",
+				Version:  "9.11.1",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
+					VirtualPath: "asm-commons-9.11.1.jar",
+					Manifest: &pkg.JavaManifest{
+						Main: []pkg.KeyValue{
+							{Key: "Bundle-SymbolicName", Value: "org.objectweb.asm.commons"},
+						},
+					},
+				},
+			},
+			expect: "pkg:maven/org.ow2.asm/asm-commons@9.11.1",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.expect, func(t *testing.T) {
