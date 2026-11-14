@@ -598,6 +598,19 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 		},
 		{
+			name: "go genproto submodule keeps sub-path in product",
+			p: pkg.Package{
+				Name:     "google.golang.org/genproto/googleapis/api",
+				Version:  "0.0.0-20240318140521-94a12d6c2237",
+				FoundBy:  "go-cataloger",
+				Language: pkg.Go,
+				Type:     pkg.GoModulePkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:google:genproto\\/googleapis\\/api:0.0.0-20240318140521-94a12d6c2237:*:*:*:*:*:*:*",
+			},
+		},
+		{
 			name: "generate no CPEs for indeterminate golang package name",
 			p: pkg.Package{
 				Name:     "github.com/what",
