@@ -1,6 +1,7 @@
 package model
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/sourcemetadata"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -197,5 +199,79 @@ func Test_toGithubModel(t *testing.T) {
 			// track each scheme tested (passed or not)
 			tracker.Tested(t, s.Source.Metadata)
 		})
+	}
+}
+
+func dependencyGraphFixture(t *testing.T) sbom.SBOM {
+	t.Helper()
+
+	newPkg := func(name, version string) pkg.Package {
+		p := pkg.Package{
+			Name:    name,
+			Version: version,
+			Locations: file.NewLocationSet(
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/app",
+					FileSystemID: "fsid-1",
+				}),
+			),
+		}
+		p.PURL = packageurl.NewPackageURL("generic", "", name, version, nil, "").ToString()
+		p.SetID()
+		return p
+	}
+
+	pkgs := map[string]pkg.Package{
+		"app":        newPkg("app", "1.0.0"),
+		"lib":        newPkg("lib", "2.0.0"),
+		"alib":       newPkg("alib", "3.0.0"),
+		"transitive": newPkg("transitive", "4.0.0"),
+		"owner":      newPkg("owner", "5.0.0"),
+	}
+
+	s := sbom.SBOM{
+		Descriptor: sbom.Descriptor{Name: "syft"},
+		Source: source.Description{
+			Metadata: source.ImageMetadata{UserInput: "ubuntu:18.04"},
+		},
+		Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()},
+		Relationships: []artifact.Relationship{
+			// "lib" and "alib" are dependencies of "app", so they are on the From side
+			{From: pkgs["lib"], To: pkgs["app"], Type: artifact.DependencyOfRelationship},
+			{From: pkgs["alib"], To: pkgs["app"], Type: artifact.DependencyOfRelationship},
+			{From: pkgs["transitive"], To: pkgs["lib"], Type: artifact.DependencyOfRelationship},
+			{From: pkgs["transitive"], To: pkgs["alib"], Type: artifact.DependencyOfRelationship},
+			// file ownership is not a dependency claim and should not show up as one
+			{From: pkgs["owner"], To: pkgs["app"], Type: artifact.OwnershipByFileOverlapRelationship},
+		},
+	}
+	for _, p := range pkgs {
+		s.Artifacts.Packages.Add(p)
+	}
+
+	return s
+}
+
+func Test_toGithubModel_dependencies(t *testing.T) {
+	s := dependencyGraphFixture(t)
+
+	resolved := ToGithubModel(&s).Manifests["ubuntu:18.04:/app"].Resolved
+
+	assert.Equal(t, []string{"pkg:generic/alib@3.0.0", "pkg:generic/lib@2.0.0"}, resolved["pkg:generic/app@1.0.0"].Dependencies)
+	assert.Equal(t, []string{"pkg:generic/transitive@4.0.0"}, resolved["pkg:generic/lib@2.0.0"].Dependencies)
+	assert.Equal(t, []string{"pkg:generic/transitive@4.0.0"}, resolved["pkg:generic/alib@3.0.0"].Dependencies)
+	assert.Empty(t, resolved["pkg:generic/transitive@4.0.0"].Dependencies)
+	assert.Empty(t, resolved["pkg:generic/owner@5.0.0"].Dependencies)
+}
+
+func Test_toGithubModel_dependenciesAreOrderIndependent(t *testing.T) {
+	s := dependencyGraphFixture(t)
+	forward := ToGithubModel(&s)
+
+	slices.Reverse(s.Relationships)
+	reversed := ToGithubModel(&s)
+
+	if d := cmp.Diff(forward.Manifests, reversed.Manifests); d != "" {
+		t.Errorf("manifests changed with relationship order (-forward +reversed):\n%s", d)
 	}
 }
