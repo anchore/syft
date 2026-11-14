@@ -130,32 +130,15 @@ func Test_decodeEvidenceLocations(t *testing.T) {
 			},
 		},
 		{
-			name: "the layer and the full path of an occurrence come from its additional context",
-			evidence: &cyclonedx.Evidence{Occurrences: &[]cyclonedx.EvidenceOccurrence{
-				{Location: "/usr/bin/example", AdditionalContext: "layerID: sha256:layer-1"},
-				{Location: "/usr/bin/example", AdditionalContext: "layerID: sha256:layer-2"},
-				{Location: "/usr/bin/example", AdditionalContext: "layerID: sha256:layer-2"},
-				{Location: "/app.war", AdditionalContext: "fullPath: /app.war!/WEB-INF/lib/dep.jar"},
-				{Location: "/app.war", AdditionalContext: "layerID: sha256:layer-1; fullPath: /app.war!/WEB-INF/lib/other.jar"},
-			}},
-			want: []file.Location{
-				file.NewLocationFromCoordinates(file.NewCoordinates("/usr/bin/example", "sha256:layer-1")),
-				file.NewLocationFromCoordinates(file.NewCoordinates("/usr/bin/example", "sha256:layer-2")),
-				file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/dep.jar"}),
-				file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/app.war", FileSystemID: "sha256:layer-1", FullPath: "/app.war!/WEB-INF/lib/other.jar"}),
-			},
-		},
-		{
-			// other tools use the additional context for things like code snippets, and a full path has to be
-			// within the location it is the full path of
-			name: "additional context that does not describe the location is ignored",
+			// other tools use the additional context for things like code snippets; only the location is read
+			name: "the additional context of an occurrence is ignored",
 			evidence: &cyclonedx.Evidence{Occurrences: &[]cyclonedx.EvidenceOccurrence{
 				{Location: "src/index.js", AdditionalContext: "const _ = require('lodash')"},
-				{Location: "/app.war", AdditionalContext: "fullPath: /etc/passwd"},
+				{Location: "/usr/bin/example", AdditionalContext: "layerID: sha256:layer-1"},
 			}},
 			want: []file.Location{
 				file.NewLocation("/src/index.js"),
-				file.NewLocation("/app.war"),
+				file.NewLocation("/usr/bin/example"),
 			},
 		},
 		{
@@ -241,4 +224,20 @@ func evidenceWithOccurrences(locations ...string) *cyclonedx.Evidence {
 		occurrences[i] = cyclonedx.EvidenceOccurrence{Location: location}
 	}
 	return &cyclonedx.Evidence{Occurrences: &occurrences}
+}
+
+// when a document states a path in syft:location properties, an evidence occurrence for the same path is not decoded
+// as a second location: the properties win
+func Test_decodeLocations_propertiesWinOverOccurrenceForSamePath(t *testing.T) {
+	properties := map[string]string{
+		"syft:location:0:path":    "/usr/bin/example",
+		"syft:location:0:layerID": "sha256:layer-1",
+	}
+	evidence := &cyclonedx.Evidence{Occurrences: &[]cyclonedx.EvidenceOccurrence{
+		{Location: "/usr/bin/example", AdditionalContext: "layerID: sha256:layer-2"},
+	}}
+
+	locations := decodeLocations(properties, evidence)
+	got := locations.CoordinateSet().ToSlice()
+	assert.Equal(t, []file.Coordinates{file.NewCoordinates("/usr/bin/example", "sha256:layer-1")}, got)
 }

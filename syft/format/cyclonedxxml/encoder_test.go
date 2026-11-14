@@ -124,10 +124,25 @@ func TestCycloneDxLocations_SpecVersions(t *testing.T) {
 			assert.Equal(t, tt.wantOccurrences, strings.Contains(buf.String(), "<occurrences>"))
 			assert.Equal(t, tt.wantOccurrences, strings.Contains(buf.String(), "<evidence>"))
 
-			// the additional context of an occurrence would be written as an attribute the schema does not allow,
-			// so an XML document of any spec version states the layer in the syft:location properties
+			// the layer is stated in the syft:location properties at every spec version, not in the additional
+			// context of an occurrence, which would be written as an attribute the schema does not allow
 			assert.NotContains(t, buf.String(), "additionalContext")
 			assert.Contains(t, buf.String(), `"syft:location:`)
+		})
+	}
+}
+
+// every 1.5+ XML document has evidence occurrences, one per distinct path: /usr/bin/example is found in two layers
+// but is one occurrence, since the layer is stated in the syft:location properties
+func TestCycloneDxLocations_OneOccurrencePerPath(t *testing.T) {
+	s, _ := testutil.LocationsInput(t)
+	for _, version := range []string{"1.5", "1.6", "1.7"} {
+		t.Run(version, func(t *testing.T) {
+			enc, err := NewFormatEncoderWithConfig(EncoderConfig{Version: version})
+			require.NoError(t, err)
+			var out bytes.Buffer
+			require.NoError(t, enc.Encode(&out, s))
+			assert.Equal(t, 1, strings.Count(out.String(), "<location>/usr/bin/example</location>"))
 		})
 	}
 }
