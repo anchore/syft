@@ -11,18 +11,18 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/adrg/xdg v0.5.3
-	github.com/anchore/bubbly v0.2.2
-	github.com/anchore/clio v0.1.2
-	github.com/anchore/fangs v0.1.1
-	github.com/anchore/go-collections v0.1.1
-	github.com/anchore/go-homedir v0.1.1
-	github.com/anchore/go-logger v0.2.0
-	github.com/anchore/go-macholibre v0.1.1
-	github.com/anchore/go-rpmdb v0.2.2
-	github.com/anchore/go-sync v0.1.2
+	github.com/anchore/bubbly v0.2.3-0.20261113055450-18aef2fd8c88
+	github.com/anchore/clio v0.1.3-0.20261113204513-18da1f4a030e
+	github.com/anchore/fangs v0.1.2-0.20261113223454-d8ff0432a380
+	github.com/anchore/go-collections v0.1.2-0.20261113083500-ba4aad2faeb9
+	github.com/anchore/go-homedir v0.1.2-0.20261113170613-7dbc6b942b2d
+	github.com/anchore/go-logger v0.2.1-0.20261113155452-d9a9975e4c8d
+	github.com/anchore/go-macholibre v0.1.2-0.20261113232453-590aa9dafa3a
+	github.com/anchore/go-rpmdb v0.2.3-0.20261109005757-22483d422fb5
+	github.com/anchore/go-sync v0.1.3-0.20261113235518-efdcdeacccef
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
-	github.com/anchore/packageurl-go v0.2.0
-	github.com/anchore/stereoscope v0.4.1
+	github.com/anchore/packageurl-go v0.2.1-0.20261113033656-eaa3d8472743
+	github.com/anchore/stereoscope v0.4.2-0.20261113205631-61e46aa6b120
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	github.com/aquasecurity/go-pep440-version v0.0.1
 	github.com/bitnami/go-version v0.0.0-20250131085805-b1f57a8634ef
@@ -127,7 +127,7 @@ require (
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
-	github.com/anchore/go-lzo v0.1.1 // indirect
+	github.com/anchore/go-lzo v0.1.2-0.20261113041526-80bc12f55e8c // indirect
 	github.com/anchore/go-struct-converter v0.2.0-rc2 // indirect
 	github.com/andybalholm/brotli v1.2.8 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
@@ -186,7 +186,7 @@ require (
 	github.com/containers/ocicrypt v1.3.2 // indirect
 	github.com/cyberphone/json-canonicalization v0.0.0-20241213102144-19d51d7fe467 // indirect
 	github.com/cyphar/filepath-securejoin v0.7.0 // indirect
-	github.com/docker/cli v29.9.2+incompatible // indirect
+	github.com/docker/cli v29.9.3+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.10 // indirect
 	github.com/docker/go-connections v0.8.2 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -291,7 +291,7 @@ require (
 	github.com/sorairolake/lzip-go v0.3.8 // indirect
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
-	github.com/spf13/pflag v1.0.10 // indirect
+	github.com/spf13/pflag v1.1.0 // indirect
 	github.com/spf13/viper v1.21.0 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.8.1 // indirect
 	github.com/stefanberger/go-pkcs11uri v0.0.0-20230803200340-78284954bff6 // indirect
@@ -331,7 +331,7 @@ require (
 	go4.org v0.0.0-20230225012048-214862532bf5 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
-	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/term v0.47.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
