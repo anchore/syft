@@ -992,6 +992,41 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			}},
 		},
 		{
+			name: "parse a mod with hyphenated go experiments",
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: "go1.26.1-X:nodwarf5",
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+					},
+				},
+				cryptoSettings: nil,
+				arch:           archDetails,
+			},
+			expected: []pkg.Package{{
+				Name:     "github.com/anchore/syft",
+				Language: pkg.Go,
+				Type:     pkg.GoModulePkg,
+				Version:  "", // this was (devel) but we cleared it explicitly
+				PURL:     "pkg:golang/github.com/anchore/syft",
+				Locations: file.NewLocationSet(
+					file.NewLocationFromCoordinates(
+						file.NewCoordinates("/a-path", "layer-id"),
+					).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				),
+				Metadata: pkg.GolangBinaryBuildinfoEntry{
+					GoCompiledVersion: "go1.26.1",
+					Architecture:      archDetails,
+					BuildSettings:     defaultBuildSettings,
+					MainModule:        "github.com/anchore/syft",
+					GoExperiments:     []string{"nodwarf5"},
+				},
+			}},
+		},
+		{
 			name: "parse a mod from path (partial build of package)",
 			mod: &extendedBuildInfo{
 				BuildInfo: &debug.BuildInfo{
@@ -1598,4 +1633,27 @@ func Test_stdlibSymbolsFor_isolation(t *testing.T) {
 	got["net/url"] = []string{"Parse"}
 
 	assert.Equal(t, map[string][]string{"net/http": {"Get"}}, c.stdlibSymbolsFor(coord), "internal state must be unaffected by caller mutation")
+}
+
+func Test_getExperimentsFromVersion(t *testing.T) {
+	tests := []struct {
+		version         string
+		wantVersion     string
+		wantExperiments []string
+	}{
+		{version: "go1.26.1", wantVersion: "go1.26.1"},
+		{version: "go1.26.1-X:nodwarf5", wantVersion: "go1.26.1", wantExperiments: []string{"nodwarf5"}},
+		{version: "go1.26.1-X:boringcrypto,nodwarf5", wantVersion: "go1.26.1", wantExperiments: []string{"boringcrypto", "nodwarf5"}},
+		{version: "go1.26rc1-X:loopvar", wantVersion: "go1.26rc1", wantExperiments: []string{"loopvar"}},
+		{version: "go1.22.2 X:nocoverageredesign,noallocheaders", wantVersion: "go1.22.2", wantExperiments: []string{"nocoverageredesign", "noallocheaders"}},
+		{version: "go1.22.2 something X:arenas", wantVersion: "go1.22.2", wantExperiments: []string{"arenas"}},
+		{version: "go1.22.2 something", wantVersion: "go1.22.2"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.version, func(t *testing.T) {
+			gotVersion, gotExperiments := getExperimentsFromVersion(tt.version)
+			assert.Equal(t, tt.wantVersion, gotVersion)
+			assert.Equal(t, tt.wantExperiments, gotExperiments)
+		})
+	}
 }

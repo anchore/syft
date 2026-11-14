@@ -454,14 +454,19 @@ func getBuildSettings(settings []debug.BuildSetting) pkg.KeyValues {
 func getExperimentsFromVersion(version string) (string, []string) {
 	// See: https://github.com/anchore/grype/issues/1851
 	var experiments []string
-	version, rest, ok := strings.Cut(version, " ")
-	if ok {
-		// Assume they may add more non-version chunks in the future, so only look for "X:".
-		for chunk := range strings.SplitSeq(rest, " ") {
-			if strings.HasPrefix(rest, "X:") {
-				csv := strings.TrimPrefix(chunk, "X:")
-				experiments = append(experiments, strings.Split(csv, ",")...)
-			}
+	version, rest, _ := strings.Cut(version, " ")
+
+	// Go 1.23 and later append the experiments with a hyphen instead of a
+	// space, e.g. "go1.26.1-X:nodwarf5" (older toolchains: "go1.22.2 X:...").
+	if v, exp, found := strings.Cut(version, "-X:"); found {
+		version = v
+		rest = strings.TrimSpace("X:" + exp + " " + rest)
+	}
+
+	// Assume they may add more non-version chunks in the future, so only look for "X:".
+	for chunk := range strings.FieldsSeq(rest) {
+		if csv, ok := strings.CutPrefix(chunk, "X:"); ok {
+			experiments = append(experiments, strings.Split(csv, ",")...)
 		}
 	}
 
