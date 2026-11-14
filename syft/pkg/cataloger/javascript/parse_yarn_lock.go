@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/goccy/go-yaml"
@@ -121,8 +123,8 @@ func readPackageJSONDeps(resolver file.Resolver, lockfileLocation file.Location)
 }
 
 // findReachable returns all package names reachable from the given roots via BFS
-// through the dependency graph.
-func findReachable(roots map[string]string, pkgByName map[string]yarnPackage) map[string]bool {
+// through the dependency graph, following the dependencies of every entry with a given name.
+func findReachable(roots map[string]string, pkgsByName map[string][]yarnPackage) map[string]bool {
 	visited := make(map[string]bool)
 	queue := make([]string, 0, len(roots))
 
@@ -139,8 +141,8 @@ func findReachable(roots map[string]string, pkgByName map[string]yarnPackage) ma
 		}
 		visited[name] = true
 
-		if pkg, exists := pkgByName[name]; exists {
-			for depName := range pkg.Dependencies {
+		for _, p := range pkgsByName[name] {
+			for depName := range p.Dependencies {
 				if !visited[depName] {
 					queue = append(queue, depName)
 				}
@@ -152,13 +154,15 @@ func findReachable(roots map[string]string, pkgByName map[string]yarnPackage) ma
 }
 
 func findDevOnlyPkgs(yarnPkgs []yarnPackage, prodDeps, devDeps map[string]string) map[string]bool {
-	pkgByName := make(map[string]yarnPackage)
+	// a name can have several entries (one per resolved version), so keep them all rather than
+	// letting whichever comes last hide the dependencies of the others
+	pkgsByName := make(map[string][]yarnPackage)
 	for _, p := range yarnPkgs {
-		pkgByName[p.Name] = p
+		pkgsByName[p.Name] = append(pkgsByName[p.Name], p)
 	}
 
-	prodTransitive := findReachable(prodDeps, pkgByName)
-	devTransitive := findReachable(devDeps, pkgByName)
+	prodTransitive := findReachable(prodDeps, pkgsByName)
+	devTransitive := findReachable(devDeps, pkgsByName)
 
 	devOnly := make(map[string]bool)
 	for name := range devTransitive {
@@ -266,7 +270,10 @@ func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
 	var seenPkgs = strset.New()
 
 	pkgs := []yarnPackage{}
-	for key, value := range lockfile {
+	// iterate in key order so that the entry kept for a duplicate name@version (e.g. a patch: entry
+	// alongside the npm entry it patches) and the order of the result are stable
+	for _, key := range slices.Sorted(maps.Keys(lockfile)) {
+		value := lockfile[key]
 		packageName := findPackageName(key)
 		if packageName == "" {
 			log.WithFields("key", key).Error("unable to parse yarn v2 package key")
