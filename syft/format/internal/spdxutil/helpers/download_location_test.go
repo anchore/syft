@@ -650,6 +650,60 @@ func Test_DownloadLocation(t *testing.T) {
 			},
 			expected: "https://github.com/anchore/syft",
 		},
+		{
+			name: "go binary module resolves to the go proxy zip",
+			input: pkg.Package{
+				Name:     "github.com/spf13/cobra",
+				Version:  "v1.8.1",
+				Metadata: pkg.GolangBinaryBuildinfoEntry{},
+			},
+			expected: "https://proxy.golang.org/github.com/spf13/cobra/@v/v1.8.1.zip",
+		},
+		{
+			name: "go module path with uppercase is proxy-escaped",
+			input: pkg.Package{
+				Name:     "github.com/BurntSushi/toml",
+				Version:  "v1.4.0",
+				Metadata: pkg.GolangBinaryBuildinfoEntry{},
+			},
+			expected: "https://proxy.golang.org/github.com/!burnt!sushi/toml/@v/v1.4.0.zip",
+		},
+		{
+			name: "go module entry resolves to the go proxy zip",
+			input: pkg.Package{
+				Name:     "golang.org/x/text",
+				Version:  "v0.14.0",
+				Metadata: pkg.GolangModuleEntry{},
+			},
+			expected: "https://proxy.golang.org/golang.org/x/text/@v/v0.14.0.zip",
+		},
+		{
+			name: "go source entry resolves to the go proxy zip",
+			input: pkg.Package{
+				Name:     "github.com/foo/bar",
+				Version:  "v0.1.0",
+				Metadata: pkg.GolangSourceEntry{},
+			},
+			expected: "https://proxy.golang.org/github.com/foo/bar/@v/v0.1.0.zip",
+		},
+		{
+			name: "go standard library has no download location",
+			input: pkg.Package{
+				Name:     "stdlib",
+				Version:  "go1.22.0",
+				Metadata: pkg.GolangBinaryBuildinfoEntry{},
+			},
+			expected: NOASSERTION,
+		},
+		{
+			name: "go main module built locally has no module version",
+			input: pkg.Package{
+				Name:     "github.com/anchore/syft",
+				Version:  "(devel)",
+				Metadata: pkg.GolangBinaryBuildinfoEntry{},
+			},
+			expected: NOASSERTION,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
