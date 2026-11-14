@@ -1,0 +1,7 @@
+{
+  "name": "test-monorepo-root",
+  "version": "1.0.0",
+  "devDependencies": {
+    "prod-pkg": "^1.0.0"
+  }
+}
