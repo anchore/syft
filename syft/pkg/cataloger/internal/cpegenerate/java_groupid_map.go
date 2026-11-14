@@ -1936,9 +1936,17 @@ type groupIDMigration struct {
 // groovy moved from org.codehaus.groovy to org.apache.groovy at 4.0
 var groovyMigration = groupIDMigration{before: "org.codehaus.groovy", after: "org.apache.groovy", atMajor: 4}
 
+// hibernate-commons-annotations moved from org.hibernate to org.hibernate.common at 4.0. Jars in these releases
+// ship no META-INF/maven pom metadata, so without this entry the group ID falls back to a manifest guess
+// (Implementation-Vendor-Id: org.hibernate), producing purls with the wrong namespace.
+// See https://github.com/anchore/syft/issues/5522
+var hibernateCommonsAnnotationsMigration = groupIDMigration{before: "org.hibernate", after: "org.hibernate.common", atMajor: 4}
+
 // migratedArtifactIDToGroupID holds artifacts whose group ID depends on the version. It takes precedence over
 // defaultArtifactIDToGroupID; use ArtifactIDToGroupID rather than reading it directly.
 var migratedArtifactIDToGroupID = map[string]groupIDMigration{
+	"hibernate-commons-annotations": hibernateCommonsAnnotationsMigration,
+
 	// groovy artifacts published under both coordinates. Without these, jars that ship no pom metadata get a
 	// stale codehaus group or one guessed from the per-module Automatic-Module-Name (e.g. org.apache.groovy.json).
 	// See https://github.com/anchore/syft/issues/5311
