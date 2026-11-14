@@ -1,5 +1,11 @@
 # Cataloger capabilities. See ../README.md for documentation.
 
+configs: # AUTO-GENERATED - config structs and their fields
+  rust.CatalogerConfig:
+    fields:
+      - key: IncludeDevDependencies
+        description: IncludeDevDependencies includes dependencies used only for tests, examples, and benchmarks.
+        app_key: rust.include-dev-dependencies
 catalogers:
   - ecosystem: rust # MANUAL
     name: cargo-auditable-binary-cataloger # AUTO-GENERATED
@@ -57,7 +63,8 @@ catalogers:
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
       file: syft/pkg/cataloger/rust/cataloger.go
-      function: NewCargoLockCataloger
+      function: NewConfiguredCargoLockCataloger
+    config: rust.CatalogerConfig # AUTO-GENERATED
     selectors: # AUTO-GENERATED
       - cargo
       - declared
