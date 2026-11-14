@@ -25,9 +25,9 @@ func parseConanfile(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	for {
 		line, err := r.ReadString('\n')
 		switch {
-		case errors.Is(err, io.EOF):
+		case errors.Is(err, io.EOF) && line == "":
 			return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
-		case err != nil:
+		case err != nil && !errors.Is(err, io.EOF):
 			return nil, nil, fmt.Errorf("failed to parse conanfile.txt file: %w", err)
 		}
 
