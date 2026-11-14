@@ -103,7 +103,10 @@ require (
 	modernc.org/sqlite v1.61.1
 )
 
-require github.com/github/go-spdx/v2 v2.8.0
+require (
+	github.com/github/go-spdx/v2 v2.8.0
+	github.com/sbomit/sbomit v0.3.0
+)
 
 require (
 	cel.dev/expr v0.25.2 // indirect

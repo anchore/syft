@@ -31,6 +31,7 @@ type CreateSBOMConfig struct {
 	Archive            cataloging.ArchiveSearchConfig
 	Parallelism        int
 	CatalogerSelection cataloging.SelectionRequest
+	SBOMit             bool
 
 	// audit what tool is being used to generate the SBOM
 	ToolName          string
@@ -146,6 +147,12 @@ func (c *CreateSBOMConfig) WithFilesConfig(cfg filecataloging.Config) *CreateSBO
 	return c
 }
 
+// WithSBOMit allows for enabling enrichment of the SBOM from in-toto/witness attestations.
+func (c *CreateSBOMConfig) WithSBOMit(enabled bool) *CreateSBOMConfig {
+	c.SBOMit = enabled
+	return c
+}
+
 // WithArchiveConfig sets how archives are cataloged: how deep to recurse into nested archives (MaxDepth
 // 0, the default, does not recurse) and how much extracted content the scan may hold at once.
 func (c *CreateSBOMConfig) WithArchiveConfig(cfg cataloging.ArchiveSearchConfig) *CreateSBOMConfig {
@@ -224,14 +231,28 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description, exclusions []s
 	case c.Files.Selection == file.FilesOwnedByPackageSelection && archiveTask != nil:
 		// the archive task describes archives at the root too (java leaves them to it), so the root file
 		// catalogers must run after it to see those packages
-		taskGroups = append(taskGroups, pkgTasks, []task.Task{archiveTask}, fileTasks)
+		taskGroups = append(taskGroups, pkgTasks, []task.Task{archiveTask})
 	case c.Files.Selection == file.FilesOwnedByPackageSelection:
 		// special case: we need the package info when we are cataloging files owned by packages
-		taskGroups = append(taskGroups, pkgTasks, fileTasks)
+		taskGroups = append(taskGroups, pkgTasks)
 	case archiveTask != nil:
 		taskGroups = append(taskGroups, append(pkgTasks, fileTasks...), []task.Task{archiveTask})
 	default:
 		taskGroups = append(taskGroups, append(pkgTasks, fileTasks...))
+	}
+
+	// SBOMit Task should run after all packages have been cataloged, and before file tasks and relationship tasks.
+	// This ensures that any files or packages added by the SBOMit task get proper package metadata and hashes.
+	if c.SBOMit {
+		taskGroups = append(taskGroups, []task.Task{task.NewSBOMitTask(task.CatalogingFactoryConfig{
+			RelationshipsConfig:  c.Relationships,
+			DataGenerationConfig: c.DataGeneration,
+			LicenseConfig:        c.Licenses,
+		})})
+	}
+
+	if c.Files.Selection == file.FilesOwnedByPackageSelection {
+		taskGroups = append(taskGroups, fileTasks)
 	}
 
 	// all scope work must be done after all nodes (files and packages) have been cataloged and before the relationship
