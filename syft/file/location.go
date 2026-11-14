@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"maps"
 
 	"github.com/hashicorp/go-multierror"
 
@@ -49,18 +50,28 @@ type LocationMetadata struct {
 	Annotations map[string]string `json:"annotations,omitempty"` // Arbitrary key-value pairs that can be used to annotate a location
 }
 
+// merge never writes to m.Annotations in place: copies of a Location share that map, and catalogers
+// hand the same location to packages parsed concurrently.
 func (m *LocationMetadata) merge(other LocationMetadata) error {
+	if len(other.Annotations) == 0 {
+		return nil
+	}
+	merged := maps.Clone(m.Annotations)
+	if merged == nil {
+		merged = make(map[string]string, len(other.Annotations))
+	}
 	var errs error
 	for k, v := range other.Annotations {
-		if otherV, ok := m.Annotations[k]; ok {
+		if otherV, ok := merged[k]; ok {
 			if v != otherV {
 				err := fmt.Errorf("unable to merge location metadata: conflicting values for key=%q: %q != %q", k, v, otherV)
 				errs = multierror.Append(errs, err)
 				continue
 			}
 		}
-		m.Annotations[k] = v
+		merged[k] = v
 	}
+	m.Annotations = merged
 	return errs
 }
 
