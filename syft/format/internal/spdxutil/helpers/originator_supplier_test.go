@@ -100,6 +100,26 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Person: auth",
 		},
 		{
+			name: "from apk -- hyphenated maintainer email domain",
+			input: pkg.Package{
+				Metadata: pkg.ApkDBEntry{
+					Maintainer: "Sören Tempel <soeren+alpine@soeren-tempel.net>",
+				},
+			},
+			originator: "Person: Sören Tempel (soeren+alpine@soeren-tempel.net)",
+			supplier:   "Person: Sören Tempel (soeren+alpine@soeren-tempel.net)",
+		},
+		{
+			name: "from apk -- unusable maintainer email keeps the name",
+			input: pkg.Package{
+				Metadata: pkg.ApkDBEntry{
+					Maintainer: "Sören Tempel <soeren+alpine@soeren-tempel .net>",
+				},
+			},
+			originator: "Person: Sören Tempel",
+			supplier:   "Person: Sören Tempel",
+		},
+		{
 			name: "from alpm",
 			input: pkg.Package{
 				Metadata: pkg.AlpmDBEntry{
@@ -414,6 +434,36 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Organization: auth",
 		},
 		{
+			name: "from rpm DB -- vendor with a url in angle brackets",
+			input: pkg.Package{
+				Metadata: pkg.RpmDBEntry{
+					Vendor: "SUSE LLC <https://www.suse.com/>",
+				},
+			},
+			originator: "Organization: SUSE LLC",
+			supplier:   "Organization: SUSE LLC",
+		},
+		{
+			name: "from dpkg DB -- multi-label maintainer email domain",
+			input: pkg.Package{
+				Metadata: pkg.DpkgDBEntry{
+					Maintainer: "Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>",
+				},
+			},
+			originator: "Person: Ubuntu Developers (ubuntu-devel-discuss@lists.ubuntu.com)",
+			supplier:   "Person: Ubuntu Developers (ubuntu-devel-discuss@lists.ubuntu.com)",
+		},
+		{
+			name: "from alpm -- parenthetical in the packager name",
+			input: pkg.Package{
+				Metadata: pkg.AlpmDBEntry{
+					Packager: "Jan Alexander Steffens (heftig) <heftig@archlinux.org>",
+				},
+			},
+			originator: "",
+			supplier:   "Person: Jan Alexander Steffens (heftig) (heftig@archlinux.org)",
+		},
+		{
 			name: "from wordpress plugin",
 			input: pkg.Package{
 				Metadata: pkg.WordpressPluginEntry{
@@ -522,6 +572,79 @@ func Test_parseNameEmailUrl(t *testing.T) {
 			input:     "my name (i@izs.me)",
 			wantName:  "my name",
 			wantEmail: "i@izs.me",
+		},
+		{
+			name:      "hyphenated email domain",
+			input:     "Sören Tempel <soeren+alpine@soeren-tempel.net>",
+			wantName:  "Sören Tempel",
+			wantEmail: "soeren+alpine@soeren-tempel.net",
+		},
+		{
+			name:      "multi-label email domain",
+			input:     "Jane Doe <jane@mail.example.org>",
+			wantName:  "Jane Doe",
+			wantEmail: "jane@mail.example.org",
+		},
+		{
+			name:      "second-level TLD email domain",
+			input:     "Jane Doe <jane@example.co.uk>",
+			wantName:  "Jane Doe",
+			wantEmail: "jane@example.co.uk",
+		},
+		{
+			name:      "two-label email domain",
+			input:     "Natanael Copa <ncopa@alpinelinux.org>",
+			wantName:  "Natanael Copa",
+			wantEmail: "ncopa@alpinelinux.org",
+		},
+		{
+			name:      "single-label email domain",
+			input:     "Natanael Copa <ncopa@localhost>",
+			wantName:  "Natanael Copa",
+			wantEmail: "ncopa@localhost",
+		},
+		{
+			name:     "email with whitespace is dropped but the name is kept",
+			input:    "Foo <a@b c>",
+			wantName: "Foo",
+		},
+		{
+			name:     "email with a newline is dropped but the name is kept",
+			input:    "Foo <a@b.c\nSupplier: Person: other>",
+			wantName: "Foo",
+		},
+		{
+			name:     "email without @ is dropped but the name is kept",
+			input:    "Foo <not-an-email>",
+			wantName: "Foo",
+		},
+		{
+			name:     "empty email is dropped but the name is kept",
+			input:    "Foo <>",
+			wantName: "Foo",
+		},
+		{
+			name:     "url in angle brackets is not an email but the name is kept",
+			input:    "SUSE LLC <https://www.suse.com/>",
+			wantName: "SUSE LLC",
+		},
+		{
+			name:      "parenthetical in the name before the email",
+			input:     "Jan Alexander Steffens (heftig) <heftig@archlinux.org>",
+			wantName:  "Jan Alexander Steffens (heftig)",
+			wantEmail: "heftig@archlinux.org",
+		},
+		{
+			name:      "hyphenated local part and multi-label email domain",
+			input:     "Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>",
+			wantName:  "Ubuntu Developers",
+			wantEmail: "ubuntu-devel-discuss@lists.ubuntu.com",
+		},
+		{
+			name:     "unusable email does not discard the url",
+			input:    "Foo <a@b c> (http://example.com)",
+			wantName: "Foo",
+			wantUrl:  "http://example.com",
 		},
 	}
 	for _, tt := range tests {
