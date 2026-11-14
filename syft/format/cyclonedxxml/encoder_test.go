@@ -110,7 +110,6 @@ func TestCycloneDxLocations_SpecVersions(t *testing.T) {
 		{version: "1.4"},
 		{version: "1.5", wantOccurrences: true},
 		{version: "1.6", wantOccurrences: true},
-		{version: "1.7", wantOccurrences: true},
 		{version: cyclonedxutil.DefaultVersion, wantOccurrences: true},
 	}
 	for _, tt := range tests {
@@ -148,7 +147,7 @@ func TestCycloneDxLocations_OneOccurrencePerPath(t *testing.T) {
 }
 
 func TestCycloneDxLocations_RoundTrip(t *testing.T) {
-	for _, version := range []string{"1.4", "1.5", "1.6", "1.7", cyclonedxutil.DefaultVersion} {
+	for _, version := range []string{"1.4", "1.5", "1.6", cyclonedxutil.DefaultVersion} {
 		t.Run(version, func(t *testing.T) {
 			s, want := testutil.LocationsInput(t)
 

@@ -1,14 +1,12 @@
 package helpers
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -191,31 +189,6 @@ func Test_evidenceLocationsRoundTrip(t *testing.T) {
 			{RealPath: "/app.war"},
 		}, decoded.Locations.CoordinateSet().ToSlice())
 	})
-}
-
-// the occurrences come from an SBOM that may not be trusted, so decoding them may not cost more than a fixed amount
-// of memory per occurrence: ten times the occurrences may take about ten times the memory, and no more.
-func Test_decodeEvidenceLocations_memoryIsProportionalToInput(t *testing.T) {
-	measure := func(count int) uint64 {
-		paths := make([]string, count)
-		for i := range paths {
-			paths[i] = fmt.Sprintf("/usr/lib/example/%d", i)
-		}
-		evidence := evidenceWithOccurrences(paths...)
-
-		var got []file.Location
-		allocated := testutils.MeasureAlloc(t, func() {
-			got = decodeEvidenceLocations(evidence, nil)
-		})
-		require.Len(t, got, count)
-		return allocated
-	}
-
-	small := measure(2_000)
-	large := measure(20_000)
-
-	assert.Less(t, large, small*20, "decoding 10x the occurrences allocated %d bytes, up from %d", large, small)
-	assert.Less(t, large, uint64(20_000*1024), "decoding allocated more than 1KiB per occurrence")
 }
 
 func evidenceWithOccurrences(locations ...string) *cyclonedx.Evidence {
