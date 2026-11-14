@@ -117,6 +117,67 @@ func TestToSyftModel(t *testing.T) {
 	assert.Len(t, p2.CPEs, 3)
 }
 
+func TestToSyftModel_sharedPackageSPDXIDAcrossDocuments(t *testing.T) {
+	// regression test for https://github.com/anchore/syft/issues/5525: SPDX element IDs are only
+	// required to be unique within a single document (SPDX 2.3, clause 7.2), so two documents may
+	// legitimately name different packages with the same SPDXID. When packages from both documents
+	// land in a shared collection, each document's package must remain a distinct entry.
+	newDoc := func(namespace, name, version, declaredLicense string) *spdx.Document {
+		return &spdx.Document{
+			SPDXVersion:       "SPDX-2.3",
+			DataLicense:       "CC0-1.0",
+			SPDXIdentifier:    "SPDXRef-DOCUMENT",
+			DocumentName:      name + "-" + version,
+			DocumentNamespace: namespace,
+			Packages: []*spdx.Package{
+				{
+					PackageSPDXIdentifier:  "SPDXRef-Package",
+					PackageName:            name,
+					PackageVersion:         version,
+					PackageLicenseDeclared: declaredLicense,
+				},
+			},
+		}
+	}
+
+	allPkgs := pkg.NewCollection()
+	for _, doc := range []*spdx.Document{
+		newDoc("https://example.com/spdx/alpha-1.0", "alpha", "1.0", "MIT"),
+		newDoc("https://example.com/spdx/beta-2.0", "beta", "2.0", "Apache-2.0"),
+	} {
+		s, err := ToSyftModel(doc)
+		require.NoError(t, err)
+		for _, p := range s.Artifacts.Packages.Sorted() {
+			allPkgs.Add(p)
+		}
+	}
+
+	require.Equal(t, 2, allPkgs.PackageCount())
+
+	byName := map[string]pkg.Package{}
+	for _, p := range allPkgs.Sorted() {
+		byName[p.Name] = p
+	}
+
+	licenseValues := func(p pkg.Package) []string {
+		var values []string
+		for _, l := range p.Licenses.ToSlice() {
+			values = append(values, l.Value)
+		}
+		return values
+	}
+
+	alpha, ok := byName["alpha"]
+	require.True(t, ok, "expected the alpha package to survive as its own collection entry")
+	assert.Equal(t, artifact.ID("https://example.com/spdx/alpha-1.0#SPDXRef-Package"), alpha.ID())
+	assert.Equal(t, []string{"MIT"}, licenseValues(alpha))
+
+	beta, ok := byName["beta"]
+	require.True(t, ok, "expected the beta package to survive as its own collection entry")
+	assert.Equal(t, artifact.ID("https://example.com/spdx/beta-2.0#SPDXRef-Package"), beta.ID())
+	assert.Equal(t, []string{"Apache-2.0"}, licenseValues(beta))
+}
+
 func Test_extractMetadata(t *testing.T) {
 	oneTwoThreeFour := 1234
 	tests := []struct {
@@ -313,7 +374,7 @@ func TestH1Digest(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			p := toSyftPackage(&test.pkg)
+			p := toSyftPackage(&test.pkg, &spdx.Document{})
 			meta := p.Metadata.(pkg.GolangBinaryBuildinfoEntry)
 			require.Equal(t, test.expectedDigest, meta.H1Digest)
 		})
@@ -664,7 +725,8 @@ func Test_purlValue(t *testing.T) {
 
 func Test_directPackageFiles(t *testing.T) {
 	doc := &spdx.Document{
-		SPDXVersion: "SPDX-2.3",
+		SPDXVersion:       "SPDX-2.3",
+		DocumentNamespace: "some-namespace",
 		Packages: []*spdx.Package{
 			{
 				PackageName:           "some-package",
@@ -693,7 +755,7 @@ func Test_directPackageFiles(t *testing.T) {
 		Name:    "some-package",
 		Version: "1.0.5",
 	}
-	p.OverrideID("1") // the same as the spdxID on the package element
+	p.OverrideID("some-namespace#1") // the spdxID on the package element, qualified with the document namespace
 	f := file.Location{
 		LocationData: file.LocationData{
 			Coordinates: file.Coordinates{
@@ -737,7 +799,8 @@ func Test_directPackageFiles(t *testing.T) {
 
 func Test_useSPDXIdentifierOverDerivedSyftArtifactID(t *testing.T) {
 	doc := &spdx.Document{
-		SPDXVersion: "SPDX-2.3",
+		SPDXVersion:       "SPDX-2.3",
+		DocumentNamespace: "some-namespace",
 		Packages: []*spdx.Package{
 			{
 				PackageName:           "some-package",
@@ -761,12 +824,13 @@ func Test_useSPDXIdentifierOverDerivedSyftArtifactID(t *testing.T) {
 	s, err := ToSyftModel(doc)
 
 	assert.Nil(t, err)
-	assert.NotNil(t, s.Artifacts.Packages.Package("1"))
+	assert.NotNil(t, s.Artifacts.Packages.Package("some-namespace#1"))
 }
 
 func Test_skipsPackagesWithGeneratedFromRelationship(t *testing.T) {
 	doc := &spdx.Document{
-		SPDXVersion: "SPDX-2.3",
+		SPDXVersion:       "SPDX-2.3",
+		DocumentNamespace: "some-namespace",
 		Packages: []*spdx.Package{
 			{
 				PackageName:           "package-1",
@@ -794,8 +858,8 @@ func Test_skipsPackagesWithGeneratedFromRelationship(t *testing.T) {
 	s, err := ToSyftModel(doc)
 
 	assert.Nil(t, err)
-	assert.NotNil(t, s.Artifacts.Packages.Package("1"))
-	assert.Nil(t, s.Artifacts.Packages.Package("1-src"))
+	assert.NotNil(t, s.Artifacts.Packages.Package("some-namespace#1"))
+	assert.Nil(t, s.Artifacts.Packages.Package("some-namespace#1-src"))
 }
 
 func Test_nestedFiles_longChainIsCapped(t *testing.T) {
