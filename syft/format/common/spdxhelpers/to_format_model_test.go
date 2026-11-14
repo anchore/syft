@@ -1060,6 +1060,36 @@ func Test_OtherLicenses(t *testing.T) {
 	}
 }
 
+func Test_OtherLicenses_caseInsensitiveIDs(t *testing.T) {
+	ctx := context.Background()
+	upper := pkg.Package{
+		Name:     "upper",
+		Version:  "1.0",
+		Licenses: pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "BSD-3-clause-GENERIC")),
+	}
+	lower := pkg.Package{
+		Name:     "lower",
+		Version:  "1.0",
+		Licenses: pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "BSD-3-clause-generic")),
+	}
+
+	packages, otherLicenses := toPackages(relationship.NewIndex(), pkg.NewCollection(upper, lower), sbom.SBOM{})
+
+	// SPDX license identifiers are case-insensitive, so the two values must end up as a single license
+	require.Equal(t, []spdx.OtherLicense{
+		{
+			LicenseIdentifier: "LicenseRef-BSD-3-clause-GENERIC",
+			LicenseName:       "BSD-3-clause-GENERIC",
+			ExtractedText:     "NOASSERTION",
+		},
+	}, otherLicenses)
+
+	require.Len(t, packages, 2)
+	for _, p := range packages {
+		assert.Equal(t, "LicenseRef-BSD-3-clause-GENERIC", p.PackageLicenseDeclared, p.PackageName)
+	}
+}
+
 func Test_toSPDXID(t *testing.T) {
 	tests := []struct {
 		name     string
