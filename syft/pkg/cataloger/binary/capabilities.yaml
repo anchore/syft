@@ -888,6 +888,26 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/kube-apiserver'
+        packages:
+          - class: kube-apiserver-binary
+            name: kube-apiserver
+            purl: pkg:generic/kube-apiserver
+            cpes:
+              - cpe:2.3:a:kubernetes:kubernetes:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/kubelet'
+        packages:
+          - class: kubelet-binary
+            name: kubelet
+            purl: pkg:generic/kubelet
+            cpes:
+              - cpe:2.3:a:kubernetes:kubernetes:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/java'
         packages:
           - class: java-binary

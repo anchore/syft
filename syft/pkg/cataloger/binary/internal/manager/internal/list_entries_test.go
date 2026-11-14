@@ -114,3 +114,66 @@ func TestListAllEntries(t *testing.T) {
 	)
 
 }
+
+func TestBinaryFromURLHasSnippet(t *testing.T) {
+	tests := []struct {
+		name     string
+		cfg      config.BinaryFromURL
+		entries  Entries
+		expected bool
+	}{
+		{
+			name: "all targets have snippets",
+			cfg: config.BinaryFromURL{
+				GenericName: "kubelet",
+				Version:     "1.28.0",
+				Targets: []config.URLTarget{
+					{Platform: "linux/amd64", URL: "http://example.com/kubelet"},
+					{Platform: "linux/arm64", URL: "http://example.com/kubelet"},
+				},
+			},
+			entries: Entries{
+				LogicalEntryKey{OrgName: "kubelet", Version: "1.28.0", Platform: "linux-amd64", Filename: "kubelet"}: EntryInfo{SnippetPath: "testdata/snippets/kubelet/1.28.0/linux-amd64/kubelet"},
+				LogicalEntryKey{OrgName: "kubelet", Version: "1.28.0", Platform: "linux-arm64", Filename: "kubelet"}: EntryInfo{SnippetPath: "testdata/snippets/kubelet/1.28.0/linux-arm64/kubelet"},
+			},
+			expected: true,
+		},
+		{
+			name: "missing snippet for one target",
+			cfg: config.BinaryFromURL{
+				GenericName: "kubelet",
+				Version:     "1.28.0",
+				Targets: []config.URLTarget{
+					{Platform: "linux/amd64", URL: "http://example.com/kubelet"},
+					{Platform: "linux/arm64", URL: "http://example.com/kubelet"},
+				},
+			},
+			entries: Entries{
+				LogicalEntryKey{OrgName: "kubelet", Version: "1.28.0", Platform: "linux-amd64", Filename: "kubelet"}: EntryInfo{SnippetPath: "testdata/snippets/kubelet/1.28.0/linux-amd64/kubelet"},
+				LogicalEntryKey{OrgName: "kubelet", Version: "1.28.0", Platform: "linux-arm64", Filename: "kubelet"}: EntryInfo{SnippetPath: ""},
+			},
+			expected: false,
+		},
+		{
+			name: "target missing entirely from entries",
+			cfg: config.BinaryFromURL{
+				GenericName: "kubelet",
+				Version:     "1.28.0",
+				Targets: []config.URLTarget{
+					{Platform: "linux/amd64", URL: "http://example.com/kubelet"},
+					{Platform: "linux/arm64", URL: "http://example.com/kubelet"},
+				},
+			},
+			entries: Entries{
+				LogicalEntryKey{OrgName: "kubelet", Version: "1.28.0", Platform: "linux-amd64", Filename: "kubelet"}: EntryInfo{SnippetPath: "testdata/snippets/kubelet/1.28.0/linux-amd64/kubelet"},
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.entries.BinaryFromURLHasSnippet(tt.cfg))
+		})
+	}
+}
