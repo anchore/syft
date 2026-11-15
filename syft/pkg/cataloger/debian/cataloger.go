@@ -20,8 +20,9 @@ func NewDBCataloger() pkg.Cataloger {
 		WithProcessors(mergeStatusDirDuplicates, dependency.Processor(dbEntryDependencySpecifier))
 }
 
-// NewArchiveCataloger returns a new Debian package cataloger object capable of parsing .deb and .ipk (opkg) archive files
+// NewArchiveCataloger returns a new Debian package cataloger object capable of parsing .deb and .ipk (opkg) archive files,
+// as well as .udeb (debian-installer micro packages) and .ddeb (debug symbol packages), which share the .deb format
 func NewArchiveCataloger() pkg.Cataloger {
 	return generic.NewCataloger("deb-archive-cataloger").
-		WithParserByGlobs(parseDebArchive, "**/*.deb", "**/*.ipk")
+		WithParserByGlobs(parseDebArchive, "**/*.deb", "**/*.udeb", "**/*.ddeb", "**/*.ipk")
 }
