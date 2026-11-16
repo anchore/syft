@@ -38,7 +38,7 @@ func (e Encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	if e.version < cyclonedx.SpecVersion1_5 {
 		// evidence occurrences are a 1.5+ field; cyclonedx-go strips the occurrences for older spec versions but
 		// leaves the emptied evidence element behind, so drop it rather than emit an empty element
-		dropEvidence(bom.Components)
+		dropEvidenceOccurrences(bom.Components)
 	}
 	enc := cyclonedx.NewBOMEncoder(writer, e.format)
 	enc.SetPretty(e.pretty)
@@ -47,14 +47,22 @@ func (e Encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	return enc.EncodeVersion(bom, e.version)
 }
 
-func dropEvidence(components *[]cyclonedx.Component) {
+// dropEvidenceOccurrences removes the occurrences from the evidence of each component, and the evidence itself where
+// nothing else is left in it. Other evidence (licenses, copyright) is valid before 1.5 and is kept.
+func dropEvidenceOccurrences(components *[]cyclonedx.Component) {
 	if components == nil {
 		return
 	}
 	for i := range *components {
 		c := &(*components)[i]
-		dropEvidence(c.Components)
-		c.Evidence = nil
+		dropEvidenceOccurrences(c.Components)
+		if c.Evidence == nil {
+			continue
+		}
+		c.Evidence.Occurrences = nil
+		if *c.Evidence == (cyclonedx.Evidence{}) {
+			c.Evidence = nil
+		}
 	}
 }
 

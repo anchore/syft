@@ -160,13 +160,15 @@ func TestCycloneDxLocations_SpecVersions(t *testing.T) {
 	s, _ := testutil.LocationsInput(t)
 	tests := []struct {
 		version         string
+		wantProperties  bool
 		wantOccurrences bool
 	}{
-		{version: "1.3"},
-		{version: "1.4"},
-		{version: "1.5", wantOccurrences: true},
-		{version: "1.6", wantOccurrences: true},
-		{version: cyclonedxutil.DefaultVersion, wantOccurrences: true},
+		{version: "1.2"},
+		{version: "1.3", wantProperties: true},
+		{version: "1.4", wantProperties: true},
+		{version: "1.5", wantProperties: true, wantOccurrences: true},
+		{version: "1.6", wantProperties: true, wantOccurrences: true},
+		{version: cyclonedxutil.DefaultVersion, wantProperties: true, wantOccurrences: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.version, func(t *testing.T) {
@@ -180,10 +182,9 @@ func TestCycloneDxLocations_SpecVersions(t *testing.T) {
 			assert.Equal(t, tt.wantOccurrences, strings.Contains(buf.String(), `"occurrences"`))
 			assert.Equal(t, tt.wantOccurrences, strings.Contains(buf.String(), `"evidence"`))
 
-			// every spec version keeps the syft:location properties, which state the layer and the full path, so the
-			// occurrences carry no additional context and are one per distinct path
-			assert.False(t, strings.Contains(buf.String(), `"additionalContext"`))
-			assert.True(t, strings.Contains(buf.String(), `"syft:location:`))
+			// every spec version that has properties (1.3 and later) keeps the syft:location properties, which state the
+			// layer and the full path, so the occurrences are one per distinct path
+			assert.Equal(t, tt.wantProperties, strings.Contains(buf.String(), `"syft:location:`))
 			wantExampleOccurrences := 0
 			if tt.wantOccurrences {
 				wantExampleOccurrences = 1
@@ -194,9 +195,13 @@ func TestCycloneDxLocations_SpecVersions(t *testing.T) {
 }
 
 func TestCycloneDxLocations_RoundTrip(t *testing.T) {
-	for _, version := range []string{"1.4", "1.5", "1.6", cyclonedxutil.DefaultVersion} {
+	for _, version := range []string{"1.2", "1.3", "1.4", "1.5", "1.6", cyclonedxutil.DefaultVersion} {
 		t.Run(version, func(t *testing.T) {
 			s, want := testutil.LocationsInput(t)
+			if version == "1.2" {
+				// properties exist from spec 1.3 and occurrences from 1.5, so a 1.2 document states no locations
+				want = nil
+			}
 
 			cfg := DefaultEncoderConfig()
 			cfg.Version = version
@@ -218,22 +223,56 @@ func TestCycloneDxLocations_RoundTrip(t *testing.T) {
 }
 
 // cyclonedxhelpers.ToFormatModel is public: library callers (grype's CycloneDX presenter is one) encode its model with
-// cyclonedx.BOMEncoder.EncodeVersion at the BOM's own spec version. The locations of a component should come out the
-// same as from syft's own encoder at that version.
+// cyclonedx.BOMEncoder.EncodeVersion, at the BOM's own spec version or an older one. The locations of a component
+// should come out the same as from syft's own encoder at that version, and decode to the same locations.
 func TestCycloneDxLocations_ToFormatModelMatchesEncoder(t *testing.T) {
-	s, _ := testutil.LocationsInput(t)
+	require.Equal(t, cyclonedx.SpecVersion1_7, cyclonedxhelpers.ToFormatModel(sbom.SBOM{}).SpecVersion)
 
-	enc, err := NewFormatEncoderWithConfig(EncoderConfig{Version: cyclonedx.SpecVersion1_7.String()})
-	require.NoError(t, err)
-	var encoderOut bytes.Buffer
-	require.NoError(t, enc.Encode(&encoderOut, s))
+	tests := []struct {
+		version cyclonedx.SpecVersion
+		// properties exist from spec 1.3, so a 1.2 document states no locations
+		wantProperties  bool
+		wantOccurrences bool
+		// cyclonedx-go removes the occurrences for 1.3 and 1.4 and leaves the evidence object, which those schemas
+		// allow to be empty; 1.2 has no evidence at all
+		wantEmptyEvidence bool
+	}{
+		{version: cyclonedx.SpecVersion1_2},
+		{version: cyclonedx.SpecVersion1_3, wantProperties: true, wantEmptyEvidence: true},
+		{version: cyclonedx.SpecVersion1_4, wantProperties: true, wantEmptyEvidence: true},
+		{version: cyclonedx.SpecVersion1_5, wantProperties: true, wantOccurrences: true},
+		{version: cyclonedx.SpecVersion1_6, wantProperties: true, wantOccurrences: true},
+		{version: cyclonedx.SpecVersion1_7, wantProperties: true, wantOccurrences: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.version.String(), func(t *testing.T) {
+			s, want := testutil.LocationsInput(t)
 
-	bom := cyclonedxhelpers.ToFormatModel(s)
-	require.Equal(t, cyclonedx.SpecVersion1_7, bom.SpecVersion)
-	var modelOut bytes.Buffer
-	require.NoError(t, cyclonedx.NewBOMEncoder(&modelOut, cyclonedx.BOMFileFormatJSON).EncodeVersion(bom, bom.SpecVersion))
+			enc, err := NewFormatEncoderWithConfig(EncoderConfig{Version: tt.version.String()})
+			require.NoError(t, err)
+			var encoderOut bytes.Buffer
+			require.NoError(t, enc.Encode(&encoderOut, s))
 
-	assert.Equal(t, locationsOf(t, encoderOut.Bytes()), locationsOf(t, modelOut.Bytes()))
+			var modelOut bytes.Buffer
+			modelEncoder := cyclonedx.NewBOMEncoder(&modelOut, cyclonedx.BOMFileFormatJSON)
+			require.NoError(t, modelEncoder.EncodeVersion(cyclonedxhelpers.ToFormatModel(s), tt.version))
+
+			got := locationsOf(t, modelOut.Bytes())
+			assert.Equal(t, locationsOf(t, encoderOut.Bytes()), got)
+			assert.Equal(t, tt.wantProperties, len(got.Properties) > 0)
+			assert.Equal(t, tt.wantOccurrences, len(got.Occurrences) > 0)
+			assert.Equal(t, tt.wantEmptyEvidence, strings.Contains(modelOut.String(), `"evidence":{}`))
+
+			if !tt.wantProperties {
+				want = nil
+			}
+			decoded, _, _, err := NewFormatDecoder().Decode(bytes.NewReader(modelOut.Bytes()))
+			require.NoError(t, err)
+			pkgs := decoded.Artifacts.Packages.PackagesByName(testutil.LocationsInputPackageName)
+			require.Len(t, pkgs, 1)
+			assert.ElementsMatch(t, want, pkgs[0].Locations.CoordinateSet().ToSlice())
+		})
+	}
 }
 
 type componentLocations struct {
@@ -262,18 +301,6 @@ func locationsOf(t *testing.T, doc []byte) componentLocations {
 		}
 	}
 	return out
-}
-
-// cyclonedx-go writes an occurrence's additionalContext as an XML attribute, which the 1.7 schema does not allow: it
-// declares additionalContext as a child element of occurrence (bom-1.7.xsd in cyclonedx-go v0.12.0). a library
-// caller that writes XML from the public ToFormatModel must get a document that passes schema validation.
-func TestCycloneDxLocations_ToFormatModelXMLHasNoOccurrenceContext(t *testing.T) {
-	s, _ := testutil.LocationsInput(t)
-	bom := cyclonedxhelpers.ToFormatModel(s)
-	var out bytes.Buffer
-	require.NoError(t, cyclonedx.NewBOMEncoder(&out, cyclonedx.BOMFileFormatXML).EncodeVersion(bom, bom.SpecVersion))
-	assert.False(t, strings.Contains(out.String(), "additionalContext="),
-		"ToFormatModel XML at %s writes additionalContext as an occurrence attribute, which the schema rejects", bom.SpecVersion)
 }
 
 // Released versions of syft and grype read package locations only from the syft:location properties, so

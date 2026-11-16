@@ -86,15 +86,15 @@ func Test_decodeEvidenceLocations(t *testing.T) {
 			name:     "a location per occurrence",
 			evidence: evidenceWithOccurrences("/usr/bin/example", "/opt/example"),
 			want: []file.Location{
-				file.NewLocation("/usr/bin/example"),
-				file.NewLocation("/opt/example"),
+				occurrenceLocation("/usr/bin/example"),
+				occurrenceLocation("/opt/example"),
 			},
 		},
 		{
 			name:     "empty and repeated occurrences are skipped",
 			evidence: evidenceWithOccurrences("/usr/bin/example", "", "/usr/bin/example"),
 			want: []file.Location{
-				file.NewLocation("/usr/bin/example"),
+				occurrenceLocation("/usr/bin/example"),
 			},
 		},
 		{
@@ -104,7 +104,7 @@ func Test_decodeEvidenceLocations(t *testing.T) {
 				file.NewLocationFromCoordinates(file.NewCoordinates("/usr/bin/example", "sha256:layer-1")),
 			},
 			want: []file.Location{
-				file.NewLocation("/opt/example"),
+				occurrenceLocation("/opt/example"),
 			},
 		},
 		{
@@ -115,7 +115,7 @@ func Test_decodeEvidenceLocations(t *testing.T) {
 				{Location: "src/index.js", Line: new(7)},
 			}},
 			want: []file.Location{
-				file.NewLocation("/src/index.js"),
+				occurrenceLocation("/src/index.js"),
 			},
 		},
 		{
@@ -123,8 +123,8 @@ func Test_decodeEvidenceLocations(t *testing.T) {
 			name:     "a relative occurrence is rooted",
 			evidence: evidenceWithOccurrences("src/index.js", "/src/index.js", "/opt/example"),
 			want: []file.Location{
-				file.NewLocation("/src/index.js"),
-				file.NewLocation("/opt/example"),
+				occurrenceLocation("/src/index.js"),
+				occurrenceLocation("/opt/example"),
 			},
 		},
 		{
@@ -135,8 +135,18 @@ func Test_decodeEvidenceLocations(t *testing.T) {
 				{Location: "/usr/bin/example", AdditionalContext: "layerID: sha256:layer-1"},
 			}},
 			want: []file.Location{
-				file.NewLocation("/src/index.js"),
-				file.NewLocation("/usr/bin/example"),
+				occurrenceLocation("/src/index.js"),
+				occurrenceLocation("/usr/bin/example"),
+			},
+		},
+		{
+			// a path is rooted and nothing else, as the name of a file component and a syft:location path are
+			name:     "an occurrence path is otherwise kept as written",
+			evidence: evidenceWithOccurrences("./src/index.js", `packages\example.deb`, "a/../b"),
+			want: []file.Location{
+				occurrenceLocation("/./src/index.js"),
+				occurrenceLocation(`/packages\example.deb`),
+				occurrenceLocation("/a/../b"),
 			},
 		},
 		{
@@ -213,4 +223,19 @@ func Test_decodeLocations_propertiesWinOverOccurrenceForSamePath(t *testing.T) {
 	locations := decodeLocations(properties, evidence)
 	got := locations.CoordinateSet().ToSlice()
 	assert.Equal(t, []file.Coordinates{file.NewCoordinates("/usr/bin/example", "sha256:layer-1")}, got)
+}
+
+// a location decoded from an occurrence has the shape of one decoded from syft:location properties: coordinates only
+func Test_decodeLocations_occurrenceLocationMatchesPropertyLocation(t *testing.T) {
+	fromProperty := decodeLocations(map[string]string{"syft:location:0:path": "/usr/bin/example"}, nil).ToSlice()
+	fromOccurrence := decodeLocations(nil, evidenceWithOccurrences("/usr/bin/example")).ToSlice()
+
+	require.Len(t, fromProperty, 1)
+	require.Len(t, fromOccurrence, 1)
+	assert.Equal(t, fromProperty[0].LocationData, fromOccurrence[0].LocationData)
+	assert.Empty(t, fromOccurrence[0].AccessPath)
+}
+
+func occurrenceLocation(path string) file.Location {
+	return file.Location{LocationData: file.LocationData{Coordinates: file.NewCoordinates(path, "")}}
 }

@@ -11,9 +11,7 @@ import (
 
 // encodeEvidence expresses the package locations as CycloneDX evidence occurrences, the standard field other tools
 // read: one occurrence per distinct path on the scanned filesystem (for a file within an archive, the real path of the
-// outermost archive). The layer and the path within an archive stay in the syft:location properties: an occurrence's
-// additionalContext is written by cyclonedx-go as an XML attribute that the schema does not allow, and this model is
-// what the public cyclonedxhelpers.ToFormatModel returns, so it must be valid in every format and spec version.
+// outermost archive). The layer and the path within an archive are stated only in the syft:location properties.
 // Annotations are not written.
 func encodeEvidence(locations []file.Location) *cyclonedx.Evidence {
 	var occurrences []cyclonedx.EvidenceOccurrence
@@ -34,8 +32,12 @@ func encodeEvidence(locations []file.Location) *cyclonedx.Evidence {
 // decodeEvidenceLocations returns a location for each distinct evidence occurrence path that none of the known
 // locations already covers. The known locations are the ones decoded from syft:location properties: they describe a
 // path more fully than an occurrence can (layer, path within an archive), so an occurrence for the same path would
-// otherwise be a second location for one file. Occurrence paths are rooted, as the names of file components are, so
-// that a package location and the file it names agree.
+// otherwise be a second location for one file.
+//
+// An occurrence becomes a location by the rules the rest of this decoder already applies, and no others:
+//   - every non-empty occurrence location is accepted
+//   - the path is rooted the way the name of a file component is (see rootedPath) and is otherwise kept as written
+//   - the location holds only coordinates, as a location decoded from syft:location properties does
 func decodeEvidenceLocations(evidence *cyclonedx.Evidence, known []file.Location) []file.Location {
 	if evidence == nil || evidence.Occurrences == nil {
 		return nil
@@ -56,11 +58,15 @@ func decodeEvidenceLocations(evidence *cyclonedx.Evidence, known []file.Location
 			continue
 		}
 		paths.Add(path)
-		locations = append(locations, file.NewLocation(path))
+		locations = append(locations, file.Location{
+			LocationData: file.LocationData{Coordinates: file.NewCoordinates(path, "")},
+		})
 	}
 	return locations
 }
 
+// rootedPath is the path relative to the scan root: file component names and evidence occurrence locations in
+// documents from other tools are commonly relative, and syft paths are absolute.
 func rootedPath(path string) string {
 	return "/" + strings.TrimPrefix(path, "/")
 }

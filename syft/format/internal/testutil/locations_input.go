@@ -12,7 +12,8 @@ import (
 const LocationsInputPackageName = "example"
 
 // LocationsInput is an SBOM with a package found at the same path in two layers and within an archive, along with
-// the coordinates of the locations of that package.
+// the coordinates of the locations of that package. The SBOM is otherwise the directory input: the layers are stated
+// on the locations only, which is all that an encoder reads of them.
 func LocationsInput(t testing.TB) (sbom.SBOM, []file.Coordinates) {
 	locations := []file.Coordinates{
 		file.NewCoordinates("/opt/example", "sha256:layer-1"),
