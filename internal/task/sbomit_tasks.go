@@ -59,12 +59,10 @@ func NewSBOMitTask(cfg CatalogingFactoryConfig) Task {
 				continue
 			}
 
-			// Do the simplest cases right now.
 			// Current, Attestation -> Action
 			// A@X, A@X -> Add an evident-by attestation edge to every existing Node.
 			// ---, A@X -> Add a new package entry.
 			// A@X, A@Y -> Add a new package entry, leaving the cataloged one untouched.
-			// A@X, A@? -> TODO
 			for _, p := range result.Packages {
 				existing := findPackages(accessor, p)
 				// Add a new package if no package with this (name, version, type) exists.
