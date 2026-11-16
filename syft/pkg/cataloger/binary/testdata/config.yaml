@@ -1769,6 +1769,15 @@ from-images:
       - /usr/local/julia/lib/julia/libjulia-internal.so.1.12.6
 
   - name: julia
+    version: 1.12.4
+    images:
+      - ref: library/julia:1.12.4@sha256:1339c3a525d63f7089e9d51aa7dce030d432a2b9111cb2350cb6a6202f796ad1
+        platform: linux/arm64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.12.4
+
+  - name: julia
     version: 1.11.9
     images:
       - ref: library/julia:1.11.9@sha256:18e83baa9277c2ac94bef267d585634760b5adf9bc7343480161c7b09034b452
@@ -1776,6 +1785,15 @@ from-images:
     paths:
       - /usr/local/julia/lib/julia/libjulia-internal.so
       - /usr/local/julia/lib/julia/libjulia-internal.so.1.11.9
+
+  - name: julia
+    version: 1.11.6
+    images:
+      - ref: library/julia:1.11.6@sha256:6a7f5e2b5f9c43b8ea6023df4c46edaf14dbc6d3f40562545a63a2f32316c06a
+        platform: linux/ppc64le
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.11.6
 
   - name: julia
     version: 1.10.11
@@ -1787,10 +1805,43 @@ from-images:
       - /usr/local/julia/lib/julia/libjulia-internal.so.1.10.11
 
   - name: julia
+    version: 1.10.4
+    images:
+      - ref: library/julia:1.10.4@sha256:101e6819484e693032933cefcffe246ee12a5f4a790da69555c821e89f566820
+        platform: linux/arm64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.10.4
+
+  - name: julia
+    version: 1.9.0-beta3
+    images:
+      # note: per-platform manifest digests (not the index digest) -- the extraction step creates a
+      # container from the ref alone, so each platform needs its own uniquely addressable ref
+      - ref: library/julia:1.9.0-beta3@sha256:1bf66d7f6120cd0e75ce6198f5e0247de8e8448ebdc1bc319da750457c23788f
+        platform: linux/amd64
+      - ref: library/julia:1.9.0-beta3@sha256:4667273a351b6db5867686cf9618a42a7d62108f478ebb251a922d834f113916
+        platform: linux/ppc64le
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.9
+
+  - name: julia
+    version: 1.9.0-beta2
+    images:
+      - ref: library/julia:1.9.0-beta2@sha256:7877eae88f51a50344c0163b9bbf66bf172aafb1f886fe558c12a55a51a26780
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.9
+
+  - name: julia
     version: 1.9.0-alpha1
     images:
       - ref: library/julia:1.9.0-alpha1@sha256:fb932603485d7cea435e85c073c04bdf4d0b90232c03013585aa0f65c8216111
         platform: linux/amd64
+      - ref: library/julia:1.9.0-alpha1@sha256:a219a720fddbcb6d589127f2ea40bee2e66eab9157645ec753010048f1d8cc17
+        platform: linux/arm64
     paths:
       - /usr/local/julia/lib/julia/libjulia-internal.so
       - /usr/local/julia/lib/julia/libjulia-internal.so.1.9
@@ -1800,6 +1851,8 @@ from-images:
     images:
       - ref: library/julia:1.8.5@sha256:5edccd0ca0b5f00d78beca0bd8217d65b2c24ef051ad07e2b08ed67224ff905a
         platform: linux/amd64
+      - ref: library/julia:1.8.5@sha256:edd1f4415b619d95f4503fa04a589dd79b0e6f91e26006391729c6661d767c78
+        platform: linux/arm64
     paths:
       - /usr/local/julia/lib/julia/libjulia-internal.so
       - /usr/local/julia/lib/julia/libjulia-internal.so.1.8
