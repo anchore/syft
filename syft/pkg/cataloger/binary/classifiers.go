@@ -217,6 +217,19 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			// macOS builds such as Homebrew ship a small bin/node launcher and keep the
+			// runtime (and its version string) in lib/libnode.<abi>.dylib. The number in
+			// the file name is the ABI version, so the version comes from the contents.
+			Class:    "nodejs-binary-lib",
+			FileGlob: "**/libnode*.dylib",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// node.js/v26.13.0
+				`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			Package: "node",
+			PURL:    mustPURL("pkg:generic/node@version"),
+			CPEs:    singleCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "busybox-binary",
 			FileGlob: "**/busybox",
 			EvidenceMatcher: m.FileContentsVersionMatcher(

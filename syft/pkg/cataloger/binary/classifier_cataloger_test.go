@@ -931,6 +931,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// Homebrew bottle: bin/node is a launcher, the version is in the shared library
+			logicalFixture: "node/26.13.0/darwin-arm64",
+			expected: pkg.Package{
+				Name:      "node",
+				Version:   "26.13.0",
+				PURL:      "pkg:generic/node@26.13.0",
+				Locations: locations("libnode.147.dylib"),
+				Metadata:  metadata("nodejs-binary-lib"),
+			},
+		},
+		{
 			// TODO: find original binary...
 			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
 			logicalFixture: "go-version-hint/1.15-dev/any",

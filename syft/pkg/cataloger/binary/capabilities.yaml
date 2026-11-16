@@ -121,6 +121,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/libnode*.dylib'
+        packages:
+          - class: nodejs-binary-lib
+            name: node
+            purl: pkg:generic/node
+            cpes:
+              - cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/busybox'
         packages:
           - class: busybox-binary
