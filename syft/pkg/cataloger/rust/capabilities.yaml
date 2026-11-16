@@ -63,7 +63,7 @@ catalogers:
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
       file: syft/pkg/cataloger/rust/cataloger.go
-      function: NewConfiguredCargoLockCataloger
+      function: NewCargoLockWithOptionsCataloger
     config: rust.CatalogerConfig # AUTO-GENERATED
     selectors: # AUTO-GENERATED
       - cargo

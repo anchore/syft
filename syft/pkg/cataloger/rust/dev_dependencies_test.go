@@ -377,7 +377,7 @@ test-helper = "1"
 				lockPath = "Cargo.lock"
 			}
 			require.NoError(t, os.WriteFile(filepath.Join(dir, lockPath), []byte(lock), 0o600))
-			cataloger := NewConfiguredCargoLockCataloger(DefaultCatalogerConfig().WithIncludeDevDependencies(tt.include))
+			cataloger := NewCargoLockWithOptionsCataloger(DefaultCatalogerConfig().WithIncludeDevDependencies(tt.include))
 			if tt.legacy {
 				var factory func() pkg.Cataloger = NewCargoLockCataloger
 				cataloger = factory()
@@ -490,7 +490,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 						assert.True(t, ids[relationship.From.ID()])
 						assert.True(t, ids[relationship.To.ID()])
 					}
-				}).TestCataloger(t, NewConfiguredCargoLockCataloger(DefaultCatalogerConfig().WithIncludeDevDependencies(false)))
+				}).TestCataloger(t, NewCargoLockWithOptionsCataloger(DefaultCatalogerConfig().WithIncludeDevDependencies(false)))
 		})
 	}
 }

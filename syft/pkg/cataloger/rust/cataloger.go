@@ -11,11 +11,11 @@ import (
 
 // NewCargoLockCataloger returns a new Rust Cargo lock file cataloger object.
 func NewCargoLockCataloger() pkg.Cataloger {
-	return NewConfiguredCargoLockCataloger(DefaultCatalogerConfig())
+	return NewCargoLockWithOptionsCataloger(DefaultCatalogerConfig())
 }
 
-// NewConfiguredCargoLockCataloger returns a Rust Cargo lock file cataloger with the given configuration.
-func NewConfiguredCargoLockCataloger(cfg CatalogerConfig) pkg.Cataloger {
+// NewCargoLockWithOptionsCataloger returns a Rust Cargo lock file cataloger with the given configuration.
+func NewCargoLockWithOptionsCataloger(cfg CatalogerConfig) pkg.Cataloger {
 	adapter := cargoLockAdapter{cfg: cfg}
 	return generic.NewCataloger("rust-cargo-lock-cataloger").
 		WithParserByGlobs(adapter.parseCargoLock, "**/Cargo.lock")

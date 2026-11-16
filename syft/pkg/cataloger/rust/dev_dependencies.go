@@ -10,6 +10,7 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/pelletier/go-toml"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -42,7 +43,7 @@ func cargoManifests(resolver file.Resolver, lock file.Location) (map[string]*tom
 	rootDir := path.Dir(lock.RealPath)
 	rootLocation := resolver.RelativeFileByPath(lock, path.Join(rootDir, "Cargo.toml"))
 	if rootLocation == nil {
-		return nil, nil, fmt.Errorf("Cargo.toml is missing")
+		return nil, nil, fmt.Errorf("missing Cargo.toml")
 	}
 	root, err := readCargoManifest(resolver, *rootLocation)
 	if err != nil {
@@ -123,7 +124,7 @@ func readCargoManifest(resolver file.Resolver, location file.Location) (*toml.Tr
 	if err != nil {
 		return nil, err
 	}
-	defer r.Close()
+	defer internal.CloseAndLogError(r, location.FullNestedPath())
 	return toml.LoadReader(r)
 }
 
