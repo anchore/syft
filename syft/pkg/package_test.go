@@ -2,6 +2,10 @@ package pkg
 
 import (
 	"context"
+	"fmt"
+	"math/rand/v2"
+	"slices"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -472,4 +476,171 @@ func TestID_nestedArchiveLocations(t *testing.T) {
 		id(file.Coordinates{RealPath: "/package.json"}),
 		id(file.NewCoordinates("/package.json", "")),
 		"a full path equal to the real path must not change the ID")
+}
+
+func TestLess(t *testing.T) {
+	newPkg := func(name, version string, ty Type, md any, paths ...string) Package {
+		var locs []file.Location
+		for _, p := range paths {
+			locs = append(locs, file.NewLocation(p))
+		}
+		return Package{Name: name, Version: version, Type: ty, Metadata: md, Locations: file.NewLocationSet(locs...)}
+	}
+	md := func(resolved string) NpmPackageLockEntry { return NpmPackageLockEntry{Resolved: resolved} }
+
+	cases := []struct {
+		name string
+		i, j Package
+		want bool
+	}{
+		{
+			name: "name-decides",
+			i:    newPkg("a", "2", NpmPkg, md("z"), "/z"),
+			j:    newPkg("b", "1", DotnetPkg, md("a"), "/a"),
+			want: true,
+		},
+		{
+			name: "version-decides",
+			i:    newPkg("a", "2", NpmPkg, md("a"), "/a"),
+			j:    newPkg("a", "1", DotnetPkg, md("z"), "/z"),
+			want: false,
+		},
+		{
+			name: "type-decides",
+			i:    newPkg("a", "1", DotnetPkg, md("z"), "/z"),
+			j:    newPkg("a", "1", NpmPkg, md("a"), "/a"),
+			want: true,
+		},
+		{
+			name: "location-path-decides",
+			i:    newPkg("a", "1", NpmPkg, md("z"), "/a", "/z"),
+			j:    newPkg("a", "1", NpmPkg, md("a"), "/b"),
+			want: true,
+		},
+		{
+			name: "fewer-locations-first",
+			i:    newPkg("a", "1", NpmPkg, md("z"), "/a"),
+			j:    newPkg("a", "1", NpmPkg, md("a"), "/a", "/b"),
+			want: true,
+		},
+		{
+			name: "metadata-decides",
+			i:    newPkg("a", "1", NpmPkg, md("z"), "/a"),
+			j:    newPkg("a", "1", NpmPkg, md("a"), "/a"),
+			want: false,
+		},
+		{
+			name: "equal",
+			i:    newPkg("a", "1", NpmPkg, md("a"), "/a"),
+			j:    newPkg("a", "1", NpmPkg, md("a"), "/a"),
+			want: false,
+		},
+	}
+
+	for _, c := range cases {
+		require.Equal(t, c.want, Less(c.i, c.j), "when packages: %s", c.name)
+	}
+}
+
+func TestSort_MatchesStableSortByLess(t *testing.T) {
+	r := rand.New(rand.NewPCG(1, 0))
+	types := []Type{NpmPkg, DotnetPkg}
+	for round := range 200 {
+		// sizes incl 0 and 1, pkgs may lack locs
+		pkgs := make([]Package, r.IntN(300))
+		for i := range pkgs {
+			var locs []file.Location
+			for k := r.IntN(4) - 1; k >= 0; k-- {
+				locs = append(locs, file.NewLocation(fmt.Sprintf("/p%d/package-lock.json", r.IntN(4))))
+			}
+			pkgs[i] = Package{
+				Name:      fmt.Sprintf("n%d", r.IntN(4)),
+				Version:   fmt.Sprintf("v%d", r.IntN(3)),
+				Type:      types[r.IntN(len(types))],
+				Locations: file.NewLocationSet(locs...),
+				Metadata:  NpmPackageLockEntry{Resolved: fmt.Sprintf("r%d", r.IntN(2))},
+				PURL:      fmt.Sprintf("identity-%d", i),
+			}
+		}
+
+		want := slices.Clone(pkgs)
+		sort.SliceStable(want, func(i, j int) bool { return Less(want[i], want[j]) })
+		got := slices.Clone(pkgs)
+		Sort(got)
+
+		for i := range want {
+			require.Equal(t, want[i].PURL, got[i].PURL, "round %d index %d", round, i)
+		}
+
+		// resorting sorted input keeps order
+		Sort(got)
+		for i := range want {
+			require.Equal(t, want[i].PURL, got[i].PURL, "resort round %d index %d", round, i)
+		}
+	}
+}
+
+func BenchmarkSort(b *testing.B) {
+	newPkg := func(name string, paths ...string) Package {
+		var locs []file.Location
+		for _, p := range paths {
+			locs = append(locs, file.NewLocation(p))
+		}
+		return Package{Name: name, Version: "1.0.0", Type: NpmPkg, Locations: file.NewLocationSet(locs...)}
+	}
+
+	// dup deps across lockfiles: compare locations
+	duplicates := func(lockfiles int) []Package {
+		var pkgs []Package
+		for l := range lockfiles {
+			for i := range 1_000 {
+				pkgs = append(pkgs, newPkg(fmt.Sprintf("package-%d", i), fmt.Sprintf("/svc-%d/package-lock.json", l)))
+			}
+		}
+		return pkgs
+	}
+	// unique names: locations never compared
+	unique := func(count int) []Package {
+		pkgs := make([]Package, count)
+		for i := range pkgs {
+			pkgs[i] = newPkg(fmt.Sprintf("package-%d", (i*7919)%count), "/app/package-lock.json", "/app/node_modules/x/package.json")
+		}
+		return pkgs
+	}
+	// dup deps in one lockfile: compare metadata
+	metadataTies := func(count int) []Package {
+		pkgs := make([]Package, count)
+		for i := range pkgs {
+			pkgs[i] = newPkg(fmt.Sprintf("package-%d", i%100), "/app/package-lock.json")
+			pkgs[i].Metadata = NpmPackageLockEntry{Resolved: fmt.Sprintf("https://registry.npmjs.org/package-%d.tgz", (i*7919)%count)}
+		}
+		return pkgs
+	}
+	presorted := func(count int) []Package {
+		pkgs := unique(count)
+		sort.SliceStable(pkgs, func(i, j int) bool { return Less(pkgs[i], pkgs[j]) })
+		return pkgs
+	}
+
+	cases := []struct {
+		name string
+		pkgs []Package
+	}{
+		{name: "duplicates/packages=10000", pkgs: duplicates(10)},
+		{name: "duplicates/packages=100000", pkgs: duplicates(100)},
+		{name: "metadata-ties/packages=10000", pkgs: metadataTies(10_000)},
+		{name: "unique/packages=100000", pkgs: unique(100_000)},
+		{name: "presorted/packages=100000", pkgs: presorted(100_000)},
+		{name: "small/packages=8", pkgs: unique(8)},
+	}
+	for _, tc := range cases {
+		b.Run(tc.name, func(b *testing.B) {
+			b.ReportAllocs()
+			work := make([]Package, len(tc.pkgs))
+			for b.Loop() {
+				copy(work, tc.pkgs)
+				Sort(work)
+			}
+		})
+	}
 }
