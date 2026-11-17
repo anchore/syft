@@ -456,11 +456,11 @@ func getExperimentsFromVersion(version string) (string, []string) {
 	var experiments []string
 	version, rest, _ := strings.Cut(version, " ")
 
-	// Go 1.23 and later append the experiments with a hyphen instead of a
+	// Go 1.26 and later append the experiments with a hyphen instead of a
 	// space, e.g. "go1.26.1-X:nodwarf5" (older toolchains: "go1.22.2 X:...").
+	// See https://go.dev/issue/75953.
 	if v, exp, found := strings.Cut(version, "-X:"); found {
-		version = v
-		rest = strings.TrimSpace("X:" + exp + " " + rest)
+		return v, strings.Split(exp, ",")
 	}
 
 	// Assume they may add more non-version chunks in the future, so only look for "X:".
