@@ -1262,6 +1262,16 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 			mainModule: "github.com/open-policy-agent/opa",
 			ldflags:    `build	-ldflags=" -X github.com/open-policy-agent/opa/version.Hostname=9549178459bc"`,
 		},
+		{
+			name:       "hypothetical version in another repository of the same owner",
+			mainModule: "github.com/foo/bar/cmd/bar",
+			ldflags:    `	build	-ldflags="-X github.com/foo/other/version.Version=v1.2.3"`,
+		},
+		{
+			name:       "hypothetical gitlab subgroup path does not fall back to the parent group",
+			mainModule: "gitlab.com/group/subgroup/repo",
+			ldflags:    `	build	-ldflags="-X gitlab.com/group/subgroup/other/version.Version=v1.2.3"`,
+		},
 		///////////////////////////////////////////////////////////////////
 		// trickier cases
 		{
@@ -1298,6 +1308,20 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 			ldflags:          `	build	-ldflags="-X main.version=2.0.0-beta.2.1"`,
 			wantMajorVersion: "2",
 			wantFullVersion:  "v2.0.0-beta.2.1",
+		},
+		{
+			name:             "docker cli ldflags with the main module crafted from the package path",
+			mainModule:       "github.com/docker/cli/cmd/docker",
+			ldflags:          `	build	-ldflags=" -X \"github.com/docker/cli/cli/version.GitCommit=5457199\" -X \"github.com/docker/cli/cli/version.BuildTime=2026-11-03T21:42:08Z\" -X \"github.com/docker/cli/cli/version.Version=29.9.3\" -linkmode external -extldflags -static"`,
+			wantMajorVersion: "29",
+			wantFullVersion:  "v29.9.3",
+		},
+		{
+			name:             "hypothetical main module version wins over the repository root",
+			mainModule:       "github.com/foo/bar/cmd/bar",
+			ldflags:          `	build	-ldflags="-X github.com/foo/bar/version.Version=v1.0.0 -X github.com/foo/bar/cmd/bar/version.Version=v2.0.0"`,
+			wantMajorVersion: "2",
+			wantFullVersion:  "v2.0.0",
 		},
 		///////////////////////////////////////////////////////////////////
 		// don't know how to handle these... yet
