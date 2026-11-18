@@ -2069,6 +2069,19 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// note: snippet captured from the official Chrome for Testing 156.0.8078.4 linux64
+			// binary, where the version follows "glic-actor-ui-debounce-timer" instead of "Default".
+			logicalFixture: "chrome/156.0.8078.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "chrome",
+				Version:   "156.0.8078.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/chrome@156.0.8078.4",
+				Locations: locations("chrome"),
+				Metadata:  metadata("chrome-binary"),
+			},
+		},
+		{
 			logicalFixture: "firefox/151.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "firefox",
