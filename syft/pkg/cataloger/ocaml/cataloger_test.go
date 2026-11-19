@@ -124,8 +124,9 @@ func TestInstalledLibraryCataloger(t *testing.T) {
 			"cmdliner @ 1.3.0 (lib/cmdliner/META)",
 			// dune-package without a version: fall back to META
 			"mylib @ 2.1.0 (lib/mylib/dune-package)",
-			// not cataloged: findlib shims for compiler libraries (bytes, unix), non-findlib META files and
-			// dune _build output
+			// not cataloged: findlib shims for compiler libraries (bytes, unix), non-findlib META files, META files
+			// without an opam file next to them (lib/stray, the src/pkg/META template of a topkg project) and dune
+			// _build output
 		}).
 		ExpectsRelationshipStrings([]string{
 			"cmdliner @ 1.3.0 (lib/cmdliner/META) [dependency-of] lwt @ 5.4.2 (lib/lwt/dune-package)",
@@ -160,5 +161,29 @@ func TestInstalledLibraryCataloger_LicensesComeFromTheOpamFile(t *testing.T) {
 			}
 			t.Fatal("package lwt not found")
 		}).
+		TestCataloger(t, NewInstalledLibraryCataloger())
+}
+
+// TestPlaceholderVersions checks that unsubstituted build templates (%%VERSION%%, %%VERSION_NUM%%) are not used
+// as versions.
+func TestPlaceholderVersions(t *testing.T) {
+	versions := func(expected map[string]string) func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
+		return func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
+			got := map[string]string{}
+			for _, p := range pkgs {
+				got[p.Name] = p.Version
+			}
+			assert.Equal(t, expected, got)
+		}
+	}
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/placeholder-version").
+		ExpectsAssertion(versions(map[string]string{"myproj": ""})).
+		TestCataloger(t, NewOpamPackageManagerCataloger())
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/placeholder-version").
+		ExpectsAssertion(versions(map[string]string{"tmpl": ""})).
 		TestCataloger(t, NewInstalledLibraryCataloger())
 }

@@ -44,7 +44,7 @@ func parseOpamFields(data []byte) (opamFields, error) {
 		case "name":
 			out.Name = firstString(s.value)
 		case "version":
-			out.Version = firstString(s.value)
+			out.Version = knownVersion(firstString(s.value))
 		case "license":
 			out.Licenses = allStrings(s.value)
 		case "homepage":

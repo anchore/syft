@@ -33,7 +33,7 @@ func parseDunePackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 		case "name":
 			name = string(m[2])
 		case "version":
-			version = string(m[2])
+			version = knownVersion(string(m[2]))
 		}
 	}
 	dir := path.Dir(p)
@@ -70,8 +70,18 @@ func parseFindlibMeta(ctx context.Context, resolver file.Resolver, _ *generic.En
 	if !isFindlib || meta.isCompilerShim() {
 		return nil, nil, nil
 	}
-	name := path.Base(dir)
+	// a META file alone doesn't make an installed package: source trees carry META files (or templates of them,
+	// e.g. topkg's pkg/META), and so does the compiler for the libraries it ships. Libraries installed by opam
+	// have their opam file installed next to META. The directory is a findlib name, which only matches the
+	// opam package name for such libraries.
 	opam, opamLocation, hasOpam := readSiblingOpamFields(resolver, path.Join(dir, "opam"))
+	if !hasOpam {
+		return nil, nil, nil
+	}
+	name := path.Base(dir)
+	if name == "/" || name == "." {
+		return nil, nil, nil
+	}
 	version := meta.version
 	if version == "" {
 		version = opam.Version
@@ -130,7 +140,7 @@ func parseFindlibFields(data []byte) (findlibFields, bool) {
 		}
 		switch m[1] {
 		case "version":
-			out.version = m[3]
+			out.version = knownVersion(m[3])
 		case "directory":
 			out.directory = m[3]
 		}

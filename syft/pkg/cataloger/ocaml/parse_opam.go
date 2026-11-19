@@ -146,6 +146,15 @@ func nameAndVersionFromDir(dir string, fields opamFields) (string, string) {
 	return name, version
 }
 
+// knownVersion returns "" for values that are build templates rather than versions, such as the %%VERSION%% and
+// %%VERSION_NUM%% placeholders that topkg and dune-release substitute when making a release.
+func knownVersion(v string) string {
+	if strings.Contains(v, "%%") {
+		return ""
+	}
+	return v
+}
+
 func splitNameVersion(s string) (string, string, bool) {
 	idx := strings.Index(s, ".")
 	if idx <= 0 || idx == len(s)-1 {
@@ -157,7 +166,7 @@ func splitNameVersion(s string) (string, string, bool) {
 func opamMetadata(name, version string, fields opamFields) pkg.OpamPackage {
 	return pkg.OpamPackage{
 		Name:         name,
-		Version:      version,
+		Version:      knownVersion(version),
 		Licenses:     fields.Licenses,
 		URL:          fields.URL,
 		Checksums:    fields.Checksums,
