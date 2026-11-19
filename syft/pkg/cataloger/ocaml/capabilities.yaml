@@ -43,8 +43,7 @@ catalogers:
             default:
               - runtime
               - build
-              - test
-            comment: build, with-test and with-doc dependencies are included in lock files
+            comment: pins only needed for tests, documentation or development (with-test, with-doc and with-dev-setup) are not cataloged
           - name: package_manager.files.listing
             default: false
           - name: package_manager.files.digests
@@ -70,6 +69,7 @@ catalogers:
             default: true
           - name: dependency.depth
             default: []
+            comment: dependency names are recorded in the metadata, but version constraints are not resolved to packages
           - name: dependency.edges
             default: ""
           - name: dependency.kinds
