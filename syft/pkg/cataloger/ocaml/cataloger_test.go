@@ -51,11 +51,10 @@ func TestOpamPackageManagerCataloger_DeclaredLayouts(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "testdata/declared").
 		ExpectsPackageStrings([]string{
-			// the lock file supersedes foo.opam and pins the dependencies
+			// the lock file supersedes foo.opam and pins the dependencies (ounit2 is only pinned for tests)
 			"foo @ 0.1.0 (project/foo.opam.locked)",
 			"lwt @ 5.4.2 (project/foo.opam.locked)",
 			"ocaml @ 4.14.2 (project/foo.opam.locked)",
-			"ounit2 @ 2.2.5 (project/foo.opam.locked)",
 			"bar @ 0.1.0 (project/bar.opam)",
 			// name and version come from the file, not from a dotted directory name
 			"myproj @ 1.2.3 (my-proj-1.2.3/opam)",
@@ -67,7 +66,6 @@ func TestOpamPackageManagerCataloger_DeclaredLayouts(t *testing.T) {
 		ExpectsRelationshipStrings([]string{
 			"lwt @ 5.4.2 (project/foo.opam.locked) [dependency-of] foo @ 0.1.0 (project/foo.opam.locked)",
 			"ocaml @ 4.14.2 (project/foo.opam.locked) [dependency-of] foo @ 0.1.0 (project/foo.opam.locked)",
-			"ounit2 @ 2.2.5 (project/foo.opam.locked) [dependency-of] foo @ 0.1.0 (project/foo.opam.locked)",
 		}).
 		TestCataloger(t, NewOpamPackageManagerCataloger())
 }
@@ -108,7 +106,7 @@ func TestOpamPackageManagerCataloger_LockFileUsesProjectMetadata(t *testing.T) {
 				meta, ok := p.Metadata.(pkg.OpamPackage)
 				require.True(t, ok)
 				assert.Equal(t, "https://example.com/foo", meta.Homepage)
-				assert.Equal(t, []string{"lwt", "ocaml", "ounit2"}, meta.Dependencies)
+				assert.Equal(t, []string{"lwt", "ocaml"}, meta.Dependencies)
 				assert.Equal(t, "pkg:opam/foo@0.1.0", p.PURL)
 				return
 			}

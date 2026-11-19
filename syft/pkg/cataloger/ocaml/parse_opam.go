@@ -175,11 +175,12 @@ func opamMetadata(name, version string, fields opamFields) pkg.OpamPackage {
 	}
 }
 
+// dependencyNames lists the packages a package depends on, leaving out the ones only needed for development.
 func dependencyNames(self string, deps []opamDependency) []string {
 	var names []string
 	seen := map[string]bool{self: true}
 	for _, d := range deps {
-		if seen[d.Name] {
+		if d.Development || seen[d.Name] {
 			continue
 		}
 		seen[d.Name] = true
@@ -188,11 +189,13 @@ func dependencyNames(self string, deps []opamDependency) []string {
 	return names
 }
 
+// pinnedDependencyPackages returns a package for each dependency a lock file pins to a version. Pins that are only
+// needed to test, document or develop the project are left out, as dev dependencies are for other ecosystems.
 func pinnedDependencyPackages(ctx context.Context, self string, fields opamFields, location file.Location) []pkg.Package {
 	var pkgs []pkg.Package
 	seen := map[string]bool{self: true}
 	for _, d := range fields.Depends {
-		if d.Version == "" || seen[d.Name] {
+		if d.Version == "" || d.Development || seen[d.Name] {
 			continue
 		}
 		seen[d.Name] = true

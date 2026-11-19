@@ -75,8 +75,9 @@ func TestParseOpamPackage(t *testing.T) {
 						Version:  "1.5.0",
 						Licenses: []string{"ISC"},
 						Homepage: "https://github.com/mirage/alcotest",
+						// odoc is only needed for the docs ({with-doc})
 						Dependencies: []string{
-							"dune", "ocaml", "fmt", "astring", "cmdliner", "re", "stdlib-shims", "uutf", "ocaml-syntax-shims", "odoc",
+							"dune", "ocaml", "fmt", "astring", "cmdliner", "re", "stdlib-shims", "uutf", "ocaml-syntax-shims",
 						},
 					},
 				},

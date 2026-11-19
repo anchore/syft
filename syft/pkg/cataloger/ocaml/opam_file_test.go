@@ -60,6 +60,10 @@ depends: [
   ("ssl" | "tls")
   "mypkg" {= version}
   "odoc" {with-doc}
+  "ocamlformat" {= "0.26.2" & with-dev-setup}
+  ("alcotest" "qcheck") {with-test}
+  "ppx_expect" {with-test | build}
+  "base" {= "v0.16.0" | = "v0.17.0"}
 ]
 `,
 			want: opamFields{
@@ -67,11 +71,18 @@ depends: [
 					{Name: "ocaml"},
 					{Name: "dune"},
 					{Name: "lwt", Version: "5.4.2"},
-					{Name: "ounit2", Version: "2.2.5"},
+					{Name: "ounit2", Version: "2.2.5", Development: true},
 					{Name: "ssl"},
 					{Name: "tls"},
 					{Name: "mypkg"},
-					{Name: "odoc"},
+					{Name: "odoc", Development: true},
+					{Name: "ocamlformat", Version: "0.26.2", Development: true},
+					{Name: "alcotest", Development: true},
+					{Name: "qcheck", Development: true},
+					// a disjunction can hold without with-test
+					{Name: "ppx_expect"},
+					// a choice of versions is not a pin
+					{Name: "base"},
 				},
 			},
 		},

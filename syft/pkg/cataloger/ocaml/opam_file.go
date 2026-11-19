@@ -23,10 +23,12 @@ type opamFields struct {
 }
 
 // opamDependency is a package named in a `depends` formula. Version is only set when the dependency is pinned to an
-// exact version (e.g. `"lwt" {= "5.4.2"}`), as in opam lock files.
+// exact version (e.g. `"lwt" {= "5.4.2"}`), as in opam lock files. Development is set for dependencies that are only
+// needed to test, document or develop the package (`{with-test}`, `{with-doc}`, `{with-dev-setup}`).
 type opamDependency struct {
-	Name    string
-	Version string
+	Name        string
+	Version     string
+	Development bool
 }
 
 // parseOpamFields parses the opam file format. Only the subset of the grammar needed to extract opamFields is
@@ -57,7 +59,7 @@ func parseOpamFields(data []byte) (opamFields, error) {
 		case "homepage":
 			out.Homepage = firstString(s.value)
 		case "depends":
-			out.Depends = dependencies(s.value)
+			out.Depends = dependencies(s.value, false)
 		case "url":
 			if s.section == nil {
 				continue
@@ -442,28 +444,61 @@ func allStrings(nodes []opamNode) []string {
 	return out
 }
 
-// dependencies extracts every package named in a depends formula, including all alternatives of a disjunction.
-func dependencies(nodes []opamNode) []opamDependency {
+// dependencies extracts every package named in a depends formula, including all alternatives of a disjunction. A
+// filter on a group applies to every package in it.
+func dependencies(nodes []opamNode, development bool) []opamDependency {
 	var out []opamDependency
 	for _, n := range nodes {
+		dev := development || isDevelopmentOnly(n.option)
 		switch n.kind {
 		case tokString:
-			out = append(out, opamDependency{Name: n.text, Version: pinnedVersion(n.option)})
+			out = append(out, opamDependency{Name: n.text, Version: pinnedVersion(n.option), Development: dev})
 		case tokLBracket, tokLParen:
-			out = append(out, dependencies(n.children)...)
+			out = append(out, dependencies(n.children, dev)...)
 		}
 	}
 	return out
 }
 
+// developmentVariables are the filter variables that are only true when a package is tested, documented or set up
+// for development.
+var developmentVariables = map[string]bool{"with-test": true, "with-doc": true, "with-dev-setup": true}
+
+// isDevelopmentOnly reports whether a constraint requires one of the developmentVariables, e.g. `{with-test}` or
+// `{= "2.2.5" & with-doc}`. A disjunction (`{with-test | build}`) may hold without them, so it does not count.
+func isDevelopmentOnly(option []opamNode) bool {
+	if hasDisjunction(option) {
+		return false
+	}
+	for _, n := range option {
+		if n.kind == tokIdent && developmentVariables[n.text] {
+			return true
+		}
+	}
+	return false
+}
+
+func hasDisjunction(option []opamNode) bool {
+	for _, n := range option {
+		if n.kind == tokOp && n.text == "|" {
+			return true
+		}
+	}
+	return false
+}
+
 // pinnedVersion returns X for a constraint of the form `= "X"` (optionally combined with filters, e.g.
-// `{= "X" & with-test}`). A binary comparison such as `os = "linux"` is not a version pin.
+// `{= "X" & with-test}`). A binary comparison such as `os = "linux"` is not a version pin, and neither is a
+// disjunction such as `{= "1" | = "2"}`.
 func pinnedVersion(option []opamNode) string {
+	if hasDisjunction(option) {
+		return ""
+	}
 	for i, n := range option {
 		if n.kind != tokOp || n.text != "=" || i+1 >= len(option) || option[i+1].kind != tokString {
 			continue
 		}
-		if i == 0 || (option[i-1].kind == tokOp && (option[i-1].text == "&" || option[i-1].text == "|")) {
+		if i == 0 || (option[i-1].kind == tokOp && option[i-1].text == "&") {
 			return option[i+1].text
 		}
 	}
