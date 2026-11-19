@@ -60,6 +60,10 @@ func TestOpamPackageManagerCataloger_DeclaredLayouts(t *testing.T) {
 			"myproj @ 1.2.3 (my-proj-1.2.3/opam)",
 			// without a name field, a plain `opam` file is named after its directory
 			"noname @ 2.0 (noname/opam)",
+			// ... which may be a source archive (<name>-<version>) ...
+			"cmdliner @ 1.3.0 (cmdliner-1.3.0/opam)",
+			// ... or the project of an opam/ directory
+			"oldstyle @ 0.3 (oldstyle/opam/opam)",
 			// not cataloged: _build output, opam switch internals, opam-repository trees and installed
 			// library copies (all of these carry version 9.9.9 in the fixture)
 		}).
@@ -67,6 +71,14 @@ func TestOpamPackageManagerCataloger_DeclaredLayouts(t *testing.T) {
 			"lwt @ 5.4.2 (project/foo.opam.locked) [dependency-of] foo @ 0.1.0 (project/foo.opam.locked)",
 			"ocaml @ 4.14.2 (project/foo.opam.locked) [dependency-of] foo @ 0.1.0 (project/foo.opam.locked)",
 		}).
+		TestCataloger(t, NewOpamPackageManagerCataloger())
+}
+
+func TestOpamPackageManagerCataloger_UnnamedOpamFileAtTheRoot(t *testing.T) {
+	// the scan root has no name to give the package
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/root-opam").
+		ExpectsPackageStrings(nil).
 		TestCataloger(t, NewOpamPackageManagerCataloger())
 }
 

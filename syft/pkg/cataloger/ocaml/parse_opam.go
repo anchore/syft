@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"path"
+	"regexp"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -18,6 +19,8 @@ import (
 )
 
 const (
+	// opamFileName is the name of a plain opam file, and of the directory it was kept in by an older project layout
+	opamFileName       = "opam"
 	opamFileSuffix     = ".opam"
 	opamLockFileSuffix = ".opam.locked"
 
@@ -37,7 +40,7 @@ func parseOpamPackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 		return nil, nil, nil
 	}
 	dir, fileName := path.Split(p)
-	if fileName != "opam" && fileExists(resolver, p+".locked") {
+	if fileName != opamFileName && fileExists(resolver, p+".locked") {
 		// the lock file describes this package with exact dependency versions
 		return nil, nil, nil
 	}
@@ -48,10 +51,14 @@ func parseOpamPackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 	}
 
 	var name, version string
-	if fileName == "opam" {
-		name, version = nameAndVersionFromDir(path.Base(dir), fields)
+	if fileName == opamFileName {
+		name, version = nameAndVersionFromDir(projectDirName(dir), fields)
 	} else {
 		name, version = strings.TrimSuffix(fileName, opamFileSuffix), fields.Version
+	}
+	if name == "" {
+		log.WithFields("path", p).Trace("unable to determine the opam package name")
+		return nil, nil, nil
 	}
 
 	return []pkg.Package{newOpamPackage(ctx, opamMetadata(name, version, fields), reader.Location)}, nil, nil
@@ -98,11 +105,11 @@ func skipDeclaredOpamFile(resolver file.Resolver, p string) bool {
 		return true
 	}
 	segments := strings.Split(strings.TrimPrefix(p, "/"), "/")
-	if n := len(segments); n >= 4 && segments[n-1] == "opam" && segments[n-4] == "packages" &&
+	if n := len(segments); n >= 4 && segments[n-1] == opamFileName && segments[n-4] == "packages" &&
 		strings.HasPrefix(segments[n-2], segments[n-3]+".") {
 		return true
 	}
-	if path.Base(p) == "opam" {
+	if path.Base(p) == opamFileName {
 		dir := path.Dir(p)
 		if fileExists(resolver, path.Join(dir, "META")) || fileExists(resolver, path.Join(dir, "dune-package")) {
 			return true
@@ -126,15 +133,37 @@ func isBuildOutput(p string) bool {
 	return strings.HasPrefix(p, "_build/") || strings.Contains(p, "/_build/")
 }
 
+// projectDirName returns the name of the directory a plain `opam` file describes: its own directory, or the parent
+// of an `opam/` directory (an older layout). It is empty at the root of the scan, which has no usable name.
+func projectDirName(dir string) string {
+	dir = path.Clean(dir)
+	if path.Base(dir) == opamFileName {
+		dir = path.Dir(dir)
+	}
+	name := path.Base(dir)
+	if name == "/" || name == "." {
+		return ""
+	}
+	return name
+}
+
+// archiveDirPattern matches a `<name>-<version>` directory, as unpacked from a source archive (e.g. cmdliner-1.3.0).
+var archiveDirPattern = regexp.MustCompile(`^(.+?)-(v?[0-9]+(?:\.[0-9]+)+.*)$`)
+
 // nameAndVersionFromDir prefers the name and version fields of the file, falling back to the directory name, which
-// is either `<name>.<version>` (opam package names cannot contain a dot) or just the name.
+// is `<name>-<version>` (a source archive), `<name>.<version>` (opam package names cannot contain a dot) or just the
+// name.
 func nameAndVersionFromDir(dir string, fields opamFields) (string, string) {
 	name, version := fields.Name, fields.Version
 	if name != "" && version != "" {
 		return name, version
 	}
-	dirName, dirVersion, found := splitNameVersion(dir)
-	if !found {
+	var dirName, dirVersion string
+	if m := archiveDirPattern.FindStringSubmatch(dir); m != nil {
+		dirName, dirVersion = m[1], m[2]
+	} else if n, v, found := splitNameVersion(dir); found {
+		dirName, dirVersion = n, v
+	} else {
 		dirName = dir
 	}
 	if name == "" {
