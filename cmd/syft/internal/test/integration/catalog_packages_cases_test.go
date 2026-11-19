@@ -12,6 +12,14 @@ type testCase struct {
 
 var imageOnlyTestCases = []testCase{
 	{
+		name:        "find installed OCaml libraries",
+		pkgType:     pkg.OpamPkg,
+		pkgLanguage: pkg.OCaml,
+		pkgInfo: map[string]string{
+			"cmdliner": "1.3.0",
+		},
+	},
+	{
 		name:        "find gemspec packages",
 		pkgType:     pkg.GemPkg,
 		pkgLanguage: pkg.Ruby,

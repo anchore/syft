@@ -1,0 +1,3 @@
+description = "template of a topkg project"
+version = "%%VERSION_NUM%%"
+requires = ""
