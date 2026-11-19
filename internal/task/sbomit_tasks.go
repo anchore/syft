@@ -61,12 +61,16 @@ func NewSBOMitTask(cfg CatalogingFactoryConfig) Task {
 
 			// Current, Attestation -> Action
 			// A@X, A@X -> Add an evident-by attestation edge to every existing Node.
-			// ---, A@X -> Add a new package entry.
-			// A@X, A@Y -> Add a new package entry, leaving the cataloged one untouched.
+			// ---, A@X -> Add a new package entry, if shouldAdd allows it.
+			// A@X, A@Y -> Same as above, leaving the cataloged one untouched.
 			for _, p := range result.Packages {
 				existing := findPackages(accessor, p)
 				// Add a new package if no package with this (name, version, type) exists.
 				if len(existing) == 0 {
+					if !shouldAdd(p) {
+						log.Debugf("sbomit:   [-] %s @ %s (only fetched, not installed)", p.Name, p.Version)
+						continue
+					}
 					addNewPackage(cfg, resolver, builder, loc, p)
 					log.Debugf("sbomit:   [+] %s @ %s", p.Name, p.Version)
 					continue
@@ -84,6 +88,21 @@ func NewSBOMitTask(cfg CatalogingFactoryConfig) Task {
 	}
 
 	return NewTask("sbomit", fn)
+}
+
+// shouldAdd follows this rule: a package is added only if attested file paths show it was installed.
+// This is the default behavior for all ecosystems except npm.
+// In npm, its node_modules paths carry no version, so the artifact npm downloaded is trusted instead.
+func shouldAdd(p resolve.Package) bool {
+	for _, e := range p.Evidence {
+		switch {
+		case e.Source == resolve.SourcePath:
+			return true
+		case e.Source == resolve.SourceNetwork && e.Artifact && p.Ecosystem == "npm" && e.PkgMgr == "npm":
+			return true
+		}
+	}
+	return false
 }
 
 // Return the packages already in the SBOM with the given name, version and type.
@@ -109,7 +128,7 @@ func addAttestationEvidence(builder sbomsync.Builder, loc file.Location, target 
 		evidenceData = append(evidenceData, map[string]any{
 			"source":   string(ev.Source),
 			"pkgMgr":   ev.PkgMgr,
-			"location": ev.Location, // File path relative to where the attestation ran.
+			"location": ev.Location, // Path as witness recorded it, or the URL for network evidence.
 			"artifact": ev.Artifact,
 			"digests":  digestData(ev.Digests),
 		})

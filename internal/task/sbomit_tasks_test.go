@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sbomit/sbomit/pkg/resolve"
+
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -66,4 +68,32 @@ func Test_sbomitTask_VerifyAndAddPackages(t *testing.T) {
 	assert.Equal(t, pkg.PythonPkg, added[0].Type)
 	assert.Equal(t, "sbomit", added[0].FoundBy)
 	assert.True(t, relatedToAttestation(added[0].ID()), "the added package must be related to the attestation")
+}
+
+func Test_shouldAdd(t *testing.T) {
+	path := func(pkgMgr string) resolve.Evidence {
+		return resolve.Evidence{Source: resolve.SourcePath, PkgMgr: pkgMgr}
+	}
+	download := func(pkgMgr string, artifact bool) resolve.Evidence {
+		return resolve.Evidence{Source: resolve.SourceNetwork, PkgMgr: pkgMgr, Artifact: artifact}
+	}
+
+	tests := []struct {
+		name      string
+		ecosystem string
+		evidence  []resolve.Evidence
+		want      bool
+	}{
+		{name: "installed, seen on disk", ecosystem: "pypi", evidence: []resolve.Evidence{path("pip"), download("pip", true)}, want: true},
+		{name: "fetched by pip, never installed", ecosystem: "pypi", evidence: []resolve.Evidence{download("pip", true)}, want: false},
+		{name: "fetched by gradle, never installed", ecosystem: "maven", evidence: []resolve.Evidence{download("gradle", true)}, want: false},
+		{name: "fetched by pnpm, whose store paths carry versions", ecosystem: "npm", evidence: []resolve.Evidence{download("pnpm", true)}, want: false},
+		{name: "tarball downloaded by npm", ecosystem: "npm", evidence: []resolve.Evidence{download("npm", true)}, want: true},
+		{name: "only npm registry metadata", ecosystem: "npm", evidence: []resolve.Evidence{download("npm", false)}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, shouldAdd(resolve.Package{Ecosystem: tt.ecosystem, Evidence: tt.evidence}))
+		})
+	}
 }
