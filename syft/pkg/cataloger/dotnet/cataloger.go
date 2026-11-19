@@ -31,3 +31,9 @@ func NewDotnetPackagesLockCataloger() pkg.Cataloger {
 	return generic.NewCataloger("dotnet-packages-lock-cataloger").
 		WithParserByGlobs(parseDotnetPackagesLock, "**/packages.lock.json")
 }
+
+// NewDotnetPackagesConfigCataloger returns a cataloger based on packages.config files.
+func NewDotnetPackagesConfigCataloger() pkg.Cataloger {
+	return generic.NewCataloger("dotnet-packages-config-cataloger").
+		WithParserByGlobs(parseDotnetPackagesConfig, "**/packages.config")
+}
