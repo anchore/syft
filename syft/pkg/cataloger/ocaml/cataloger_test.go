@@ -65,10 +65,29 @@ func TestOpamPackageManagerCataloger_DeclaredLayouts(t *testing.T) {
 			// library copies (all of these carry version 9.9.9 in the fixture)
 		}).
 		ExpectsRelationshipStrings([]string{
-			"lwt @ 5.4.2 (project/foo.opam.locked) [dependency-of] bar @ 0.1.0 (project/bar.opam)",
 			"lwt @ 5.4.2 (project/foo.opam.locked) [dependency-of] foo @ 0.1.0 (project/foo.opam.locked)",
 			"ocaml @ 4.14.2 (project/foo.opam.locked) [dependency-of] foo @ 0.1.0 (project/foo.opam.locked)",
 			"ounit2 @ 2.2.5 (project/foo.opam.locked) [dependency-of] foo @ 0.1.0 (project/foo.opam.locked)",
+		}).
+		TestCataloger(t, NewOpamPackageManagerCataloger())
+}
+
+func TestOpamPackageManagerCataloger_RelationshipsStayWithinALockFile(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/lock-files").
+		ExpectsPackageStrings([]string{
+			"app @ 1.0.0 (app/app.opam.locked)",
+			"lwt @ 5.4.2 (app/app.opam.locked)",
+			"ocaml @ 4.14.2 (app/app.opam.locked)",
+			"tool @ 2.0.0 (tool/tool.opam.locked)",
+			"lwt @ 5.7.0 (tool/tool.opam.locked)",
+			"ocaml @ 5.3.0 (tool/tool.opam.locked)",
+		}).
+		ExpectsRelationshipStrings([]string{
+			"lwt @ 5.4.2 (app/app.opam.locked) [dependency-of] app @ 1.0.0 (app/app.opam.locked)",
+			"ocaml @ 4.14.2 (app/app.opam.locked) [dependency-of] app @ 1.0.0 (app/app.opam.locked)",
+			"lwt @ 5.7.0 (tool/tool.opam.locked) [dependency-of] tool @ 2.0.0 (tool/tool.opam.locked)",
+			"ocaml @ 5.3.0 (tool/tool.opam.locked) [dependency-of] tool @ 2.0.0 (tool/tool.opam.locked)",
 		}).
 		TestCataloger(t, NewOpamPackageManagerCataloger())
 }

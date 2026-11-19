@@ -15,14 +15,13 @@ import (
 func NewOpamPackageManagerCataloger() pkg.Cataloger {
 	return generic.NewCataloger("opam-cataloger").
 		WithParserByGlobs(parseOpamPackage, "**/*.opam", "**/opam").
-		WithParserByGlobs(parseOpamLockFile, "**/*.opam.locked").
-		WithProcessors(dependency.Processor(opamDependencySpecifier))
+		WithParserByGlobs(parseOpamLockFile, "**/*.opam.locked")
 }
 
 var _ dependency.Specifier = opamDependencySpecifier
 
 // opamDependencySpecifier declares that an opam package provides its own name and requires the packages named in
-// its depends field, so the dependency processor can resolve dependency-of relationships between them.
+// its depends field, so that dependency-of relationships can be resolved between packages of the same lock file.
 func opamDependencySpecifier(p pkg.Package) dependency.Specification {
 	meta, ok := p.Metadata.(pkg.OpamPackage)
 	if !ok {

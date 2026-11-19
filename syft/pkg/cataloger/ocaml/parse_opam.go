@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
 const (
@@ -28,7 +29,8 @@ const (
 var errMetadataFileTooLarge = errors.New("OCaml package metadata file is larger than the max allowed size")
 
 // parseOpamPackage parses a declared opam package definition: a `<name>.opam` file or a plain `opam` file in a
-// project. Dependencies are recorded by name; only lock files resolve them to cataloged packages.
+// project. Dependencies are recorded by name only: they are version constraints, not the packages that are used, so
+// no relationships are made to packages cataloged elsewhere.
 func parseOpamPackage(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	p := reader.Path()
 	if skipDeclaredOpamFile(resolver, p) {
@@ -56,7 +58,8 @@ func parseOpamPackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 }
 
 // parseOpamLockFile parses a `<name>.opam.locked` file (as written by `opam lock`). The project package takes its
-// descriptive metadata (license, homepage, ...) from the sibling `<name>.opam` file when present.
+// descriptive metadata (license, homepage, ...) from the sibling `<name>.opam` file when present. Relationships are
+// resolved within the lock file only, so that packages of other projects or lock files are never linked.
 func parseOpamLockFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	p := reader.Path()
 	if skipDeclaredOpamFile(resolver, p) {
@@ -83,7 +86,8 @@ func parseOpamLockFile(ctx context.Context, resolver file.Resolver, _ *generic.E
 
 	root := withLicenseLocation(ctx, newOpamPackage(ctx, meta, reader.Location), meta.Licenses, licenseLocation)
 
-	return append([]pkg.Package{root}, pinnedDependencyPackages(ctx, name, fields, reader.Location)...), nil, nil
+	pkgs := append([]pkg.Package{root}, pinnedDependencyPackages(ctx, name, fields, reader.Location)...)
+	return pkgs, dependency.Resolve(opamDependencySpecifier, pkgs), nil
 }
 
 // skipDeclaredOpamFile reports whether an opam file is not a declaration of a project's own package: build
