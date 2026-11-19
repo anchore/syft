@@ -18,10 +18,18 @@ func NewOpamPackageManagerCataloger() pkg.Cataloger {
 		WithParserByGlobs(parseOpamLockFile, "**/*.opam.locked")
 }
 
+// NewOpamSwitchCataloger returns a new cataloger object for OCaml packages installed in an opam switch, as recorded in
+// the switch's `.opam-switch/switch-state` file.
+func NewOpamSwitchCataloger() pkg.Cataloger {
+	return generic.NewCataloger("opam-switch-cataloger").
+		WithParserByGlobs(parseOpamSwitchState, "**/.opam-switch/switch-state")
+}
+
 var _ dependency.Specifier = opamDependencySpecifier
 
 // opamDependencySpecifier declares that an opam package provides its own name and requires the packages named in
-// its depends field, so that dependency-of relationships can be resolved between packages of the same lock file.
+// its depends field, so that dependency-of relationships can be resolved between packages of the same lock file or
+// opam switch.
 func opamDependencySpecifier(p pkg.Package) dependency.Specification {
 	meta, ok := p.Metadata.(pkg.OpamPackage)
 	if !ok {

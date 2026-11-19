@@ -136,6 +136,77 @@ func TestOpamPackageManagerCataloger_LockFileUsesProjectMetadata(t *testing.T) {
 		TestCataloger(t, NewOpamPackageManagerCataloger())
 }
 
+func TestOpamSwitchCataloger(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/switch").
+		ExpectsPackageStrings([]string{
+			"lwt @ 5.4.2 (_opam/.opam-switch/packages/lwt.5.4.2/opam)",
+			"ocaml @ 4.14.2 (_opam/.opam-switch/packages/ocaml.4.14.2/opam)",
+			"ocplib-endian @ 1.2 (_opam/.opam-switch/packages/ocplib-endian.1.2/opam)",
+			// installed without a package record: known from the switch state only
+			"base-unix @ base (_opam/.opam-switch/switch-state)",
+			// not cataloged: old.0.9 has a record but is not installed, and overlays are not installed packages
+		}).
+		ExpectsRelationshipStrings([]string{
+			"ocaml @ 4.14.2 (_opam/.opam-switch/packages/ocaml.4.14.2/opam) [dependency-of] lwt @ 5.4.2 (_opam/.opam-switch/packages/lwt.5.4.2/opam)",
+			"ocaml @ 4.14.2 (_opam/.opam-switch/packages/ocaml.4.14.2/opam) [dependency-of] ocplib-endian @ 1.2 (_opam/.opam-switch/packages/ocplib-endian.1.2/opam)",
+			"ocplib-endian @ 1.2 (_opam/.opam-switch/packages/ocplib-endian.1.2/opam) [dependency-of] lwt @ 5.4.2 (_opam/.opam-switch/packages/lwt.5.4.2/opam)",
+		}).
+		TestCataloger(t, NewOpamSwitchCataloger())
+}
+
+func TestOpamSwitchCataloger_RelationshipsStayWithinASwitch(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/two-switches").
+		ExpectsPackageStrings([]string{
+			"app @ 1.0 (a/_opam/.opam-switch/packages/app.1.0/opam)",
+			"ocaml @ 4.14.2 (a/_opam/.opam-switch/packages/ocaml.4.14.2/opam)",
+			"app @ 2.0 (b/_opam/.opam-switch/packages/app.2.0/opam)",
+			"ocaml @ 5.3.0 (b/_opam/.opam-switch/packages/ocaml.5.3.0/opam)",
+		}).
+		ExpectsRelationshipStrings([]string{
+			"ocaml @ 4.14.2 (a/_opam/.opam-switch/packages/ocaml.4.14.2/opam) [dependency-of] app @ 1.0 (a/_opam/.opam-switch/packages/app.1.0/opam)",
+			"ocaml @ 5.3.0 (b/_opam/.opam-switch/packages/ocaml.5.3.0/opam) [dependency-of] app @ 2.0 (b/_opam/.opam-switch/packages/app.2.0/opam)",
+		}).
+		TestCataloger(t, NewOpamSwitchCataloger())
+}
+
+func TestOpamSwitchCataloger_LicensesAndEvidence(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/switch").
+		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
+			for _, p := range pkgs {
+				if p.Name != "lwt" {
+					continue
+				}
+				licenses := p.Licenses.ToSlice()
+				require.Len(t, licenses, 1)
+				assert.Equal(t, "MIT", licenses[0].Value)
+
+				evidence := map[string]string{}
+				for _, l := range p.Locations.ToSlice() {
+					evidence[l.RealPath] = l.Annotations[pkg.EvidenceAnnotationKey]
+				}
+				assert.Equal(t, map[string]string{
+					"_opam/.opam-switch/packages/lwt.5.4.2/opam": pkg.PrimaryEvidenceAnnotation,
+					"_opam/.opam-switch/switch-state":            pkg.SupportingEvidenceAnnotation,
+				}, evidence)
+				return
+			}
+			t.Fatal("package lwt not found")
+		}).
+		TestCataloger(t, NewOpamSwitchCataloger())
+}
+
+func TestParseSwitchState(t *testing.T) {
+	installed, err := parseSwitchState([]byte("opam-version: \"2.0\"\ncompiler: [\"ocaml.5.3.0\"]\ninstalled: [\"lwt.5.4.2\" \"ocaml.5.3.0\"]\n"))
+	require.NoError(t, err)
+	assert.Equal(t, []string{"lwt.5.4.2", "ocaml.5.3.0"}, installed)
+
+	_, err = parseSwitchState([]byte("opam-version: \"2.0\"\n"))
+	require.Error(t, err)
+}
+
 // TestPlaceholderVersions checks that unsubstituted build templates (%%VERSION%%, %%VERSION_NUM%%) are not used
 // as versions.
 func TestPlaceholderVersions(t *testing.T) {

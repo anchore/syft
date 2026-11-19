@@ -38,14 +38,9 @@ type opamDependency struct {
 // parseOpamFields parses the opam file format. Only the subset of the grammar needed to extract opamFields is
 // interpreted; other fields are parsed (so that their contents cannot be mistaken for fields) and then ignored.
 func parseOpamFields(data []byte) (opamFields, error) {
-	tokens, err := lexOpam(strings.TrimPrefix(string(data), utf8BOM))
+	stmts, err := parseOpamStatements(data)
 	if err != nil {
 		return opamFields{}, err
-	}
-	p := &opamParser{tokens: tokens}
-	stmts := p.parseStatements(false)
-	if p.err != nil {
-		return opamFields{}, p.err
 	}
 
 	var out opamFields
@@ -82,6 +77,34 @@ func parseOpamFields(data []byte) (opamFields, error) {
 		return opamFields{}, errors.New("no opam-version field found")
 	}
 	return out, nil
+}
+
+// parseSwitchState returns the packages (`<name>.<version>`) that the switch-state file of an opam switch lists as
+// installed.
+func parseSwitchState(data []byte) ([]string, error) {
+	stmts, err := parseOpamStatements(data)
+	if err != nil {
+		return nil, err
+	}
+	for _, s := range stmts {
+		if s.name == "installed" {
+			return allStrings(s.value), nil
+		}
+	}
+	return nil, errors.New("no installed field found")
+}
+
+func parseOpamStatements(data []byte) ([]opamStatement, error) {
+	tokens, err := lexOpam(strings.TrimPrefix(string(data), utf8BOM))
+	if err != nil {
+		return nil, err
+	}
+	p := &opamParser{tokens: tokens}
+	stmts := p.parseStatements(false)
+	if p.err != nil {
+		return nil, p.err
+	}
+	return stmts, nil
 }
 
 type opamTokenKind int
