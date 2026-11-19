@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/internal/parsing"
 )
 
 func TestParseOpamFields(t *testing.T) {
@@ -152,6 +154,48 @@ version: "2.0"
 func TestParseOpamFields_RejectsNonOpamContent(t *testing.T) {
 	_, err := parseOpamFields([]byte("this is not an opam file\n"))
 	require.Error(t, err)
+}
+
+func TestParseOpamFields_NestingDepth(t *testing.T) {
+	nest := func(open, inner, closing string, depth int) string {
+		return strings.Repeat(open, depth) + inner + strings.Repeat(closing, depth)
+	}
+	tests := []struct {
+		name  string
+		input func(depth int) string
+	}{
+		{
+			name:  "lists",
+			input: func(depth int) string { return "license: " + nest("[", `"MIT"`, "]", depth) },
+		},
+		{
+			name:  "groups",
+			input: func(depth int) string { return "depends: " + nest("(", `"lwt"`, ")", depth) },
+		},
+		{
+			name:  "options",
+			input: func(depth int) string { return "depends: " + nest(`"lwt" {`, `"x"`, "}", depth) },
+		},
+		{
+			name:  "sections",
+			input: func(depth int) string { return nest("s {\n", `x: "y"`, "\n}", depth) },
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := parseOpamFields([]byte("opam-version: \"2.0\"\n" + tt.input(parsing.MaxDepth)))
+			require.NoError(t, err)
+
+			_, err = parseOpamFields([]byte("opam-version: \"2.0\"\n" + tt.input(parsing.MaxDepth+1)))
+			require.ErrorIs(t, err, errTooDeep)
+		})
+	}
+}
+
+func TestParseOpamFields_DeepInput(t *testing.T) {
+	// deep input overflowed the goroutine stack (fatal, not recoverable) before nesting was bounded
+	_, err := parseOpamFields([]byte("opam-version: \"2.0\"\nlicense: " + strings.Repeat("[", 2<<20)))
+	require.ErrorIs(t, err, errTooDeep)
 }
 
 func TestReadMetadataFile(t *testing.T) {

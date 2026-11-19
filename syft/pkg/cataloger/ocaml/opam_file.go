@@ -4,7 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/anchore/syft/syft/internal/parsing"
 )
+
+var errTooDeep = fmt.Errorf("nesting deeper than %d levels", parsing.MaxDepth)
 
 // opamFields holds the fields of an opam file (https://opam.ocaml.org/doc/Manual.html#Common-file-format)
 // that are relevant for cataloging.
@@ -34,6 +38,9 @@ func parseOpamFields(data []byte) (opamFields, error) {
 	}
 	p := &opamParser{tokens: tokens}
 	stmts := p.parseStatements(false)
+	if p.err != nil {
+		return opamFields{}, p.err
+	}
 
 	var out opamFields
 	var isOpamFile bool
@@ -262,6 +269,38 @@ type opamStatement struct {
 type opamParser struct {
 	tokens []opamToken
 	pos    int
+	depth  int
+	err    error
+}
+
+// descend enters a nested list, group, option or section. Beyond parsing.MaxDepth it records errTooDeep and skips to
+// the end of the input, which ends every parsing loop; this bounds both the parser and the functions walking its tree.
+func (p *opamParser) descend() bool {
+	p.depth++
+	if p.depth > parsing.MaxDepth {
+		p.err = errTooDeep
+		p.pos = len(p.tokens)
+		return false
+	}
+	return true
+}
+
+// parseNested parses the contents of a nested list, group or option up to the given closing token.
+func (p *opamParser) parseNested(closing opamTokenKind) []opamNode {
+	defer func() { p.depth-- }()
+	if !p.descend() {
+		return nil
+	}
+	return p.parseUntil(closing)
+}
+
+// parseSection parses the statements of a section up to its closing brace.
+func (p *opamParser) parseSection() []opamStatement {
+	defer func() { p.depth-- }()
+	if !p.descend() {
+		return nil
+	}
+	return p.parseStatements(true)
 }
 
 func (p *opamParser) peek(offset int) *opamToken {
@@ -298,12 +337,12 @@ func (p *opamParser) parseStatements(inSection bool) []opamStatement {
 		case p.is(0, tokIdent) && p.is(1, tokLBrace):
 			name := p.next().text
 			p.next()
-			stmts = append(stmts, opamStatement{name: name, section: p.parseStatements(true)})
+			stmts = append(stmts, opamStatement{name: name, section: p.parseSection()})
 		case p.is(0, tokIdent) && p.is(1, tokString) && p.is(2, tokLBrace):
 			name := p.next().text
 			p.next()
 			p.next()
-			stmts = append(stmts, opamStatement{name: name, section: p.parseStatements(true)})
+			stmts = append(stmts, opamStatement{name: name, section: p.parseSection()})
 		default:
 			// not a statement: skip the token so a malformed construct cannot stall parsing
 			p.next()
@@ -343,16 +382,16 @@ func (p *opamParser) parseAtom() (opamNode, bool) {
 		return n, true
 	case tokLBracket:
 		p.next()
-		n = opamNode{kind: tokLBracket, children: p.parseUntil(tokRBracket)}
+		n = opamNode{kind: tokLBracket, children: p.parseNested(tokRBracket)}
 	case tokLParen:
 		p.next()
-		n = opamNode{kind: tokLParen, children: p.parseUntil(tokRParen)}
+		n = opamNode{kind: tokLParen, children: p.parseNested(tokRParen)}
 	default:
 		return opamNode{}, false
 	}
 	if p.is(0, tokLBrace) {
 		p.next()
-		n.option = p.parseUntil(tokRBrace)
+		n.option = p.parseNested(tokRBrace)
 	}
 	return n, true
 }
