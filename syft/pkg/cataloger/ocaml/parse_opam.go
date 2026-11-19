@@ -101,7 +101,7 @@ func parseOpamLockFile(ctx context.Context, resolver file.Resolver, _ *generic.E
 // output, opam switch internals (installed packages are cataloged separately), entries of an opam-repository
 // checkout, and the copies of opam files that are installed next to libraries.
 func skipDeclaredOpamFile(resolver file.Resolver, p string) bool {
-	if isBuildOutput(p) || strings.Contains(p, "/.opam-switch/") {
+	if isBuildOutput(p) || strings.Contains("/"+p, "/.opam-switch/") {
 		return true
 	}
 	segments := strings.Split(strings.TrimPrefix(p, "/"), "/")
@@ -121,12 +121,15 @@ func skipDeclaredOpamFile(resolver file.Resolver, p string) bool {
 // isInsideOpamSwitch reports whether the path is within an opam switch, whose packages are cataloged from the
 // switch's own records instead.
 func isInsideOpamSwitch(resolver file.Resolver, p string) bool {
-	for dir := path.Dir(p); dir != "/" && dir != "." && dir != ""; dir = path.Dir(dir) {
+	for dir := path.Dir(p); ; dir = path.Dir(dir) {
 		if fileExists(resolver, path.Join(dir, ".opam-switch", "switch-state")) {
 			return true
 		}
+		// the root is checked too: it is the switch when the switch itself is scanned
+		if dir == "/" || dir == "." || dir == "" {
+			return false
+		}
 	}
-	return false
 }
 
 func isBuildOutput(p string) bool {

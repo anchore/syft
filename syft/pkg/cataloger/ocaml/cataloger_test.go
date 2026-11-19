@@ -40,6 +40,7 @@ func Test_PackageCataloger_Globs(t *testing.T) {
 					"opam/ocaml-base-compiler.4.14.0/dune-package",
 					"opam/project.opam",
 					"opam/.opam-switch/switch-state",
+					".opam-switch/switch-state",
 					"opam/ocaml-base-compiler.4.14.0/.opam-switch/switch-state",
 				).
 				TestCataloger(t, NewOpamPackageManagerCataloger())
@@ -71,6 +72,14 @@ func TestOpamPackageManagerCataloger_DeclaredLayouts(t *testing.T) {
 			"lwt @ 5.4.2 (project/foo.opam.locked) [dependency-of] foo @ 0.1.0 (project/foo.opam.locked)",
 			"ocaml @ 4.14.2 (project/foo.opam.locked) [dependency-of] foo @ 0.1.0 (project/foo.opam.locked)",
 		}).
+		TestCataloger(t, NewOpamPackageManagerCataloger())
+}
+
+func TestOpamPackageManagerCataloger_SwitchAtTheRoot(t *testing.T) {
+	// files of an opam switch are not declared packages, also when the switch itself is scanned
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/declared/switch/_opam").
+		ExpectsPackageStrings(nil).
 		TestCataloger(t, NewOpamPackageManagerCataloger())
 }
 
