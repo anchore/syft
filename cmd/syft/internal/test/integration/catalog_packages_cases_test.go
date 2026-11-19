@@ -12,14 +12,6 @@ type testCase struct {
 
 var imageOnlyTestCases = []testCase{
 	{
-		name:        "find installed opam packages",
-		pkgType:     pkg.OpamPkg,
-		pkgLanguage: pkg.OCaml,
-		pkgInfo: map[string]string{
-			"lwt": "5.4.2",
-		},
-	},
-	{
 		name:        "find gemspec packages",
 		pkgType:     pkg.GemPkg,
 		pkgLanguage: pkg.Ruby,
@@ -436,14 +428,11 @@ var dirOnlyTestCases = []testCase{
 		},
 	},
 	{
-		name:        "find opam packages",
+		name:        "find opam package",
 		pkgType:     pkg.OpamPkg,
 		pkgLanguage: pkg.OCaml,
 		pkgInfo: map[string]string{
-			// declared (opam file in a project)
 			"ocaml-base-compiler": "4.14.0",
-			// installed in an opam switch
-			"lwt": "5.4.2",
 		},
 	},
 	{

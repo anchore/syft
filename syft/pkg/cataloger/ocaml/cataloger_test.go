@@ -98,22 +98,6 @@ func TestOpamPackageManagerCataloger_LockFileUsesProjectMetadata(t *testing.T) {
 		TestCataloger(t, NewOpamPackageManagerCataloger())
 }
 
-func TestOpamSwitchCataloger(t *testing.T) {
-	pkgtest.NewCatalogTester().
-		FromDirectory(t, "testdata/switch").
-		ExpectsPackageStrings([]string{
-			"lwt @ 5.4.2 (_opam/.opam-switch/packages/lwt.5.4.2/opam)",
-			"ocaml @ 4.14.2 (_opam/.opam-switch/packages/ocaml.4.14.2/opam)",
-			"ocplib-endian @ 1.2 (_opam/.opam-switch/packages/ocplib-endian.1.2/opam)",
-		}).
-		ExpectsRelationshipStrings([]string{
-			"ocaml @ 4.14.2 (_opam/.opam-switch/packages/ocaml.4.14.2/opam) [dependency-of] lwt @ 5.4.2 (_opam/.opam-switch/packages/lwt.5.4.2/opam)",
-			"ocaml @ 4.14.2 (_opam/.opam-switch/packages/ocaml.4.14.2/opam) [dependency-of] ocplib-endian @ 1.2 (_opam/.opam-switch/packages/ocplib-endian.1.2/opam)",
-			"ocplib-endian @ 1.2 (_opam/.opam-switch/packages/ocplib-endian.1.2/opam) [dependency-of] lwt @ 5.4.2 (_opam/.opam-switch/packages/lwt.5.4.2/opam)",
-		}).
-		TestCataloger(t, NewOpamSwitchCataloger())
-}
-
 // TestPlaceholderVersions checks that unsubstituted build templates (%%VERSION%%, %%VERSION_NUM%%) are not used
 // as versions.
 func TestPlaceholderVersions(t *testing.T) {

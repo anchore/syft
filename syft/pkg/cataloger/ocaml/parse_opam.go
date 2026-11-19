@@ -86,21 +86,6 @@ func parseOpamLockFile(ctx context.Context, resolver file.Resolver, _ *generic.E
 	return append([]pkg.Package{root}, pinnedDependencyPackages(ctx, name, fields, reader.Location)...), nil, nil
 }
 
-// parseOpamSwitchPackage parses the record opam keeps for each package installed in a switch, at
-// `<switch>/.opam-switch/packages/<name>.<version>/opam`.
-func parseOpamSwitchPackage(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	fields, ok := readOpamFields(reader)
-	if !ok {
-		return nil, nil, nil
-	}
-	dir := path.Base(path.Dir(reader.Path()))
-	name, version, found := splitNameVersion(dir)
-	if !found {
-		name, version = nameAndVersionFromDir(dir, fields)
-	}
-	return []pkg.Package{newOpamPackage(ctx, opamMetadata(name, version, fields), reader.Location)}, nil, nil
-}
-
 // skipDeclaredOpamFile reports whether an opam file is not a declaration of a project's own package: build
 // output, opam switch internals (installed packages are cataloged separately), entries of an opam-repository
 // checkout, and the copies of opam files that are installed next to libraries.

@@ -19,13 +19,6 @@ func NewOpamPackageManagerCataloger() pkg.Cataloger {
 		WithProcessors(dependency.Processor(opamDependencySpecifier))
 }
 
-// NewOpamSwitchCataloger returns a new cataloger object for OCaml packages installed in an opam switch.
-func NewOpamSwitchCataloger() pkg.Cataloger {
-	return generic.NewCataloger("opam-switch-cataloger").
-		WithParserByGlobs(parseOpamSwitchPackage, "**/.opam-switch/packages/*/opam").
-		WithProcessors(dependency.Processor(opamDependencySpecifier))
-}
-
 var _ dependency.Specifier = opamDependencySpecifier
 
 // opamDependencySpecifier declares that an opam package provides its own name and requires the packages named in
