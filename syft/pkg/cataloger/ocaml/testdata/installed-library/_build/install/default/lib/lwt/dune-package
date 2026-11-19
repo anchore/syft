@@ -1,3 +1,0 @@
-(lang dune 3.9)
-(name lwt)
-(version 9.9.9)

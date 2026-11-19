@@ -16,8 +16,7 @@ var imageOnlyTestCases = []testCase{
 		pkgType:     pkg.OpamPkg,
 		pkgLanguage: pkg.OCaml,
 		pkgInfo: map[string]string{
-			"lwt":      "5.4.2",
-			"cmdliner": "1.3.0",
+			"lwt": "5.4.2",
 		},
 	},
 	{
@@ -445,8 +444,6 @@ var dirOnlyTestCases = []testCase{
 			"ocaml-base-compiler": "4.14.0",
 			// installed in an opam switch
 			"lwt": "5.4.2",
-			// installed library (dune-package)
-			"cmdliner": "1.3.0",
 		},
 	},
 	{

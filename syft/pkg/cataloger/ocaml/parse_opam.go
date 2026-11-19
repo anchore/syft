@@ -122,6 +122,17 @@ func skipDeclaredOpamFile(resolver file.Resolver, p string) bool {
 	return isInsideOpamSwitch(resolver, p)
 }
 
+// isInsideOpamSwitch reports whether the path is within an opam switch, whose packages are cataloged from the
+// switch's own records instead.
+func isInsideOpamSwitch(resolver file.Resolver, p string) bool {
+	for dir := path.Dir(p); dir != "/" && dir != "." && dir != ""; dir = path.Dir(dir) {
+		if fileExists(resolver, path.Join(dir, ".opam-switch", "switch-state")) {
+			return true
+		}
+	}
+	return false
+}
+
 func isBuildOutput(p string) bool {
 	return strings.HasPrefix(p, "_build/") || strings.Contains(p, "/_build/")
 }

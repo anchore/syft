@@ -26,15 +26,6 @@ func NewOpamSwitchCataloger() pkg.Cataloger {
 		WithProcessors(dependency.Processor(opamDependencySpecifier))
 }
 
-// NewInstalledLibraryCataloger returns a new cataloger object for OCaml libraries installed outside of an opam
-// switch (e.g. by a system package manager), identified by their dune-package or findlib META files.
-func NewInstalledLibraryCataloger() pkg.Cataloger {
-	return generic.NewCataloger("ocaml-installed-library-cataloger").
-		WithParserByGlobs(parseDunePackage, "**/dune-package").
-		WithParserByGlobs(parseFindlibMeta, "**/META").
-		WithProcessors(dependency.Processor(opamDependencySpecifier))
-}
-
 var _ dependency.Specifier = opamDependencySpecifier
 
 // opamDependencySpecifier declares that an opam package provides its own name and requires the packages named in

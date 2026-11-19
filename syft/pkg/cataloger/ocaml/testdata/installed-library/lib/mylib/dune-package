@@ -1,3 +1,0 @@
-(lang dune 3.9)
-(name mylib)
-(sections (lib .))

@@ -114,56 +114,6 @@ func TestOpamSwitchCataloger(t *testing.T) {
 		TestCataloger(t, NewOpamSwitchCataloger())
 }
 
-func TestInstalledLibraryCataloger(t *testing.T) {
-	pkgtest.NewCatalogTester().
-		FromDirectory(t, "testdata/installed-library").
-		ExpectsPackageStrings([]string{
-			// name and version from dune-package; license and dependencies from the sibling opam file
-			"lwt @ 5.4.2 (lib/lwt/dune-package)",
-			// findlib-only library: version from META
-			"cmdliner @ 1.3.0 (lib/cmdliner/META)",
-			// dune-package without a version: fall back to META
-			"mylib @ 2.1.0 (lib/mylib/dune-package)",
-			// not cataloged: findlib shims for compiler libraries (bytes, unix), non-findlib META files, META files
-			// without an opam file next to them (lib/stray, the src/pkg/META template of a topkg project) and dune
-			// _build output
-		}).
-		ExpectsRelationshipStrings([]string{
-			"cmdliner @ 1.3.0 (lib/cmdliner/META) [dependency-of] lwt @ 5.4.2 (lib/lwt/dune-package)",
-		}).
-		TestCataloger(t, NewInstalledLibraryCataloger())
-}
-
-func TestInstalledLibraryCataloger_SkipsLibrariesInsideAnOpamSwitch(t *testing.T) {
-	pkgtest.NewCatalogTester().
-		FromDirectory(t, "testdata/switch").
-		ExpectsPackageStrings(nil).
-		TestCataloger(t, NewInstalledLibraryCataloger())
-}
-
-func TestInstalledLibraryCataloger_LicensesComeFromTheOpamFile(t *testing.T) {
-	pkgtest.NewCatalogTester().
-		FromDirectory(t, "testdata/installed-library").
-		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
-			for _, p := range pkgs {
-				if p.Name != "lwt" {
-					continue
-				}
-				licenses := p.Licenses.ToSlice()
-				require.Len(t, licenses, 1)
-				assert.Equal(t, "MIT", licenses[0].Value)
-				var paths []string
-				for _, l := range licenses[0].Locations.ToSlice() {
-					paths = append(paths, l.RealPath)
-				}
-				assert.Equal(t, []string{"lib/lwt/opam"}, paths)
-				return
-			}
-			t.Fatal("package lwt not found")
-		}).
-		TestCataloger(t, NewInstalledLibraryCataloger())
-}
-
 // TestPlaceholderVersions checks that unsubstituted build templates (%%VERSION%%, %%VERSION_NUM%%) are not used
 // as versions.
 func TestPlaceholderVersions(t *testing.T) {
@@ -181,9 +131,4 @@ func TestPlaceholderVersions(t *testing.T) {
 		FromDirectory(t, "testdata/placeholder-version").
 		ExpectsAssertion(versions(map[string]string{"myproj": ""})).
 		TestCataloger(t, NewOpamPackageManagerCataloger())
-
-	pkgtest.NewCatalogTester().
-		FromDirectory(t, "testdata/placeholder-version").
-		ExpectsAssertion(versions(map[string]string{"tmpl": ""})).
-		TestCataloger(t, NewInstalledLibraryCataloger())
 }
