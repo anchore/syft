@@ -3,12 +3,16 @@ package ocaml
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/anchore/syft/syft/internal/parsing"
 )
 
 var errTooDeep = fmt.Errorf("nesting deeper than %d levels", parsing.MaxDepth)
+
+// utf8BOM is ignored at the start of a file, which some editors write.
+const utf8BOM = "\uFEFF"
 
 // opamFields holds the fields of an opam file (https://opam.ocaml.org/doc/Manual.html#Common-file-format)
 // that are relevant for cataloging.
@@ -34,7 +38,7 @@ type opamDependency struct {
 // parseOpamFields parses the opam file format. Only the subset of the grammar needed to extract opamFields is
 // interpreted; other fields are parsed (so that their contents cannot be mistaken for fields) and then ignored.
 func parseOpamFields(data []byte) (opamFields, error) {
-	tokens, err := lexOpam(string(data))
+	tokens, err := lexOpam(strings.TrimPrefix(string(data), utf8BOM))
 	if err != nil {
 		return opamFields{}, err
 	}
@@ -211,32 +215,84 @@ func (l *opamLexer) skipBlockComment() error {
 }
 
 func (l *opamLexer) lexTripleQuotedString() error {
-	end := strings.Index(l.s[l.i+3:], `"""`)
-	if end < 0 {
-		return errors.New("unterminated triple-quoted string")
-	}
-	l.emit(tokString, l.s[l.i+3:l.i+3+end], 3+end+3)
-	return nil
+	return l.lexQuoted(`"""`)
 }
 
 func (l *opamLexer) lexString() error {
-	var b strings.Builder
-	for i := l.i + 1; i < len(l.s); i++ {
-		switch l.s[i] {
-		case '\\':
-			if i+1 < len(l.s) {
-				i++
-				b.WriteByte(l.s[i])
-			}
-		case '"':
-			l.tokens = append(l.tokens, opamToken{kind: tokString, text: b.String()})
-			l.i = i + 1
+	return l.lexQuoted(`"`)
+}
+
+// lexQuoted reads a string delimited by quote, decoding its escape sequences.
+func (l *opamLexer) lexQuoted(quote string) error {
+	start := l.i + len(quote)
+	for i := start; i < len(l.s); i++ {
+		switch {
+		case l.s[i] == '\\':
+			i++
+		case strings.HasPrefix(l.s[i:], quote):
+			l.emit(tokString, unescapeOpamString(l.s[start:i]), i+len(quote)-l.i)
 			return nil
-		default:
-			b.WriteByte(l.s[i])
 		}
 	}
 	return errors.New("unterminated string")
+}
+
+var opamSimpleEscapes = map[byte]byte{'\\': '\\', '"': '"', '\'': '\'', 'n': '\n', 'r': '\r', 't': '\t', 'b': '\b', ' ': ' '}
+
+// unescapeOpamString decodes the escape sequences of the opam file format: \\ \" \' \n \r \t \b and "\ ", decimal
+// \ddd and hexadecimal \xhh codes, and a backslash at the end of a line, which skips the line break and the indentation
+// that follows. Other sequences are kept as written.
+func unescapeOpamString(s string) string {
+	if !strings.Contains(s, "\\") {
+		return s
+	}
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		if s[i] != '\\' || i+1 >= len(s) {
+			b.WriteByte(s[i])
+			continue
+		}
+		next := s[i+1]
+		switch {
+		case opamSimpleEscapes[next] != 0:
+			b.WriteByte(opamSimpleEscapes[next])
+			i++
+		case next == '\n' || (next == '\r' && i+2 < len(s) && s[i+2] == '\n'):
+			i++
+			if next == '\r' {
+				i++
+			}
+			for i+1 < len(s) && (s[i+1] == ' ' || s[i+1] == '\t') {
+				i++
+			}
+		case i+3 < len(s) && isDigits(s[i+1:i+4]):
+			if c, err := strconv.ParseUint(s[i+1:i+4], 10, 8); err == nil {
+				b.WriteByte(byte(c))
+				i += 3
+			} else {
+				b.WriteByte(s[i])
+			}
+		case next == 'x' && i+3 < len(s):
+			if c, err := strconv.ParseUint(s[i+2:i+4], 16, 8); err == nil {
+				b.WriteByte(byte(c))
+				i += 3
+			} else {
+				b.WriteByte(s[i])
+			}
+		default:
+			b.WriteByte(s[i])
+		}
+	}
+	return b.String()
+}
+
+func isDigits(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func (l *opamLexer) lexIdent() {

@@ -87,6 +87,28 @@ depends: [
 			},
 		},
 		{
+			name: "escape sequences",
+			input: "opam-version: \"2.0\"\n" +
+				`name: "a\"b\\c"` + "\n" +
+				`version: "1\n2\t3\0654\x35"` + "\n" +
+				"homepage: \"https://example.com/\\\n    long\"\n" +
+				`license: """M"I"T\q"""` + "\n",
+			want: opamFields{
+				Name:     `a"b\c`,
+				Version:  "1\n2\t3A45",
+				Homepage: "https://example.com/long",
+				// unknown escapes are kept as written
+				Licenses: []string{`M"I"T\q`},
+			},
+		},
+		{
+			name:  "byte order mark",
+			input: "\uFEFFopam-version: \"2.0\"\nversion: \"1.0\"\n",
+			want: opamFields{
+				Version: "1.0",
+			},
+		},
+		{
 			name: "url section with single checksum",
 			input: `opam-version: "2.0"
 url {
