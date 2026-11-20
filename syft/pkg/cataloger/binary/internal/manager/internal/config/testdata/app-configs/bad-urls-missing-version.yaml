@@ -1,0 +1,7 @@
+download-path: classifiers/bin
+snippet-path: classifiers/snippets
+
+from-urls:
+  - name: kubelet
+    targets:
+      - url: https://dl.k8s.io/v1.28.0/bin/linux/amd64/kubelet
