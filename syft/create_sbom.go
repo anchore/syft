@@ -27,12 +27,19 @@ import (
 
 // CreateSBOM creates a software bill-of-materials from the given source. If the CreateSBOMConfig is nil, then
 // default options will be used.
-//
-//nolint:funlen
 func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (*sbom.SBOM, error) {
 	if cfg == nil {
 		cfg = DefaultCreateSBOMConfig()
 	}
+	return createSBOM(ctx, src, cfg)
+}
+
+// createSBOM is CreateSBOM for a non-nil config. It must not reference DefaultCreateSBOMConfig: callers that reach
+// it through CreateSBOMConfig.Create, with a config that doesn't come from DefaultCreateSBOMConfig, then don't link
+// every default cataloger into their binary.
+//
+//nolint:funlen
+func createSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (*sbom.SBOM, error) {
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}

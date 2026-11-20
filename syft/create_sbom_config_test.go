@@ -651,3 +651,9 @@ func TestCreateSBOMConfig_archiveTaskGroup(t *testing.T) {
 			"java's own squash-inlined depth must not be written to either")
 	})
 }
+
+func TestCreateSBOMConfig_Create_NilConfig(t *testing.T) {
+	var cfg *CreateSBOMConfig
+	_, err := cfg.Create(context.Background(), nil)
+	require.ErrorContains(t, err, "no SBOM configuration provided")
+}
