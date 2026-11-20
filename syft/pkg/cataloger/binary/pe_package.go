@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	packageurl "github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -15,6 +16,9 @@ var (
 	// spaceRegex includes nbsp (#160) considered to be a space character
 	spaceRegex  = regexp.MustCompile(`[\s\xa0]+`)
 	numberRegex = regexp.MustCompile(`\d`)
+	// php ext dll InternalName / OriginalFilename patterns
+	phpExtensionInternalNameRegex = regexp.MustCompile(`(?i)^(\S+) extension$`)
+	phpExtensionFilenameRegex     = regexp.MustCompile(`(?i)^php_(.+)\.dll$`)
 )
 
 func newPEPackage(versionResources map[string]string, f file.Location) pkg.Package {
@@ -44,6 +48,29 @@ func newPEPackage(versionResources map[string]string, f file.Location) pkg.Packa
 		// build a generic PURL for ghostscript
 		purl := packageurl.NewPackageURL(packageurl.TypeGeneric, "", "ghostscript", p.Version, nil, "").ToString()
 		p.PURL = purl
+	}
+
+	// php ext dll isn't php, use ext name/ver
+	if ext := phpExtensionName(versionResources); ext != "" {
+		p.Name = ext
+		// ProductVersion is always php ver
+		if fileVersion := extractVersionFromResourcesValue(versionResources["FileVersion"]); fileVersion != "" {
+			p.Version = fileVersion
+		}
+		if p.Version != "" {
+			p.PURL = packageurl.NewPackageURL(packageurl.TypeGeneric, "", ext, p.Version, nil, "").ToString()
+		}
+		p.CPEs = []cpe.CPE{
+			{
+				Attributes: cpe.Attributes{
+					Part:    "a",
+					Vendor:  "php-" + ext,
+					Product: "php-" + ext,
+					Version: p.Version,
+				},
+				Source: cpe.DeclaredSource,
+			},
+		}
 	}
 
 	p.SetID()
@@ -93,6 +120,20 @@ func findNameFromVR(versionResources map[string]string) string {
 
 	return name
 }
+
+func phpExtensionName(versionResources map[string]string) string {
+	if !strings.EqualFold(spaceNormalize(versionResources["ProductName"]), "php") {
+		return ""
+	}
+	if match := phpExtensionInternalNameRegex.FindStringSubmatch(spaceNormalize(versionResources["InternalName"])); match != nil {
+		return strings.ToLower(match[1])
+	}
+	if match := phpExtensionFilenameRegex.FindStringSubmatch(spaceNormalize(versionResources["OriginalFilename"])); match != nil {
+		return strings.ToLower(match[1])
+	}
+	return ""
+}
+
 func isMicrosoftVR(versionResources map[string]string) bool {
 	return strings.Contains(strings.ToLower(versionResources["CompanyName"]), "microsoft") ||
 		strings.Contains(strings.ToLower(versionResources["ProductName"]), "microsoft")
