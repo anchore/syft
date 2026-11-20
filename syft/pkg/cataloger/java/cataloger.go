@@ -136,11 +136,14 @@ func NewPomCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
 	}
 }
 
-// NewGradleLockfileCataloger returns a cataloger capable of parsing dependencies from a gradle.lockfile file.
+// NewGradleLockfileCataloger returns a cataloger capable of parsing dependencies from Gradle lockfiles:
+// gradle.lockfile for a project's configurations, and buildscript-gradle.lockfile and
+// settings-gradle.lockfile, which Gradle writes in the same format for the classpaths of the build
+// script and the settings script.
 // Note: Older versions of lockfiles aren't supported yet
 func NewGradleLockfileCataloger() pkg.Cataloger {
 	return generic.NewCataloger("java-gradle-lockfile-cataloger").
-		WithParserByGlobs(parseGradleLockfile, "**/gradle.lockfile*")
+		WithParserByGlobs(parseGradleLockfile, "**/gradle.lockfile*", "**/buildscript-gradle.lockfile", "**/settings-gradle.lockfile")
 }
 
 // NewJvmDistributionCataloger returns packages representing JDK/JRE installations (of multiple distribution types).

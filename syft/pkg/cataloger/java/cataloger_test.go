@@ -326,3 +326,30 @@ func TestJvmDistributionCatalogerFromFile(t *testing.T) {
 	}
 
 }
+
+func Test_GradleLockfileCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain gradle lockfiles for the project, the build script and the settings script",
+			fixture: "testdata/glob-paths",
+			expected: []string{
+				"gradle/gradle.lockfile",
+				"gradle/buildscript-gradle.lockfile",
+				"gradle/settings-gradle.lockfile",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsResolverContentQueries(test.expected).
+				TestCataloger(t, NewGradleLockfileCataloger())
+		})
+	}
+}
