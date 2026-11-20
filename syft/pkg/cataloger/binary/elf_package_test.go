@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -163,6 +164,31 @@ func Test_newELFPackage(t *testing.T) {
 				Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 					Type:   "binary",
 					System: "syftsys",
+				},
+			},
+		},
+		{
+			name: "declared application cpe is used instead of a generated one",
+			metadata: elfBinaryPackageNotes{
+				Name:    "cloudflared",
+				Version: "2026.10.7",
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
+					Type:   "generic",
+					AppCpe: "cpe:2.3:a:cloudflare:cloudflared:2026.10.7:*:*:*:*:*:*:*",
+				},
+			},
+
+			expected: pkg.Package{
+				Name:    "cloudflared",
+				Version: "2026.10.7",
+				Type:    "binary",
+				PURL:    "pkg:generic/cloudflared@2026.10.7",
+				CPEs: []cpe.CPE{
+					cpe.Must("cpe:2.3:a:cloudflare:cloudflared:2026.10.7:*:*:*:*:*:*:*", cpe.DeclaredSource),
+				},
+				Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
+					Type:   "generic",
+					AppCpe: "cpe:2.3:a:cloudflare:cloudflared:2026.10.7:*:*:*:*:*:*:*",
 				},
 			},
 		},

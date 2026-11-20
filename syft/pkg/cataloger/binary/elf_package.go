@@ -16,6 +16,7 @@ func newELFPackage(ctx context.Context, metadata elfBinaryPackageNotes, location
 		Version:   metadata.Version,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, metadata.License)),
 		PURL:      elfPackageURL(metadata),
+		CPEs:      elfPackageCPEs(metadata),
 		Type:      pkgType(metadata.Type),
 		Locations: locations,
 		Metadata:  metadata.ELFBinaryPackageNoteJSONPayload,
@@ -24,6 +25,20 @@ func newELFPackage(ctx context.Context, metadata elfBinaryPackageNotes, location
 	p.SetID()
 
 	return p
+}
+
+// elfPackageCPEs returns the CPE the package note declares for the upstream application, if any. A declared CPE is
+// authoritative, so no CPE is generated from the package name for such a package.
+func elfPackageCPEs(metadata elfBinaryPackageNotes) []cpe.CPE {
+	if metadata.AppCpe == "" {
+		return nil
+	}
+	c, err := cpe.New(metadata.AppCpe, cpe.DeclaredSource)
+	if err != nil {
+		log.WithFields("error", err).Trace("unable to parse the application cpe of an elf binary package")
+		return nil
+	}
+	return []cpe.CPE{c}
 }
 
 func elfPackageURL(metadata elfBinaryPackageNotes) string {
