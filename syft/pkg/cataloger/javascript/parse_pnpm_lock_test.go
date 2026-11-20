@@ -370,6 +370,63 @@ func TestParsePnpmLockV5PeerSuffix(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
 }
 
+func TestParsePnpmV6LockNonRegistryPackages(t *testing.T) {
+	// a tarball or git dependency is keyed by its source rather than by name@version
+	// (e.g. "@codeload.github.com/..." or "github.com/<owner>/<repo>/<commit>"),
+	// so its name and version come from the entry's own fields.
+	fixture := "testdata/pnpm-v6-non-registry/pnpm-lock.yaml"
+
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "@itsmapleleaf/configs",
+			Version:   "4.0.0",
+			PURL:      "pkg:npm/%40itsmapleleaf/configs@4.0.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Dependencies: map[string]string{
+					"typescript": "5.2.2",
+				},
+			},
+		},
+		{
+			Name:      "@snyk/gemfile",
+			Version:   "0.0.0",
+			PURL:      "pkg:npm/%40snyk/gemfile@0.0.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "typescript",
+			Version:   "5.2.2",
+			PURL:      "pkg:npm/typescript@5.2.2",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w=="},
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: expectedPkgs[2],
+			To:   expectedPkgs[0],
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
+}
+
 func TestParsePnpmLockV9(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	fixture := "testdata/pnpm-v9/pnpm-lock.yaml"
