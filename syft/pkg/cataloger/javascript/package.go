@@ -18,7 +18,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
 
-func newPackageJSONPackage(ctx context.Context, resolver file.Resolver, u packageJSON, indexLocation file.Location) pkg.Package {
+func newPackageJSONPackage(ctx context.Context, resolver file.Resolver, cfg CatalogerConfig, u packageJSON, indexLocation file.Location) pkg.Package {
 	licenseCandidates, err := u.licensesFromJSON()
 	if err != nil {
 		log.Debugf("unable to extract licenses from javascript package.json: %+v", err)
@@ -80,7 +80,9 @@ func newPackageJSONPackage(ctx context.Context, resolver file.Resolver, u packag
 	p.SetID()
 
 	// if license not specified, search for license files
-	p = licenses.RelativeToPackage(ctx, resolver, p)
+	if cfg.SearchLocalLicenses {
+		p = licenses.RelativeToPackage(ctx, resolver, p)
+	}
 
 	return p
 }

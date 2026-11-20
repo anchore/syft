@@ -398,7 +398,7 @@ func TestParsePackageJSON(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Fixture, func(t *testing.T) {
 			test.ExpectedPkg.Locations.Add(file.NewLocation(test.Fixture))
-			pkgtest.TestFileParser(t, test.Fixture, parsePackageJSON, []pkg.Package{test.ExpectedPkg}, nil)
+			pkgtest.TestFileParser(t, test.Fixture, packageJSONParser{cfg: DefaultCatalogerConfig()}.parsePackageJSON, []pkg.Package{test.ExpectedPkg}, nil)
 		})
 	}
 }
@@ -407,7 +407,7 @@ func Test_corruptPackageJSON(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromFile(t, "testdata/corrupt/package.json").
 		WithError().
-		TestParser(t, parsePackageJSON)
+		TestParser(t, packageJSONParser{cfg: DefaultCatalogerConfig()}.parsePackageJSON)
 }
 
 func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anchore/syft/issues/311
@@ -424,7 +424,7 @@ func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anch
 			Locations: file.NewLocationSet(file.NewLocation(fixtureFile)),
 		},
 	}
-	pkgtest.TestFileParser(t, fixtureFile, parsePackageJSON, expectedPkgs, nil)
+	pkgtest.TestFileParser(t, fixtureFile, packageJSONParser{cfg: DefaultCatalogerConfig()}.parsePackageJSON, expectedPkgs, nil)
 }
 
 func Test_pathContainsNodeModulesDirectory(t *testing.T) {
