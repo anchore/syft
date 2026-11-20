@@ -64,7 +64,8 @@ func (s stereoscopeImageSource) Describe() source.Description {
 
 	version := a.Version
 	versionIfUnset := func(v string) {
-		if version != "" && version != "latest" {
+		// a user-provided version is kept as-is, even "latest"
+		if a.Version != "" || (version != "" && version != "latest") {
 			return
 		}
 		version = v
