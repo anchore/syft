@@ -354,35 +354,49 @@ func extractVersionFromContents(reader io.Reader) string {
 	return ""
 }
 
-func extractVersionFromLDFlags(ldflags string, maimModule string) (majorVersion string, fullVersion string) {
+func extractVersionFromLDFlags(ldflags string, mainModule string) (majorVersion string, fullVersion string) {
 	if ldflags == "" {
 		return "", ""
 	}
 
-	for _, pattern := range knownBuildFlagPatterns {
-		newPattern := regexp.MustCompile(fmt.Sprintf(`(main|%s\/[^\s]*)%s`, strings.ReplaceAll(maimModule, "/", "\\/"), pattern.String()))
-		groups := internal.MatchNamedCaptureGroups(newPattern, ldflags)
-		v, ok := groups["version"]
+	for _, prefix := range ldflagsPackagePrefixes(mainModule) {
+		for _, pattern := range knownBuildFlagPatterns {
+			newPattern := regexp.MustCompile(fmt.Sprintf(`(main|%s\/[^\s]*)%s`, strings.ReplaceAll(prefix, "/", "\\/"), pattern.String()))
+			groups := internal.MatchNamedCaptureGroups(newPattern, ldflags)
+			v, ok := groups["version"]
 
-		if !ok {
-			continue
+			if !ok {
+				continue
+			}
+
+			fullVersion = v
+			if !strings.HasPrefix(v, "v") {
+				fullVersion = fmt.Sprintf("v%s", v)
+			}
+			components := strings.Split(v, ".")
+
+			if len(components) == 0 {
+				continue
+			}
+
+			majorVersion = strings.TrimPrefix(components[0], "v")
+			return majorVersion, fullVersion
 		}
-
-		fullVersion = v
-		if !strings.HasPrefix(v, "v") {
-			fullVersion = fmt.Sprintf("v%s", v)
-		}
-		components := strings.Split(v, ".")
-
-		if len(components) == 0 {
-			continue
-		}
-
-		majorVersion = strings.TrimPrefix(components[0], "v")
-		return majorVersion, fullVersion
 	}
 
 	return "", ""
+}
+
+// ldflagsPackagePrefixes returns the main module path, then its host/owner/repo root on hosts without
+// subgroups (so not gitlab.com). A main module crafted from the package path (see createMainModuleFromPath)
+// can sit below the package that holds the version, as github.com/docker/cli/cmd/docker does.
+func ldflagsPackagePrefixes(mainModule string) []string {
+	prefixes := []string{mainModule}
+	parts := strings.SplitN(mainModule, "/", 4)
+	if len(parts) == 4 && (parts[0] == "github.com" || parts[0] == "bitbucket.org") {
+		prefixes = append(prefixes, strings.Join(parts[:3], "/"))
+	}
+	return prefixes
 }
 
 func getGOARCH(settings []debug.BuildSetting) string {
