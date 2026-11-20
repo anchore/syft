@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"slices"
 	"strings"
 
 	"github.com/tailscale/hujson"
@@ -119,7 +120,9 @@ func (a genericBunLockAdapter) parseBunLock(ctx context.Context, resolver file.R
 func parseBunLockPackages(lockfile bunLockfile) []bunPackage {
 	packages := make([]bunPackage, 0, len(lockfile.Packages))
 
-	for pkgName, pkgData := range lockfile.Packages {
+	// iterate in key order so the order of the result is stable
+	for _, pkgName := range slices.Sorted(maps.Keys(lockfile.Packages)) {
+		pkgData := lockfile.Packages[pkgName]
 		var pkgArray []json.RawMessage
 		if err := json.Unmarshal(pkgData, &pkgArray); err != nil {
 			log.WithFields("package", pkgName, "error", err).Trace("unable to parse bun.lock package entry")
@@ -238,17 +241,16 @@ func parseBunPackageIdentifier(identifier string) (name, version string, ok bool
 }
 
 func findDevOnlyBunPkgs(bunPkgs []bunPackage, prodDeps map[string]string, devDeps map[string]bool) map[string]bool {
-	// Build a simplified dependency graph
+	// Build a simplified dependency graph. A name can have several entries (e.g. a nested version),
+	// so merge their edges rather than letting whichever comes last hide the others
 	depGraph := make(map[string][]string)
 	for _, p := range bunPkgs {
-		var deps []string
 		for depName := range p.Metadata.Dependencies {
-			deps = append(deps, depName)
+			depGraph[p.Name] = append(depGraph[p.Name], depName)
 		}
 		for depName := range p.Metadata.OptionalDependencies {
-			deps = append(deps, depName)
+			depGraph[p.Name] = append(depGraph[p.Name], depName)
 		}
-		depGraph[p.Name] = deps
 	}
 
 	// Find all packages reachable from production dependencies
