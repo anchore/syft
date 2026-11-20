@@ -37,3 +37,31 @@ func TestGhostscriptPEGeneratesArtifexCPE(t *testing.T) {
 		t.Fatalf("expected to find CPE with vendor 'artifex' and product 'ghostscript' for Ghostscript PE binary; got: %+v", cpes)
 	}
 }
+
+func TestMicrosoftEdgePEGeneratesEdgeChromiumCPE(t *testing.T) {
+	p := pkg.Package{
+		Name:    "Microsoft Edge",
+		Version: "122.0.2365.106",
+		Type:    pkg.BinaryPkg,
+		Metadata: pkg.PEBinary{
+			VersionResources: pkg.KeyValues{
+				{Key: "CompanyName", Value: "Microsoft Corporation"},
+				{Key: "ProductName", Value: "Microsoft Edge"},
+				{Key: "FileDescription", Value: "Microsoft Edge"},
+			},
+		},
+	}
+
+	cpes := FromPackageAttributes(p)
+
+	found := false
+	for _, c := range cpes {
+		if c.Attributes.Vendor == "microsoft" && c.Attributes.Product == "edge_chromium" && c.Attributes.Version == p.Version {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected a CPE with vendor 'microsoft' and product 'edge_chromium' for Microsoft Edge PE binary; got: %+v", cpes)
+	}
+}
