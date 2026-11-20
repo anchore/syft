@@ -72,6 +72,12 @@ func collectFiles(components []cyclonedx.Component, container *file.Coordinates,
 				}
 				s.Artifacts.FileDigests[c] = digests
 			}
+			if ids := decodeExecutableIdentifiers(component.Properties); len(ids) > 0 {
+				if s.Artifacts.Executables == nil {
+					s.Artifacts.Executables = map[file.Coordinates]file.Executable{}
+				}
+				s.Artifacts.Executables[c] = file.Executable{Identifiers: ids}
+			}
 		}
 		if component.Components != nil {
 			collectFiles(*component.Components, coordinates, s)
