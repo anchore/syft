@@ -14,6 +14,9 @@ var (
 	forbiddenProductGroupIDFields = strset.New("plugin", "plugins", "client")
 	forbiddenVendorGroupIDFields  = strset.New("plugin", "plugins")
 
+	// groupID segs have no delimiters, artifact IDs do
+	delimiterFlattener = strings.NewReplacer("-", "", "_", "", ".", "")
+
 	domains = []string{
 		"com",
 		"org",
@@ -137,7 +140,9 @@ func productsFromArtifactAndGroupIDs(artifactID string, groupIDs []string) []str
 	for _, groupID := range groupIDs {
 		isPlugin := strings.Contains(artifactID, "plugin") || strings.Contains(groupID, "plugin")
 
-		for i, field := range strings.Split(groupID, ".") {
+		fields := strings.Split(groupID, ".")
+
+		for i, field := range fields {
 			field = strings.TrimSpace(field)
 
 			if len(field) == 0 {
@@ -157,13 +162,34 @@ func productsFromArtifactAndGroupIDs(artifactID string, groupIDs []string) []str
 			// to identify fields that may represent the umbrella project, and not fields that indicate auxiliary
 			// information about the package.
 			couldBeProjectName := strings.HasPrefix(artifactID, field) || strings.HasSuffix(artifactID, field)
-			if artifactID == "" || (couldBeProjectName && !isPlugin) {
+			if artifactID == "" || (couldBeProjectName && !isPlugin && belongsToGroupIDProject(artifactID, field, fields[i+1:])) {
 				products.Add(field)
 			}
 		}
 	}
 
 	return products.List()
+}
+
+// belongsToGroupIDProject reports whether an artifact under a nested groupID inherits an ancestor seg as its CPE
+// product -- else siblings inherit its vulns. Needs both: names every nested seg (jetty.ee10:jetty-ee10-servlet yes,
+// jetty.toolchain:jetty-schemas no), and names more than the sub-project (jetty.schemas:jetty-schemas no).
+func belongsToGroupIDProject(artifactID, field string, nested []string) bool {
+	flatArtifactID := delimiterFlattener.Replace(artifactID)
+
+	subProject := field
+	for _, segment := range nested {
+		segment = strings.TrimSpace(segment)
+		if len(segment) == 0 {
+			continue
+		}
+		if !strings.Contains(flatArtifactID, delimiterFlattener.Replace(segment)) {
+			return false
+		}
+		subProject += "-" + segment
+	}
+
+	return artifactID != subProject
 }
 
 func artifactIDFromJavaPackage(p pkg.Package) string {
