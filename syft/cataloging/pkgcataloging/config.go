@@ -10,6 +10,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
+	"github.com/anchore/syft/syft/pkg/cataloger/rust"
 )
 
 type Config struct {
@@ -22,6 +23,7 @@ type Config struct {
 	LinuxKernel kernel.LinuxKernelCatalogerConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
 	Nix         nix.Config                        `yaml:"nix" json:"nix" mapstructure:"nix"`
 	Python      python.CatalogerConfig            `yaml:"python" json:"python" mapstructure:"python"`
+	Rust        rust.CatalogerConfig              `yaml:"rust" json:"rust" mapstructure:"rust"`
 }
 
 func DefaultConfig() Config {
@@ -34,7 +36,13 @@ func DefaultConfig() Config {
 		LinuxKernel: kernel.DefaultLinuxKernelCatalogerConfig(),
 		Nix:         nix.DefaultConfig(),
 		Python:      python.DefaultCatalogerConfig(),
+		Rust:        rust.DefaultCatalogerConfig(),
 	}
+}
+
+func (c Config) WithRustConfig(cfg rust.CatalogerConfig) Config {
+	c.Rust = cfg
+	return c
 }
 
 func (c Config) WithNixConfig(cfg nix.Config) Config {

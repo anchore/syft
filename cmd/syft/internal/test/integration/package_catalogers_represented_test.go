@@ -119,6 +119,9 @@ func getCatalogerConstructors(t *testing.T) map[string]*strset.Set {
 
 	// remove some exceptions
 	delete(constructorsPerPackage, "generic") // this is not an actual cataloger
+	// The legacy Rust constructor delegates to the configurable constructor;
+	// both expose the same cataloger and must count as a single task.
+	constructorsPerPackage["rust"].Remove("NewCargoLockCataloger")
 
 	return constructorsPerPackage
 }
