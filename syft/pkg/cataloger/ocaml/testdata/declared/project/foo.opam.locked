@@ -1,0 +1,8 @@
+opam-version: "2.0"
+name: "foo"
+version: "0.1.0"
+depends: [
+  "lwt" {= "5.4.2"}
+  "ocaml" {= "4.14.2"}
+  "ounit2" {= "2.2.5" & with-test}
+]
