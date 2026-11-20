@@ -1,0 +1,2 @@
+version = "%%VERSION_NUM%%"
+description = "installed from a release built without substituting the version"
