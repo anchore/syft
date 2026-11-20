@@ -5,6 +5,7 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -23,7 +24,7 @@ func TestCataloger_Globs(t *testing.T) {
 		{
 			name:      "obtain deps.json files",
 			fixture:   "testdata/glob-paths",
-			cataloger: NewDotnetDepsCataloger(),
+			cataloger: NewDotnetDepsCataloger(DefaultCatalogerConfig()),
 			expected: []string{
 				"src/something.deps.json",
 			},
@@ -31,7 +32,7 @@ func TestCataloger_Globs(t *testing.T) {
 		{
 			name:      "obtain portable executable files",
 			fixture:   "testdata/glob-paths",
-			cataloger: NewDotnetPortableExecutableCataloger(),
+			cataloger: NewDotnetPortableExecutableCataloger(DefaultCatalogerConfig()),
 			expected: []string{
 				"src/something.bpl",
 				"src/something.dll",
@@ -51,6 +52,7 @@ func TestCataloger_Globs(t *testing.T) {
 				"src/something.deps.json",
 				"src/something.dll",
 				"src/something.exe",
+				"src/project.assets.json",
 				// uppercase extensions appear on Windows/ISO 9660 filesystems and must also match
 				"src/winsomething.DLL",
 				"src/winsomething.EXE",
@@ -601,7 +603,7 @@ func TestCataloger(t *testing.T) {
 			if len(m.Executables) != 1 {
 				if m.Name == "Humanizer" {
 					// there is only one "virtual" package that doesn't have an actual DLL associated
-					assert.Empty(t, m.Executables)
+					require.Empty(t, m.Executables)
 					continue
 				}
 				t.Errorf("expected exactly one executable for package %s, found %d", p.Name, len(m.Executables))
@@ -654,7 +656,7 @@ func TestCataloger(t *testing.T) {
 				t.Fatalf("expected metadata to be of type DotnetPortableExecutableEntry")
 			}
 
-			assert.NotNil(t, m, "expected metadata to be a non-nil DotnetPortableExecutableEntry")
+			require.NotNil(t, m, "expected metadata to be a non-nil DotnetPortableExecutableEntry")
 		}
 
 		actual := extractMatchingPackage(t, "dotnetapp", pkgs)
@@ -714,7 +716,7 @@ func TestCataloger(t *testing.T) {
 				t.Fatalf("expected metadata to be of type DotnetPortableExecutableEntry")
 			}
 
-			assert.NotNil(t, m, "expected metadata to be a non-nil DotnetPortableExecutableEntry")
+			require.NotNil(t, m, "expected metadata to be a non-nil DotnetPortableExecutableEntry")
 		}
 
 		actual := extractMatchingPackage(t, "dotnetapp", pkgs)
@@ -767,7 +769,7 @@ func TestCataloger(t *testing.T) {
 		{
 			name:         "deps cataloger",
 			fixture:      "image-net8-app",
-			cataloger:    NewDotnetDepsCataloger(),
+			cataloger:    NewDotnetDepsCataloger(DefaultCatalogerConfig()),
 			expectedPkgs: net8AppExpectedDepPkgs,
 			expectedRels: net8AppExpectedDepRelationships,
 			assertion:    assertAllDepEntriesWithoutExecutables,
@@ -915,7 +917,7 @@ func TestCataloger(t *testing.T) {
 		{
 			name:         "PE cataloger",
 			fixture:      "image-net8-app",
-			cataloger:    NewDotnetPortableExecutableCataloger(),
+			cataloger:    NewDotnetPortableExecutableCataloger(DefaultCatalogerConfig()),
 			expectedPkgs: net8AppBinaryOnlyPkgs,
 			// important: no relationships should be found
 			assertion: assertAllBinaryEntries,
@@ -923,7 +925,7 @@ func TestCataloger(t *testing.T) {
 		{
 			name:      "deps cataloger (no deps.json)",
 			fixture:   "image-net8-app-no-depjson",
-			cataloger: NewDotnetDepsCataloger(),
+			cataloger: NewDotnetDepsCataloger(DefaultCatalogerConfig()),
 			// there should be no packages found!
 		},
 		{
@@ -937,7 +939,7 @@ func TestCataloger(t *testing.T) {
 		{
 			name:         "pe cataloger (no deps.json)",
 			fixture:      "image-net8-app-no-depjson",
-			cataloger:    NewDotnetPortableExecutableCataloger(),
+			cataloger:    NewDotnetPortableExecutableCataloger(DefaultCatalogerConfig()),
 			expectedPkgs: net8AppBinaryOnlyPkgs,
 			// important: no relationships should be found
 			assertion: assertAllBinaryEntries,
@@ -945,7 +947,7 @@ func TestCataloger(t *testing.T) {
 		{
 			name:      "deps cataloger (single file)",
 			fixture:   "image-net8-app-single-file",
-			cataloger: NewDotnetDepsCataloger(),
+			cataloger: NewDotnetDepsCataloger(DefaultCatalogerConfig()),
 			// there should be no packages found!
 		},
 		{
@@ -1113,7 +1115,7 @@ func TestCataloger(t *testing.T) {
 		{
 			name:      "pe cataloger (single file)",
 			fixture:   "image-net8-app-single-file",
-			cataloger: NewDotnetPortableExecutableCataloger(),
+			cataloger: NewDotnetPortableExecutableCataloger(DefaultCatalogerConfig()),
 			// important: no relationships should be found
 			expectedPkgs: []string{
 				"dotnetapp @ 1.0.0.0 (/app/dotnetapp.exe)",
@@ -1284,7 +1286,7 @@ func TestCataloger(t *testing.T) {
 		{
 			name:         "deps cataloger (self-contained)",
 			fixture:      "image-net8-app-self-contained",
-			cataloger:    NewDotnetDepsCataloger(),
+			cataloger:    NewDotnetDepsCataloger(DefaultCatalogerConfig()),
 			expectedPkgs: net8AppExpectedDepsSelfContainedPkgs,
 			expectedRels: net8AppExpectedDepSelfContainedRelationships,
 		},
@@ -1300,7 +1302,7 @@ func TestCataloger(t *testing.T) {
 		{
 			name:      "pe cataloger (self-contained)",
 			fixture:   "image-net8-app-self-contained",
-			cataloger: NewDotnetPortableExecutableCataloger(),
+			cataloger: NewDotnetPortableExecutableCataloger(DefaultCatalogerConfig()),
 			// important: no relationships should be found
 			expectedPkgs: net8AppExpectedBinarySelfContainedPkgs,
 		},
@@ -1438,7 +1440,7 @@ func TestDotnetDepsCataloger_regressions(t *testing.T) {
 			// during development, these version resources tended to be corrupted
 			name:      "Newtonsoft dll details",
 			fixture:   "image-net8-app-no-depjson",
-			cataloger: NewDotnetPortableExecutableCataloger(),
+			cataloger: NewDotnetPortableExecutableCataloger(DefaultCatalogerConfig()),
 			assertion: func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 				// TODO: name should be "Newtonsoft.Json" (bad metadata in the artifact)
 				actual := extractMatchingPackage(t, "Json.NET", pkgs)
@@ -1549,14 +1551,14 @@ func Test_corruptDotnetPE(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "testdata/glob-paths/src").
 		Expects(nil, nil). // we shouldn't find packages nor error out
-		TestCataloger(t, NewDotnetPortableExecutableCataloger())
+		TestCataloger(t, NewDotnetPortableExecutableCataloger(DefaultCatalogerConfig()))
 }
 
 func Test_corruptDotnetDeps(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "testdata/glob-paths/src").
 		Expects(nil, nil). // we shouldn't find packages nor error out
-		TestCataloger(t, NewDotnetDepsCataloger())
+		TestCataloger(t, NewDotnetDepsCataloger(DefaultCatalogerConfig()))
 }
 
 func TestParseDotnetDeps(t *testing.T) {
@@ -1919,7 +1921,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 
-	pkgtest.TestCataloger(t, fixture, NewDotnetDepsCataloger(), expectedPkgs, expectedRelationships)
+	pkgtest.TestCataloger(t, fixture, NewDotnetDepsCataloger(DefaultCatalogerConfig()), expectedPkgs, expectedRelationships)
 }
 
 func extractMatchingPackage(t *testing.T, name string, pkgs []pkg.Package) pkg.Package {
