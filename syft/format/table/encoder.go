@@ -3,6 +3,7 @@ package table
 import (
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"strings"
 
@@ -66,7 +67,7 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	})
 
 	columns = append(columns, "") // add a column for duplicate annotations
-	rows = markDuplicateRows(rows)
+	rows = markDuplicateRows(rows, annotationRenderer(writer))
 
 	table := newTableWriter(writer, columns)
 
@@ -154,7 +155,16 @@ func newTableWriter(writer io.Writer, columns []string) *tablewriter.Table {
 	)
 }
 
-func markDuplicateRows(items [][]string) [][]string {
+// annotationRenderer returns a renderer that decides on color based on where the output goes: a file gets
+// color only if that file is a terminal. Other writers (e.g. the buffer used for stdout reporting) keep the default.
+func annotationRenderer(writer io.Writer) *lipgloss.Renderer {
+	if f, ok := writer.(*os.File); ok {
+		return lipgloss.NewRenderer(f)
+	}
+	return lipgloss.DefaultRenderer()
+}
+
+func markDuplicateRows(items [][]string, r *lipgloss.Renderer) [][]string {
 	seen := map[string]int{}
 	var result [][]string
 
@@ -170,7 +180,7 @@ func markDuplicateRows(items [][]string) [][]string {
 		result = append(result, v)
 	}
 
-	style := lipgloss.NewStyle().Foreground(lipgloss.Color("#777777"))
+	style := r.NewStyle().Foreground(lipgloss.Color("#777777"))
 	for i, v := range result {
 		key := strings.Join(v, "|")
 		// var name string
@@ -183,7 +193,9 @@ func markDuplicateRows(items [][]string) [][]string {
 			annotation = fmt.Sprintf("(+%d duplicates)", seen[key]-1)
 		}
 
-		annotation = style.Render(annotation)
+		if annotation != "" {
+			annotation = style.Render(annotation)
+		}
 		result[i] = append(v, annotation)
 	}
 
