@@ -35,6 +35,13 @@
         <property name="syft:location:0:layerID">sha256:redacted</property>
         <property name="syft:location:0:path">/somefile-1.txt</property>
       </properties>
+      <evidence>
+        <occurrences>
+          <occurrence>
+            <location>/somefile-1.txt</location>
+          </occurrence>
+        </occurrences>
+      </evidence>
     </component>
     <component bom-ref="pkg:deb/debian/package-2@2.0.1?package-id=4b756c6f6fb127a3" type="library">
       <name>package-2</name>
@@ -49,6 +56,13 @@
         <property name="syft:location:0:path">/somefile-2.txt</property>
         <property name="syft:metadata:installedSize">0</property>
       </properties>
+      <evidence>
+        <occurrences>
+          <occurrence>
+            <location>/somefile-2.txt</location>
+          </occurrence>
+        </occurrences>
+      </evidence>
     </component>
     <component bom-ref="os:debian@1.2.3" type="operating-system">
       <name>debian</name>

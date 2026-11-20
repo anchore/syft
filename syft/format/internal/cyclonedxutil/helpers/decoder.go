@@ -51,7 +51,7 @@ func collectFiles(components []cyclonedx.Component, container *file.Coordinates,
 		component := &components[i]
 		var coordinates *file.Coordinates
 		if component.Type == cyclonedx.ComponentTypeFile {
-			c := file.NewCoordinates("/"+strings.TrimPrefix(component.Name, "/"), "")
+			c := file.NewCoordinates(rootedPath(component.Name), "")
 			if container != nil {
 				nested, ok := internal.NestedCoordinates(*container, component.Name)
 				if !ok {
