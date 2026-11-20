@@ -83,3 +83,28 @@ func TestSPDXIDRecognition(t *testing.T) {
 		})
 	}
 }
+
+func TestHasTopLevelOr(t *testing.T) {
+	tests := []struct {
+		expression string
+		want       bool
+	}{
+		{"", false},
+		{"MIT", false},
+		{"MIT AND Apache-2.0", false},
+		{"Apache-2.0 WITH LLVM-exception", false},
+		{"MIT OR Apache-2.0", true},
+		{"(MIT OR Apache-2.0)", false},
+		{"ISC AND (BSD-3-Clause OR MIT)", false},
+		{"MIT OR (Apache-2.0 AND BSD-3-Clause)", true},
+		{"(GPL-2.0-only WITH Linux-syscall-note) OR MIT", true},
+		{"(MIT OR Apache-2.0) OR (GPL-3.0-only AND LGPL-2.1-only)", true},
+		{"(MIT AND (Apache-2.0 OR BSD-3-Clause))", false},
+		{"LicenseRef-one-thing-first", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.expression, func(t *testing.T) {
+			assert.Equal(t, tt.want, HasTopLevelOr(tt.expression))
+		})
+	}
+}
