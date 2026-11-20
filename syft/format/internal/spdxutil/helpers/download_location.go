@@ -1,10 +1,13 @@
 package helpers
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 
 	urilib "github.com/spdx/gordf/uri"
+	"golang.org/x/mod/module"
+	"golang.org/x/mod/semver"
 
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -12,6 +15,14 @@ import (
 const NONE = "NONE"
 const NOASSERTION = "NOASSERTION"
 const SUPPLIERORG = "Organization"
+
+// goProxy is the public Go module proxy used to construct a stable, publicly
+// resolvable download location for Go modules.
+const goProxy = "https://proxy.golang.org"
+
+// golangStdlib is the synthetic package name syft assigns to the Go standard
+// library, which is not a downloadable module.
+const golangStdlib = "stdlib"
 
 func DownloadLocation(p pkg.Package) string {
 	// 3.7: Package Download Location
@@ -37,9 +48,30 @@ func DownloadLocation(p pkg.Package) string {
 			location = metadata.Dist.URL
 		case pkg.OpamPackage:
 			location = metadata.URL
+		case pkg.GolangBinaryBuildinfoEntry, pkg.GolangModuleEntry, pkg.GolangSourceEntry:
+			location = golangProxyLocation(p.Name, p.Version)
 		}
 	}
 	return URIValue(location)
+}
+
+// golangProxyLocation builds the Go module proxy download URL for a module
+// version, or returns an empty string when the package is not a downloadable
+// module (the standard library, or a version that is not a module version such
+// as "(devel)" or a bare Go toolchain version).
+func golangProxyLocation(name, version string) string {
+	if name == golangStdlib || !semver.IsValid(version) {
+		return ""
+	}
+	escapedPath, err := module.EscapePath(name)
+	if err != nil {
+		return ""
+	}
+	escapedVersion, err := module.EscapeVersion(version)
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf("%s/%s/@v/%s.zip", goProxy, escapedPath, escapedVersion)
 }
 
 func isURIValid(uri string) bool {
