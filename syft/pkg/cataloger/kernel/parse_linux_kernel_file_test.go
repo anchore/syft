@@ -35,3 +35,47 @@ func TestParseLinuxKernelMetadata_bzImage_EmptyVersion(t *testing.T) {
 	assert.Equal(t, "bzImage", got.Format)
 	assert.Empty(t, got.Version, "version should be empty when no version token is present")
 }
+
+func TestParseLinuxKernelMetadata_Devices(t *testing.T) {
+	tests := []struct {
+		name               string
+		swapDevice         string
+		rootDevice         string
+		expectedSwapDevice int
+		expectedRootDevice int
+	}{
+		{
+			name:               "uppercase hexadecimal prefix",
+			swapDevice:         "0XD",
+			rootDevice:         "0X1A",
+			expectedSwapDevice: 13,
+			expectedRootDevice: 26,
+		},
+		{
+			name:               "lowercase hexadecimal prefix",
+			swapDevice:         "0xd",
+			rootDevice:         "0x1a",
+			expectedSwapDevice: 13,
+			expectedRootDevice: 26,
+		},
+		{
+			name:               "no hexadecimal prefix",
+			swapDevice:         "D",
+			rootDevice:         "1A",
+			expectedSwapDevice: 13,
+			expectedRootDevice: 26,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := parseLinuxKernelMetadata([]string{
+				"swap_dev " + test.swapDevice,
+				"root_dev " + test.rootDevice,
+			})
+
+			assert.Equal(t, test.expectedSwapDevice, got.SwapDevice)
+			assert.Equal(t, test.expectedRootDevice, got.RootDevice)
+		})
+	}
+}
