@@ -76,6 +76,7 @@ type nativeImagePE struct {
 type nativeImageCataloger struct{}
 
 const nativeImageCatalogerName = "graalvm-native-image-cataloger"
+const nativeImageElfSection = ".svm_heap"
 const nativeImageSbomSymbol = "sbom"
 const nativeImageSbomLengthSymbol = "sbom_length"
 const nativeImageSbomVersionSymbol = "__svm_version_info"
@@ -181,6 +182,13 @@ func newElf(filename string, r io.ReaderAt) (nativeImage, error) {
 	if bi == nil {
 		return nil, nil
 	}
+
+	// Skip non-GraalVM binaries before loading their symbol tables.
+	if bi.Section(nativeImageElfSection) == nil {
+		log.WithFields("filename", filename).Trace("skipping ELF: no .svm_heap section")
+		return nil, nil
+	}
+
 	return nativeImageElf{
 		file: bi,
 	}, nil
