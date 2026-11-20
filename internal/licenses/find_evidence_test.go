@@ -4,11 +4,43 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/require"
 )
+
+func TestScanner_Coverage(t *testing.T) {
+	const content = "license text with additional terms"
+	match := []licensecheck.Match{{ID: "MIT", Start: 0, End: 12}}
+	recognized := []Evidence{{ID: "MIT", End: 12}}
+	possible := []Evidence{{ID: "LicenseRef-Possible-MIT-cc91cc0b66ec", End: len(content)}}
+	multiple := []licensecheck.Match{{ID: "MIT"}, {ID: "Apache-2.0"}}
+	possibleMultiple := []Evidence{possible[0], {ID: "LicenseRef-Possible-Apache-2.0-cc91cc0b66ec", End: len(content)}}
+	testCases := []struct {
+		name                string
+		coverage, threshold float64
+		matches             []licensecheck.Match
+		want                []Evidence
+	}{
+		{"unknown gets a descriptive reference", 40, 75, match, possible},
+		{"multiple candidates get separate references", 40, 75, multiple, possibleMultiple},
+		{"lower threshold still accepts match", 40, 40, match, recognized},
+		{"no matches remain unknown", 0, 75, nil, nil},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &scanner{coverageThreshold: tc.threshold, scanner: func([]byte) licensecheck.Coverage {
+				return licensecheck.Coverage{Percent: tc.coverage, Match: tc.matches}
+			}}
+			evidence, text, err := s.FindEvidence(context.Background(), strings.NewReader(content))
+			require.NoError(t, err)
+			require.Equal(t, content, string(text))
+			require.ElementsMatch(t, tc.want, evidence)
+		})
+	}
+}
 
 func TestDefaultScanner_FindEvidence(t *testing.T) {
 	testCases := []struct {

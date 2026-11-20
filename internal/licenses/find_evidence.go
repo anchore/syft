@@ -2,6 +2,8 @@ package licenses
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"io"
 )
 
@@ -16,14 +18,14 @@ func (s *scanner) FindEvidence(_ context.Context, reader io.Reader) (evidence []
 	}
 
 	cov := s.scanner(content)
-	if cov.Percent < s.coverageThreshold {
-		// unknown or no licenses here
-		// => check return content to Search to process
-		return nil, content, nil
-	}
-
 	evidence = make([]Evidence, 0)
 	for _, m := range cov.Match {
+		if cov.Percent < s.coverageThreshold {
+			// Retain the full text for review instead of asserting a standard license.
+			hash := sha256.Sum256(content)
+			m.ID = fmt.Sprintf("LicenseRef-Possible-%s-%x", m.ID, hash[:6])
+			m.Start, m.End = 0, len(content)
+		}
 		evidence = append(evidence, Evidence{
 			ID:    m.ID,
 			Type:  m.Type,

@@ -2,14 +2,42 @@ package helpers
 
 import (
 	"context"
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/spdxlicense"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
+
+func Test_License_PossibleMatch(t *testing.T) {
+	const text = "license text with additional terms"
+	const id = "LicenseRef-Possible-MIT-cc91cc0b66ec"
+	scanner, err := licenses.NewScanner(&licenses.ScannerConfig{
+		CoverageThreshold: licenses.DefaultCoverageThreshold,
+		Scanner: func([]byte) licensecheck.Coverage {
+			return licensecheck.Coverage{Percent: 40, Match: []licensecheck.Match{{ID: "MIT", Start: 0, End: 12}}}
+		},
+	})
+	require.NoError(t, err)
+	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
+	location := file.NewLocation("/usr/share/doc/example/copyright")
+	found := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(location, io.NopCloser(strings.NewReader(text))))
+	require.Len(t, found, 1)
+	concluded, declared, extracted := License(pkg.Package{Licenses: pkg.NewLicenseSet(found...)})
+	assert.Equal(t, id, concluded)
+	assert.Equal(t, NOASSERTION, declared)
+	require.Len(t, extracted, 1)
+	assert.Equal(t, id, extracted[0].LicenseIdentifier)
+	assert.Equal(t, text, extracted[0].ExtractedText)
+}
 
 func Test_License(t *testing.T) {
 	ctx := context.TODO()

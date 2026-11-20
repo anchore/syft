@@ -388,8 +388,8 @@ func (b *licenseBuilder) licensesFromEvidenceAndContent(evidence []licenses.Evid
 		if e.Start >= 0 && e.End <= len(content) && e.Start <= e.End {
 			candidate.Contents = string(content[e.Start:e.End])
 		}
-		// check for SPDX Validity
-		if ex, err := license.ParseExpression(e.ID); err == nil {
+		// Keep custom references as values so SPDX exports include their extracted text.
+		if ex, err := license.ParseExpression(e.ID); err == nil && !strings.HasPrefix(e.ID, spdxlicense.LicenseRefPrefix) {
 			candidate.SPDXExpression = ex
 		}
 
