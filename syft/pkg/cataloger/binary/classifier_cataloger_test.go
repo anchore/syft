@@ -1904,6 +1904,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "git/2.49.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "git",
+				Version:   "2.49.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/git@2.49.1",
+				Locations: locations("git"),
+				Metadata:  metadata("git-binary"),
+			},
+		},
+		{
 			logicalFixture: "fluent-bit/3.0.2/linux-amd64",
 			expected: pkg.Package{
 				Name:      "fluent-bit",
