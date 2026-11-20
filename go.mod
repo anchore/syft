@@ -62,7 +62,7 @@ require (
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
 	github.com/klauspost/compress v1.20.4
-	github.com/magiconair/properties v1.18.12
+	github.com/magiconair/properties v1.18.13
 	github.com/mholt/archives v0.1.5
 	github.com/moby/sys/mountinfo v0.7.3
 	github.com/nix-community/go-nix v0.0.0-20250101154619-4bdde671e0a1
