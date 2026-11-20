@@ -103,7 +103,10 @@ require (
 	modernc.org/sqlite v1.61.1
 )
 
-require github.com/github/go-spdx/v2 v2.8.0
+require (
+	github.com/github/go-spdx/v2 v2.8.0
+	github.com/muesli/termenv v0.16.0
+)
 
 require (
 	cel.dev/expr v0.25.2 // indirect
@@ -253,7 +256,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
-	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/ncruces/go-strftime v1.1.0 // indirect
 	github.com/nwaples/rardecode/v2 v2.4.1 // indirect
 	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
