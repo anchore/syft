@@ -2,7 +2,9 @@ package javascript
 
 import (
 	"context"
+	"io"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -472,5 +474,45 @@ func TestParseBunPackageIdentifier(t *testing.T) {
 					tt.identifier, gotName, gotVer, gotOK, tt.wantName, tt.wantVer, tt.wantOK)
 			}
 		})
+	}
+}
+
+func TestParseBunLock_DuplicatePackageNameReachable(t *testing.T) {
+	// Tests that when multiple versions/entries of a package name exist in bun.lock,
+	// dependencies reachable from production are not nondeterministically dropped as dev-only.
+	lockContent := `{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "repro",
+      "dependencies": { "a": "^1.0.0" },
+      "devDependencies": { "d": "^1.0.0" }
+    }
+  },
+  "packages": {
+    "a": ["a@1.0.0", "", { "dependencies": { "b": "^1.0.0" } }, "sha512-AAAA"],
+    "a/b": ["b@1.0.0", "", { "dependencies": { "x": "^1.0.0" } }, "sha512-BBBB"],
+    "b": ["b@2.0.0", "", {}, "sha512-CCCC"],
+    "d": ["d@1.0.0", "", { "dependencies": { "x": "^1.0.0" } }, "sha512-DDDD"],
+    "x": ["x@1.0.0", "", {}, "sha512-XXXX"]
+  }
+}`
+
+	adapter := newGenericBunLockAdapter(CatalogerConfig{IncludeDevDependencies: false})
+	for i := 0; i < 50; i++ {
+		pkgs, _, err := adapter.parseBunLock(
+			context.Background(),
+			nil,
+			nil,
+			file.NewLocationReadCloser(file.NewLocation("bun.lock"), io.NopCloser(strings.NewReader(lockContent))),
+		)
+		require.NoError(t, err)
+
+		var names []string
+		for _, p := range pkgs {
+			names = append(names, p.Name)
+		}
+		assert.Contains(t, names, "x", "run %d: package x should be kept as production-reachable", i)
+		assert.NotContains(t, names, "d", "run %d: package d is dev-only and should be excluded", i)
 	}
 }
