@@ -651,3 +651,39 @@ func TestCreateSBOMConfig_archiveTaskGroup(t *testing.T) {
 			"java's own squash-inlined depth must not be written to either")
 	})
 }
+
+func TestCreateSBOMConfig_sbomitTaskGroup(t *testing.T) {
+	src := source.Description{Metadata: source.DirectoryMetadata{}}
+
+	// the index of the first group with a task by the given name or tag, or -1 if there is none
+	groupWith := func(groups [][]task.Task, nameOrTag string) int {
+		for i, group := range groups {
+			for _, tsk := range group {
+				if selector, ok := tsk.(task.Selector); ok && selector.HasAllSelectors(nameOrTag) {
+					return i
+				}
+				if tsk.Name() == nameOrTag {
+					return i
+				}
+			}
+		}
+		return -1
+	}
+
+	t.Run("no sbomit task by default", func(t *testing.T) {
+		groups, _, err := DefaultCreateSBOMConfig().makeTaskGroups(src, nil)
+		require.NoError(t, err)
+		assert.Equal(t, -1, groupWith(groups, "sbomit"))
+	})
+
+	t.Run("sbomit task runs after package cataloging, and before file cataloging and relationships", func(t *testing.T) {
+		groups, _, err := DefaultCreateSBOMConfig().WithSBOMit(true).makeTaskGroups(src, nil)
+		require.NoError(t, err)
+
+		sbomit := groupWith(groups, "sbomit")
+		require.NotEqual(t, -1, sbomit)
+		assert.Less(t, groupWith(groups, pkgcataloging.PackageTag), sbomit, "sbomit should run after packages are cataloged")
+		assert.Greater(t, groupWith(groups, filecataloging.FileTag), sbomit, "file tasks should run after sbomit")
+		assert.Greater(t, groupWith(groups, "relationships-cataloger"), sbomit, "relationship tasks should run after sbomit")
+	})
+}

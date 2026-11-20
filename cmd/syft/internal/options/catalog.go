@@ -43,6 +43,7 @@ type Catalog struct {
 	Relationships relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
 	Compliance    complianceConfig    `yaml:"compliance" json:"compliance" mapstructure:"compliance"`
 	Enrich        []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
+	SBOMit        sbomitConfig        `yaml:"sbomit" json:"sbomit" mapstructure:"sbomit"`
 
 	// ecosystem-specific cataloger configuration
 	Cpp         cppConfig         `yaml:"cpp" json:"cpp" mapstructure:"cpp"`
@@ -91,6 +92,7 @@ func DefaultCatalog() Catalog {
 		Unknowns:      defaultUnknowns(),
 		Source:        defaultSourceConfig(),
 		Parallelism:   cfg.Parallelism,
+		SBOMit:        defaultSBOMit(),
 	}
 }
 
@@ -106,6 +108,7 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithPackagesConfig(cfg.ToPackagesConfig()).
 		WithLicenseConfig(cfg.ToLicenseConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
+		WithSBOMit(cfg.SBOMit.Enable).
 		WithCatalogerSelection(
 			cataloging.NewSelectionRequest().
 				WithDefaults(cfg.DefaultCatalogers...).
