@@ -16,6 +16,7 @@ func TestArtifactIDToGroupID(t *testing.T) {
 	}{
 		{name: "unconditional entry", artifactID: "ant-antlr", version: "1.10.0", want: "org.apache.ant", wantOK: true},
 		{name: "unknown artifact", artifactID: "not-a-real-artifact", version: "1.0.0"},
+		{name: "reactor 1.x predates io.projectreactor", artifactID: "reactor-core", version: "1.1.6.RELEASE", want: "org.projectreactor", wantOK: true},
 		{name: "groovy 4 migrates to apache", artifactID: "groovy", version: "4.0.33", want: "org.apache.groovy", wantOK: true},
 		{name: "groovy 3 stays on codehaus", artifactID: "groovy", version: "3.0.22", want: "org.codehaus.groovy", wantOK: true},
 		{name: "groovy without a version falls back to codehaus", artifactID: "groovy-json", want: "org.codehaus.groovy", wantOK: true},

@@ -15,6 +15,25 @@ func Test_packageURL(t *testing.T) {
 		expect string
 	}{
 		{
+			name: "reactor 3 without pom metadata",
+			pkg: pkg.Package{
+				Name:     "reactor-core",
+				Version:  "3.7.9",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
+					VirtualPath: "reactor-core-3.7.9.jar",
+					Manifest: &pkg.JavaManifest{
+						Main: []pkg.KeyValue{
+							{Key: "Bundle-SymbolicName", Value: "io.projectreactor.reactor-core"},
+							{Key: "Automatic-Module-Name", Value: "reactor.core"},
+						},
+					},
+				},
+			},
+			expect: "pkg:maven/io.projectreactor/reactor-core@3.7.9",
+		},
+		{
 			name: "maven",
 			pkg: pkg.Package{
 				Name:     "example-java-app-maven",
