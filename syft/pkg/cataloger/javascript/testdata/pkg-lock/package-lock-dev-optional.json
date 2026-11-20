@@ -1,0 +1,22 @@
+{
+  "name": "test-dev-optional",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "version": "1.0.0"
+    },
+    "node_modules/regular-dep": {
+      "version": "1.0.0",
+      "resolved": "https://registry.npmjs.org/regular-dep/-/regular-dep-1.0.0.tgz",
+      "integrity": "sha512-regular"
+    },
+    "node_modules/dev-optional-dep": {
+      "version": "2.0.0",
+      "resolved": "https://registry.npmjs.org/dev-optional-dep/-/dev-optional-dep-2.0.0.tgz",
+      "integrity": "sha512-devoptional",
+      "devOptional": true
+    }
+  }
+}
