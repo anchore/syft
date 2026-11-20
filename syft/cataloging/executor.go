@@ -6,3 +6,6 @@ const ExecutorCPU = "cpu"
 
 // ExecutorFile is the name to use when executing parallel file reading functions, such as cataloging
 const ExecutorFile = "file"
+
+// ExecutorNetwork is the name to use when executing parallel functions which perform network requests.
+const ExecutorNetwork = "network"
