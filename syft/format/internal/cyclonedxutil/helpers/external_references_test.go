@@ -32,6 +32,50 @@ func Test_encodeExternalReferences(t *testing.T) {
 			},
 		},
 		{
+			name: "from apk with multiple URLs",
+			input: pkg.Package{
+				Metadata: pkg.ApkDBEntry{
+					URL: "http://web.mit.edu/kerberos/www/ http://h5l.org",
+				},
+			},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "http://web.mit.edu/kerberos/www/", Type: cyclonedx.ERTypeDistribution},
+				{URL: "http://h5l.org", Type: cyclonedx.ERTypeDistribution},
+			},
+		},
+		{
+			name: "from apk with valid and invalid URLs",
+			input: pkg.Package{
+				Metadata: pkg.ApkDBEntry{
+					URL: "invalid http://a-place.gov invalid",
+				},
+			},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "http://a-place.gov", Type: cyclonedx.ERTypeDistribution},
+			},
+		},
+		{
+			name: "from apk with whitespace-separated URLs",
+			input: pkg.Package{
+				Metadata: pkg.ApkDBEntry{
+					URL: " \thttps://example.com/one\nhttps://example.com/two ",
+				},
+			},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://example.com/one", Type: cyclonedx.ERTypeDistribution},
+				{URL: "https://example.com/two", Type: cyclonedx.ERTypeDistribution},
+			},
+		},
+		{
+			name: "from apk with no valid URLs",
+			input: pkg.Package{
+				Metadata: pkg.ApkDBEntry{
+					URL: " \tinvalid\n ",
+				},
+			},
+			expected: nil,
+		},
+		{
 			name: "from npm with valid URL",
 			input: pkg.Package{
 				Metadata: pkg.NpmPackage{
