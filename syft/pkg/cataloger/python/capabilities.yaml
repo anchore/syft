@@ -238,11 +238,74 @@ catalogers:
             default: false
           - name: package_manager.package_integrity_hash
             default: false
+      - function: parsePrefixedRequirementsDirTxt
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/requirements-*/*.txt'
+            - '**/requirements_*/*.txt'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonRequirementsEntry
+        package_types: # AUTO-GENERATED
+          - python
+        purl_types: # AUTO-GENERATED
+          - pypi
+        json_schema_types: # AUTO-GENERATED
+          - PythonPipRequirementsEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - any
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parseRequirementsDirTxt
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/requirements/**/*.txt'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonRequirementsEntry
+        package_types: # AUTO-GENERATED
+          - python
+        purl_types: # AUTO-GENERATED
+          - pypi
+        json_schema_types: # AUTO-GENERATED
+          - PythonPipRequirementsEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - any
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
       - function: parseRequirementsTxt
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
             - '**/*requirements*.txt'
+            - '**/*Requirements*.txt'
+            - '**/*REQUIREMENTS*.txt'
         metadata_types: # AUTO-GENERATED
           - pkg.PythonRequirementsEntry
         package_types: # AUTO-GENERATED

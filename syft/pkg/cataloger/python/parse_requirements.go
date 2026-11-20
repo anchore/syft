@@ -3,7 +3,9 @@ package python
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -96,6 +98,32 @@ func newRequirementsParser(cfg CatalogerConfig) requirementsParser {
 		cfg:             cfg,
 		licenseResolver: newPythonLicenseResolver(cfg),
 	}
+}
+
+// parses .txt under requirements/, skips name-glob matches
+func (rp requirementsParser) parseRequirementsDirTxt(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	if hasRequirementsName(reader.Path()) {
+		return nil, nil, nil
+	}
+	return rp.parseRequirementsTxt(ctx, resolver, env, reader)
+}
+
+// parses requirements-*/ .txt, skips files under requirements/
+func (rp requirementsParser) parsePrefixedRequirementsDirTxt(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	if inRequirementsDir(reader.Path()) {
+		return nil, nil, nil
+	}
+	return rp.parseRequirementsDirTxt(ctx, resolver, env, reader)
+}
+
+func hasRequirementsName(p string) bool {
+	name := filepath.Base(p)
+	return strings.Contains(name, "requirements") || strings.Contains(name, "Requirements") || strings.Contains(name, "REQUIREMENTS")
+}
+
+func inRequirementsDir(p string) bool {
+	dirs := strings.Split(filepath.ToSlash(filepath.Dir(p)), "/")
+	return slices.Contains(dirs, "requirements")
 }
 
 // parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a

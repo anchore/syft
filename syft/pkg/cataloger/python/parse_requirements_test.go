@@ -2,13 +2,16 @@ package python
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
@@ -647,4 +650,74 @@ func Test_corruptRequirementsTxt(t *testing.T) {
 		FromFile(t, "testdata/glob-paths/src/requirements.txt").
 		WithError().
 		TestParser(t, rp.parseRequirementsTxt)
+}
+
+func Test_parseRequirementsDirTxt(t *testing.T) {
+	rp := newRequirementsParser(DefaultCatalogerConfig())
+	flaskAt := func(path string) []pkg.Package {
+		return []pkg.Package{
+			{
+				Name:      "flask",
+				Version:   "2.0.3",
+				PURL:      "pkg:pypi/flask@2.0.3",
+				Locations: file.NewLocationSet(file.NewLocation(path)),
+				Language:  pkg.Python,
+				Type:      pkg.PythonPkg,
+				Metadata: pkg.PythonRequirementsEntry{
+					Name:              "flask",
+					VersionConstraint: "==2.0.3",
+				},
+			},
+		}
+	}
+
+	tests := []struct {
+		name  string
+		parse generic.Parser
+		path  string
+		want  []pkg.Package
+	}{
+		{
+			name:  "file in requirements directory",
+			parse: rp.parseRequirementsDirTxt,
+			path:  filepath.Join("requirements", "base.txt"),
+			want:  flaskAt(filepath.Join("requirements", "base.txt")),
+		},
+		{
+			name:  "file in nested requirements directory",
+			parse: rp.parseRequirementsDirTxt,
+			path:  filepath.Join("app", "requirements", "edx", "base.txt"),
+			want:  flaskAt(filepath.Join("app", "requirements", "edx", "base.txt")),
+		},
+		{
+			name:  "name containing requirements is left to the name globs",
+			parse: rp.parseRequirementsDirTxt,
+			path:  filepath.Join("requirements", "requirements-dev.txt"),
+		},
+		{
+			name:  "name containing Requirements is left to the name globs",
+			parse: rp.parseRequirementsDirTxt,
+			path:  filepath.Join("requirements", "devRequirements.txt"),
+		},
+		{
+			name:  "file in prefixed requirements directory",
+			parse: rp.parsePrefixedRequirementsDirTxt,
+			path:  filepath.Join("requirements-min", "tests-min.txt"),
+			want:  flaskAt(filepath.Join("requirements-min", "tests-min.txt")),
+		},
+		{
+			name:  "prefixed directory under requirements directory is left to the requirements directory glob",
+			parse: rp.parsePrefixedRequirementsDirTxt,
+			path:  filepath.Join("requirements", "requirements-extra", "lattice.txt"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromString(tt.path, "flask==2.0.3\n").
+				WithErrorAssertion(require.NoError).
+				Expects(tt.want, nil).
+				TestParser(t, tt.parse)
+		})
+	}
 }

@@ -19,7 +19,11 @@ func NewPackageCataloger(cfg CatalogerConfig) pkg.Cataloger {
 	pdmLockParser := newPdmLockParser(cfg)
 	requirementsFileParser := newRequirementsParser(cfg)
 	return generic.NewCataloger("python-package-cataloger").
-		WithParserByGlobs(requirementsFileParser.parseRequirementsTxt, "**/*requirements*.txt").
+		// globs r case-sensitive, so list common spellings
+		WithParserByGlobs(requirementsFileParser.parseRequirementsTxt, "**/*requirements*.txt", "**/*Requirements*.txt", "**/*REQUIREMENTS*.txt").
+		// pip allows any filename, so also scan req dirs
+		WithParserByGlobs(requirementsFileParser.parseRequirementsDirTxt, "**/requirements/**/*.txt").
+		WithParserByGlobs(requirementsFileParser.parsePrefixedRequirementsDirTxt, "**/requirements-*/*.txt", "**/requirements_*/*.txt").
 		WithParserByGlobs(poetryLockParser.parsePoetryLock, "**/poetry.lock").
 		WithParserByGlobs(pipfileLockParser.parsePipfileLock, "**/Pipfile.lock").
 		WithParserByGlobs(setupFileParser.parseSetupFile, "**/setup.py").
