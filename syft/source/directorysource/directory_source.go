@@ -156,6 +156,11 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 
 	// the given patterns are the source's configuration (see source.PathExcluder), so they are not rewritten in place
 	rooted := make([]string, 0, len(exclusions))
+	// "**/" patterns are not tied to a location, so they are also matched as given against paths that are
+	// outside the scan root, which the indexer reports for files reached through a symlink that points
+	// outside it (e.g. a scan root made of symlinks to other directories). Paths inside the scan root
+	// keep using the rooted pattern, so the root's own parent directories never match.
+	unanchored := make([]string, 0, len(exclusions))
 	var errors []string
 	for _, exclusion := range exclusions {
 		// check exclusions for supported paths, these are all relative to the "scan root"
@@ -165,6 +170,9 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 			// causing the pattern to silently match nothing (see issue #4839)
 			exclusion = strings.TrimSuffix(exclusion, "/")
 			rooted = append(rooted, root+exclusion)
+			if strings.HasPrefix(exclusion, "**/") {
+				unanchored = append(unanchored, exclusion)
+			}
 		} else {
 			errors = append(errors, exclusion)
 		}
@@ -176,9 +184,13 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 
 	return []fileresolver.PathIndexVisitor{
 		func(_, path string, info os.FileInfo, _ error) error {
-			for _, exclusion := range rooted {
-				// this is required to handle Windows filepaths
-				path = filepath.ToSlash(path)
+			// this is required to handle Windows filepaths
+			path = filepath.ToSlash(path)
+			patterns := rooted
+			if !strings.HasPrefix(path, root) {
+				patterns = append(patterns[:len(patterns):len(patterns)], unanchored...)
+			}
+			for _, exclusion := range patterns {
 				matches, err := doublestar.Match(exclusion, path)
 				if err != nil {
 					return nil
