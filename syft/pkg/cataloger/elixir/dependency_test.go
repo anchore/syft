@@ -31,6 +31,11 @@ func Test_extractMixLockDependencies(t *testing.T) {
 			want: []string{"cowlib", "ranch"},
 		},
 		{
+			name: "aliased hex dependency",
+			line: `  "consumer": {:hex, :consumer, "1.0.0", "hash", [:mix], [{:my_json, "~> 1.3", [hex: :jason, repo: "hexpm", optional: false]}], "hexpm", "ext"},`,
+			want: []string{"jason"},
+		},
+		{
 			name: "git source is skipped like hex source",
 			line: `  "mydep": {:git, "https://github.com/example/mydep.git", "ref", [{:jason, "~> 1.0", [hex: :jason]}]},`,
 			want: []string{"jason"},

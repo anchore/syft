@@ -1,6 +1,8 @@
 package elixir
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -266,4 +268,44 @@ func TestParseMixLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 
 	pkgtest.TestFileParser(t, fixture, parseMixLock, expected, expectedRelationships)
+}
+
+func TestParseMixLockHexAliasUsesPackageName(t *testing.T) {
+	fixture := "testdata/mix-alias.lock"
+
+	pkgtest.TestFileParser(t, fixture, parseMixLock, expectedMixLockAliasPackages(fixture), nil)
+}
+
+func TestParseMixLockHexAliasUsesPackageNameWithCRLF(t *testing.T) {
+	srcFixture := "testdata/mix-alias.lock"
+	content, err := os.ReadFile(srcFixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pkgtest.NewCatalogTester().
+		FromString(srcFixture, strings.ReplaceAll(string(content), "\n", "\r\n")).
+		Expects(expectedMixLockAliasPackages(srcFixture), nil).
+		TestParser(t, parseMixLock)
+}
+
+func expectedMixLockAliasPackages(fixture string) []pkg.Package {
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+
+	return []pkg.Package{
+		{
+			Name:      "jason",
+			Version:   "1.3.0",
+			Language:  pkg.Elixir,
+			Type:      pkg.HexPkg,
+			Locations: locations,
+			PURL:      "pkg:hex/jason@1.3.0",
+			Metadata: pkg.ElixirMixLockEntry{
+				Name:       "jason",
+				Version:    "1.3.0",
+				PkgHash:    "aaa",
+				PkgHashExt: "bbb",
+			},
+		},
+	}
 }
