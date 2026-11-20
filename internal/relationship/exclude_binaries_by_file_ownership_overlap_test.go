@@ -14,7 +14,8 @@ func TestExcludeByFileOwnershipOverlap(t *testing.T) {
 	packageB := pkg.Package{Name: "package-b", Type: pkg.BinaryPkg, Metadata: pkg.JavaVMInstallation{}}
 	packageC := pkg.Package{Name: "package-c", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{Type: "rpm"}}
 	packageD := pkg.Package{Name: "package-d", Type: pkg.BitnamiPkg}
-	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD} {
+	packageE := pkg.Package{Name: "package-e", Type: pkg.RpmPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{Type: "rpm"}}
+	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD, &packageE} {
 		p.SetID()
 	}
 
@@ -30,9 +31,9 @@ func TestExcludeByFileOwnershipOverlap(t *testing.T) {
 			relationship: artifact.Relationship{
 				Type: artifact.OwnershipByFileOverlapRelationship,
 				From: packageA, // OS
-				To:   packageC, // ELF binary
+				To:   packageE, // ELF binary
 			},
-			packages:      pkg.NewCollection(packageA, packageC),
+			packages:      pkg.NewCollection(packageA, packageE),
 			shouldExclude: true,
 		},
 		{
@@ -76,9 +77,10 @@ func TestIdentifyOverlappingOSRelationship(t *testing.T) {
 	packageB := pkg.Package{Name: "package-b", Type: pkg.BinaryPkg}
 	packageC := pkg.Package{Name: "package-c", Type: pkg.BinaryPkg, Metadata: pkg.BinarySignature{}}
 	packageD := pkg.Package{Name: "package-d", Type: pkg.PythonPkg} // Language package
-	packageE := pkg.Package{Name: "package-e", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{}}
+	packageE := pkg.Package{Name: "package-e", Type: pkg.RpmPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{Type: "rpm"}}
+	packageF := pkg.Package{Name: "package-f", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{Type: "generic"}}
 
-	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD, &packageE} {
+	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD, &packageE, &packageF} {
 		p.SetID()
 	}
 
@@ -111,6 +113,12 @@ func TestIdentifyOverlappingOSRelationship(t *testing.T) {
 			parent:     &packageA,
 			child:      &packageE,
 			expectedID: packageE.ID(), // OS package to binary package with ELF metadata, should return child ID
+		},
+		{
+			name:       "OS -> binary with ELF metadata of no OS package type",
+			parent:     &packageA,
+			child:      &packageF,
+			expectedID: "", // the note declares a package of its own, no exclusion
 		},
 		{
 			name:       "non-OS parent",
