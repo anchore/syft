@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/spdx/tools-golang/spdx"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/internal/spdxlicense"
@@ -243,6 +244,87 @@ func TestCreateSPDXLicenseAndGenerateLicenseID(t *testing.T) {
 			if d := cmp.Diff(tt.expected, license); d != "" {
 				t.Errorf("createSPDXLicense() mismatch (-want +got):\n%s", d)
 			}
+		})
+	}
+}
+
+func TestSPDXOtherLicenseSet_DeduplicateIDs(t *testing.T) {
+	tests := []struct {
+		name            string
+		licenses        []spdx.OtherLicense
+		expected        []spdx.OtherLicense
+		expectedRenamed map[string]string
+	}{
+		{
+			name: "unique identifiers are kept",
+			licenses: []spdx.OtherLicense{
+				{LicenseIdentifier: "LicenseRef-a", LicenseName: "a", ExtractedText: NOASSERTION},
+				{LicenseIdentifier: "LicenseRef-b", LicenseName: "b", ExtractedText: NOASSERTION},
+			},
+			expected: []spdx.OtherLicense{
+				{LicenseIdentifier: "LicenseRef-a", LicenseName: "a", ExtractedText: NOASSERTION},
+				{LicenseIdentifier: "LicenseRef-b", LicenseName: "b", ExtractedText: NOASSERTION},
+			},
+			expectedRenamed: map[string]string{},
+		},
+		{
+			name: "identifiers that differ only by case with the same text are merged",
+			licenses: []spdx.OtherLicense{
+				{LicenseIdentifier: "LicenseRef-BSD-3-clause-generic", LicenseName: "BSD-3-clause-generic", ExtractedText: NOASSERTION},
+				{LicenseIdentifier: "LicenseRef-BSD-3-clause-GENERIC", LicenseName: "BSD-3-clause-GENERIC", ExtractedText: NOASSERTION},
+			},
+			expected: []spdx.OtherLicense{
+				{LicenseIdentifier: "LicenseRef-BSD-3-clause-GENERIC", LicenseName: "BSD-3-clause-GENERIC", ExtractedText: NOASSERTION},
+			},
+			expectedRenamed: map[string]string{
+				"LicenseRef-BSD-3-clause-generic": "LicenseRef-BSD-3-clause-GENERIC",
+			},
+		},
+		{
+			name: "identifiers that differ only by case with different text get a suffix",
+			licenses: []spdx.OtherLicense{
+				{LicenseIdentifier: "LicenseRef-custom", LicenseName: "custom", ExtractedText: "first text"},
+				{LicenseIdentifier: "LicenseRef-Custom", LicenseName: "Custom", ExtractedText: "second text"},
+				{LicenseIdentifier: "LicenseRef-custom-2", LicenseName: "custom-2", ExtractedText: NOASSERTION},
+			},
+			expected: []spdx.OtherLicense{
+				{LicenseIdentifier: "LicenseRef-Custom", LicenseName: "Custom", ExtractedText: "second text"},
+				{LicenseIdentifier: "LicenseRef-custom-2", LicenseName: "custom-2", ExtractedText: NOASSERTION},
+				{LicenseIdentifier: "LicenseRef-custom-3", LicenseName: "custom", ExtractedText: "first text"},
+			},
+			expectedRenamed: map[string]string{
+				"LicenseRef-custom": "LicenseRef-custom-3",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewSPDXOtherLicenseSet()
+			s.Add(tt.licenses...)
+			renamed := s.DeduplicateIDs()
+			assert.Equal(t, tt.expectedRenamed, renamed)
+			assert.Equal(t, tt.expected, s.ToSlice())
+		})
+	}
+}
+
+func TestReplaceLicenseIDs(t *testing.T) {
+	renamed := map[string]string{
+		"LicenseRef-foo": "LicenseRef-FOO",
+	}
+	tests := []struct {
+		expression string
+		expected   string
+	}{
+		{expression: "NOASSERTION", expected: "NOASSERTION"},
+		{expression: "LicenseRef-foo", expected: "LicenseRef-FOO"},
+		{expression: "MIT AND LicenseRef-foo", expected: "MIT AND LicenseRef-FOO"},
+		{expression: "(LicenseRef-foo OR Apache-2.0) AND LicenseRef-foo-2", expected: "(LicenseRef-FOO OR Apache-2.0) AND LicenseRef-foo-2"},
+		{expression: "DocumentRef-other:LicenseRef-foo", expected: "DocumentRef-other:LicenseRef-foo"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.expression, func(t *testing.T) {
+			assert.Equal(t, tt.expected, ReplaceLicenseIDs(tt.expression, renamed))
 		})
 	}
 }

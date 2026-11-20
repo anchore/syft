@@ -1,7 +1,9 @@
 package helpers
 
 import (
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/spdx/tools-golang/spdx"
@@ -142,6 +144,70 @@ func (s *SPDXOtherLicenseSet) Add(licenses ...spdx.OtherLicense) {
 	for _, l := range licenses {
 		s.set[l.LicenseIdentifier] = l
 	}
+}
+
+// DeduplicateIDs makes sure no two license identifiers in the set differ only by case. SPDX license identifiers
+// are matched case-insensitively, so such identifiers would name the same license and make the document invalid.
+// Licenses with the same extracted text and a name that differs only by case are merged into a single entry,
+// any other clash gets a numeric suffix. The returned map holds each identifier that was replaced and the
+// identifier that replaces it, so that license expressions referring to it can be updated (see ReplaceLicenseIDs).
+func (s *SPDXOtherLicenseSet) DeduplicateIDs() map[string]string {
+	renamed := make(map[string]string)
+
+	ids := make([]string, 0, len(s.set))
+	taken := make(map[string]bool, len(s.set))
+	for id := range s.set {
+		ids = append(ids, id)
+		taken[strings.ToLower(id)] = true
+	}
+	// sort so that the identifier kept for a group of clashing identifiers is stable
+	sort.Strings(ids)
+
+	kept := make(map[string]spdx.OtherLicense)
+	for _, id := range ids {
+		key := strings.ToLower(id)
+		existing, ok := kept[key]
+		if !ok {
+			kept[key] = s.set[id]
+			continue
+		}
+
+		l := s.set[id]
+		delete(s.set, id)
+
+		if l.ExtractedText == existing.ExtractedText && strings.EqualFold(l.LicenseName, existing.LicenseName) {
+			renamed[id] = existing.LicenseIdentifier
+			continue
+		}
+
+		newID := id + "-2"
+		for i := 3; taken[strings.ToLower(newID)]; i++ {
+			newID = id + "-" + strconv.Itoa(i)
+		}
+		taken[strings.ToLower(newID)] = true
+
+		l.LicenseIdentifier = newID
+		s.set[newID] = l
+		renamed[id] = newID
+	}
+
+	return renamed
+}
+
+var licenseExpressionTermPattern = regexp.MustCompile(`[^\s()]+`)
+
+// ReplaceLicenseIDs replaces the license identifiers in the given SPDX license expression that are keys of the
+// renamed map with their mapped values.
+func ReplaceLicenseIDs(expression string, renamed map[string]string) string {
+	if len(renamed) == 0 {
+		return expression
+	}
+	return licenseExpressionTermPattern.ReplaceAllStringFunc(expression, func(term string) string {
+		if id, ok := renamed[term]; ok {
+			return id
+		}
+		return term
+	})
 }
 
 type ByLicenseIdentifier []spdx.OtherLicense

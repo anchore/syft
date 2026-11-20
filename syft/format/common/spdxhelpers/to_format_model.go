@@ -604,6 +604,15 @@ func toPackages(rels *relationship.Index, catalog *pkg.Collection, sbom sbom.SBO
 			PackageAttributionTexts: nil,
 		})
 	}
+	// license identifiers that differ only by case are the same identifier in SPDX, so make them unique
+	// and point the package license expressions at the identifiers that are kept
+	if renamed := otherLicenseSet.DeduplicateIDs(); len(renamed) > 0 {
+		for _, p := range results {
+			p.PackageLicenseConcluded = helpers.ReplaceLicenseIDs(p.PackageLicenseConcluded, renamed)
+			p.PackageLicenseDeclared = helpers.ReplaceLicenseIDs(p.PackageLicenseDeclared, renamed)
+		}
+	}
+
 	return results, otherLicenseSet.ToSlice()
 }
 
