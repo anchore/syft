@@ -52,6 +52,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from conda metadata"
 	case pkg.PortagePkg:
 		answer = "acquired package info from portage DB"
+	case pkg.HadronPkg:
+		answer = "acquired package info from Hadron components.json file"
 	case pkg.HackagePkg:
 		answer = "acquired package info from cabal or stack manifest files"
 	case pkg.HexPkg:
