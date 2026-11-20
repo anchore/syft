@@ -200,6 +200,8 @@ var dirOnlyTestCases = []testCase{
 		pkgLanguage: pkg.Go,
 		pkgInfo: map[string]string{
 			"github.com/bmatcuk/doublestar": "v1.3.1",
+			// declared go directive version from go.mod
+			"stdlib": "1.14",
 		},
 	},
 	{

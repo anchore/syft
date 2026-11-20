@@ -1,6 +1,9 @@
 package golang
 
 import (
+	"context"
+	"io"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -8,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
@@ -31,6 +35,22 @@ func TestParseGoMod(t *testing.T) {
 					Type:      pkg.GoModulePkg,
 					Metadata:  pkg.GolangModuleEntry{},
 				},
+				{
+					Name:      "stdlib",
+					Version:   "1.14",
+					PURL:      "pkg:golang/stdlib@1.14",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/go-mod-fixtures/one-package/go.mod")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(context.Background(), "BSD-3-Clause")),
+					CPEs: []cpe.CPE{
+						{
+							Attributes: cpe.MustAttributes("cpe:2.3:a:golang:go:1.14:-:*:*:*:*:*:*"),
+							Source:     cpe.GeneratedSource,
+						},
+					},
+					Metadata: pkg.GolangModuleEntry{},
+				},
 			},
 		},
 		{
@@ -44,6 +64,22 @@ func TestParseGoMod(t *testing.T) {
 					Type:      pkg.GoModulePkg,
 					Locations: file.NewLocationSet(file.NewLocation("testdata/go-mod-fixtures/relative-replace/go.mod")),
 					Metadata:  pkg.GolangModuleEntry{},
+				},
+				{
+					Name:      "stdlib",
+					Version:   "1.22",
+					PURL:      "pkg:golang/stdlib@1.22",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/go-mod-fixtures/relative-replace/go.mod")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(context.Background(), "BSD-3-Clause")),
+					CPEs: []cpe.CPE{
+						{
+							Attributes: cpe.MustAttributes("cpe:2.3:a:golang:go:1.22:-:*:*:*:*:*:*"),
+							Source:     cpe.GeneratedSource,
+						},
+					},
+					Metadata: pkg.GolangModuleEntry{},
 				},
 			},
 		},
@@ -105,6 +141,22 @@ func TestParseGoMod(t *testing.T) {
 					Type:      pkg.GoModulePkg,
 					Metadata:  pkg.GolangModuleEntry{},
 				},
+				{
+					Name:      "stdlib",
+					Version:   "1.14",
+					PURL:      "pkg:golang/stdlib@1.14",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/go-mod-fixtures/many-packages/go.mod")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(context.Background(), "BSD-3-Clause")),
+					CPEs: []cpe.CPE{
+						{
+							Attributes: cpe.MustAttributes("cpe:2.3:a:golang:go:1.14:-:*:*:*:*:*:*"),
+							Source:     cpe.GeneratedSource,
+						},
+					},
+					Metadata: pkg.GolangModuleEntry{},
+				},
 			},
 		},
 	}
@@ -162,6 +214,23 @@ func Test_GoSumHashes(t *testing.T) {
 					Metadata: pkg.GolangModuleEntry{
 						H1Digest: "h1:5PJl274Y63IEHC+7izoQE9x6ikvDFZS2mDVS3drnohI=",
 					},
+				},
+				{
+					Name:      "stdlib",
+					Version:   "1.18",
+					PURL:      "pkg:golang/stdlib@1.18",
+					Locations: file.NewLocationSet(file.NewLocation("go.mod")),
+					FoundBy:   "go-module-file-cataloger",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(context.Background(), "BSD-3-Clause")),
+					CPEs: []cpe.CPE{
+						{
+							Attributes: cpe.MustAttributes("cpe:2.3:a:golang:go:1.18:-:*:*:*:*:*:*"),
+							Source:     cpe.GeneratedSource,
+						},
+					},
+					Metadata: pkg.GolangModuleEntry{},
 				},
 			},
 		},
@@ -227,6 +296,7 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 				"github.com/rogpeppe/go-internal @ v1.9.0 (go.mod)",
 				"go.uber.org/goleak @ v1.3.0 (go.mod)",
 				"gopkg.in/check.v1 @ v1.0.0-20190902080502-41f04d3bba15 (go.mod)",
+				"stdlib @ 1.24.3 (go.mod)",
 			},
 			expectedRels: []string{
 				"github.com/davecgh/go-spew @ v1.1.1 (go.mod) [dependency-of] github.com/stretchr/testify @ v1.10.0 (go.mod)",
@@ -299,6 +369,7 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 				"github.com/rogpeppe/go-internal":     {"BSD-3-Clause"},
 				"go.uber.org/goleak":                  {"MIT"},
 				"gopkg.in/check.v1":                   {"BSD-2-Clause"},
+				"stdlib":                              {"BSD-3-Clause"},
 			},
 		},
 	}
@@ -311,6 +382,12 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 				ExpectsRelationshipStrings(tt.expectedRels).
 				ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 					for _, p := range pkgs {
+						if p.Name == "stdlib" {
+							require.Equal(t, "go-module-file-cataloger", p.FoundBy)
+							require.IsType(t, pkg.GolangModuleEntry{}, p.Metadata)
+							_, isBinary := p.Metadata.(pkg.GolangBinaryBuildinfoEntry)
+							require.False(t, isBinary)
+						}
 						if metadata, ok := p.Metadata.(pkg.GolangSourceEntry); ok {
 							// Validate that GolangSourceEntry metadata is present but don't assert on specific field values
 							// since these might vary across development machines
@@ -337,4 +414,139 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 				TestCataloger(t, NewGoModuleFileCataloger(DefaultCatalogerConfig().WithUsePackagesLib(true)))
 		})
 	}
+}
+
+func TestParseGoMod_declaredStdlibVersion(t *testing.T) {
+	tests := []struct {
+		name    string
+		source  string
+		version string
+		cpe     string
+	}{
+		{
+			name:    "minimal module",
+			source:  "module hello\n\ngo 1.21\n",
+			version: "1.21",
+			cpe:     "cpe:2.3:a:golang:go:1.21:-:*:*:*:*:*:*",
+		},
+		{
+			name:    "patch version",
+			source:  "module hello\n\ngo 1.22.5\n",
+			version: "1.22.5",
+			cpe:     "cpe:2.3:a:golang:go:1.22.5:-:*:*:*:*:*:*",
+		},
+		{
+			name:    "prerelease version",
+			source:  "module hello\n\ngo 1.23rc1\n",
+			version: "1.23rc1",
+			cpe:     "cpe:2.3:a:golang:go:1.23:rc1:*:*:*:*:*:*",
+		},
+		{
+			name:    "toolchain does not replace go directive",
+			source:  "module hello\n\ngo 1.21\n\ntoolchain go1.24.1\n",
+			version: "1.21",
+			cpe:     "cpe:2.3:a:golang:go:1.21:-:*:*:*:*:*:*",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c := newGoModCataloger(DefaultCatalogerConfig().WithUsePackagesLib(false).WithSearchRemoteLicenses(false))
+			pkgtest.NewCatalogTester().
+				FromString("go.mod", test.source).
+				Expects([]pkg.Package{
+					{
+						Name:      "stdlib",
+						Version:   test.version,
+						PURL:      "pkg:golang/stdlib@" + test.version,
+						Locations: file.NewLocationSet(file.NewLocation("go.mod")),
+						Language:  pkg.Go,
+						Type:      pkg.GoModulePkg,
+						Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(context.Background(), "BSD-3-Clause")),
+						CPEs: []cpe.CPE{
+							{
+								Attributes: cpe.MustAttributes(test.cpe),
+								Source:     cpe.GeneratedSource,
+							},
+						},
+						Metadata: pkg.GolangModuleEntry{},
+					},
+				}, nil).
+				TestParser(t, c.parseGoModFile)
+		})
+	}
+}
+
+func TestParseGoMod_missingGoDirective(t *testing.T) {
+	c := newGoModCataloger(DefaultCatalogerConfig().WithUsePackagesLib(false).WithSearchRemoteLicenses(false))
+	pkgtest.NewCatalogTester().
+		FromString("go.mod", "module hello\n\nrequire github.com/example/mod v1.2.3\n").
+		Expects([]pkg.Package{
+			{
+				Name:      "github.com/example/mod",
+				Version:   "v1.2.3",
+				PURL:      "pkg:golang/github.com/example/mod@v1.2.3",
+				Locations: file.NewLocationSet(file.NewLocation("go.mod")),
+				Language:  pkg.Go,
+				Type:      pkg.GoModulePkg,
+				Metadata:  pkg.GolangModuleEntry{},
+			},
+		}, nil).
+		TestParser(t, c.parseGoModFile)
+}
+
+func TestParseGoMod_malformed(t *testing.T) {
+	c := newGoModCataloger(DefaultCatalogerConfig().WithUsePackagesLib(false).WithSearchRemoteLicenses(false))
+	pkgtest.NewCatalogTester().
+		FromString("go.mod", "module hello\n\ngo not-a-version\n").
+		WithError().
+		Expects(nil, nil).
+		TestParser(t, c.parseGoModFile)
+}
+
+func TestParseGoMod_readerError(t *testing.T) {
+	pr, pw := io.Pipe()
+	require.NoError(t, pw.CloseWithError(io.ErrUnexpectedEOF))
+
+	c := newGoModCataloger(DefaultCatalogerConfig().WithUsePackagesLib(false).WithSearchRemoteLicenses(false))
+	_, _, err := c.parseGoModFile(pkgtest.Context(t), fileresolver.Empty{}, nil, file.LocationReadCloser{
+		Location:   file.NewLocation("go.mod"),
+		ReadCloser: pr,
+	})
+	require.Error(t, err)
+}
+
+func TestGoModuleFileCataloger_declaredStdlib(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module hello\n\ngo 1.21\n"), 0o600))
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, dir).
+		Expects([]pkg.Package{
+			{
+				Name:      "stdlib",
+				Version:   "1.21",
+				PURL:      "pkg:golang/stdlib@1.21",
+				Locations: file.NewLocationSet(file.NewLocation("go.mod")),
+				Language:  pkg.Go,
+				Type:      pkg.GoModulePkg,
+				Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(context.Background(), "BSD-3-Clause")),
+				CPEs: []cpe.CPE{
+					{
+						Attributes: cpe.MustAttributes("cpe:2.3:a:golang:go:1.21:-:*:*:*:*:*:*"),
+						Source:     cpe.GeneratedSource,
+					},
+				},
+				Metadata: pkg.GolangModuleEntry{},
+			},
+		}, nil).
+		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+			require.Len(t, pkgs, 1)
+			require.Empty(t, relationships)
+			require.Equal(t, "go-module-file-cataloger", pkgs[0].FoundBy)
+			require.Equal(t, "go.mod", pkgs[0].Locations.ToSlice()[0].RealPath)
+			_, isBinary := pkgs[0].Metadata.(pkg.GolangBinaryBuildinfoEntry)
+			require.False(t, isBinary)
+		}).
+		TestCataloger(t, NewGoModuleFileCataloger(DefaultCatalogerConfig().WithUsePackagesLib(false).WithSearchRemoteLicenses(false)))
 }
