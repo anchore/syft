@@ -256,21 +256,18 @@ func addLinuxKernelModuleEntry(k *pkg.LinuxKernelModule, entry []byte) error {
 		if len(parts) != 2 {
 			return fmt.Errorf("invalid parm entry: %s", value)
 		}
-		if m, ok := k.Parameters[parts[0]]; !ok {
-			k.Parameters[parts[0]] = pkg.LinuxKernelModuleParameter{Description: parts[1]}
-		} else {
-			m.Description = parts[1]
-		}
+		// Reading the struct into m copies it, so the field has to be written back or the assignment is lost.
+		m := k.Parameters[parts[0]]
+		m.Description = parts[1]
+		k.Parameters[parts[0]] = m
 	case "parmtype":
 		parts := strings.SplitN(value, ":", 2)
 		if len(parts) != 2 {
 			return fmt.Errorf("invalid parmtype entry: %s", value)
 		}
-		if m, ok := k.Parameters[parts[0]]; !ok {
-			k.Parameters[parts[0]] = pkg.LinuxKernelModuleParameter{Type: parts[1]}
-		} else {
-			m.Type = parts[1]
-		}
+		m := k.Parameters[parts[0]]
+		m.Type = parts[1]
+		k.Parameters[parts[0]] = m
 	}
 	return nil
 }
