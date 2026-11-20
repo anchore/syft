@@ -204,3 +204,45 @@ catalogers:
         default: false
       - name: package_manager.package_integrity_hash
         default: false
+  - ecosystem: dotnet # MANUAL
+    name: dotnet-packages-config-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/dotnet/cataloger.go
+      function: NewDotnetPackagesConfigCataloger
+    selectors: # AUTO-GENERATED
+      - c#
+      - declared
+      - directory
+      - dotnet
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseDotnetPackagesConfig
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/packages.config'
+        package_types: # AUTO-GENERATED
+          - dotnet
+        purl_types: # AUTO-GENERATED
+          - nuget
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+            comment: Includes all installed packages without distinguishing direct from transitive entries.
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+            comment: developmentDependency controls NuGet packing, not dependency scope.
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

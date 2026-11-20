@@ -138,6 +138,8 @@ func DefaultPackageTaskFactories() Factories {
 		// inside container images
 		newSimplePackageTaskFactory(perl.NewCpanMetaCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "perl", "cpan"),
 
+		newSimplePackageTaskFactory(dotnet.NewDotnetPackagesConfigCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dotnet", "c#"),
+
 		// language-specific package for both image and directory scans (but not necessarily declared) ////////////////////////////////////////
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
