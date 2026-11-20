@@ -109,3 +109,31 @@ func TestParseCabalFreeze(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parseCabalFreeze, expectedPkgs, expectedRelationships)
 }
+
+func TestParseCabalFreezeNoTrailingNewline(t *testing.T) {
+	location := "cabal.project.freeze"
+	locationSet := file.NewLocationSet(file.NewLocation(location))
+	expected := []pkg.Package{
+		{
+			Name:      "Cabal",
+			Version:   "3.2.1.0",
+			PURL:      "pkg:hackage/Cabal@3.2.1.0",
+			Locations: locationSet,
+			Language:  pkg.Haskell,
+			Type:      pkg.HackagePkg,
+		},
+		{
+			Name:      "Diff",
+			Version:   "0.4.1",
+			PURL:      "pkg:hackage/Diff@0.4.1",
+			Locations: locationSet,
+			Language:  pkg.Haskell,
+			Type:      pkg.HackagePkg,
+		},
+	}
+
+	pkgtest.NewCatalogTester().
+		FromString(location, "constraints: any.Cabal ==3.2.1.0,\n             any.Diff ==0.4.1").
+		Expects(expected, nil).
+		TestParser(t, parseCabalFreeze)
+}

@@ -110,6 +110,54 @@ func TestParseRpmManifest(t *testing.T) {
 
 }
 
+func TestParseRpmManifestNoTrailingNewline(t *testing.T) {
+	location := file.NewLocation("container-manifest-2")
+	expected := []pkg.Package{
+		{
+			Name:      "mariner-release",
+			Version:   "2.0-12.cm2",
+			PURL:      "pkg:rpm/mariner-release@2.0-12.cm2?arch=noarch&upstream=mariner-release-2.0-12.cm2.src.rpm",
+			Locations: file.NewLocationSet(location),
+			Type:      pkg.RpmPkg,
+			Metadata: pkg.RpmDBEntry{
+				Name:      "mariner-release",
+				Epoch:     nil,
+				Arch:      "noarch",
+				Release:   "12.cm2",
+				Version:   "2.0",
+				SourceRpm: "mariner-release-2.0-12.cm2.src.rpm",
+				Size:      580,
+				Vendor:    "Microsoft Corporation",
+			},
+		},
+		{
+			Name:      "filesystem",
+			Version:   "1.1-9.cm2",
+			PURL:      "pkg:rpm/filesystem@1.1-9.cm2?arch=x86_64&upstream=filesystem-1.1-9.cm2.src.rpm",
+			Locations: file.NewLocationSet(location),
+			Type:      pkg.RpmPkg,
+			Metadata: pkg.RpmDBEntry{
+				Name:      "filesystem",
+				Epoch:     nil,
+				Arch:      "x86_64",
+				Release:   "9.cm2",
+				Version:   "1.1",
+				SourceRpm: "filesystem-1.1-9.cm2.src.rpm",
+				Size:      7596,
+				Vendor:    "Microsoft Corporation",
+			},
+		},
+	}
+
+	input := "mariner-release\t2.0-12.cm2\t1653816591\t1653753130\tMicrosoft Corporation\t(none)\t580\tnoarch\t0\tmariner-release-2.0-12.cm2.src.rpm\n" +
+		"filesystem\t1.1-9.cm2\t1653816591\t1653628924\tMicrosoft Corporation\t(none)\t7596\tx86_64\t0\tfilesystem-1.1-9.cm2.src.rpm"
+
+	pkgtest.NewCatalogTester().
+		FromString("container-manifest-2", input).
+		Expects(expected, nil).
+		TestParser(t, parseRpmManifest)
+}
+
 func TestNewMetadataFromManifestLine(t *testing.T) {
 	// fields are: NAME, VERSION-RELEASE, INSTALLTIME, BUILDTIME, VENDOR, EPOCH, SIZE, ARCH, EPOCHNUM, SOURCERPM
 	line := func(epoch, size, epochNum string) string {
