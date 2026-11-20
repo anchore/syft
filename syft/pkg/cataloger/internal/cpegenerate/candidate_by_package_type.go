@@ -59,6 +59,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		},
 		{
 			pkg.BinaryPkg,
+			candidateKey{PkgName: "Node.js"},
+			candidateAddition{AdditionalProducts: []string{"node.js"}, AdditionalVendors: []string{"nodejs"}},
+		},
+		{
+			pkg.BinaryPkg,
 			candidateKey{PkgName: "util-linux"},
 			candidateAddition{AdditionalVendors: []string{"kernel"}},
 		},
@@ -690,6 +695,15 @@ var defaultCandidateRemovals = buildCandidateRemovalLookup(
 			pkg.PhpPearPkg,
 			candidateKey{PkgName: "redis"},
 			candidateRemovals{ProductsToRemove: []string{"redis"}},
+		},
+		// Binary packages
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "Node.js"},
+			candidateRemovals{
+				ProductsToRemove: []string{"Node.js"},
+				VendorsToRemove:  []string{"Node.js", "node.js"},
+			},
 		},
 	})
 
