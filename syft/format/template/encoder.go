@@ -13,6 +13,7 @@ import (
 	"github.com/Masterminds/sprig/v3"
 
 	"github.com/anchore/go-homedir"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -38,6 +39,8 @@ func NewFormatEncoder(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 	// helpers requested in issue #2372. Allowlisting here keeps the user-template trust boundary
 	// safe even if sprig adds new non-hermetic functions in the future.
 	f := sprig.HermeticTxtFuncMap()
+	// Expose individual CPE attributes without changing the template data model.
+	f["parseCPE"] = cpe.NewAttributes
 	full := sprig.TxtFuncMap()
 	for _, name := range []string{"now", "date", "dateInZone", "dateModify", "date_in_zone", "date_modify", "htmlDate", "htmlDateInZone"} {
 		f[name] = full[name]
