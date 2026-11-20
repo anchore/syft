@@ -41,7 +41,7 @@ func newPackageFromAudit(dep *rustaudit.Package, locations ...file.Location) pkg
 	p := pkg.Package{
 		Name:      dep.Name,
 		Version:   dep.Version,
-		PURL:      packageURL(dep.Name, dep.Version),
+		PURL:      auditPackageURL(dep),
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
 		Locations: file.NewLocationSet(locations...),
@@ -55,6 +55,17 @@ func newPackageFromAudit(dep *rustaudit.Package, locations ...file.Location) pkg
 	p.SetID()
 
 	return p
+}
+
+func auditPackageURL(dep *rustaudit.Package) string {
+	// cargo-auditable records workspace and path dependencies with a "local"
+	// source. As with Cargo.lock entries that have no source, a cargo PURL
+	// would identify an unrelated package on crates.io.
+	if dep.Source == "local" {
+		return ""
+	}
+
+	return packageURL(dep.Name, dep.Version)
 }
 
 // packageURL returns the PURL for the specific rust package (see https://github.com/package-url/purl-spec)
