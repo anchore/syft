@@ -1,0 +1,44 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      is-number:
+        specifier: 7.0.0
+        version: 7.0.0
+    devDependencies:
+      node:
+        specifier: runtime:22.23.4
+        version: runtime:22.23.4
+
+packages:
+
+  is-number@7.0.0:
+    resolution: {integrity: sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==}
+    engines: {node: '>=0.12.0'}
+
+  node@runtime:22.23.4:
+    resolution:
+      type: variations
+      variants:
+        - resolution:
+            archive: tarball
+            bin:
+              node: bin/node
+            integrity: sha256-whlBC+oK7Qjs+lhHo9ispORd1JSglPhsDYchE4Ngqck=
+            type: binary
+            url: https://nodejs.org/download/release/v22.23.4/node-v22.23.4-aix-ppc64.tar.gz
+          targets:
+            - cpu: ppc64
+              os: aix
+
+snapshots:
+
+  is-number@7.0.0: {}
+
+  node@runtime:22.23.4: {}
