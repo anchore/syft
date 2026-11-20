@@ -12,6 +12,14 @@ type testCase struct {
 
 var imageOnlyTestCases = []testCase{
 	{
+		name:        "find installed opam packages",
+		pkgType:     pkg.OpamPkg,
+		pkgLanguage: pkg.OCaml,
+		pkgInfo: map[string]string{
+			"lwt": "5.4.2",
+		},
+	},
+	{
 		name:        "find gemspec packages",
 		pkgType:     pkg.GemPkg,
 		pkgLanguage: pkg.Ruby,
