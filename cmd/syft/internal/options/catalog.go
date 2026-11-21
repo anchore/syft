@@ -280,6 +280,10 @@ func (cfg *Catalog) PostLoad() error {
 	cfg.From = Flatten(cfg.From)
 	cfg.Enrich = FlattenAndSort(cfg.Enrich)
 
+	if err := validateEnrichmentOptions(cfg.Enrich); err != nil {
+		return err
+	}
+
 	s := source.ParseScope(cfg.Scope)
 	if s == source.UnknownScope {
 		return fmt.Errorf("bad scope value %q", cfg.Scope)
@@ -316,6 +320,47 @@ var publicisedEnrichmentOptions = []string{
 	task.JavaScript,
 	task.Python,
 	task.Vcpkg,
+}
+
+// validEnrichmentDirectives are the values that actually select an enrichment feature. All of
+// them are accepted by enrichmentEnabled, including the feature names that are not listed in the
+// flag help (a Go directive is also satisfied by "go", java by "maven", javascript by "node" or
+// "npm", and cpp by "vcpkg").
+var validEnrichmentDirectives = []string{
+	"all",
+	"none",
+	task.Cpp,
+	task.Go,
+	task.Golang,
+	task.Java,
+	task.JavaScript,
+	task.Maven,
+	task.Node,
+	task.NPM,
+	task.Python,
+	task.Vcpkg,
+}
+
+func validateEnrichmentOptions(enrichDirectives []string) error {
+	if len(enrichDirectives) == 0 {
+		return nil
+	}
+
+	validOptions := append([]string(nil), validEnrichmentDirectives...)
+	sort.Strings(validOptions)
+
+	for _, directive := range enrichDirectives {
+		// a leading '+' or '-' selects the same feature (enabled or disabled), see enrichmentEnabled
+		name := strings.TrimPrefix(strings.TrimPrefix(directive, "+"), "-")
+		if name == "" {
+			continue
+		}
+		if !slices.Contains(validOptions, name) {
+			return fmt.Errorf("invalid enrichment option %q (valid options: %s)", directive, strings.Join(validOptions, ", "))
+		}
+	}
+
+	return nil
 }
 
 func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {
