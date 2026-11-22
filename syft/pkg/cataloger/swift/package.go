@@ -63,11 +63,30 @@ func swiftPackageManagerPackageURL(name, version, sourceURL string) string {
 	return packageurl.NewPackageURL(
 		packageurl.TypeSwift,
 		swiftNamespaceFromSourceURL(sourceURL, name),
-		name,
+		swiftNameFromSourceURL(sourceURL, name),
 		version,
 		qualifiers,
 		"",
 	).ToString()
+}
+
+// swiftNameFromSourceURL returns the purl name for a Swift package. The purl
+// spec defines the swift name as the repository name and treats it as case
+// sensitive, but SwiftPM lowercases Package.resolved identities. When the last
+// path segment of the source URL matches the identity case-insensitively, use
+// that segment so the original case is kept (e.g. identity "alamofire" with
+// location https://github.com/Alamofire/Alamofire.git gives "Alamofire").
+// Otherwise fall back to the identity. See anchore/syft#5615.
+func swiftNameFromSourceURL(sourceURL, name string) string {
+	path := strings.TrimSuffix(strings.TrimRight(sourceURL, "/"), ".git")
+	idx := strings.LastIndex(path, "/")
+	if idx < 0 {
+		return name
+	}
+	if segment := path[idx+1:]; strings.EqualFold(segment, name) {
+		return segment
+	}
+	return name
 }
 
 // swiftNamespaceFromSourceURL derives the purl namespace (e.g.
