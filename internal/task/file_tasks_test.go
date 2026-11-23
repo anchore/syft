@@ -40,19 +40,13 @@ func Test_coordinatesForSelection(t *testing.T) {
 				Relationships: []artifact.Relationship{
 					{
 						From: pkg.Package{},
-						To: file.Coordinates{
-							RealPath:     "path",
-							FileSystemID: "fs",
-						},
+						To:   file.NewCoordinates("path", "fs"),
 						Type: artifact.ContainsRelationship,
 					},
 				},
 			},
 			files: []file.Coordinates{
-				{
-					RealPath:     "path",
-					FileSystemID: "fs",
-				},
+				file.NewCoordinates("path", "fs"),
 			},
 			ok: true,
 		},
@@ -63,10 +57,7 @@ func Test_coordinatesForSelection(t *testing.T) {
 				Relationships: []artifact.Relationship{
 					{
 						From: pkg.Package{},
-						To: file.Coordinates{
-							RealPath:     "path",
-							FileSystemID: "fs",
-						},
+						To:   file.NewCoordinates("path", "fs"),
 						// wrong type
 						Type: artifact.DependencyOfRelationship,
 					},
@@ -82,10 +73,7 @@ func Test_coordinatesForSelection(t *testing.T) {
 				Relationships: []artifact.Relationship{
 					{
 						From: file.Coordinates{}, // wrong type
-						To: file.Coordinates{
-							RealPath:     "path",
-							FileSystemID: "fs",
-						},
+						To:   file.NewCoordinates("path", "fs"),
 						Type: artifact.ContainsRelationship,
 					},
 				},

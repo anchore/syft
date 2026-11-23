@@ -18,7 +18,7 @@ func BranchingEvidenceMatcher(classifiers ...Classifier) EvidenceMatcher {
 		if err != nil {
 			return nil, err
 		}
-		defer internal.CloseAndLogError(rdr, context.Location.RealPath)
+		defer internal.CloseAndLogError(rdr, context.Location.FullNestedPath())
 		if err != nil {
 			return nil, err
 		}

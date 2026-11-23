@@ -194,6 +194,95 @@ func TestParseJavaManifest(t *testing.T) {
 	}
 }
 
+func TestSelectLicensesSplitsBundleLicenseClauses(t *testing.T) {
+	manifest := &pkg.JavaManifest{
+		Main: pkg.KeyValues{
+			{
+				Key: "Bundle-License",
+				Value: "https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt;description=\"EPL, version 2\", " +
+					"https://www.gnu.org/software/classpath/license.html",
+			},
+		},
+	}
+
+	assert.Equal(t, []string{
+		"https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt",
+		"https://www.gnu.org/software/classpath/license.html",
+	}, selectLicenses(manifest))
+}
+
+func TestSelectLicensesApacheName(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    string
+		expected []string
+	}{
+		{
+			name:     "freemarker unquoted name with see parameter",
+			value:    "Apache License, Version 2.0; see: http://www.apache.org/licenses/LICENSE-2.0.txt",
+			expected: []string{"Apache-2.0"},
+		},
+		{
+			name:     "unquoted name",
+			value:    "Apache License, Version 2.0",
+			expected: []string{"Apache-2.0"},
+		},
+		{
+			name:     "quoted name",
+			value:    `"Apache License, Version 2.0";description="Apache, version 2"`,
+			expected: []string{"Apache-2.0"},
+		},
+		{
+			name:     "single quoted name",
+			value:    "'Apache License, Version 2.0'",
+			expected: []string{"Apache-2.0"},
+		},
+		{
+			name:     "other licenses before and after",
+			value:    "MIT, Apache License, Version 2.0;description=Apache, BSD-3-Clause",
+			expected: []string{"MIT", "Apache-2.0", "BSD-3-Clause"},
+		},
+		{
+			name:     "case and whitespace",
+			value:    " apache license , version 2.0 ;description=Apache ",
+			expected: []string{"Apache-2.0"},
+		},
+		{
+			name:     "different version",
+			value:    "Apache License, Version 1.0",
+			expected: []string{"Apache License", "Version 1.0"},
+		},
+		{
+			name:     "different license name",
+			value:    "Custom License, Version 2.0",
+			expected: []string{"Custom License", "Version 2.0"},
+		},
+		{
+			name:     "comma in description",
+			value:    `MIT;description="Apache License, Version 2.0", BSD-3-Clause`,
+			expected: []string{"MIT", "BSD-3-Clause"},
+		},
+		{
+			name:     "parameter separates the two clauses",
+			value:    "Apache License;description=custom, Version 2.0",
+			expected: []string{"Apache License", "Version 2.0"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			manifest := &pkg.JavaManifest{Main: pkg.KeyValues{{Key: "Bundle-License", Value: test.value}}}
+			actual := selectLicenses(manifest)
+			assert.Equal(t, test.expected, actual)
+			for _, license := range pkg.NewLicensesFromValuesWithContext(t.Context(), actual...) {
+				if license.Value == "Apache-2.0" {
+					assert.Equal(t, "Apache-2.0", license.SPDXExpression)
+				}
+			}
+		})
+	}
+}
+
 func TestSelectName(t *testing.T) {
 	tests := []struct {
 		desc     string

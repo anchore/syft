@@ -59,7 +59,7 @@ func readDirHFConfig(resolver file.Resolver, p string) (*file.Location, *hfConfi
 	if err != nil {
 		return nil, nil
 	}
-	defer internal.CloseAndLogError(rc, p)
+	defer internal.CloseAndLogError(rc, locations[0].FullNestedPath())
 
 	buf, err := readBounded(rc, maxHFConfigSize)
 	if err != nil {
@@ -86,7 +86,7 @@ func readDirReadmeFrontmatter(resolver file.Resolver, p string) (*file.Location,
 	if err != nil {
 		return nil, nil
 	}
-	defer internal.CloseAndLogError(rc, p)
+	defer internal.CloseAndLogError(rc, locations[0].FullNestedPath())
 
 	buf, err := readPrefix(rc, maxReadmePrefixSize)
 	if err != nil {

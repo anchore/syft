@@ -87,14 +87,14 @@ func newLibmanJSON(reader file.LocationReadCloser) (*libmanJSON, error) {
 }
 
 func findLibmanJSON(resolver file.Resolver, depsJSON file.Location) (*libmanJSON, error) {
-	parent := path.Dir(depsJSON.RealPath)
+	parent := path.Dir(depsJSON.LocalPath())
 	loc := resolver.RelativeFileByPath(depsJSON, path.Join(parent, "libman.json"))
 	if loc == nil {
 		return nil, nil
 	}
 
 	reader, err := resolver.FileContentsByLocation(*loc)
-	defer internal.CloseAndLogError(reader, loc.RealPath)
+	defer internal.CloseAndLogError(reader, loc.FullNestedPath())
 	if err != nil {
 		return nil, err
 	}

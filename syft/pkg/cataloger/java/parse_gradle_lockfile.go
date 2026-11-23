@@ -35,6 +35,11 @@ func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environm
 		// Trim leading and trailing whitespace from the line
 		line = strings.TrimSpace(line)
 
+		// skip comment lines (e.g. the header gradle writes), which may contain ':' and '=' characters
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+
 		groupNameVersion := line
 		groupNameVersion = strings.Split(groupNameVersion, "=")[0]
 		parts := strings.Split(groupNameVersion, ":")

@@ -1,12 +1,14 @@
 package java
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
@@ -688,6 +690,147 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	}
 
 	return expected{pkgs, relationships}
+}
+
+func Test_isArchiveMetaPom(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected bool
+	}{
+		{
+			name:     "META-INF maven pom",
+			path:     "META-INF/maven/com.example/my-lib/pom.xml",
+			expected: true,
+		},
+		{
+			name:     "nested META-INF maven pom",
+			path:     "some/path/META-INF/maven/org.apache/commons/pom.xml",
+			expected: true,
+		},
+		{
+			name:     "project pom.xml",
+			path:     "pom.xml",
+			expected: false,
+		},
+		{
+			name:     "module pom.xml",
+			path:     "submodule/pom.xml",
+			expected: false,
+		},
+		{
+			name:     "META-INF but not maven",
+			path:     "META-INF/pom.xml",
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			loc := file.NewLocation(test.path)
+			assert.Equal(t, test.expected, isArchiveMetaPom(insideJar(t), loc))
+		})
+	}
+
+	t.Run("only inside an extracted java archive", func(t *testing.T) {
+		loc := file.NewLocation("WEB-INF/classes/META-INF/maven/com.example/my-lib/pom.xml")
+		assert.False(t, isArchiveMetaPom(context.Background(), loc), "outside any archive, e.g. an exploded war")
+		inTarball := archive.WithTraversal(context.Background(), &archive.Traversal{Location: file.NewLocation("/src.tar.gz")})
+		assert.False(t, isArchiveMetaPom(inTarball, loc), "inside an archive java does not describe")
+	})
+}
+
+// insideJar is a context as the archive cataloger task sets it up while cataloging a jar's contents.
+func insideJar(t *testing.T) context.Context {
+	return archive.WithTraversal(pkgtest.Context(t), &archive.Traversal{Location: file.NewLocation("/app.jar")})
+}
+
+func Test_pomCatalogerSkipsMetaInfPoms(t *testing.T) {
+	// a pom.xml under META-INF/maven/ alone yields no packages: that is archive metadata, not a
+	// project file
+	cat := NewPomCataloger(ArchiveCatalogerConfig{
+		ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+			IncludeIndexedArchives:   true,
+			IncludeUnindexedArchives: true,
+		},
+	})
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/pom/meta-inf-archive").
+		WithContext(insideJar(t)).
+		Expects(nil, nil).
+		TestCataloger(t, cat)
+
+	// the same pom outside a jar is a project file like any other
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/pom/meta-inf-archive").
+		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
+			assert.NotEmpty(t, pkgs)
+		}).
+		TestCataloger(t, cat)
+}
+
+func Test_pomCatalogerSkipsMetaInfButKeepsProjectPom(t *testing.T) {
+	// with both a project pom.xml and a META-INF/maven one, only the project pom.xml is
+	// cataloged; the META-INF pom and its dependencies are ignored
+	pomLocation := file.NewLocationSet(file.NewLocation("pom.xml"))
+
+	myApp := pkg.Package{
+		Name:      "my-app",
+		Version:   "2.0.0",
+		PURL:      "pkg:maven/org.anchore/my-app@2.0.0",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: pomLocation,
+		Metadata: pkg.JavaArchive{
+			PomProject: &pkg.JavaPomProject{
+				GroupID:    "org.anchore",
+				ArtifactID: "my-app",
+				Version:    "2.0.0",
+			},
+		},
+	}
+	finalizePackage(&myApp)
+
+	guava := pkg.Package{
+		Name:      "guava",
+		Version:   "31.1-jre",
+		PURL:      "pkg:maven/com.google.guava/guava@31.1-jre",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: pomLocation,
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "com.google.guava",
+				ArtifactID: "guava",
+			},
+		},
+	}
+	finalizePackage(&guava)
+
+	expectedPkgs := []pkg.Package{myApp, guava}
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: guava,
+			To:   myApp,
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+
+	cat := NewPomCataloger(ArchiveCatalogerConfig{
+		ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+			IncludeIndexedArchives:   true,
+			IncludeUnindexedArchives: true,
+		},
+	})
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/pom/mixed-meta-inf-and-project").
+		WithContext(insideJar(t)).
+		Expects(expectedPkgs, expectedRelationships).
+		TestCataloger(t, cat)
 }
 
 func expectedTransientPackageData() expected {

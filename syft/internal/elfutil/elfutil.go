@@ -82,6 +82,9 @@ var sectionsReadByName = map[string]struct{}{
 	".gopclntab":    {},
 	".note.package": {},
 	".modinfo":      {},
+	// identifier notes read by the executable cataloger
+	".note.gnu.build-id": {},
+	".note.go.buildid":   {},
 }
 
 // wire sizes of the structures we decode, which differ between the two ELF classes

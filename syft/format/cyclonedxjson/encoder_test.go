@@ -114,6 +114,45 @@ func TestCycloneDxImageEncoder(t *testing.T) {
 	)
 }
 
+func TestCycloneDxSourcePackageEncoder(t *testing.T) {
+	dir := t.TempDir()
+	testutil.AssertEncoderAgainstGoldenSnapshot(t,
+		testutil.EncoderSnapshotTestConfig{
+			Subject:                     testutil.SourcePackagesInput(t, dir),
+			Format:                      getEncoder(t),
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      true,
+			Redactor:                    redactor(dir),
+		},
+	)
+}
+
+func TestCycloneDxSourcePackageEncoder_SpecVersions(t *testing.T) {
+	s := testutil.SourcePackagesInput(t, t.TempDir())
+	tests := []struct {
+		version string
+		want    bool
+	}{
+		{version: "1.4", want: false},
+		{version: "1.5", want: false},
+		{version: "1.6", want: true},
+		{version: cyclonedxutil.DefaultVersion, want: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.version, func(t *testing.T) {
+			enc, err := NewFormatEncoderWithConfig(EncoderConfig{Version: tt.version})
+			require.NoError(t, err)
+
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, s))
+
+			// the source-distribution reference type only exists from spec 1.6
+			assert.Equal(t, tt.want, strings.Contains(buf.String(), `"source-distribution"`))
+		})
+	}
+}
+
 func redactor(values ...string) testutil.Redactor {
 	return testutil.NewRedactions().
 		WithValuesRedacted(values...).

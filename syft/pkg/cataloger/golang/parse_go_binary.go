@@ -41,8 +41,8 @@ var (
 	// inject the correct version into the main module of the build process
 
 	knownBuildFlagPatterns = []*regexp.Regexp{
-		regexp.MustCompile(`(?m)\.[a-zA-Z0-9]*([rR]elease)?([gG]it)?([bB]uild)?[vV]er(sion)?=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
-		regexp.MustCompile(`(?m)\.[a-zA-Z0-9]*([tT]ag)=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
+		regexp.MustCompile(`(?m)\.[a-zA-Z0-9]*([rR]elease)?([gG]it)?([bB]uild)?[vV]er(sion)?=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*(?:\.[-\w]+)*)`),
+		regexp.MustCompile(`(?m)\.[a-zA-Z0-9]*([tT]ag)=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*(?:\.[-\w]+)*)`),
 	}
 )
 
@@ -119,7 +119,7 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
+	defer internal.CloseAndLogError(reader.ReadCloser, reader.FullNestedPath())
 
 	mods, errs := scanFile(ctx, reader.Location, unionReader, c.symbolSelector.enabled())
 	// scanFile hands back the reconstruction for each binary that turned out to be packed. The readers

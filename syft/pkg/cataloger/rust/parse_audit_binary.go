@@ -26,7 +26,7 @@ func parseAuditBinary(_ context.Context, _ file.Resolver, _ *generic.Environment
 		return nil, nil, err
 	}
 
-	infos, err := parseAuditBinaryEntry(unionReader, reader.RealPath)
+	infos, err := parseAuditBinaryEntry(unionReader, reader.FullNestedPath())
 	for _, versionInfo := range infos {
 		auditPkgs, auditRelationships := processAuditVersionInfo(reader.Location, versionInfo)
 		pkgs = append(pkgs, auditPkgs...)

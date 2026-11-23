@@ -87,20 +87,20 @@ func IdentifyRelease(resolver file.Resolver) *Release {
 func tryParseReleaseInfo(resolver file.Resolver, location file.Location, logger logger.Logger, entry parseEntry) *Release {
 	contentReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		logger.WithFields("error", err, "path", location.RealPath).Trace("unable to get contents")
+		logger.WithFields("error", err, "path", location.FullNestedPath()).Trace("unable to get contents")
 		return nil
 	}
-	defer internal.CloseAndLogError(contentReader, location.AccessPath)
+	defer internal.CloseAndLogError(contentReader, location.FullNestedPath())
 
 	content, err := io.ReadAll(io.LimitReader(contentReader, 5*1024*1024))
 	if err != nil {
-		logger.WithFields("error", err, "path", location.RealPath).Trace("unable to read contents")
+		logger.WithFields("error", err, "path", location.FullNestedPath()).Trace("unable to read contents")
 		return nil
 	}
 
 	release, err := entry.fn(string(content))
 	if err != nil {
-		logger.WithFields("error", err, "path", location.RealPath).Trace("unable to parse contents")
+		logger.WithFields("error", err, "path", location.FullNestedPath()).Trace("unable to parse contents")
 		return nil
 	}
 

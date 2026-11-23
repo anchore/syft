@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"flag"
+	"fmt"
 	"runtime"
 	"strings"
 	"testing"
@@ -90,6 +91,30 @@ func TestEscapeHTML(t *testing.T) {
 	})
 }
 
+func TestEncode_sameFileInManyArchivesIsReproducible(t *testing.T) {
+	// files and package locations that differ only by archive path come out of map iteration, so the
+	// output is reproducible only if the sort breaks that tie
+	s := testutil.DirectoryInput(t, t.TempDir())
+	s.Artifacts.FileMetadata = map[file.Coordinates]file.Metadata{}
+	p := pkg.Package{Name: "shared", Version: "1.0"}
+	for i := range 20 {
+		c := file.Coordinates{RealPath: "/app.war", FullPath: fmt.Sprintf("/app.war!/WEB-INF/lib/%02d.jar!/META-INF/MANIFEST.MF", i)}
+		s.Artifacts.FileMetadata[c] = file.Metadata{}
+		p.Locations.Add(file.NewLocationFromCoordinates(c))
+	}
+	s.Artifacts.Packages.Add(p)
+
+	encode := func() string {
+		var buffer bytes.Buffer
+		require.NoError(t, NewFormatEncoder().Encode(&buffer, s))
+		return buffer.String()
+	}
+	first := encode()
+	for range 10 {
+		require.Equal(t, first, encode())
+	}
+}
+
 func TestDirectoryEncoder(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		// the golden snapshot embeds the posix source path (and the source ID derived from it)
@@ -143,9 +168,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Name:    "package-1",
 		Version: "1.0.1",
 		Locations: file.NewLocationSet(
-			file.NewLocationFromCoordinates(file.Coordinates{
-				RealPath: "/a/place/a",
-			}),
+			file.NewLocationFromCoordinates(file.NewCoordinates("/a/place/a", "")),
 		),
 		Type:     pkg.PythonPkg,
 		FoundBy:  "the-cataloger-1",
@@ -166,9 +189,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Name:    "package-2",
 		Version: "2.0.1",
 		Locations: file.NewLocationSet(
-			file.NewLocationFromCoordinates(file.Coordinates{
-				RealPath: "/b/place/b",
-			}),
+			file.NewLocationFromCoordinates(file.NewCoordinates("/b/place/b", "")),
 		),
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",

@@ -169,9 +169,7 @@ func Test_Join(t *testing.T) {
 }
 
 func Test_flatten(t *testing.T) {
-	coords := file.Coordinates{
-		RealPath: "real/path",
-	}
+	coords := file.NewCoordinates("real/path", "")
 	e1 := fmt.Errorf("e1")
 	e2 := fmt.Errorf("e2")
 	c1 := New(coords, fmt.Errorf("c1"))

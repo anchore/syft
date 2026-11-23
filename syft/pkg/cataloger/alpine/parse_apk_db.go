@@ -126,7 +126,7 @@ func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Enviro
 	// This should get fixed with https://gitlab.alpinelinux.org/alpine/apk-tools/-/issues/10875
 	if r == nil {
 		// find the repositories file from the relative directory of the DB file
-		releases := findReleases(resolver, reader.RealPath)
+		releases := findReleases(resolver, reader.LocalPath())
 
 		if len(releases) > 0 {
 			r = &releases[0]
@@ -160,10 +160,10 @@ func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
 
 	reposReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		log.Tracef("unable to fetch contents for APK repositories file %q: %+v", reposLocation, err)
+		log.Tracef("unable to fetch contents for APK repositories file %q: %+v", location.FullNestedPath(), err)
 		return nil
 	}
-	defer internal.CloseAndLogError(reposReader, location.RealPath)
+	defer internal.CloseAndLogError(reposReader, location.FullNestedPath())
 
 	return parseReleasesFromAPKRepository(file.LocationReadCloser{
 		Location:   location,
@@ -176,7 +176,7 @@ func parseReleasesFromAPKRepository(reader file.LocationReadCloser) []linux.Rele
 
 	reposB, err := io.ReadAll(reader) //nolint:gocritic // regex matching requires full buffer
 	if err != nil {
-		log.Tracef("unable to read APK repositories file %q: %+v", reader.RealPath, err)
+		log.Tracef("unable to read APK repositories file %q: %+v", reader.FullNestedPath(), err)
 		return nil
 	}
 

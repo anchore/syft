@@ -22,7 +22,7 @@ func NewPEPackageCataloger() pkg.Cataloger {
 func parsePE(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	f, err := pe.Read(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse PE file %q: %w", reader.RealPath, err)
+		return nil, nil, fmt.Errorf("failed to parse PE file %q: %w", reader.FullNestedPath(), err)
 	}
 
 	if f == nil {

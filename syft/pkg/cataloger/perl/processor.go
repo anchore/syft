@@ -212,7 +212,7 @@ func providedModules(p pkg.Package) []string {
 // belong in relationships and not in the metadata struct.
 func prereqModules(resolver file.Resolver, p pkg.Package) []string {
 	for _, location := range p.Locations.ToSlice() {
-		if path.Base(location.Path()) != "MYMETA.json" {
+		if path.Base(location.FullNestedPath()) != "MYMETA.json" {
 			continue
 		}
 		m, err := decodeMeta(resolver, location)

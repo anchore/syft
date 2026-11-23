@@ -1,0 +1,17 @@
+Package: gzip
+Version: 1.13-1+dhi1
+Architecture: arm64
+Essential: yes
+Maintainer: Docker Hardened Images <dhi@docker.com>
+Installed-Size: 287
+Pre-Depends: libc6 (>= 2.41)
+Suggests: less
+Conflicts: zutils (<< 1.13-2~)
+Section: utils
+Priority: required
+Homepage: https://www.gnu.org/software/gzip/
+Description: GNU compression utilities
+ This package provides the standard GNU file compression utilities, which
+ are also the default compression tools for Debian.  They typically operate
+ on files with names ending in '.gz', but can also decompress files ending
+ in '.Z' created with 'compress'.

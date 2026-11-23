@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/gohugoio/hashstructure"
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/log"
 )
@@ -112,8 +113,13 @@ func (s *LocationSet) Empty() bool {
 }
 
 func (s LocationSet) Hash() (uint64, error) {
-	// access paths and filesystem IDs are not considered when hashing a location set, only the real paths
-	return hashstructure.Hash(s.CoordinateSet().Paths(), &hashstructure.HashOptions{
+	// access paths and filesystem IDs are not considered when hashing a location set, only the full paths
+	// (unlike CoordinateSet.Paths, which ownership-by-overlap needs as real paths only)
+	paths := strset.New()
+	for _, c := range s.CoordinateSet().ToUnorderedSlice() {
+		paths.Add(c.FullNestedPath())
+	}
+	return hashstructure.Hash(paths.List(), &hashstructure.HashOptions{
 		ZeroNil:      true,
 		SlicesAsSets: true,
 	})

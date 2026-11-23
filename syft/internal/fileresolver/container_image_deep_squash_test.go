@@ -1104,15 +1104,9 @@ func TestContainerImageDeepSquash_MergeLocationStreams_FunCases(t *testing.T) {
 }
 
 func makeLocation(path string, layer int) file.Location {
-	return file.NewLocationFromCoordinates(file.Coordinates{
-		RealPath:     path,
-		FileSystemID: fmt.Sprintf("layer-%d", layer),
-	})
+	return file.NewLocationFromCoordinates(file.NewCoordinates(path, fmt.Sprintf("layer-%d", layer)))
 }
 
 func makeVirtualLocation(path, access string, layer int) file.Location {
-	return file.NewVirtualLocationFromCoordinates(file.Coordinates{
-		RealPath:     path,
-		FileSystemID: fmt.Sprintf("layer-%d", layer),
-	}, access)
+	return file.NewVirtualLocationFromCoordinates(file.NewCoordinates(path, fmt.Sprintf("layer-%d", layer)), access)
 }

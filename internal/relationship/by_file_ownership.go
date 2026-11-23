@@ -6,6 +6,7 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
@@ -100,7 +101,7 @@ func findOwnershipByFilesRelationships(resolver file.Resolver, catalog *pkg.Coll
 	// Now establish relationships, considering symlinks
 	for _, candidateOwnerPkg := range catalog.Sorted() {
 		id := candidateOwnerPkg.ID()
-		if candidateOwnerPkg.Metadata == nil {
+		if candidateOwnerPkg.Metadata == nil || withinArchive(candidateOwnerPkg) {
 			continue
 		}
 
@@ -164,7 +165,7 @@ func directOwnersByPath(catalog *pkg.Collection) map[pkg.Type]*strset.Set {
 
 	// First, identify direct ownership of all files
 	for _, p := range catalog.Sorted() {
-		if p.Metadata == nil {
+		if p.Metadata == nil || withinArchive(p) {
 			continue
 		}
 
@@ -192,6 +193,21 @@ func directOwnersByPath(catalog *pkg.Collection) map[pkg.Type]*strset.Set {
 	return directOwnership
 }
 
+// withinArchive reports whether every location of p is inside an archive. Such a package's owned files
+// are paths within its archive, not the scan root, so it is not treated as a file owner.
+func withinArchive(p pkg.Package) bool {
+	locations := p.Locations.ToSlice()
+	if len(locations) == 0 {
+		return false
+	}
+	for _, l := range locations {
+		if archive.ContainerPath(l.Coordinates) == "" {
+			return false
+		}
+	}
+	return true
+}
+
 func resolvePaths(ownedFilePath string, resolver file.Resolver) []string {
 	// though we have a string path, we need to resolve symlinks and other filesystem oddities since we cannot assume this is a real path
 	var locs []file.Location
@@ -206,6 +222,8 @@ func resolvePaths(ownedFilePath string, resolver file.Resolver) []string {
 
 	ownedFilePaths := strset.New(ownedFilePath)
 	for _, loc := range locs {
+		// Owned file paths are currently based on the top-level resolver, which is always the RealPath and includes
+		// all files found within archives at that location
 		ownedFilePaths.Add(loc.RealPath)
 	}
 	return ownedFilePaths.List()

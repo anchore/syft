@@ -25,7 +25,7 @@ func parseTerraformLock(_ context.Context, _ file.Resolver, _ *generic.Environme
 		return nil, nil, fmt.Errorf("failed to read terraform lock file: %w", err)
 	}
 
-	err = hclsimple.Decode(reader.RealPath, contents, nil, &lockFile)
+	err = hclsimple.Decode(reader.FullNestedPath(), contents, nil, &lockFile)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to decode terraform lock file: %w", err)
 	}

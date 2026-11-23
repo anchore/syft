@@ -3,9 +3,11 @@ package task
 import (
 	"context"
 	"fmt"
+	"path"
 	"strings"
 	"unicode"
 
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/relationship"
@@ -48,7 +50,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 			HideOnSuccess: true,
 		}
 
-		t := bus.StartCatalogerTask(info, -1, "")
+		t := bus.StartCatalogerTask(ctx, info, -1, "")
 
 		pkgs, relationships, err := c.Catalog(ctx, resolver)
 
@@ -167,7 +169,7 @@ func applyComplianceRules(p *pkg.Package, cfg cataloging.ComplianceConfig) (bool
 		loc := "unknown"
 		locs := p.Locations.ToSlice()
 		if len(locs) > 0 {
-			loc = locs[0].Path()
+			loc = locs[0].FullNestedPath()
 		}
 		switch action {
 		case cataloging.ComplianceActionDrop:
@@ -236,10 +238,10 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver
 
 	locations := map[artifact.ID]file.Location{}
 
-	for _, path := range fileOwner.OwnedFiles() {
-		pathRefs, err := resolver.FilesByPath(path)
+	for _, ownedPath := range fileOwner.OwnedFiles() {
+		pathRefs, err := resolver.FilesByPath(ownedPath)
 		if err != nil {
-			return nil, fmt.Errorf("unable to find path for path=%q: %w", path, err)
+			return nil, fmt.Errorf("unable to find path for path=%q: %w", ownedPath, err)
 		}
 
 		if len(pathRefs) == 0 {
@@ -250,8 +252,13 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver
 		}
 
 		for _, ref := range pathRefs {
+			// an archive looks a relative path up from its root, but an owned path may be relative to
+			// anything (a python RECORD is relative to site-packages), so only an absolute one owns a file in one
+			if archive.ContainerPath(ref.Coordinates) != "" && !path.IsAbs(ownedPath) {
+				continue
+			}
 			if oldRef, ok := locations[ref.ID()]; ok {
-				log.Debugf("found path duplicate of %s", oldRef.RealPath)
+				log.Debugf("found path duplicate of %s", oldRef.FullNestedPath())
 			}
 			locations[ref.ID()] = ref
 		}

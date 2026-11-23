@@ -25,7 +25,7 @@ import (
 // parseGGUFModel parses a GGUF model file and returns the discovered package.
 // This implementation only reads the header portion of the file, not the entire model.
 func parseGGUFModel(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	defer internal.CloseAndLogError(reader, reader.Path())
+	defer internal.CloseAndLogError(reader, reader.FullNestedPath())
 
 	td := tmpdir.FromContext(ctx)
 	if td == nil {

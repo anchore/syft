@@ -197,7 +197,7 @@ func (r *ContainerImageAllLayers) RelativeFileByPath(location file.Location, pat
 func (r *ContainerImageAllLayers) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
 	entry, err := r.img.FileCatalog.Get(location.Reference())
 	if err != nil {
-		return nil, fmt.Errorf("unable to get metadata for path=%q from file catalog: %w", location.RealPath, err)
+		return nil, fmt.Errorf("unable to get metadata for path=%q from file catalog: %w", location.FullNestedPath(), err)
 	}
 
 	switch entry.Type {

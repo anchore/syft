@@ -176,10 +176,10 @@ func perllocalLocations(resolver file.Resolver) []file.Location {
 func readPerllocal(resolver file.Resolver, location file.Location) []perllocalEntry {
 	reader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		log.WithFields("path", location.Path(), "error", err).Debug("unable to read perllocal.pod")
+		log.WithFields("path", location.FullNestedPath(), "error", err).Debug("unable to read perllocal.pod")
 		return nil
 	}
-	defer internal.CloseAndLogError(reader, location.Path())
+	defer internal.CloseAndLogError(reader, location.FullNestedPath())
 
 	return parsePerllocal(reader)
 }
@@ -217,7 +217,7 @@ func parsePerllocal(r io.Reader) []perllocalEntry {
 func primaryPath(p pkg.Package) string {
 	for _, location := range p.Locations.ToSlice() {
 		if location.Annotations[pkg.EvidenceAnnotationKey] == pkg.PrimaryEvidenceAnnotation {
-			return location.Path()
+			return location.LocalPath()
 		}
 	}
 	return ""

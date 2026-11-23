@@ -56,7 +56,7 @@ func partitionSafeTensorsPackages(pkgs []pkg.Package) (safeTensors, other []pkg.
 // single scan is one source, so the first package is representative of the rest.
 func fromOCIArtifact(pkgs []pkg.Package) bool {
 	loc := primaryEvidenceLocation(pkgs[0])
-	return loc != nil && loc.RealPath == "/"
+	return loc != nil && loc.LocalPath() == "/"
 }
 
 // mergeOCIModel treats the whole OCI artifact as a single model: every layer
@@ -120,7 +120,7 @@ func groupByParentDir(pkgs []pkg.Package) map[string][]pkg.Package {
 		if loc == nil {
 			continue
 		}
-		dir := path.Dir(loc.RealPath)
+		dir := path.Dir(loc.LocalPath())
 		out[dir] = append(out[dir], p)
 	}
 	return out

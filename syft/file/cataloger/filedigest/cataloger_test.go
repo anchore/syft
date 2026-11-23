@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -205,6 +206,45 @@ func TestFileDigestCataloger_GivenCoordinates(t *testing.T) {
 		})
 	}
 
+}
+
+// countingResolver records how many times each coordinate's contents are opened
+type countingResolver struct {
+	file.Resolver
+	lock   sync.Mutex
+	counts map[file.Coordinates]int
+}
+
+func (r *countingResolver) FileContentsByLocation(l file.Location) (io.ReadCloser, error) {
+	r.lock.Lock()
+	r.counts[l.Coordinates]++
+	r.lock.Unlock()
+	return r.Resolver.FileContentsByLocation(l)
+}
+
+func TestDigestsCataloger_hashesEachCoordinateOnce(t *testing.T) {
+	testImage := "image-file-type-mix"
+
+	testutils.SkipWithoutLinuxContainers(t)
+	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
+
+	src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+		Reference: testImage,
+	})
+
+	resolver, err := src.FileResolver(source.SquashedScope)
+	require.NoError(t, err)
+
+	// /symlink-1 and /file-1.txt both resolve to the same coordinates
+	counter := &countingResolver{Resolver: resolver, counts: make(map[file.Coordinates]int)}
+
+	actual, err := NewCataloger([]crypto.Hash{crypto.MD5}).Catalog(context.Background(), counter)
+	require.NoError(t, err)
+	require.NotEmpty(t, actual)
+
+	for c, n := range counter.counts {
+		assert.Equal(t, 1, n, "contents of %+v opened %d times", c, n)
+	}
 }
 
 type panicReader struct{}

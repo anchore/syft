@@ -41,30 +41,21 @@ func sbomFixture() sbom.SBOM {
 			Name:    "pkg-1",
 			Version: "1.0.1",
 			Locations: file.NewLocationSet(
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/usr/lib",
-					FileSystemID: "fsid-1",
-				}),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/usr/lib", "fsid-1")),
 			),
 		},
 		{
 			Name:    "pkg-2",
 			Version: "2.0.2",
 			Locations: file.NewLocationSet(
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/usr/lib",
-					FileSystemID: "fsid-1",
-				}),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/usr/lib", "fsid-1")),
 			),
 		},
 		{
 			Name:    "pkg-3",
 			Version: "3.0.3",
 			Locations: file.NewLocationSet(
-				file.NewLocationFromCoordinates(file.Coordinates{
-					RealPath:     "/etc",
-					FileSystemID: "fsid-1",
-				}),
+				file.NewLocationFromCoordinates(file.NewCoordinates("/etc", "fsid-1")),
 			),
 		},
 	} {

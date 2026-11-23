@@ -23,13 +23,14 @@ type parsedData struct {
 
 	// license info
 
-	Licenses          string `mapstructure:"License"`
-	LicenseFile       string `mapstructure:"LicenseFile"`
-	LicenseExpression string `mapstructure:"LicenseExpression"`
+	Licenses          string   `mapstructure:"License"`
+	LicenseFiles      []string `mapstructure:"LicenseFile"`
+	LicenseExpression string   `mapstructure:"LicenseExpression"`
 	LicenseFilePath   string
 }
 
 var pluralFields = map[string]bool{
+	"LicenseFile":   true,
 	"ProvidesExtra": true,
 	"RequiresDist":  true,
 }
@@ -48,13 +49,11 @@ func parseWheelOrEggMetadata(locationReader file.LocationReadCloser) (parsedData
 	}
 
 	// add additional metadata not stored in the egg/wheel metadata file
-	metadataPath := locationReader.Path()
+	metadataPath := locationReader.LocalPath()
 
 	pd.SitePackagesRootPath = determineSitePackagesRootPath(metadataPath)
 	if pd.Licenses != "" || pd.LicenseExpression != "" {
 		pd.LicenseFilePath = metadataPath
-	} else if pd.LicenseFile != "" {
-		pd.LicenseFilePath = path.Join(path.Dir(metadataPath), pd.LicenseFile)
 	}
 
 	pd.DistInfoLocation = locationReader.Location
@@ -104,13 +103,13 @@ func extractRFC5322Fields(locationReader file.LocationReadCloser) (map[string]an
 
 				fields[key] = handleSingleOrMultiField(fields[key], val)
 			} else {
-				log.Debugf("cannot parse field from path: %q from line: %q", locationReader.Path(), line)
+				log.Debugf("cannot parse field from path: %q from line: %q", locationReader.FullNestedPath(), line)
 			}
 		}
 	}
 	if err := scanner.Err(); err != nil {
 		// the caller discards everything on error, so keep the partial fields and log instead
-		log.WithFields("path", locationReader.Path(), "error", err).Debug("failed to fully read python wheel/egg metadata")
+		log.WithFields("path", locationReader.FullNestedPath(), "error", err).Debug("failed to fully read python wheel/egg metadata")
 	}
 	return fields, nil
 }

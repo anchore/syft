@@ -164,7 +164,7 @@ func Test_perllocalVersion(t *testing.T) {
 				return
 			}
 			require.NotNil(t, evidence)
-			assert.Equal(t, "/usr/local/lib/perl5/5.40.4/aarch64-linux-gnu/perllocal.pod", evidence.Path())
+			assert.Equal(t, "/usr/local/lib/perl5/5.40.4/aarch64-linux-gnu/perllocal.pod", evidence.FullNestedPath())
 		})
 	}
 }

@@ -15,18 +15,9 @@ func TestRelationshipsEvidentBy(t *testing.T) {
 
 	c := pkg.NewCollection()
 
-	coordA := file.Coordinates{
-		RealPath:     "/somewhere/real",
-		FileSystemID: "abc",
-	}
-	coordC := file.Coordinates{
-		RealPath:     "/somewhere/real",
-		FileSystemID: "abc",
-	}
-	coordD := file.Coordinates{
-		RealPath:     "/somewhere/real",
-		FileSystemID: "abc",
-	}
+	coordA := file.NewCoordinates("/somewhere/real", "abc")
+	coordC := file.NewCoordinates("/somewhere/real", "abc")
+	coordD := file.NewCoordinates("/somewhere/real", "abc")
 	pkgA := pkg.Package{
 		Locations: file.NewLocationSet(
 			// added!
@@ -39,10 +30,7 @@ func TestRelationshipsEvidentBy(t *testing.T) {
 	pkgA.SetID()
 	c.Add(pkgA)
 
-	coordB := file.Coordinates{
-		RealPath:     "/somewhere-else/real",
-		FileSystemID: "def",
-	}
+	coordB := file.NewCoordinates("/somewhere-else/real", "def")
 	pkgB := pkg.Package{
 		Locations: file.NewLocationSet(
 			// added!

@@ -119,10 +119,10 @@ func Less(i, j Package) bool {
 						}
 						return len(iLocations) < len(jLocations)
 					}
-					if iLocations[l].RealPath == jLocations[l].RealPath {
+					if iLocations[l].FullNestedPath() == jLocations[l].FullNestedPath() {
 						continue
 					}
-					return iLocations[l].RealPath < jLocations[l].RealPath
+					return iLocations[l].FullNestedPath() < jLocations[l].FullNestedPath()
 				}
 				// compare remaining metadata as a final fallback
 				// note: we cannot guarantee that IDs (which digests the metadata) are stable enough to sort on

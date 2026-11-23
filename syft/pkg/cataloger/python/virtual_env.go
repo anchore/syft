@@ -97,7 +97,7 @@ func (v virtualEnvInfo) matchVirtualEnvSitePackagesPath(sitePackagePaths []strin
 	sitePackagePathsSet := strset.New(sitePackagePaths...)
 	// the parent directory of the venv config is the top-level directory of the virtualenv
 	// e.g. /app/project1/venv/pyvenv.cfg -> /app/project1/venv
-	parent := strings.TrimLeft(path.Dir(v.Location.RealPath), "/")
+	parent := strings.TrimLeft(path.Dir(v.Location.LocalPath()), "/")
 
 	// we are searchin for the site-packages directory within the virtualenv
 	search := parent + "/lib/python" + v.majorMinorVersion() + "/site-packages"
@@ -120,9 +120,9 @@ func (v virtualEnvInfo) matchVirtualEnvSitePackagesPath(sitePackagePaths []strin
 func parsePyvenvCfg(_ context.Context, resolver file.Resolver, location file.Location) (*virtualEnvInfo, error) {
 	reader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read file %q: %w", location.Path(), err)
+		return nil, fmt.Errorf("unable to read file %q: %w", location.FullNestedPath(), err)
 	}
-	defer internal.CloseAndLogError(reader, location.Path())
+	defer internal.CloseAndLogError(reader, location.FullNestedPath())
 
 	cfg, err := parsePyvenvCfgReader(file.NewLocationReadCloser(location, reader))
 	if err != nil {

@@ -261,11 +261,69 @@ func selectLicenses(manifest *pkg.JavaManifest) []string {
 
 	for _, fieldName := range fieldNames {
 		if v := fieldValueFromManifest(*manifest, fieldName); v != "" {
-			result = append(result, v)
+			if fieldName != "Bundle-License" {
+				result = append(result, v)
+				continue
+			}
+
+			clauses := splitUnquoted(v, ',')
+			for i := 0; i < len(clauses); i++ {
+				identifier := strings.TrimSpace(splitUnquoted(clauses[i], ';')[0])
+				// Some bundles, including FreeMarker, leave this comma-containing name unquoted.
+				if strings.EqualFold(strings.TrimSpace(clauses[i]), "Apache License") && i+1 < len(clauses) &&
+					strings.EqualFold(strings.TrimSpace(splitUnquoted(clauses[i+1], ';')[0]), "Version 2.0") {
+					identifier += ", Version 2.0"
+					i++
+				}
+				if strings.EqualFold(strings.Trim(identifier, `"'`), "Apache License, Version 2.0") {
+					identifier = "Apache-2.0"
+				}
+				if identifier != "" {
+					result = append(result, identifier)
+				}
+			}
 		}
 	}
 
 	return result
+}
+
+func splitUnquoted(value string, delimiter rune) []string {
+	var parts []string
+	var current strings.Builder
+	var quote rune
+	escaped := false
+
+	for _, r := range value {
+		if escaped {
+			current.WriteRune(r)
+			escaped = false
+			continue
+		}
+		if quote != 0 && r == '\\' {
+			current.WriteRune(r)
+			escaped = true
+			continue
+		}
+		if r == '\'' || r == '"' {
+			switch quote {
+			case 0:
+				quote = r
+			case r:
+				quote = 0
+			}
+			current.WriteRune(r)
+			continue
+		}
+		if quote == 0 && r == delimiter {
+			parts = append(parts, current.String())
+			current.Reset()
+			continue
+		}
+		current.WriteRune(r)
+	}
+
+	return append(parts, current.String())
 }
 
 func fieldValueFromManifest(manifest pkg.JavaManifest, fieldName string) string {

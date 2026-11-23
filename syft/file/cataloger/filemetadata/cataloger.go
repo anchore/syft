@@ -34,7 +34,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 			go func() {
 				defer close(ch)
 				for _, c := range coordinates {
-					locs, err := resolver.FilesByPath(c.RealPath)
+					locs, err := resolver.FilesByPath(c.FullNestedPath())
 					if err != nil {
 						errs = unknown.Append(errs, c, err)
 						continue
@@ -53,9 +53,9 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 		}()
 	}
 
-	prog := catalogingProgress(-1)
+	prog := catalogingProgress(ctx, -1)
 	for location := range locations {
-		prog.AtomicStage.Set(location.Path())
+		prog.AtomicStage.Set(location.FullNestedPath())
 
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {
@@ -76,7 +76,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 	return results, errs
 }
 
-func catalogingProgress(locations int64) *monitor.TaskProgress {
+func catalogingProgress(ctx context.Context, locations int64) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "File metadata",
@@ -84,5 +84,5 @@ func catalogingProgress(locations int64) *monitor.TaskProgress {
 		ParentID: monitor.TopLevelCatalogingTaskID,
 	}
 
-	return bus.StartCatalogerTask(info, locations, "")
+	return bus.StartCatalogerTask(ctx, info, locations, "")
 }

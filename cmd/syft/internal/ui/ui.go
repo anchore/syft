@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -186,7 +187,12 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m UI) View() string {
-	return m.frame.View()
+	v := m.frame.View()
+	// bubbletea erases the line the cursor rests on at exit, which would drop the frame's last line
+	if !strings.HasSuffix(v, "\n") {
+		return v + "\n"
+	}
+	return v
 }
 
 var (

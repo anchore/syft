@@ -319,6 +319,21 @@ func Test_newRequirement(t *testing.T) {
 			},
 		},
 		{
+			name: "single character name",
+			raw:  "q==2.7",
+			want: &unprocessedRequirement{
+				Name:              "q",
+				VersionConstraint: "==2.7",
+			},
+		},
+		{
+			name: "single character name without version",
+			raw:  "q",
+			want: &unprocessedRequirement{
+				Name: "q",
+			},
+		},
+		{
 			name: "arbitrary equality",
 			raw:  "urllib3===1.26.20",
 			want: &unprocessedRequirement{

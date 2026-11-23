@@ -141,9 +141,16 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 // generate the minimal set of representative CPEs, which implies that optional fields should not be included
 // (such as target SW).
 func FromPackageAttributes(p pkg.Package) []cpe.CPE {
-	// ML models should not have CPEs as they are not traditional software packages
-	// and don't fit the vulnerability model used for software packages.
-	if p.Type == pkg.ModelPkg {
+	switch p.Type {
+	case pkg.KbPkg:
+		// Microsoft KB packages are patches, not products: the name is an MSRC product ID and the
+		// version a KB number, neither of which maps onto a CPE vendor, product or version. They are
+		// matched against MSRC data by name and version, so a generated CPE is only noise, and one
+		// that NVD-based matching could misread.
+		return nil
+	case pkg.ModelPkg:
+		// ML models should not have CPEs as they are not traditional software packages
+		// and don't fit the vulnerability model used for software packages.
 		return nil
 	}
 
@@ -227,6 +234,10 @@ func candidateTargetSw(p pkg.Package) []string {
 		// NVD records CPAN distributions with perl in target_sw, e.g.
 		// cpe:2.3:a:mojolicious:mojolicious:*:*:*:*:*:perl:*:*
 		return []string{"perl"}
+	case p.Type == pkg.TerraformPkg:
+		// NVD records terraform providers with the provider type in target_sw, e.g.
+		// cpe:2.3:a:hashicorp:terraform_provider:*:*:*:*:*:vault:*:*
+		return candidateTargetSwForTerraformProvider(p)
 	}
 
 	return []string{cpe.Any}
@@ -325,6 +336,9 @@ func candidateVendorsByType(p pkg.Package, vendors fieldCandidateSet) fieldCandi
 	case pkg.WordpressPluginEntry:
 		vendors.clear()
 		vendors.union(candidateVendorsForWordpressPlugin(p))
+	case pkg.TerraformLockProviderEntry:
+		vendors.clear()
+		vendors.union(candidateVendorsForTerraformProvider(p))
 	}
 	return vendors
 }
@@ -370,6 +384,9 @@ func candidateProductSet(p pkg.Package) fieldCandidateSet {
 	case pkg.WordpressPluginEntry:
 		products.clear()
 		products.union(candidateProductsForWordpressPlugin(p))
+	case pkg.TerraformLockProviderEntry:
+		products.clear()
+		products.union(candidateProductsForTerraformProvider(p))
 	}
 
 	// it is never OK to have candidates with these values ["" and "*"] (since CPEs will match any other value)

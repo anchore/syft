@@ -481,3 +481,27 @@ func Test_useBomRefOverDerivedSyftArtifactID(t *testing.T) {
 	assert.NotEqual(t, "", pkgsWithoutID[0].ID())
 
 }
+
+func Test_collectFiles_refusedChainIsDropped(t *testing.T) {
+	// a nested file a scan could not have produced is dropped with everything in it, not moved to the root
+	fileComponent := func(name string, children ...cyclonedx.Component) cyclonedx.Component {
+		c := cyclonedx.Component{Type: cyclonedx.ComponentTypeFile, Name: name}
+		if len(children) > 0 {
+			c.Components = &children
+		}
+		return c
+	}
+	s := &sbom.SBOM{}
+	collectFiles([]cyclonedx.Component{
+		fileComponent("/app.war",
+			fileComponent("WEB-INF/lib/a.jar"),
+			fileComponent("b.jar!/forged.jar", fileComponent("inner.txt")),
+		),
+	}, nil, s)
+
+	var got []string
+	for c := range s.Artifacts.FileMetadata {
+		got = append(got, c.FullNestedPath())
+	}
+	assert.ElementsMatch(t, []string{"/app.war", "/app.war!/WEB-INF/lib/a.jar"}, got)
+}

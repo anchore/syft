@@ -32,8 +32,8 @@ func resolveSafeTensorsOCIIdentity(ctx context.Context, resolver file.Resolver, 
 	// seen wins below, so sort for a stable result across runs. For OCI
 	// artifacts every RealPath is "/", so in practice this is digest order.
 	sort.Slice(modelFileLocs, func(i, j int) bool {
-		if modelFileLocs[i].RealPath != modelFileLocs[j].RealPath {
-			return modelFileLocs[i].RealPath < modelFileLocs[j].RealPath
+		if modelFileLocs[i].FullNestedPath() != modelFileLocs[j].FullNestedPath() {
+			return modelFileLocs[i].FullNestedPath() < modelFileLocs[j].FullNestedPath()
 		}
 		return modelFileLocs[i].FileSystemID < modelFileLocs[j].FileSystemID
 	})
@@ -128,7 +128,7 @@ func classifyOCIModelFileLayer(resolver file.Resolver, loc file.Location) (*hfCo
 	if err != nil {
 		return nil, nil
 	}
-	defer internal.CloseAndLogError(rc, loc.RealPath)
+	defer internal.CloseAndLogError(rc, loc.FullNestedPath())
 
 	buf, err := readBounded(rc, maxModelFileLayerSize)
 	if err != nil {
@@ -174,7 +174,7 @@ func readLicenseSPDXIDFromFrontmatter(resolver file.Resolver, loc file.Location)
 	if err != nil {
 		return ""
 	}
-	defer internal.CloseAndLogError(rc, loc.RealPath)
+	defer internal.CloseAndLogError(rc, loc.FullNestedPath())
 
 	buf, err := readPrefix(rc, maxLicensePrefixSize)
 	if err != nil {

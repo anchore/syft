@@ -71,7 +71,7 @@ func extractLicenses(resolver file.Resolver, closestLocation *file.Location, rea
 	if err := scanner.Err(); err != nil {
 		fields := []any{"error", err}
 		if closestLocation != nil {
-			fields = append(fields, "path", closestLocation.RealPath)
+			fields = append(fields, "path", closestLocation.FullNestedPath())
 		}
 		log.WithFields(fields...).Debug("failed to fully read portage LICENSE")
 	}
@@ -115,9 +115,9 @@ func readLicenseGroups(resolver file.Resolver, closestLocation *file.Location) m
 	}
 
 	groupReader, err := resolver.FileContentsByLocation(*groupLocation)
-	defer internal.CloseAndLogError(groupReader, groupLocation.RealPath)
+	defer internal.CloseAndLogError(groupReader, groupLocation.FullNestedPath())
 	if err != nil {
-		log.WithFields("path", groupLocation.RealPath, "error", err).Debug("failed to fetch portage LICENSE")
+		log.WithFields("path", groupLocation.FullNestedPath(), "error", err).Debug("failed to fetch portage LICENSE")
 		return nil
 	}
 
@@ -127,7 +127,7 @@ func readLicenseGroups(resolver file.Resolver, closestLocation *file.Location) m
 
 	licenseGroups, err = parseLicenseGroups(groupReader)
 	if err != nil {
-		log.WithFields("path", groupLocation.RealPath, "error", err).Debug("failed to parse portage LICENSE")
+		log.WithFields("path", groupLocation.FullNestedPath(), "error", err).Debug("failed to parse portage LICENSE")
 	}
 
 	return licenseGroups

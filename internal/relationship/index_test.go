@@ -21,12 +21,8 @@ func Test_Index(t *testing.T) {
 	p3 := pkg.Package{
 		Name: "pkg-3",
 	}
-	c1 := file.Coordinates{
-		RealPath: "/coords/1",
-	}
-	c2 := file.Coordinates{
-		RealPath: "/coords/2",
-	}
+	c1 := file.NewCoordinates("/coords/1", "")
+	c2 := file.NewCoordinates("/coords/2", "")
 
 	for _, p := range []*pkg.Package{&p1, &p2, &p3} {
 		p.SetID()
@@ -156,18 +152,10 @@ func Test_Coordinates(t *testing.T) {
 	p3 := pkg.Package{
 		Name: "pkg-3",
 	}
-	c1 := file.Coordinates{
-		RealPath: "/coords/1",
-	}
-	c2 := file.Coordinates{
-		RealPath: "/coords/2",
-	}
-	c3 := file.Coordinates{
-		RealPath: "/coords/3",
-	}
-	c4 := file.Coordinates{
-		RealPath: "/coords/4",
-	}
+	c1 := file.NewCoordinates("/coords/1", "")
+	c2 := file.NewCoordinates("/coords/2", "")
+	c3 := file.NewCoordinates("/coords/3", "")
+	c4 := file.NewCoordinates("/coords/4", "")
 
 	for _, p := range []*pkg.Package{&p1, &p2, &p3} {
 		p.SetID()
@@ -237,10 +225,10 @@ func TestRemove(t *testing.T) {
 	p1 := pkg.Package{Name: "pkg-1"}
 	p2 := pkg.Package{Name: "pkg-2"}
 	p3 := pkg.Package{Name: "pkg-3"}
-	c1 := file.Coordinates{RealPath: "/coords/1"}
-	c2 := file.Coordinates{RealPath: "/coords/2"}
-	c3 := file.Coordinates{RealPath: "/coords/3"}
-	c4 := file.Coordinates{RealPath: "/coords/4"}
+	c1 := file.NewCoordinates("/coords/1", "")
+	c2 := file.NewCoordinates("/coords/2", "")
+	c3 := file.NewCoordinates("/coords/3", "")
+	c4 := file.NewCoordinates("/coords/4", "")
 
 	for _, p := range []*pkg.Package{&p1, &p2, &p3} {
 		p.SetID()

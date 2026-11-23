@@ -608,3 +608,65 @@ func Test_toOSBomRef(t *testing.T) {
 		})
 	}
 }
+
+func Test_nestedArchiveFiles(t *testing.T) {
+	top := file.NewCoordinates("/etc/os-release", "")
+	inA := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF"}
+	inB := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/b.jar!/odd:na%me.txt"}
+	inWar := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/index.html"}
+	dir := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/c.jar!/META-INF"}
+	sha := []file.Digest{{Algorithm: "sha256", Value: "abc"}}
+	s := sbom.SBOM{Artifacts: sbom.Artifacts{
+		FileMetadata: map[file.Coordinates]file.Metadata{
+			// a directory resolver's metadata path is the path on the host, not the one scanned
+			top:   {Path: "/host/scan/etc/os-release"},
+			inA:   {},
+			inB:   {},
+			inWar: {},
+			dir:   {Type: stfile.TypeDirectory},
+		},
+		FileDigests: map[file.Coordinates][]file.Digest{inA: sha},
+	}}
+
+	bom := ToFormatModel(s)
+
+	type node struct {
+		Name     string
+		Children []node
+	}
+	var tree func(cs *[]cyclonedx.Component) []node
+	tree = func(cs *[]cyclonedx.Component) []node {
+		if cs == nil {
+			return nil
+		}
+		var out []node
+		for _, c := range *cs {
+			require.Equal(t, cyclonedx.ComponentTypeFile, c.Type)
+			out = append(out, node{Name: c.Name, Children: tree(c.Components)})
+		}
+		return out
+	}
+	// each archive holding a file is a component, synthesized when not otherwise described; an archive
+	// holding only skipped files is left out
+	assert.Equal(t, []node{
+		{Name: "/app.war", Children: []node{
+			{Name: "/WEB-INF/lib/a.jar", Children: []node{{Name: "/META-INF/MANIFEST.MF"}}},
+			{Name: "/WEB-INF/lib/b.jar", Children: []node{{Name: "/odd:na%me.txt"}}},
+			{Name: "/index.html"},
+		}},
+		{Name: "/etc/os-release"},
+	}, tree(bom.Components))
+
+	decoded, err := helpers.ToSyftModel(bom)
+	require.NoError(t, err)
+
+	war := file.NewCoordinates("/app.war", "")
+	a := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/a.jar"}
+	b := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/b.jar"}
+	var got []file.Coordinates
+	for c := range decoded.Artifacts.FileMetadata {
+		got = append(got, c)
+	}
+	assert.ElementsMatch(t, []file.Coordinates{top, war, a, b, inA, inB, inWar}, got)
+	assert.Equal(t, map[file.Coordinates][]file.Digest{inA: sha}, decoded.Artifacts.FileDigests)
+}

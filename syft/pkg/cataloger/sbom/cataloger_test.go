@@ -259,10 +259,7 @@ func Test_parseSBOM(t *testing.T) {
 
 	apkgdbLocation := file.NewLocationSet(file.Location{
 		LocationData: file.LocationData{
-			Coordinates: file.Coordinates{
-				RealPath:     "/lib/apk/db/installed",
-				FileSystemID: "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd",
-			},
+			Coordinates: file.NewCoordinates("/lib/apk/db/installed", "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"),
 		},
 	})
 
@@ -349,10 +346,7 @@ func Test_parseSBOM(t *testing.T) {
 		},
 		{
 			From: libSSL,
-			To: file.Coordinates{
-				RealPath:     "/lib/libssl.so.1.1",
-				FileSystemID: "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd",
-			},
+			To:   file.NewCoordinates("/lib/libssl.so.1.1", "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"),
 			Type: artifact.ContainsRelationship,
 		},
 		{
@@ -362,18 +356,12 @@ func Test_parseSBOM(t *testing.T) {
 		},
 		{
 			From: baseLayout,
-			To: file.Coordinates{
-				RealPath:     "/etc/profile.d/color_prompt.sh.disabled",
-				FileSystemID: "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd",
-			},
+			To:   file.NewCoordinates("/etc/profile.d/color_prompt.sh.disabled", "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"),
 			Type: artifact.ContainsRelationship,
 		},
 		{
 			From: baseLayout,
-			To: file.Coordinates{
-				RealPath:     "/etc/modprobe.d/kms.conf",
-				FileSystemID: "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd",
-			},
+			To:   file.NewCoordinates("/etc/modprobe.d/kms.conf", "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd"),
 			Type: artifact.ContainsRelationship,
 		},
 		{
@@ -386,9 +374,7 @@ func Test_parseSBOM(t *testing.T) {
 	for _, p := range expectedPkgs {
 		expectedRelationships = append(expectedRelationships, artifact.Relationship{
 			From: p,
-			To: file.Coordinates{
-				RealPath: "sbom.syft.json",
-			},
+			To:   file.NewCoordinates("sbom.syft.json", ""),
 			Type: artifact.DescribedByRelationship,
 		})
 	}

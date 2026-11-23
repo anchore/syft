@@ -193,14 +193,14 @@ func TestToSyftModelV3_documentConversion(t *testing.T) {
 	assert.Equal(t, "BSD-3-Clause AND GPL-2.0+", pkg2Concluded[0].Value)
 
 	// Verify files
-	coords1 := file.Coordinates{RealPath: "/src/main.go"}
+	coords1 := file.NewCoordinates("/src/main.go", "")
 	digests, ok := result.Artifacts.FileDigests[coords1]
 	require.True(t, ok, "file1 digests not found")
 	require.Len(t, digests, 1)
 	assert.Equal(t, "sha256", digests[0].Algorithm)
 	assert.Equal(t, "abc123", digests[0].Value)
 
-	coords2 := file.Coordinates{RealPath: "/src/util.go"}
+	coords2 := file.NewCoordinates("/src/util.go", "")
 	_, ok = result.Artifacts.FileMetadata[coords2]
 	assert.True(t, ok, "file2 metadata not found")
 
@@ -433,4 +433,45 @@ func Test_v3parseSPDXLicenses(t *testing.T) {
 
 	require.Len(t, declared, 1)
 	assert.Equal(t, "Apache-2.0 AND BSD-3-Clause", declared[0].Value)
+}
+
+func TestToSyftModelV3_nestedArchiveFiles(t *testing.T) {
+	war := &spdx.File{ID: "war", Name: "/app.war", Comment: "layerID: sha256:layer"}
+	jar := &spdx.File{ID: "jar", Name: "WEB-INF/lib/a.jar"}
+	manifest := &spdx.File{ID: "manifest", Name: "META-INF/MANIFEST.MF"}
+	p := &spdx.Package{ID: "pkg", Name: "a"}
+	warContainsJar := &spdx.Relationship{From: war, To: spdx.ElementList{jar}, Type: spdx.RelationshipType_Contains}
+	jarContains := &spdx.Relationship{From: jar, To: spdx.ElementList{manifest, p}, Type: spdx.RelationshipType_Contains}
+
+	doc := &spdx.Document{SpdxDocument: spdx.SpdxDocument{
+		Elements: spdx.ElementList{war, jar, manifest, p, warContainsJar, jarContains},
+	}}
+
+	s, err := ToSyftModelV3(doc)
+	require.NoError(t, err)
+
+	wantWar := file.NewCoordinates("/app.war", "sha256:layer")
+	wantJar := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/a.jar", FileSystemID: "sha256:layer"}
+	wantManifest := file.Coordinates{RealPath: "/app.war", FullPath: "/app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF", FileSystemID: "sha256:layer"}
+	var got []file.Coordinates
+	for c := range s.Artifacts.FileMetadata {
+		got = append(got, c)
+	}
+	assert.ElementsMatch(t, []file.Coordinates{wantWar, wantJar, wantManifest}, got)
+
+	var fileRels []string
+	for _, r := range s.Relationships {
+		if from, ok := r.From.(file.Coordinates); ok {
+			to := "package"
+			if c, ok := r.To.(file.Coordinates); ok {
+				to = c.FullNestedPath()
+			}
+			fileRels = append(fileRels, from.FullNestedPath()+" "+string(r.Type)+" "+to)
+		}
+	}
+	assert.ElementsMatch(t, []string{
+		"/app.war contains /app.war!/WEB-INF/lib/a.jar",
+		"/app.war!/WEB-INF/lib/a.jar contains /app.war!/WEB-INF/lib/a.jar!/META-INF/MANIFEST.MF",
+		"/app.war!/WEB-INF/lib/a.jar contains package",
+	}, fileRels)
 }

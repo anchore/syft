@@ -16,7 +16,7 @@ func newHomebrewPackage(ctx context.Context, resolver file.Resolver, pd parsedHo
 		lics = append(lics, pkg.NewLicensesFromValues(pd.License)...)
 	} else {
 		// sometimes licenses are included in the parent directory
-		lics = licenses.FindInDirs(ctx, resolver, path.Dir(formulaLocation.Path()))
+		lics = licenses.FindInDirs(ctx, resolver, path.Dir(formulaLocation.LocalPath()))
 	}
 
 	p := pkg.Package{

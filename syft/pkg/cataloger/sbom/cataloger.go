@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/embeddedsbom"
 )
 
 const catalogerName = "sbom-cataloger"
@@ -40,7 +41,7 @@ func NewCataloger() pkg.Cataloger {
 func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	readSeeker, err := adaptToReadSeeker(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read SBOM file %q: %w", reader.RealPath, err)
+		return nil, nil, fmt.Errorf("unable to read SBOM file %q: %w", reader.FullNestedPath(), err)
 	}
 	s, _, _, err := format.Decode(readSeeker)
 	if err != nil {
@@ -48,12 +49,12 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 	}
 
 	if s == nil {
-		log.WithFields("path", reader.RealPath).Trace("file is not an SBOM")
+		log.WithFields("path", reader.FullNestedPath()).Trace("file is not an SBOM")
 		return nil, nil, nil
 	}
 
 	var pkgs []pkg.Package
-	relationships := s.Relationships
+	relationships := embeddedsbom.Relationships(s.Relationships)
 	for _, p := range s.Artifacts.Packages.Sorted() {
 		// replace all locations on the package with the location of the SBOM file.
 		// Why not keep the original list of locations? Since the "locations" field is meant to capture

@@ -893,6 +893,48 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			expected: []string{},
 		},
 		{
+			name: "Microsoft KB package should generate no CPEs",
+			p: pkg.Package{
+				Name:     "12437",
+				Version:  "935509",
+				Type:     pkg.KbPkg,
+				Metadata: pkg.MicrosoftKbPatch{ProductID: "12437", Kb: "935509"},
+			},
+			expected: []string{},
+		},
+		{
+			name: "terraform provider generates NVD terraform_provider CPEs not application CPEs",
+			p: pkg.Package{
+				Name:     "registry.terraform.io/grafana/grafana",
+				Version:  "4.45.2",
+				Type:     pkg.TerraformPkg,
+				Language: pkg.Go,
+				Metadata: pkg.TerraformLockProviderEntry{
+					URL:     "registry.terraform.io/grafana/grafana",
+					Version: "4.45.2",
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:grafana:terraform_provider:4.45.2:*:*:*:*:grafana:*:*",
+			},
+		},
+		{
+			name: "terraform provider with different namespace and type",
+			p: pkg.Package{
+				Name:     "registry.terraform.io/hashicorp/aws",
+				Version:  "5.72.1",
+				Type:     pkg.TerraformPkg,
+				Language: pkg.Go,
+				Metadata: pkg.TerraformLockProviderEntry{
+					URL:     "registry.terraform.io/hashicorp/aws",
+					Version: "5.72.1",
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:hashicorp:terraform_provider:5.72.1:*:*:*:*:aws:*:*",
+			},
+		},
+		{
 			name: "rust package",
 			p: pkg.Package{
 				Name:     "rust-package",

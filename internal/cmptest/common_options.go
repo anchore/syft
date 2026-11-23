@@ -69,5 +69,5 @@ func locationSorter(a, b file.Location) int {
 		return strings.Compare(a.AccessPath, b.AccessPath)
 	}
 
-	return strings.Compare(a.RealPath, b.RealPath)
+	return strings.Compare(a.FullNestedPath(), b.FullNestedPath())
 }

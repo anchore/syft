@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/anchore/syft/internal/capabilities/internal"
@@ -30,6 +31,10 @@ type ConfigInfo struct {
 }
 
 var appConfigAnnotationPattern = regexp.MustCompile(`^//\s*app-config:\s*(.+)$`)
+
+// embeddedFieldsAnnotationPattern matches "// capabilities-fields: A, B" on an embedded struct, which limits
+// the embedded fields listed to the ones named (for a shared type the cataloger reads only part of).
+var embeddedFieldsAnnotationPattern = regexp.MustCompile(`^//\s*capabilities-fields:\s*(.+)$`)
 
 // DiscoverConfigs walks the cataloger directory and discovers all configuration structs
 // Returns map where key is "packageName.StructName" (e.g., "golang.CatalogerConfig")
@@ -160,6 +165,9 @@ func extractCatalogerConfigFieldsRecursive(structType *ast.StructType, visitedTy
 		if len(field.Names) == 0 {
 			// this is an embedded field - resolve and extract its fields
 			embeddedFields := resolveEmbeddedStructFields(field.Type, visitedTypes)
+			if only := embeddedFieldAllowlist(field.Doc); only != nil {
+				embeddedFields = slices.DeleteFunc(embeddedFields, func(f ConfigField) bool { return !only[f.Name] })
+			}
 			fields = append(fields, embeddedFields...)
 			continue
 		}
@@ -193,6 +201,26 @@ func extractCatalogerConfigFieldsRecursive(structType *ast.StructType, visitedTy
 	}
 
 	return fields
+}
+
+// embeddedFieldAllowlist returns the field names from a "capabilities-fields:" annotation, or nil when there
+// is none (every exported embedded field is listed).
+func embeddedFieldAllowlist(commentGroup *ast.CommentGroup) map[string]bool {
+	if commentGroup == nil {
+		return nil
+	}
+	for _, comment := range commentGroup.List {
+		matches := embeddedFieldsAnnotationPattern.FindStringSubmatch(comment.Text)
+		if len(matches) < 2 {
+			continue
+		}
+		only := make(map[string]bool)
+		for _, name := range strings.Split(matches[1], ",") {
+			only[strings.TrimSpace(name)] = true
+		}
+		return only
+	}
+	return nil
 }
 
 // resolveEmbeddedStructFields resolves an embedded struct type and extracts its fields recursively

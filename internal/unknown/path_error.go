@@ -19,6 +19,8 @@ func ProcessPathErrors(err error) error {
 	if pathErrorRegex.MatchString(errText) {
 		foundPath := pathErrorRegex.ReplaceAllString(err.Error(), "$1")
 		if foundPath != "" {
+			// a path in an error text is taken as is: nesting is never inferred from "!/" in it, since a real
+			// path can hold one too. A caller with the location in hand should use New instead
 			return New(file.NewLocation(foundPath), err)
 		}
 	}

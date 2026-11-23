@@ -30,7 +30,7 @@ func parsePackPackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 	version := versionRe.FindSubmatch(data)
 
 	if name == nil || version == nil {
-		log.Debugf("encountered pack.pl file without a name and/or version field, ignoring (path=%q)", reader.Path())
+		log.WithFields("path", reader.FullNestedPath()).Debug("encountered pack.pl file without a name and/or version field, ignoring")
 		return nil, nil, nil
 	}
 

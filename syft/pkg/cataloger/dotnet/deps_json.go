@@ -161,7 +161,7 @@ type logicalDepsJSON struct {
 }
 
 func (l logicalDepsJSON) RootPackage() (logicalDepsJSONPackage, bool) {
-	rootName := getDepsJSONFilePrefix(l.Location.RealPath)
+	rootName := getDepsJSONFilePrefix(l.Location.FullNestedPath())
 	if rootName == "" {
 		return logicalDepsJSONPackage{}, false
 	}

@@ -19,7 +19,7 @@ import (
 func Test_Cataloger(t *testing.T) {
 	allParsedPaths := make(map[string]bool)
 	parser := func(_ context.Context, resolver file.Resolver, env *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-		allParsedPaths[reader.Path()] = true
+		allParsedPaths[reader.FullNestedPath()] = true
 		contents, err := io.ReadAll(reader)
 		require.NoError(t, err)
 
@@ -219,7 +219,7 @@ func TestParserPanicBecomesUnknown(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			parser := func(_ context.Context, _ file.Resolver, _ *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-				if reader.Path() == "testdata/another-path.txt" {
+				if reader.FullNestedPath() == "testdata/another-path.txt" {
 					tt.doPanic()
 				}
 				return []pkg.Package{{Name: "good", Locations: file.NewLocationSet(reader.Location)}}, nil, nil
@@ -308,7 +308,7 @@ func TestProcessorPanicKeepsResults(t *testing.T) {
 func Test_CatalogerWithParserByMediaType(t *testing.T) {
 	allParsedPaths := make(map[string]bool)
 	parser := func(_ context.Context, resolver file.Resolver, env *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-		allParsedPaths[reader.Path()] = true
+		allParsedPaths[reader.FullNestedPath()] = true
 		contents, err := io.ReadAll(reader)
 		require.NoError(t, err)
 
@@ -358,7 +358,7 @@ func Test_genericCatalogerReturnsErrors(t *testing.T) {
 	genericErrorReturning := NewCataloger("error returning").WithParserByGlobs(func(ctx context.Context, resolver file.Resolver, environment *Environment, locationReader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 		return []pkg.Package{
 			{
-				Name: "some-package-" + locationReader.Path(),
+				Name: "some-package-" + locationReader.FullNestedPath(),
 			},
 		}, nil, unknown.Newf(locationReader, "unable to read")
 	}, "**/*")

@@ -132,7 +132,7 @@ func findManAtLoc(loc file.Location, resolver file.Resolver) (*vcpkg.Vcpkg, erro
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(manCont, loc.RealPath)
+	defer internal.CloseAndLogError(manCont, loc.FullNestedPath())
 	manBytes, err := io.ReadAll(io.LimitReader(manCont, maxVcpkgManifestSize))
 	if err != nil {
 		return nil, err
@@ -166,7 +166,7 @@ func findVcpkgConfig(resolver file.Resolver) (*vcpkg.Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer internal.CloseAndLogError(cfgCont, locs[0].RealPath)
+		defer internal.CloseAndLogError(cfgCont, locs[0].FullNestedPath())
 		cfgBytes, err := io.ReadAll(io.LimitReader(cfgCont, maxVcpkgManifestSize))
 		if err != nil {
 			return nil, err
