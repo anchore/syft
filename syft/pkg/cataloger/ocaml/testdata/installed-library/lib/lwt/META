@@ -1,0 +1,3 @@
+version = "5.4.2"
+description = ""
+requires = "bytes"

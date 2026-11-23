@@ -1,0 +1,3 @@
+opam-version: "2.0"
+name: "cmdliner"
+license: "ISC"
