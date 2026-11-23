@@ -25,6 +25,9 @@
       "github.com/anchore/stereoscope": [
         "cpe:2.3:a:anchore:stereoscope:*:*:*:*:*:go:*:*"
       ],
+      "github.com/andybalholm/brotli": [
+        "cpe:2.3:a:andybalholm:brotli:*:*:*:*:*:go:*:*"
+      ],
       "github.com/apptainer/apptainer": [
         "cpe:2.3:a:lfprojects:apptainer:*:*:*:*:*:go:*:*"
       ],
@@ -201,6 +204,9 @@
       ],
       "github.com/satori/go.uuid": [
         "cpe:2.3:a:satori:uuid:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/shamaton/msgpack/v2": [
+        "cpe:2.3:a:shamaton:msgpack:*:*:*:*:*:go:*:*"
       ],
       "github.com/shamaton/msgpack/v3": [
         "cpe:2.3:a:shamaton:msgpack:*:*:*:*:*:go:*:*"
@@ -2456,10 +2462,12 @@
         "cpe:2.3:a:linuxfoundation:\\@backstage\\/plugin-techdocs:*:*:*:*:*:node.js:*:*"
       ],
       "@backstage/plugin-techdocs-node": [
+        "cpe:2.3:a:linuxfoundation:backstage\\/plugin-techdocs-node:*:*:*:*:*:node.js:*:*",
         "cpe:2.3:a:linuxfoundation:backstage_plugin-techdocs-node:*:*:*:*:*:*:*:*"
       ],
       "@backstage/techdocs-common": [
-        "cpe:2.3:a:linuxfoundation:\\@backstage\\/techdocs-common:*:*:*:*:*:node.js:*:*"
+        "cpe:2.3:a:linuxfoundation:\\@backstage\\/techdocs-common:*:*:*:*:*:node.js:*:*",
+        "cpe:2.3:a:linuxfoundation:backstage\\/techdocs-common:*:*:*:*:*:node.js:*:*"
       ],
       "@beproduct/nestjs-auth": [
         "cpe:2.3:a:beproduct:beproduct\\/nestjs-auth:*:*:*:*:*:node.js:*:*"
@@ -2572,6 +2580,9 @@
       ],
       "@fastify/middie": [
         "cpe:2.3:a:fastify:fastify\\/middie:*:*:*:*:*:node.js:*:*"
+      ],
+      "@fastify/multipart": [
+        "cpe:2.3:a:fastify:fastify-multipart:*:*:*:*:*:fastify:*:*"
       ],
       "@fastify/oauth2": [
         "cpe:2.3:a:fastify:fastify\\/oauth2:*:*:*:*:*:node.js:*:*"
@@ -3157,6 +3168,12 @@
       "censorify.tanisjr": [
         "cpe:2.3:a:censorify.tanisjr_project:censorify.tanisjr:*:*:*:*:*:node.js:*:*"
       ],
+      "chai": [
+        "cpe:2.3:a:chaijs:chai:*:*:*:*:*:node.js:*:*"
+      ],
+      "chalk": [
+        "cpe:2.3:a:chalk:chalk:*:*:*:*:*:node.js:*:*"
+      ],
       "changeset": [
         "cpe:2.3:a:changeset_project:changeset:*:*:*:*:*:node.js:*:*"
       ],
@@ -3171,6 +3188,12 @@
       ],
       "chatbyvista": [
         "cpe:2.3:a:chatbyvista_project:chatbyvista:*:*:*:*:*:node.js:*:*"
+      ],
+      "cheerio": [
+        "cpe:2.3:a:cheerio:cheerio:*:*:*:*:*:node.js:*:*"
+      ],
+      "chokidar": [
+        "cpe:2.3:a:paulmillr:chokidar:*:*:*:*:*:node.js:*:*"
       ],
       "chrome-devtools-mcp": [
         "cpe:2.3:a:google:chrome-devtools-mcp:*:*:*:*:*:node.js:*:*"
@@ -3253,6 +3276,9 @@
       ],
       "comb": [
         "cpe:2.3:a:c2fo:comb:*:*:*:*:*:node.js:*:*"
+      ],
+      "commander": [
+        "cpe:2.3:a:tj:commander:*:*:*:*:*:node.js:*:*"
       ],
       "commentapp.stetsonwood": [
         "cpe:2.3:a:commentapp.stetsonwood_project:commentapp.stetsonwood:*:*:*:*:*:node.js:*:*"
@@ -3473,6 +3499,9 @@
       ],
       "desafio": [
         "cpe:2.3:a:desafio_project:desafio:*:*:*:*:*:node.js:*:*"
+      ],
+      "devalue": [
+        "cpe:2.3:a:svelte:devalue:*:*:*:*:*:node.js:*:*"
       ],
       "devcert": [
         "cpe:2.3:a:devcert_project:devcert:*:*:*:*:*:node.js:*:*"
@@ -3955,6 +3984,9 @@
       "got-fetch": [
         "cpe:2.3:a:alexghr:got-fetch:*:*:*:*:*:node.js:*:*"
       ],
+      "grammy": [
+        "cpe:2.3:a:grammy:grammy:*:*:*:*:*:node.js:*:*"
+      ],
       "grapesjs": [
         "cpe:2.3:a:grapesjs:grapesjs:*:*:*:*:*:node.js:*:*"
       ],
@@ -4304,6 +4336,9 @@
       ],
       "jn_jj_server": [
         "cpe:2.3:a:jn_jj_server_project:jn_jj_server:*:*:*:*:*:node.js:*:*"
+      ],
+      "joi": [
+        "cpe:2.3:a:hapi:joi:*:*:*:*:*:node.js:*:*"
       ],
       "jointjs": [
         "cpe:2.3:a:client:jointjs:*:*:*:*:*:node.js:*:*"
@@ -4773,6 +4808,7 @@
         "cpe:2.3:a:cloudflare:miniflare:*:*:*:*:*:node.js:*:*"
       ],
       "minimatch": [
+        "cpe:2.3:a:isaacs:minimatch:*:*:*:*:*:node.js:*:*",
         "cpe:2.3:a:minimatch_project:minimatch:*:*:*:*:*:node.js:*:*"
       ],
       "mixin-deep": [
@@ -5248,6 +5284,9 @@
       ],
       "operadriver": [
         "cpe:2.3:a:cnpmjs:operadriver:*:*:*:*:*:node.js:*:*"
+      ],
+      "ora": [
+        "cpe:2.3:a:sindresorhus:ora:*:*:*:*:*:node.js:*:*"
       ],
       "orejime": [
         "cpe:2.3:a:boscop:orejime:*:*:*:*:*:node.js:*:*"
@@ -6675,6 +6714,9 @@
       "briefcase": [
         "cpe:2.3:a:beeware:briefcase:*:*:*:*:*:python:*:*"
       ],
+      "brotlicffi": [
+        "cpe:2.3:a:python-hyper:brotlicffi:*:*:*:*:*:python:*:*"
+      ],
       "case-utils": [
         "cpe:2.3:a:lfprojects:case_python_utilities:*:*:*:*:*:python:*:*"
       ],
@@ -6757,6 +6799,9 @@
       "dbt-common": [
         "cpe:2.3:a:getdbt:dbt-common:*:*:*:*:*:*:*:*"
       ],
+      "dbt-core": [
+        "cpe:2.3:a:getdbt:dbt-core:*:*:*:*:*:python:*:*"
+      ],
       "decorator": [
         "cpe:2.3:a:python:decorator:*:*:*:*:*:*:*:*"
       ],
@@ -6829,6 +6874,9 @@
       "global-workqueue": [
         "cpe:2.3:a:global-workqueue_project:global-workqueue:*:*:*:*:*:python:*:*"
       ],
+      "gpustack": [
+        "cpe:2.3:a:gpustack:gpustack:*:*:*:*:*:*:*:*"
+      ],
       "gradio": [
         "cpe:2.3:a:gradio_project:gradio:*:*:*:*:*:python:*:*"
       ],
@@ -6863,6 +6911,9 @@
       "idna": [
         "cpe:2.3:a:kjd:internationalized_domain_names_in_applications:*:*:*:*:*:python:*:*"
       ],
+      "intel-extension-for-tensorflow": [
+        "cpe:2.3:a:intel:extension_for_tensorflow:*:*:*:*:*:python:*:*"
+      ],
       "intel-transfer-learning-tool": [
         "cpe:2.3:a:intel:transfer_learning_tool:*:*:*:*:*:python:*:*"
       ],
@@ -6871,6 +6922,9 @@
       ],
       "jupyterhub-systemdspawner": [
         "cpe:2.3:a:jupyterhub:systemdspawner:*:*:*:*:*:*:*:*"
+      ],
+      "jupyterlab": [
+        "cpe:2.3:a:jupyter:jupyterlab:*:*:*:*:*:*:*:*"
       ],
       "jw.util": [
         "cpe:2.3:a:python:jw.util:*:*:*:*:*:python:*:*"
@@ -6997,6 +7051,9 @@
       ],
       "openlit": [
         "cpe:2.3:a:openlit:openlit_software_development_kit:*:*:*:*:*:python:*:*"
+      ],
+      "openllm": [
+        "cpe:2.3:a:bentoml:openllm:*:*:*:*:*:python:*:*"
       ],
       "openml": [
         "cpe:2.3:a:openml:openml:*:*:*:*:*:python:*:*"
@@ -7131,7 +7188,8 @@
         "cpe:2.3:a:pyo_project:pyo:*:*:*:*:*:*:*:*"
       ],
       "pypdf": [
-        "cpe:2.3:a:pypdf_project:pypdf:*:*:*:*:*:*:*:*"
+        "cpe:2.3:a:py-pdf:pypdf:*:*:*:*:*:python:*:*",
+        "cpe:2.3:a:py-pdf:pypdf:*:*:*:*:python:*:*:*"
       ],
       "pypiserver": [
         "cpe:2.3:a:python:pypiserver:*:*:*:*:*:*:*:*"
@@ -7235,8 +7293,20 @@
       "slashify": [
         "cpe:2.3:a:google:slashify:*:*:*:*:*:node.js:*:*"
       ],
+      "snowflake": [
+        "cpe:2.3:a:snowflake:python_api:*:*:*:*:*:*:*:*"
+      ],
       "snowflake-connector-python": [
         "cpe:2.3:a:snowflake:snowflake_connector:*:*:*:*:*:python:*:*"
+      ],
+      "snowflake-ml-python": [
+        "cpe:2.3:a:snowflake:snowflake_ml:*:*:*:*:*:python:*:*"
+      ],
+      "snowflake-snowpark-python": [
+        "cpe:2.3:a:snowflake:snowpark:*:*:*:*:*:python:*:*"
+      ],
+      "snowflake-sqlalchemy": [
+        "cpe:2.3:a:snowflake:sqlalchemy:*:*:*:*:*:python:*:*"
       ],
       "sockeye": [
         "cpe:2.3:a:amazon:sockeye:*:*:*:*:*:python:*:*"
@@ -7309,6 +7379,9 @@
       ],
       "vault-cli": [
         "cpe:2.3:a:vault-cli_project:vault-cli:*:*:*:*:*:python:*:*"
+      ],
+      "virtualenv": [
+        "cpe:2.3:a:virtualenv:virtualenv:*:*:*:*:*:*:*:*"
       ],
       "vyper": [
         "cpe:2.3:a:vyperlang:vyper:*:*:*:*:*:python:*:*"
@@ -8220,6 +8293,9 @@
       "mdbook": [
         "cpe:2.3:a:rust-lang:mdbook:*:*:*:*:*:rust:*:*"
       ],
+      "memory_pages": [
+        "cpe:2.3:a:fractalfir:memory_pages:*:*:*:*:*:rust:*:*"
+      ],
       "mermaid-text": [
         "cpe:2.3:a:leboiko:mermaid-text:*:*:*:*:*:rust:*:*"
       ],
@@ -8228,6 +8304,9 @@
       ],
       "metrics-util": [
         "cpe:2.3:a:metrics-util_project:metrics-util:*:*:*:*:*:rust:*:*"
+      ],
+      "mistralrs": [
+        "cpe:2.3:a:ericlbuehler:mistralrs:*:*:*:*:*:rust:*:*"
       ],
       "molecule": [
         "cpe:2.3:a:nervos:molecule:*:*:*:*:*:rust:*:*"
@@ -8354,6 +8433,9 @@
       ],
       "rust-embed": [
         "cpe:2.3:a:rust-embed_project:rust-embed:*:*:*:*:*:rust:*:*"
+      ],
+      "rustls": [
+        "cpe:2.3:a:rustls_project:rustls:*:*:*:*:*:*:*:*"
       ],
       "salvo": [
         "cpe:2.3:a:salvo:salvo:*:*:*:*:*:rust:*:*"
@@ -8498,6 +8580,9 @@
       ],
       "wasmtime": [
         "cpe:2.3:a:bytecodealliance:wasmtime:*:*:*:*:*:rust:*:*"
+      ],
+      "wgp": [
+        "cpe:2.3:a:nugine:wgp:*:*:*:*:*:rust:*:*"
       ],
       "ws": [
         "cpe:2.3:a:ws-rs_project:ws-rs:*:*:*:*:*:rust:*:*"
@@ -10161,6 +10246,9 @@
       "bonus-for-woo": [
         "cpe:2.3:a:computy:bonus_for_woo:*:*:*:*:*:wordpress:*:*"
       ],
+      "book-a-room": [
+        "cpe:2.3:a:heightslibrary:book_a_room:*:*:*:*:*:wordpress:*:*"
+      ],
       "book-appointment-online": [
         "cpe:2.3:a:oz-plugin:book_appointment_online:*:*:*:*:*:wordpress:*:*"
       ],
@@ -11005,6 +11093,9 @@
       ],
       "colibri-page-builder": [
         "cpe:2.3:a:extendthemes:colibri_page_builder:*:*:*:*:*:wordpress:*:*"
+      ],
+      "collapsing-archives": [
+        "cpe:2.3:a:robfelty:collapsing_archives:*:*:*:*:*:wordpress:*:*"
       ],
       "collectchat": [
         "cpe:2.3:a:micro.company:collect.chat:*:*:*:*:*:wordpress:*:*"
@@ -12745,7 +12836,8 @@
       ],
       "essential-blocks": [
         "cpe:2.3:a:wpdeveloper:essential_blocks:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:wpdeveloper:essential_blocks:*:*:*:*:free:wordpress:*:*"
+        "cpe:2.3:a:wpdeveloper:essential_blocks:*:*:*:*:free:wordpress:*:*",
+        "cpe:2.3:a:wpdeveloper:essential_blocks:*:*:*:*:pro:wordpress:*:*"
       ],
       "essential-content-types": [
         "cpe:2.3:a:catchplugins:essential_content_types:*:*:*:*:*:wordpress:*:*"
@@ -14622,6 +14714,9 @@
       ],
       "inprosysmedia-likes-dislikes-post": [
         "cpe:2.3:a:erumfaham:likes_and_dislikes:*:*:*:*:*:wordpress:*:*"
+      ],
+      "inquiry-cart": [
+        "cpe:2.3:a:ravster:inquiry_cart:*:*:*:*:*:wordpress:*:*"
       ],
       "insert-estimated-reading-time": [
         "cpe:2.3:a:nigauri:insert_estimated_reading_time:*:*:*:*:*:wordpress:*:*"
@@ -19126,6 +19221,7 @@
         "cpe:2.3:a:simple_youtube_responsive_project:simple_youtube_responsive:*:*:*:*:*:wordpress:*:*"
       ],
       "simplebooklet": [
+        "cpe:2.3:a:simplebooklet:simplebooklet:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:simplebooklet:simplebooklet_pdf_viewer_and_embedder:*:*:*:*:*:wordpress:*:*"
       ],
       "simplemap": [
@@ -19615,6 +19711,9 @@
       ],
       "spotbot": [
         "cpe:2.3:a:jakehelbig:spotbot:*:*:*:*:*:wordpress:*:*"
+      ],
+      "spotify-play-button": [
+        "cpe:2.3:a:wolfiezero:spotify_play_button:*:*:*:*:*:wordpress:*:*"
       ],
       "spotify-play-button-for-wordpress": [
         "cpe:2.3:a:followmedarling:spotify-play-button-for-wordpress:*:*:*:*:*:wordpress:*:*"
@@ -22175,6 +22274,9 @@
       "wp-downloadmanager": [
         "cpe:2.3:a:lesterchan:wp-downloadmanager:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:wp-downloadmanager_project:wp-downloadmanager:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-dream-carousel": [
+        "cpe:2.3:a:neoloki:wp_dream_carousel:*:*:*:*:wordpress:*:*:*"
       ],
       "wp-ds-blog-map": [
         "cpe:2.3:a:wp_ds_blog_map_project:wp_ds_blog_map:*:*:*:*:*:wordpress:*:*"
