@@ -11,6 +11,15 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
+func Test_OpamSwitchCataloger_Globs(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/glob-paths").
+		ExpectsResolverContentQueries([]string{
+			"switch/.opam-switch/switch-state",
+		}).
+		TestCataloger(t, NewOpamSwitchCataloger())
+}
+
 func Test_PackageCataloger_Globs(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -239,15 +248,6 @@ func TestOpamSwitchCataloger_NamesWithHyphenAndDigits(t *testing.T) {
 			"conf-python-2-7 @ 1.0 (_opam/.opam-switch/switch-state)",
 		}).
 		TestCataloger(t, NewOpamSwitchCataloger())
-}
-
-func TestParseSwitchState(t *testing.T) {
-	installed, err := parseSwitchState([]byte("opam-version: \"2.0\"\ncompiler: [\"ocaml.5.3.0\"]\ninstalled: [\"lwt.5.4.2\" \"ocaml.5.3.0\"]\n"))
-	require.NoError(t, err)
-	assert.Equal(t, []string{"lwt.5.4.2", "ocaml.5.3.0"}, installed)
-
-	_, err = parseSwitchState([]byte("opam-version: \"2.0\"\n"))
-	require.Error(t, err)
 }
 
 // TestPlaceholderVersions checks that unsubstituted build templates (%%VERSION%%, %%VERSION_NUM%%) are not used

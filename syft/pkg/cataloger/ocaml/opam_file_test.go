@@ -240,6 +240,15 @@ func TestParseOpamFields_DeepInput(t *testing.T) {
 	require.ErrorIs(t, err, errTooDeep)
 }
 
+func TestParseSwitchState(t *testing.T) {
+	installed, err := parseSwitchState([]byte("opam-version: \"2.0\"\ncompiler: [\"ocaml.5.3.0\"]\ninstalled: [\"lwt.5.4.2\" \"ocaml.5.3.0\"]\n"))
+	require.NoError(t, err)
+	assert.Equal(t, []string{"lwt.5.4.2", "ocaml.5.3.0"}, installed)
+
+	_, err = parseSwitchState([]byte("opam-version: \"2.0\"\n"))
+	require.Error(t, err)
+}
+
 func TestReadOpamFields_SizeLimit(t *testing.T) {
 	// the parser costs far more memory than the size of its input, so opam files have a limit of their own
 	content := "opam-version: \"2.0\"\nx-pad: \"" + strings.Repeat("a", maxOpamFileSize) + "\"\n"
