@@ -8,11 +8,16 @@ import (
 	"regexp"
 	"strings"
 
+	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
+
+// maxLibraryFileSize bounds the dune-package and META files. They are small text files, which are not parsed like opam
+// files: the largest dune-package files, which list every installed file, are a few hundred KB.
+const maxLibraryFileSize = 16 * intFile.MB
 
 var duneFieldPattern = regexp.MustCompile(`(?m)^\((name|version) ([^)\s]+)\)`)
 
@@ -23,7 +28,7 @@ func parseDunePackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 	if isBuildOutput(p) || isInsideOpamSwitch(resolver, p) {
 		return nil, nil, nil
 	}
-	data, err := readMetadataFile(reader)
+	data, err := readMetadataFileWithLimit(reader, maxLibraryFileSize)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -46,7 +51,7 @@ func parseDunePackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 		version = opam.Version
 	}
 	if version == "" {
-		if metaData, _, ok := readFile(resolver, path.Join(dir, "META")); ok {
+		if metaData, _, ok := readFile(resolver, path.Join(dir, "META"), maxLibraryFileSize); ok {
 			if meta, isFindlib := parseFindlibFields(metaData); isFindlib && !meta.isCompilerShim() {
 				version = meta.version
 			}
@@ -62,7 +67,7 @@ func parseFindlibMeta(ctx context.Context, resolver file.Resolver, _ *generic.En
 	if isBuildOutput(p) || fileExists(resolver, path.Join(dir, "dune-package")) || isInsideOpamSwitch(resolver, p) {
 		return nil, nil, nil
 	}
-	data, err := readMetadataFile(reader)
+	data, err := readMetadataFileWithLimit(reader, maxLibraryFileSize)
 	if err != nil {
 		return nil, nil, err
 	}
