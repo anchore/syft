@@ -21,6 +21,9 @@ const maxLibraryFileSize = 16 * intFile.MB
 
 var duneFieldPattern = regexp.MustCompile(`(?m)^\((name|version) ([^)\s]+)\)`)
 
+// duneLangPattern matches the `(lang dune <version>)` line that starts every dune-package file.
+var duneLangPattern = regexp.MustCompile(`(?m)^\(lang dune[ )]`)
+
 // parseDunePackage parses the `dune-package` file that dune installs with every package (`<lib>/<name>/dune-package`).
 // The dune package name is the opam package name. License and dependencies come from the sibling opam file.
 func parseDunePackage(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -31,6 +34,10 @@ func parseDunePackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 	data, err := readMetadataFileWithLimit(reader, maxLibraryFileSize)
 	if err != nil {
 		return nil, nil, err
+	}
+	if !duneLangPattern.Match(data) {
+		// not a dune-package file, which says which dune language it uses
+		return nil, nil, nil
 	}
 	var name, version string
 	for _, m := range duneFieldPattern.FindAllSubmatch(data, -1) {

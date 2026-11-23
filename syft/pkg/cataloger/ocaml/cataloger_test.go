@@ -11,6 +11,24 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
+func Test_InstalledLibraryCataloger_Globs(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/glob-paths").
+		ExpectsResolverContentQueries([]string{
+			"lib/foo/dune-package",
+			"lib/bar/META",
+		}).
+		// parsers probe for sibling files and for an opam switch around the library
+		IgnoreUnfulfilledPathResponses(
+			"lib/bar/dune-package",
+			"lib/foo/.opam-switch/switch-state",
+			"lib/bar/.opam-switch/switch-state",
+			"lib/.opam-switch/switch-state",
+			".opam-switch/switch-state",
+		).
+		TestCataloger(t, NewInstalledLibraryCataloger())
+}
+
 func Test_PackageCataloger_Globs(t *testing.T) {
 	tests := []struct {
 		name     string
