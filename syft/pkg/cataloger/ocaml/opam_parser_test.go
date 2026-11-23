@@ -1,6 +1,7 @@
 package ocaml
 
 import (
+	"runtime"
 	"strings"
 	"testing"
 
@@ -238,6 +239,30 @@ func TestParseOpamFields_DeepInput(t *testing.T) {
 	// deep input overflowed the goroutine stack (fatal, not recoverable) before nesting was bounded
 	_, err := parseOpamFields([]byte("opam-version: \"2.0\"\nlicense: " + strings.Repeat("[", 2<<20)))
 	require.ErrorIs(t, err, errTooDeep)
+}
+
+func TestParseOpamFields_DeepInputWithManyEntriesIsLinear(t *testing.T) {
+	// the values of a deeply nested list must be collected without copying the result at every level: with a depth of
+	// 900 and 100,000 entries that used to allocate over 1 GB (and 10 GB for a file of the largest allowed size)
+	const depth, entries = 900, 100_000
+	for _, field := range []string{"license", "depends"} {
+		t.Run(field, func(t *testing.T) {
+			input := "opam-version: \"2.0\"\n" + field + ": " + strings.Repeat("[", depth) + strings.Repeat(`"a" `, entries) + strings.Repeat("]", depth) + "\n"
+
+			var before, after runtime.MemStats
+			runtime.ReadMemStats(&before)
+			got, err := parseOpamFields([]byte(input))
+			runtime.ReadMemStats(&after)
+
+			require.NoError(t, err)
+			if field == "license" {
+				assert.Len(t, got.Licenses, entries)
+			} else {
+				assert.Len(t, got.Depends, entries)
+			}
+			assert.Less(t, after.TotalAlloc-before.TotalAlloc, uint64(400<<20), "allocated %d MB", (after.TotalAlloc-before.TotalAlloc)>>20)
+		})
+	}
 }
 
 func TestReadOpamFields_SizeLimit(t *testing.T) {

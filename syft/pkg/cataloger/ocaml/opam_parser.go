@@ -489,31 +489,42 @@ func firstString(nodes []opamNode) string {
 
 func allStrings(nodes []opamNode) []string {
 	var out []string
+	collectStrings(nodes, &out)
+	return out
+}
+
+// collectStrings appends to one shared slice: returning and appending the slice of each nested list would copy the
+// result again at every level of nesting.
+func collectStrings(nodes []opamNode, out *[]string) {
 	for _, n := range nodes {
 		switch n.kind {
 		case tokString:
-			out = append(out, n.text)
+			*out = append(*out, n.text)
 		case tokLBracket:
-			out = append(out, allStrings(n.children)...)
+			collectStrings(n.children, out)
 		}
 	}
-	return out
 }
 
 // dependencies extracts every package named in a depends formula, including all alternatives of a disjunction. A
 // filter on a group applies to every package in it.
 func dependencies(nodes []opamNode, development bool) []opamDependency {
 	var out []opamDependency
+	collectDependencies(nodes, development, &out)
+	return out
+}
+
+// collectDependencies appends to one shared slice, like collectStrings.
+func collectDependencies(nodes []opamNode, development bool, out *[]opamDependency) {
 	for _, n := range nodes {
 		dev := development || isDevelopmentOnly(n.option)
 		switch n.kind {
 		case tokString:
-			out = append(out, opamDependency{Name: n.text, Version: pinnedVersion(n.option), Development: dev})
+			*out = append(*out, opamDependency{Name: n.text, Version: pinnedVersion(n.option), Development: dev})
 		case tokLBracket, tokLParen:
-			out = append(out, dependencies(n.children, dev)...)
+			collectDependencies(n.children, dev, out)
 		}
 	}
-	return out
 }
 
 // developmentVariables are the filter variables that are only true when a package is tested, documented or set up
