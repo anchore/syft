@@ -83,6 +83,35 @@ func TestOpamPackageManagerCataloger_SwitchAtTheRoot(t *testing.T) {
 		TestCataloger(t, NewOpamPackageManagerCataloger())
 }
 
+func TestOpamPackageManagerCataloger_NamesFromDirectories(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/directory-names").
+		ExpectsPackageStrings([]string{
+			// opam package names may end in digits, so a <name>.<version> directory in the directory of its package
+			// (the layout of opam-repository) is not read as <name>-<version>
+			"bls12-381 @ 0.3.14 (bls12-381/bls12-381.0.3.14/opam)",
+			"conf-rust-2018 @ 1 (conf-rust-2018/conf-rust-2018.1/opam)",
+			"conf-python-2-7 @ 1.0 (conf-python-2-7/conf-python-2-7.1.0/opam)",
+			"conf-fswatch @ 11-0.1.0 (conf-fswatch/conf-fswatch.11-0.1.0/opam)",
+			// the version of a package in its own directory may be any text
+			"atomic @ base (atomic/atomic.base/opam)",
+			// elsewhere, text after a dot that is not a version is not one
+			"my.project @  (not-a-version/my.project/opam)",
+			// with a name field the directory only gives the version, when it is named after the package
+			"foo @  (with-name/foo.git/opam)",
+			"bar @ 1.2 (with-name/bar.1.2/opam)",
+		}).
+		TestCataloger(t, NewOpamPackageManagerCataloger())
+}
+
+func TestOpamPackageManagerCataloger_UnusableLockFileKeepsTheDeclaredFile(t *testing.T) {
+	// the lock file gives no package, so the opam file next to it must not be dropped in its favor
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/lock-fallback").
+		ExpectsPackageStrings([]string{"foo @ 1.0 (foo.opam)"}).
+		TestCataloger(t, NewOpamPackageManagerCataloger())
+}
+
 func TestOpamPackageManagerCataloger_UnnamedOpamFileAtTheRoot(t *testing.T) {
 	// the scan root has no name to give the package
 	pkgtest.NewCatalogTester().
@@ -101,12 +130,15 @@ func TestOpamPackageManagerCataloger_RelationshipsStayWithinALockFile(t *testing
 			"tool @ 2.0.0 (tool/tool.opam.locked)",
 			"lwt @ 5.7.0 (tool/tool.opam.locked)",
 			"ocaml @ 5.3.0 (tool/tool.opam.locked)",
+			// pinned for everything but the tests (!with-test)
+			"zlib @ 1.2 (tool/tool.opam.locked)",
 		}).
 		ExpectsRelationshipStrings([]string{
 			"lwt @ 5.4.2 (app/app.opam.locked) [dependency-of] app @ 1.0.0 (app/app.opam.locked)",
 			"ocaml @ 4.14.2 (app/app.opam.locked) [dependency-of] app @ 1.0.0 (app/app.opam.locked)",
 			"lwt @ 5.7.0 (tool/tool.opam.locked) [dependency-of] tool @ 2.0.0 (tool/tool.opam.locked)",
 			"ocaml @ 5.3.0 (tool/tool.opam.locked) [dependency-of] tool @ 2.0.0 (tool/tool.opam.locked)",
+			"zlib @ 1.2 (tool/tool.opam.locked) [dependency-of] tool @ 2.0.0 (tool/tool.opam.locked)",
 		}).
 		TestCataloger(t, NewOpamPackageManagerCataloger())
 }
