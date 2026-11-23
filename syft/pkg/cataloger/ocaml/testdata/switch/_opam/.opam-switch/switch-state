@@ -1,0 +1,9 @@
+opam-version: "2.0"
+compiler: ["ocaml.4.14.2"]
+roots: ["lwt.5.4.2"]
+installed: [
+  "base-unix.base"
+  "lwt.5.4.2"
+  "ocaml.4.14.2"
+  "ocplib-endian.1.2"
+]

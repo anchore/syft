@@ -1,0 +1,5 @@
+opam-version: "2.0"
+license: "LGPL-2.1-only WITH OCaml-LGPL-linking-exception"
+depends: [
+  "ocaml" {>= "4.03.0"}
+]
