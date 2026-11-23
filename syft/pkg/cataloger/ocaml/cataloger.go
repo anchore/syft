@@ -8,8 +8,10 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// NewOpamPackageManagerCataloger returns a new cataloger object for OCaml opam.
+// NewOpamPackageManagerCataloger returns a new cataloger object for declared OCaml opam packages: package
+// definitions (`<name>.opam` and `opam` files) and lock files (`<name>.opam.locked`).
 func NewOpamPackageManagerCataloger() pkg.Cataloger {
 	return generic.NewCataloger("opam-cataloger").
-		WithParserByGlobs(parseOpamPackage, "**/*opam")
+		WithParserByGlobs(parseOpamPackage, "**/*.opam", "**/opam").
+		WithParserByGlobs(parseOpamLockFile, "**/*.opam.locked")
 }
