@@ -45,8 +45,10 @@ func parseOpamPackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 		return nil, nil, nil
 	}
 
-	fields, ok := readOpamFields(reader)
-	if !ok {
+	fields, err := readOpamFields(reader)
+	if err != nil {
+		// any file named opam matches, not only opam files (e.g. the opam executable), so what is not one is skipped
+		log.WithFields("error", err, "path", p).Trace("unable to read opam file")
 		return nil, nil, nil
 	}
 
@@ -221,18 +223,13 @@ func dependencyNames(self string, deps []opamDependency) []string {
 	return names
 }
 
-func readOpamFields(reader io.Reader) (opamFields, bool) {
+// readOpamFields reads an opam file and parses it. It fails when the file is too large or is not a valid opam file.
+func readOpamFields(reader io.Reader) (opamFields, error) {
 	data, err := readMetadataFileWithLimit(reader, maxOpamFileSize)
 	if err != nil {
-		log.WithFields("error", err).Trace("unable to read opam file")
-		return opamFields{}, false
+		return opamFields{}, err
 	}
-	fields, err := parseOpamFields(data)
-	if err != nil {
-		log.WithFields("error", err).Trace("unable to parse opam file")
-		return opamFields{}, false
-	}
-	return fields, true
+	return parseOpamFields(data)
 }
 
 func readSiblingOpamFields(resolver file.Resolver, p string) (opamFields, file.Location, bool) {

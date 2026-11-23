@@ -105,9 +105,11 @@ func TestOpamPackageManagerCataloger_NamesFromDirectories(t *testing.T) {
 }
 
 func TestOpamPackageManagerCataloger_UnusableLockFileKeepsTheDeclaredFile(t *testing.T) {
-	// the lock file gives no package, so the opam file next to it must not be dropped in its favor
+	// the lock file is reported as an error and gives no package, so the opam file next to it must not be dropped in
+	// its favor
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "testdata/lock-fallback").
+		WithError().
 		ExpectsPackageStrings([]string{"foo @ 1.0 (foo.opam)"}).
 		TestCataloger(t, NewOpamPackageManagerCataloger())
 }

@@ -123,8 +123,15 @@ func TestParseOpamLockFile_ProjectMetadataFromTheOpamFile(t *testing.T) {
 }
 
 func Test_corruptOpamLockFile(t *testing.T) {
-	// not an opam file: no packages, and no error
 	pkgtest.NewCatalogTester().
 		FromFile(t, "testdata/glob-paths/opam/project.opam.locked").
+		WithError().
+		TestParser(t, parseOpamLockFile)
+}
+
+func Test_truncatedOpamLockFile(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "testdata/corrupt/foo.opam.locked").
+		WithError().
 		TestParser(t, parseOpamLockFile)
 }

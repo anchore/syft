@@ -2,6 +2,7 @@ package ocaml
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"strings"
 
@@ -13,7 +14,8 @@ import (
 )
 
 // hasUsableLockFile reports whether the lock file exists and can be read as an opam file. When it cannot, the lock
-// file gives no package, so the declared opam file stays the only description of the project.
+// file gives no package (its parser reports an error), so the declared opam file stays the only description of the
+// project.
 func hasUsableLockFile(resolver file.Resolver, lockPath string) bool {
 	_, _, ok := readSiblingOpamFields(resolver, lockPath)
 	return ok
@@ -21,15 +23,16 @@ func hasUsableLockFile(resolver file.Resolver, lockPath string) bool {
 
 // parseOpamLockFile parses a `<name>.opam.locked` file (as written by `opam lock`). The project package takes its
 // descriptive metadata (license, homepage, ...) from the sibling `<name>.opam` file when present. Relationships are
-// resolved within the lock file only, so that packages of other projects or lock files are never linked.
+// resolved within the lock file only, so that packages of other projects or lock files are never linked. Like the
+// lock file parsers of other ecosystems, it returns an error for a file that cannot be parsed.
 func parseOpamLockFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	p := reader.Path()
 	if skipDeclaredOpamFile(resolver, p) {
 		return nil, nil, nil
 	}
-	fields, ok := readOpamFields(reader)
-	if !ok {
-		return nil, nil, nil
+	fields, err := readOpamFields(reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse opam lock file: %w", err)
 	}
 	name := strings.TrimSuffix(path.Base(p), opamLockFileSuffix)
 

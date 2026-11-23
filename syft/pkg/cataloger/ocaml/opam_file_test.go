@@ -244,11 +244,11 @@ func TestReadOpamFields_SizeLimit(t *testing.T) {
 	// the parser costs far more memory than the size of its input, so opam files have a limit of their own
 	content := "opam-version: \"2.0\"\nx-pad: \"" + strings.Repeat("a", maxOpamFileSize) + "\"\n"
 	require.Greater(t, len(content), maxOpamFileSize)
-	_, ok := readOpamFields(strings.NewReader(content))
-	assert.False(t, ok)
+	_, err := readOpamFields(strings.NewReader(content))
+	require.ErrorIs(t, err, errMetadataFileTooLarge)
 
-	_, ok = readOpamFields(strings.NewReader("opam-version: \"2.0\"\n"))
-	assert.True(t, ok)
+	_, err = readOpamFields(strings.NewReader("opam-version: \"2.0\"\n"))
+	require.NoError(t, err)
 }
 
 func TestReadMetadataFile(t *testing.T) {
