@@ -64,6 +64,10 @@ depends: [
   ("alcotest" "qcheck") {with-test}
   "ppx_expect" {with-test | build}
   "base" {= "v0.16.0" | = "v0.17.0"}
+  "not-test" {!with-test}
+  "not-test-or-doc" {build & !with-doc & !with-test}
+  "not-tested" {with-test = false}
+  "maybe-test" {?with-test}
 ]
 `,
 			want: opamFields{
@@ -83,6 +87,11 @@ depends: [
 					{Name: "ppx_expect"},
 					// a choice of versions is not a pin
 					{Name: "base"},
+					// needed when not testing, documenting or developing
+					{Name: "not-test"},
+					{Name: "not-test-or-doc"},
+					{Name: "not-tested"},
+					{Name: "maybe-test"},
 				},
 			},
 		},
@@ -229,6 +238,17 @@ func TestParseOpamFields_DeepInput(t *testing.T) {
 	// deep input overflowed the goroutine stack (fatal, not recoverable) before nesting was bounded
 	_, err := parseOpamFields([]byte("opam-version: \"2.0\"\nlicense: " + strings.Repeat("[", 2<<20)))
 	require.ErrorIs(t, err, errTooDeep)
+}
+
+func TestReadOpamFields_SizeLimit(t *testing.T) {
+	// the parser costs far more memory than the size of its input, so opam files have a limit of their own
+	content := "opam-version: \"2.0\"\nx-pad: \"" + strings.Repeat("a", maxOpamFileSize) + "\"\n"
+	require.Greater(t, len(content), maxOpamFileSize)
+	_, ok := readOpamFields(strings.NewReader(content))
+	assert.False(t, ok)
+
+	_, ok = readOpamFields(strings.NewReader("opam-version: \"2.0\"\n"))
+	assert.True(t, ok)
 }
 
 func TestReadMetadataFile(t *testing.T) {
