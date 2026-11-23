@@ -24,9 +24,10 @@ const (
 	opamFileSuffix     = ".opam"
 	opamLockFileSuffix = ".opam.locked"
 
-	// maxMetadataFileSize bounds the opam, META and dune-package files read by the OCaml catalogers. These are small
-	// text files; the largest dune-package files, which list every installed file, are a few hundred KB.
-	maxMetadataFileSize = 16 * intFile.MB
+	// maxOpamFileSize bounds the opam files read by the OCaml catalogers. The opam parser allocates about 180 bytes per
+	// byte of input, so the limit is far above what real files need: opam and lock files are tens of KB (the largest of
+	// the 20,000 files of opam-repository is under 40 KB).
+	maxOpamFileSize = 1 * intFile.MB
 )
 
 var errMetadataFileTooLarge = errors.New("OCaml package metadata file is larger than the max allowed size")
@@ -40,7 +41,7 @@ func parseOpamPackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 		return nil, nil, nil
 	}
 	dir, fileName := path.Split(p)
-	if fileName != opamFileName && fileExists(resolver, p+".locked") {
+	if fileName != opamFileName && hasUsableLockFile(resolver, p+".locked") {
 		// the lock file describes this package with exact dependency versions
 		return nil, nil, nil
 	}
@@ -52,7 +53,7 @@ func parseOpamPackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 
 	var name, version string
 	if fileName == opamFileName {
-		name, version = nameAndVersionFromDir(projectDirName(dir), fields)
+		name, version = nameAndVersionFromDir(projectDir(dir), fields)
 	} else {
 		name, version = strings.TrimSuffix(fileName, opamFileSuffix), fields.Version
 	}
@@ -62,6 +63,13 @@ func parseOpamPackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 	}
 
 	return []pkg.Package{newOpamPackage(ctx, opamMetadata(name, version, fields), reader.Location)}, nil, nil
+}
+
+// hasUsableLockFile reports whether the lock file exists and can be read as an opam file. When it cannot, the lock
+// file gives no package, so the declared opam file stays the only description of the project.
+func hasUsableLockFile(resolver file.Resolver, lockPath string) bool {
+	_, _, ok := readSiblingOpamFields(resolver, lockPath)
+	return ok
 }
 
 // parseOpamLockFile parses a `<name>.opam.locked` file (as written by `opam lock`). The project package takes its
@@ -136,46 +144,79 @@ func isBuildOutput(p string) bool {
 	return strings.HasPrefix(p, "_build/") || strings.Contains(p, "/_build/")
 }
 
-// projectDirName returns the name of the directory a plain `opam` file describes: its own directory, or the parent
-// of an `opam/` directory (an older layout). It is empty at the root of the scan, which has no usable name.
-func projectDirName(dir string) string {
+// projectDir returns the directory a plain `opam` file describes: its own directory, or the parent of an `opam/`
+// directory (an older layout).
+func projectDir(dir string) string {
 	dir = path.Clean(dir)
 	if path.Base(dir) == opamFileName {
 		dir = path.Dir(dir)
 	}
-	name := path.Base(dir)
-	if name == "/" || name == "." {
-		return ""
-	}
-	return name
+	return dir
 }
 
 // archiveDirPattern matches a `<name>-<version>` directory, as unpacked from a source archive (e.g. cmdliner-1.3.0).
 var archiveDirPattern = regexp.MustCompile(`^(.+?)-(v?[0-9]+(?:\.[0-9]+)+.*)$`)
 
-// nameAndVersionFromDir prefers the name and version fields of the file, falling back to the directory name, which
-// is `<name>-<version>` (a source archive), `<name>.<version>` (opam package names cannot contain a dot) or just the
-// name.
+// versionPattern matches what a version in a directory name starts with. Versions of opam packages begin with a
+// digit, some with a "v".
+var versionPattern = regexp.MustCompile(`^v?[0-9]`)
+
+// nameAndVersionFromDir prefers the name and version fields of the file, falling back to the name of the directory
+// (a project directory is given as its path), which is `<name>.<version>` (opam package names cannot contain a dot),
+// `<name>-<version>` (a source archive) or just the name. A name that ends in digits makes the last two ambiguous
+// (bls12-381.0.3.14 or cmdliner-1.3.0); the opam-repository layout, where the directory sits in a directory named
+// after the package (bls12-381/bls12-381.0.3.14), settles it for the first.
 func nameAndVersionFromDir(dir string, fields opamFields) (string, string) {
 	name, version := fields.Name, fields.Version
 	if name != "" && version != "" {
 		return name, version
 	}
-	var dirName, dirVersion string
-	if m := archiveDirPattern.FindStringSubmatch(dir); m != nil {
-		dirName, dirVersion = m[1], m[2]
-	} else if n, v, found := splitNameVersion(dir); found {
-		dirName, dirVersion = n, v
-	} else {
-		dirName = dir
+	base := path.Base(dir)
+	if base == "/" || base == "." {
+		// the root of the scan has no usable name
+		base = ""
 	}
+	dirName, dirVersion := splitDirName(base, path.Base(path.Dir(dir)), name)
 	if name == "" {
 		name = dirName
+	} else if dirName != name {
+		// the directory is not named after the package, so its version is not the package's
+		dirVersion = ""
 	}
 	if version == "" {
 		version = dirVersion
 	}
 	return name, version
+}
+
+// splitDirName splits a directory name into a name and a version. parent is the name of the directory holding it, and
+// name the package name given by the opam file, when there is one.
+func splitDirName(dir, parent, name string) (string, string) {
+	if dir == "" {
+		return "", ""
+	}
+	dotName, dotVersion, dotFound := splitNameVersion(dir)
+	if name != "" {
+		// the name is known, so only the version has to be found
+		for _, sep := range []string{".", "-"} {
+			v, found := strings.CutPrefix(dir, name+sep)
+			if found && (versionPattern.MatchString(v) || (sep == "." && parent == name)) {
+				return name, v
+			}
+		}
+		return dir, ""
+	}
+	// in the directory of the package, the text after the dot is the version, whatever it is (atomic.base, ...)
+	if dotFound && dotName == parent {
+		return dotName, dotVersion
+	}
+	if m := archiveDirPattern.FindStringSubmatch(dir); m != nil {
+		return m[1], m[2]
+	}
+	if dotFound && versionPattern.MatchString(dotVersion) {
+		return dotName, dotVersion
+	}
+	return dir, ""
 }
 
 // knownVersion returns "" for values that are build templates rather than versions, such as the %%VERSION%% and
@@ -237,7 +278,7 @@ func pinnedDependencyPackages(ctx context.Context, self string, fields opamField
 }
 
 func readOpamFields(reader io.Reader) (opamFields, bool) {
-	data, err := readMetadataFile(reader)
+	data, err := readMetadataFileWithLimit(reader, maxOpamFileSize)
 	if err != nil {
 		log.WithFields("error", err).Trace("unable to read opam file")
 		return opamFields{}, false
@@ -251,7 +292,7 @@ func readOpamFields(reader io.Reader) (opamFields, bool) {
 }
 
 func readSiblingOpamFields(resolver file.Resolver, p string) (opamFields, file.Location, bool) {
-	data, loc, ok := readFile(resolver, p)
+	data, loc, ok := readFile(resolver, p, maxOpamFileSize)
 	if !ok {
 		return opamFields{}, file.Location{}, false
 	}
@@ -270,7 +311,7 @@ func fileExists(resolver file.Resolver, p string) bool {
 	return err == nil && len(locs) > 0
 }
 
-func readFile(resolver file.Resolver, p string) ([]byte, file.Location, bool) {
+func readFile(resolver file.Resolver, p string, limit int64) ([]byte, file.Location, bool) {
 	if resolver == nil {
 		return nil, file.Location{}, false
 	}
@@ -283,15 +324,11 @@ func readFile(resolver file.Resolver, p string) ([]byte, file.Location, bool) {
 		return nil, file.Location{}, false
 	}
 	defer internal.CloseAndLogError(rc, locs[0].RealPath)
-	data, err := readMetadataFile(rc)
+	data, err := readMetadataFileWithLimit(rc, limit)
 	if err != nil {
 		return nil, file.Location{}, false
 	}
 	return data, locs[0], true
-}
-
-func readMetadataFile(r io.Reader) ([]byte, error) {
-	return readMetadataFileWithLimit(r, maxMetadataFileSize)
 }
 
 // readMetadataFileWithLimit reads the whole file, failing (rather than truncating) when it is larger than limit.

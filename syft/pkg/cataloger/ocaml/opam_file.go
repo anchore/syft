@@ -544,15 +544,24 @@ func dependencies(nodes []opamNode, development bool) []opamDependency {
 var developmentVariables = map[string]bool{"with-test": true, "with-doc": true, "with-dev-setup": true}
 
 // isDevelopmentOnly reports whether a constraint requires one of the developmentVariables, e.g. `{with-test}` or
-// `{= "2.2.5" & with-doc}`. A disjunction (`{with-test | build}`) may hold without them, so it does not count.
+// `{= "2.2.5" & with-doc}`. A disjunction (`{with-test | build}`) may hold without them, so it does not count. Neither
+// do a negation (`{!with-test}`, which holds when not testing), an undefined variable test (`{?with-test}`) or a
+// comparison (`{with-test = false}`): such a dependency is kept.
 func isDevelopmentOnly(option []opamNode) bool {
 	if hasDisjunction(option) {
 		return false
 	}
-	for _, n := range option {
-		if n.kind == tokIdent && developmentVariables[n.text] {
-			return true
+	for i, n := range option {
+		if n.kind != tokIdent || !developmentVariables[n.text] {
+			continue
 		}
+		if i > 0 && option[i-1].kind == tokOp && (option[i-1].text == "!" || option[i-1].text == "?") {
+			continue
+		}
+		if i+1 < len(option) && option[i+1].kind == tokOp && (option[i+1].text == "=" || option[i+1].text == "!=") {
+			continue
+		}
+		return true
 	}
 	return false
 }
