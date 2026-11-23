@@ -18,7 +18,7 @@ import (
 // dependencies, at `<switch>/.opam-switch/packages/<name>.<version>/opam`. Relationships are resolved within the
 // switch only, so that packages of other switches are never linked.
 func parseOpamSwitchState(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	data, err := readMetadataFile(reader)
+	data, err := readMetadataFileWithLimit(reader, maxOpamFileSize)
 	if err != nil {
 		return nil, nil, err
 	}

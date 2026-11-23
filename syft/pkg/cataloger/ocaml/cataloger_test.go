@@ -230,6 +230,17 @@ func TestOpamSwitchCataloger_LicensesAndEvidence(t *testing.T) {
 		TestCataloger(t, NewOpamSwitchCataloger())
 }
 
+func TestOpamSwitchCataloger_NamesWithHyphenAndDigits(t *testing.T) {
+	// the switch state lists <name>.<version>, and names may end in digits
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/hyphen-switch").
+		ExpectsPackageStrings([]string{
+			"bls12-381 @ 0.3.14 (_opam/.opam-switch/packages/bls12-381.0.3.14/opam)",
+			"conf-python-2-7 @ 1.0 (_opam/.opam-switch/switch-state)",
+		}).
+		TestCataloger(t, NewOpamSwitchCataloger())
+}
+
 func TestParseSwitchState(t *testing.T) {
 	installed, err := parseSwitchState([]byte("opam-version: \"2.0\"\ncompiler: [\"ocaml.5.3.0\"]\ninstalled: [\"lwt.5.4.2\" \"ocaml.5.3.0\"]\n"))
 	require.NoError(t, err)
