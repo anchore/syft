@@ -86,10 +86,17 @@ func TestParseOpamPackage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.fixture, func(t *testing.T) {
-			// dependency relationships are resolved by the cataloger's processor, not by the parser
+			// declared opam files only record the names of their dependencies: no relationships are made
 			var expectedRelationships []artifact.Relationship
 
 			pkgtest.TestFileParser(t, tt.fixture, parseOpamPackage, tt.want, expectedRelationships)
 		})
 	}
+}
+
+func Test_corruptOpamPackage(t *testing.T) {
+	// not an opam file: no packages, and no error, as any file named opam is matched
+	pkgtest.NewCatalogTester().
+		FromFile(t, "testdata/glob-paths/opam/alcotest.opam").
+		TestParser(t, parseOpamPackage)
 }
