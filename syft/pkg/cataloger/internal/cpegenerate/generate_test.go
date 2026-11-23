@@ -9,6 +9,7 @@ import (
 	"github.com/scylladb/go-set"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
@@ -1435,4 +1436,52 @@ func Test_boundCandidates(t *testing.T) {
 	got := boundCandidates(many)
 	assert.Len(t, got, maxCandidates)
 	assert.Equal(t, "x", got[0], "shortest candidates are kept")
+}
+
+// NVD lists the nginx vulnerabilities it published since mid 2026 only under f5:nginx_open_source (e.g. CVE-2026-123007),
+// so nginx packages need that CPE besides nginx:nginx and f5:nginx to be matched at all. It has to come first: formats
+// with a single CPE field (CycloneDX's component.cpe) carry only the first, and tools such as Dependency-Track match by it.
+func TestFromPackageAttributes_nginxOpenSource(t *testing.T) {
+	cpes := func(pairs ...string) []string {
+		var out []string
+		for _, pair := range pairs {
+			out = append(out, "cpe:2.3:a:"+pair+":1.31.5-r1:*:*:*:*:*:*:*")
+		}
+		return out
+	}
+	// nginx_open_source is F5's product only, and Wolfi's package names are no NVD products
+	nginx := cpes("f5:nginx_open_source", "nginx:nginx", "f5:nginx")
+	apk := func(name string) pkg.Package {
+		return pkg.Package{
+			Name:    name,
+			Version: "1.31.5-r1",
+			Type:    pkg.ApkPkg,
+			Metadata: pkg.ApkDBEntry{
+				Package:       name,
+				URL:           "https://nginx.org/",
+				OriginPackage: name,
+			},
+		}
+	}
+	tests := []struct {
+		name string
+		p    pkg.Package
+		want []string
+	}{
+		{name: "apk nginx (Alpine, or nginx.org's Alpine repository)", p: apk("nginx"), want: nginx},
+		{name: "apk nginx-mainline (Wolfi)", p: apk("nginx-mainline"), want: nginx},
+		{name: "apk nginx-stable (Wolfi)", p: apk("nginx-stable"), want: nginx},
+		{name: "binary nginx", p: pkg.Package{Name: "nginx", Version: "1.31.5-r1", Type: pkg.BinaryPkg}, want: nginx},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got []string
+			for _, c := range FromPackageAttributes(tt.p) {
+				got = append(got, c.Attributes.BindToFmtString())
+			}
+			assert.ElementsMatch(t, tt.want, got)
+			require.NotEmpty(t, got)
+			assert.Equal(t, tt.want[0], got[0], "the CPE that single-CPE formats carry")
+		})
+	}
 }

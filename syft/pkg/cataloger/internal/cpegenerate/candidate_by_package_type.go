@@ -135,7 +135,8 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		{
 			pkg.BinaryPkg,
 			candidateKey{PkgName: "nginx"},
-			candidateAddition{AdditionalVendors: []string{"f5"}},
+			// NVD lists nginx vulnerabilities published since mid 2026 under f5:nginx_open_source only
+			candidateAddition{AdditionalProducts: []string{"nginx_open_source"}, AdditionalVendors: []string{"f5"}},
 		},
 		{
 			pkg.BinaryPkg,
@@ -359,6 +360,22 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			pkg.ApkPkg,
 			candidateKey{PkgName: "go"},
 			candidateAddition{AdditionalVendors: []string{"golang"}},
+		},
+		// NVD lists nginx vulnerabilities published since mid 2026 under f5:nginx_open_source only
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "nginx"},
+			candidateAddition{AdditionalProducts: []string{"nginx_open_source"}, AdditionalVendors: []string{"f5"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "nginx-mainline"},
+			candidateAddition{AdditionalProducts: []string{"nginx", "nginx_open_source"}, AdditionalVendors: []string{"f5"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "nginx-stable"},
+			candidateAddition{AdditionalProducts: []string{"nginx", "nginx_open_source"}, AdditionalVendors: []string{"f5"}},
 		},
 		{
 			pkg.ApkPkg,
@@ -691,7 +708,22 @@ var defaultCandidateRemovals = buildCandidateRemovalLookup(
 			candidateKey{PkgName: "redis"},
 			candidateRemovals{ProductsToRemove: []string{"redis"}},
 		},
+		// nginx: the added product nginx_open_source is no vendor, nor are its spelling variations and sub-selections;
+		// Wolfi's package names nginx-mainline and nginx-stable are no NVD vendor or product either
+		{pkg.BinaryPkg, candidateKey{PkgName: "nginx"}, nginxRemovals()},
+		{pkg.ApkPkg, candidateKey{PkgName: "nginx"}, nginxRemovals()},
+		{pkg.ApkPkg, candidateKey{PkgName: "nginx-mainline"}, nginxRemovals("nginx-mainline", "nginx_mainline")},
+		{pkg.ApkPkg, candidateKey{PkgName: "nginx-stable"}, nginxRemovals("nginx-stable", "nginx_stable")},
 	})
+
+// nginxRemovals keeps the spellings of nginx_open_source out of the vendors and products of an nginx package, and the
+// package's own names when they are no NVD names
+func nginxRemovals(packageNames ...string) candidateRemovals {
+	return candidateRemovals{
+		ProductsToRemove: append([]string{"nginx-open-source"}, packageNames...),
+		VendorsToRemove:  append([]string{"nginx_open_source", "nginx-open-source", "nginx_open", "nginx-open"}, packageNames...),
+	}
+}
 
 // buildCandidateLookup is a convenience function for creating the defaultCandidateAdditions set
 func buildCandidateLookup(cc []candidateComposite) (ca map[pkg.Type]map[candidateKey]candidateAddition) {

@@ -757,6 +757,9 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "nginx",
 			PURL:    mustPURL("pkg:generic/nginx@version"),
 			CPEs: []cpe.CPE{
+				// NVD lists nginx vulnerabilities published since mid 2026 under f5:nginx_open_source only; first, as
+				// single-CPE formats (CycloneDX's component.cpe) carry only the first
+				cpe.Must("cpe:2.3:a:f5:nginx_open_source:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 				cpe.Must("cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 				cpe.Must("cpe:2.3:a:nginx:nginx:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 			},

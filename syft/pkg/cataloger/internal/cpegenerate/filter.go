@@ -17,7 +17,14 @@ var cpeFilters = []filterFn{
 	disallowTomcatServerCPEForEmbeddedEL,
 	disallowJenkinsServerCPEForPluginPackage,
 	disallowJenkinsCPEsNotAssociatedWithJenkins,
+	disallowNginxOpenSourceFromOtherVendors,
 	disallowNonParseableCPEs,
+}
+
+// nginx_open_source is F5's product name for nginx in NVD; with another vendor it names nothing, and as the most
+// specific CPE it would be the one that single-CPE formats (CycloneDX's component.cpe) carry
+func disallowNginxOpenSourceFromOtherVendors(c cpe.Attributes, _ pkg.Package) bool {
+	return c.Product == "nginx_open_source" && c.Vendor != "f5"
 }
 
 func filter(cpes []cpe.Attributes, p pkg.Package, filters ...filterFn) (result []cpe.Attributes) {
