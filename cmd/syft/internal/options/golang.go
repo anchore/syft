@@ -41,7 +41,8 @@ if unset this defaults to $GOPROXY followed by https://proxy.golang.org`)
 	descriptions.Add(&o.NoProxy, `specifies packages which should not be fetched by proxy
 if unset this defaults to $GONOPROXY`)
 	descriptions.Add(&o.MainModuleVersion, `the go main module version discovered from binaries built with the go compiler will
-always show (devel) as the version. Use these options to control heuristics to guess
+show (devel) as the version before go1.24, and a pseudo-version (e.g. v0.0.0-20220308212642-53e6d0aaf6fb)
+from go1.24 onwards when the commit has no semver tag. Use these options to control heuristics to guess
 a more accurate version from the binary.`)
 	descriptions.Add(&o.UsePackagesLib, `use the golang.org/x/tools/go/packages library, which executes golang tooling found on the path in addition to potential network access to get the most accurate results`)
 	// note: descriptions must be static string literals; the app config discovery that generates the

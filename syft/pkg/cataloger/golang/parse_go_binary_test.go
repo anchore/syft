@@ -957,6 +957,135 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			},
 		},
 		{
+			name: "parse main mod and keep go1.24+ stamped version",
+			cfg: func() *CatalogerConfig {
+				c := DefaultCatalogerConfig()
+				c.MainModuleVersion.FromContents = true
+				return &c
+			}(),
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: "go1.24.0",
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "v1.0.0"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+						{Key: "vcs.revision", Value: "41bc6bb410352845f22766e27dd48ba93aa825a4"},
+						{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
+					},
+				},
+				cryptoSettings: nil,
+				arch:           archDetails,
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/anchore/syft",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v1.0.0",
+					PURL:     "pkg:golang/github.com/anchore/syft@v1.0.0",
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.NewCoordinates("/a-path", "layer-id"),
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "go1.24.0",
+						Architecture:      archDetails,
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "GOARCH",
+								Value: archDetails,
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+							{
+								Key:   "vcs.revision",
+								Value: "41bc6bb410352845f22766e27dd48ba93aa825a4",
+							},
+							{
+								Key:   "vcs.time",
+								Value: "2022-10-14T19:54:57Z",
+							},
+						},
+						MainModule: "github.com/anchore/syft",
+					},
+				},
+			},
+		},
+		{
+			name: "parse main mod and replace go1.24+ stamped pseudo version with pattern from binary contents",
+			cfg: func() *CatalogerConfig {
+				c := DefaultCatalogerConfig()
+				c.MainModuleVersion.FromContents = true
+				return &c
+			}(),
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: "go1.24.0",
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "v0.0.0-20221014195457-41bc6bb41035"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+						{Key: "vcs.revision", Value: "41bc6bb410352845f22766e27dd48ba93aa825a4"},
+						{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
+					},
+				},
+				cryptoSettings: nil,
+				arch:           archDetails,
+			},
+			binaryContent: "\x001.0.0\x00",
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/anchore/syft",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v1.0.0",
+					PURL:     "pkg:golang/github.com/anchore/syft@v1.0.0",
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.NewCoordinates("/a-path", "layer-id"),
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "go1.24.0",
+						Architecture:      archDetails,
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "GOARCH",
+								Value: archDetails,
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+							{
+								Key:   "vcs.revision",
+								Value: "41bc6bb410352845f22766e27dd48ba93aa825a4",
+							},
+							{
+								Key:   "vcs.time",
+								Value: "2022-10-14T19:54:57Z",
+							},
+						},
+						MainModule: "github.com/anchore/syft",
+					},
+				},
+			},
+		},
+		{
 			name: "parse a mod with go experiments",
 			mod: &extendedBuildInfo{
 				BuildInfo: &debug.BuildInfo{
