@@ -449,6 +449,22 @@ func Test_getDirectoryExclusionFunctions_crossPlatform(t *testing.T) {
 			finfo:    file.ManualInfo{},
 			walkHint: nil,
 		},
+		{
+			desc:     "doublestar does not skip the scan root itself when its parent matches",
+			root:     "/home/Help/project",
+			path:     "/home/Help/project",
+			exclude:  "**/Help/**",
+			finfo:    file.ManualInfo{ModeValue: os.ModeDir},
+			walkHint: nil,
+		},
+		{
+			desc:     "doublestar does not skip the scan root itself when given with a trailing slash",
+			root:     "/home/Help/project/",
+			path:     "/home/Help/project",
+			exclude:  "**/Help/**",
+			finfo:    file.ManualInfo{ModeValue: os.ModeDir},
+			walkHint: nil,
+		},
 	}
 
 	for _, test := range testCases {
@@ -696,4 +712,26 @@ func Test_DirectorySource_ExclusionsThroughSymlinkedDirectories(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_DirectorySource_ExclusionsDoNotSkipScanRootUnderMatchingParent(t *testing.T) {
+	// the scan root is below a directory that matches the pattern; the root itself must still be walked
+	root := filepath.Join(t.TempDir(), "Help", "project")
+	require.NoError(t, os.MkdirAll(root, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "app.txt"), []byte("x"), 0o600))
+
+	src, err := New(Config{
+		Path:    root,
+		Exclude: source.ExcludeConfig{Paths: []string{"**/Help/**"}},
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, src.Close())
+	})
+	res, err := src.FileResolver(source.SquashedScope)
+	require.NoError(t, err)
+	locations, err := res.FilesByGlob("**/*.txt")
+	require.NoError(t, err)
+	require.Len(t, locations, 1)
+	assert.Equal(t, "app.txt", filepath.Base(locations[0].RealPath))
 }
