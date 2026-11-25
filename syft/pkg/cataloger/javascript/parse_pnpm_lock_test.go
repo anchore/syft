@@ -715,7 +715,6 @@ func setupNpmRegistry() (mux *http.ServeMux, serverURL string, teardown func()) 
 // covers a real two-document lockfile end to end; parsePnpmLock explains why every
 // document is cataloged
 func TestParsePnpmLock_MultiDocument(t *testing.T) {
-	var expectedRelationships []artifact.Relationship
 	fixture := "testdata/pnpm-multi-doc/pnpm-lock.yaml"
 
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
@@ -755,8 +754,16 @@ func TestParsePnpmLock_MultiDocument(t *testing.T) {
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.PnpmLockEntry{
 				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-JZ9fDGH+WLdRdTEikN3UxeZe6bpDY7dYwV0RX0+OrJ927vc72XbId4IJXeT++ebNFA9cF3IQ1swiXHEd/Maq0Q=="},
-				Dependencies: map[string]string{},
+				Dependencies: map[string]string{"@pnpm/exe.linux-x64": "12.0.0-rc.3"},
 			},
+		},
+	}
+
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: expectedPkgs[0],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
 		},
 	}
 
@@ -908,4 +915,75 @@ func Test_pnpmDocumentVersion(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestParsePnpmV9_OptionalDependencies(t *testing.T) {
+	lockfile := `lockfileVersion: '9.0'
+packages:
+  '@pnpm/exe.linux-x64@12.0.0-rc.3':
+    resolution: {integrity: sha512-linux}
+  '@pnpm/exe@12.0.0-rc.3':
+    resolution: {integrity: sha512-exe}
+  'debug@4.3.7':
+    resolution: {integrity: sha512-debug}
+  'supports-color@8.1.1':
+    resolution: {integrity: sha512-color}
+  'ms@2.1.3':
+    resolution: {integrity: sha512-ms}
+snapshots:
+  '@pnpm/exe.linux-x64@12.0.0-rc.3':
+    optional: true
+  '@pnpm/exe@12.0.0-rc.3':
+    optionalDependencies:
+      '@pnpm/exe.linux-x64': 12.0.0-rc.3
+  'debug@4.3.7(supports-color@8.1.1)':
+    dependencies:
+      ms: 2.1.3
+    optionalDependencies:
+      supports-color: 8.1.1(chalk@4.1.2)
+  'debug@4.3.7(supports-color@9.0.0)':
+    dependencies:
+      ms: 2.1.3
+  'supports-color@8.1.1':
+    optional: true
+  'ms@2.1.3': {}
+`
+
+	parser := &pnpmV9LockYaml{}
+	pkgs, err := parser.Parse(9.0, yamlDocument(t, lockfile))
+	require.NoError(t, err)
+
+	depsByPkg := make(map[string]map[string]string, len(pkgs))
+	for _, p := range pkgs {
+		depsByPkg[p.Name+"@"+p.Version] = p.Dependencies
+	}
+
+	assert.Equal(t, map[string]string{
+		"@pnpm/exe.linux-x64": "12.0.0-rc.3",
+	}, depsByPkg["@pnpm/exe@12.0.0-rc.3"])
+	assert.Equal(t, map[string]string{
+		"ms":             "2.1.3",
+		"supports-color": "8.1.1",
+	}, depsByPkg["debug@4.3.7"])
+
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
+	reader := file.NewLocationReadCloser(file.NewLocation("pnpm-lock.yaml"), io.NopCloser(strings.NewReader(lockfile)))
+	parsedPkgs, relationships, err := adapter.parsePnpmLock(t.Context(), nil, nil, reader)
+	require.NoError(t, err)
+
+	pkgByName := make(map[string]pkg.Package, len(parsedPkgs))
+	for _, p := range parsedPkgs {
+		pkgByName[p.Name] = p
+	}
+
+	assert.Contains(t, relationships, artifact.Relationship{
+		From: pkgByName["@pnpm/exe.linux-x64"],
+		To:   pkgByName["@pnpm/exe"],
+		Type: artifact.DependencyOfRelationship,
+	})
+	assert.Contains(t, relationships, artifact.Relationship{
+		From: pkgByName["supports-color"],
+		To:   pkgByName["debug"],
+		Type: artifact.DependencyOfRelationship,
+	})
 }

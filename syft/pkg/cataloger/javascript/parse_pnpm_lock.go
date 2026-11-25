@@ -175,11 +175,11 @@ func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error)
 		}
 		pkgKey := name + "@" + ver
 		if pkg, ok := packages[pkgKey]; ok {
-			pkg.Dependencies = make(map[string]string)
-			for name, versionSpecifier := range sortedIter(snapshotInfo.Dependencies) {
-				var normalizedVersion = strings.SplitN(versionSpecifier, "(", 2)[0]
-				pkg.Dependencies[name] = normalizedVersion
+			if pkg.Dependencies == nil {
+				pkg.Dependencies = make(map[string]string)
 			}
+			mergePnpmDependencies(pkg.Dependencies, snapshotInfo.Dependencies)
+			mergePnpmDependencies(pkg.Dependencies, snapshotInfo.OptionalDependencies)
 			packages[pkgKey] = pkg
 		} else {
 			log.WithFields("package", pkgKey).Trace("package not found in packages map")
@@ -187,6 +187,13 @@ func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error)
 	}
 
 	return toSortedSlice(packages), nil
+}
+
+func mergePnpmDependencies(dst, src map[string]string) {
+	for depName, versionSpecifier := range sortedIter(src) {
+		normalizedVersion := strings.SplitN(versionSpecifier, "(", 2)[0]
+		dst[depName] = normalizedVersion
+	}
 }
 
 // newPnpmLockfileParser is a factory function that returns the correct parser for the given lockfile version.
