@@ -761,6 +761,14 @@ from-images:
     paths:
       - /usr/local/rustup/toolchains/1.67.1-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-c6192dd4c4d410ac.so
 
+  - name: rust-libstd
+    version: 1.100.0
+    images:
+      - ref: rust:1.100.0@sha256:1e626a07e55b67d7fe19de7a590519e0cf4b75cf3788b058fa75cf4d599d9b5a
+        platform: linux/amd64
+    paths:
+      - /usr/local/rustup/toolchains/1.100.0-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-7d3c8b3343c9c95a.so
+
   - name: rust-libstd-musl
     version: 1.67.1
     images:
