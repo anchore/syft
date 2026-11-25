@@ -1057,6 +1057,143 @@ func TestParseYarnLock_DevDependencies(t *testing.T) {
 	}
 }
 
+func TestParseYarnLock_NpmAlias(t *testing.T) {
+	tests := []struct {
+		name       string
+		fixtureDir string
+		includeDev bool
+		expected   func(file.LocationSet) ([]pkg.Package, []artifact.Relationship)
+	}{
+		{
+			name:       "production npm alias keeps that version and its tree",
+			fixtureDir: "testdata/yarn-npm-alias",
+			includeDev: false,
+			expected: func(locations file.LocationSet) ([]pkg.Package, []artifact.Relationship) {
+				pkgs := []pkg.Package{
+					{
+						Name:      "ansi-styles",
+						Version:   "4.3.0",
+						Locations: locations,
+						PURL:      "pkg:npm/ansi-styles@4.3.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:     "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-4.3.0.tgz#abc123",
+							Integrity:    "sha512-ansistyles==",
+							Dependencies: map[string]string{},
+						},
+					},
+					{
+						Name:      "chalk",
+						Version:   "4.1.2",
+						Locations: locations,
+						PURL:      "pkg:npm/chalk@4.1.2",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:  "https://registry.yarnpkg.com/chalk/-/chalk-4.1.2.tgz#def456",
+							Integrity: "sha512-chalk4==",
+							Dependencies: map[string]string{
+								"ansi-styles": "^4.1.0",
+							},
+						},
+					},
+				}
+				rels := []artifact.Relationship{
+					{
+						From: pkgs[0],
+						To:   pkgs[1],
+						Type: artifact.DependencyOfRelationship,
+					},
+				}
+				return pkgs, rels
+			},
+		},
+		{
+			name:       "dev npm alias is excluded",
+			fixtureDir: "testdata/yarn-npm-alias-dev",
+			includeDev: false,
+			expected: func(locations file.LocationSet) ([]pkg.Package, []artifact.Relationship) {
+				pkgs := []pkg.Package{
+					{
+						Name:      "left-pad",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/left-pad@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:     "https://registry.yarnpkg.com/left-pad/-/left-pad-1.0.0.tgz#abc123",
+							Integrity:    "sha512-leftpad==",
+							Dependencies: map[string]string{},
+						},
+					},
+				}
+				return pkgs, nil
+			},
+		},
+		{
+			name:       "berry production npm alias keeps that version",
+			fixtureDir: "testdata/yarn-berry-npm-alias",
+			includeDev: false,
+			expected: func(locations file.LocationSet) ([]pkg.Package, []artifact.Relationship) {
+				pkgs := []pkg.Package{
+					{
+						Name:      "ansi-styles",
+						Version:   "4.3.0",
+						Locations: locations,
+						PURL:      "pkg:npm/ansi-styles@4.3.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:  "ansi-styles@npm:4.3.0",
+							Integrity: "abc123",
+						},
+					},
+					{
+						Name:      "chalk",
+						Version:   "4.1.2",
+						Locations: locations,
+						PURL:      "pkg:npm/chalk@4.1.2",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:  "chalk@npm:4.1.2",
+							Integrity: "def456",
+							Dependencies: map[string]string{
+								"ansi-styles": "npm:^4.1.0",
+							},
+						},
+					},
+				}
+				rels := []artifact.Relationship{
+					{
+						From: pkgs[0],
+						To:   pkgs[1],
+						Type: artifact.DependencyOfRelationship,
+					},
+				}
+				return pkgs, rels
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fixture := tt.fixtureDir + "/yarn.lock"
+			locations := file.NewLocationSet(file.NewLocation(fixture))
+			expectedPkgs, expectedRels := tt.expected(locations)
+
+			adapter := newGenericYarnLockAdapter(CatalogerConfig{IncludeDevDependencies: tt.includeDev})
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, tt.fixtureDir).
+				FromFile(t, fixture).
+				Expects(expectedPkgs, expectedRels).
+				TestParser(t, adapter.parseYarnLock)
+		})
+	}
+}
+
 func generateMockYarnRegistryHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -1104,13 +1241,13 @@ func TestParseYarnV1LockFile_missingValues(t *testing.T) {
 			// a dependency line without a constraint is dropped rather than indexed past its end
 			name:    "dependency without version",
 			content: "# yarn lockfile v1\n\na@1:\n  version \"1\"\n  dependencies:\n    b\n\n",
-			want:    []yarnPackage{{Name: "a", Version: "1", Dependencies: map[string]string{}}},
+			want:    []yarnPackage{{Name: "a", Version: "1", Dependencies: map[string]string{}, Descriptors: []string{"a@1"}}},
 		},
 		{
 			// a field line without a value leaves the field empty
 			name:    "field without value",
 			content: "# yarn lockfile v1\n\na@1:\n  version\n\n",
-			want:    []yarnPackage{{Name: "a", Dependencies: map[string]string{}}},
+			want:    []yarnPackage{{Name: "a", Dependencies: map[string]string{}, Descriptors: []string{"a@1"}}},
 		},
 	}
 	for _, tt := range tests {
