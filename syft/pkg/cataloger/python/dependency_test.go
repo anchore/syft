@@ -726,3 +726,112 @@ func Test_pdmLockDependencySpecifier(t *testing.T) {
 		})
 	}
 }
+
+func Test_preferredPackage(t *testing.T) {
+	primary := func(path string) pkg.Package {
+		return pkg.Package{
+			Name: "packaging",
+			Locations: file.NewLocationSet(
+				file.NewLocation(path).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+		}
+	}
+
+	topLevel := primary("/usr/lib/python3/site-packages/packaging-26.3.dist-info/METADATA")
+	vendored := primary("/usr/lib/python3/site-packages/setuptools/_vendor/packaging-24.2.dist-info/METADATA")
+	sibling := primary("/usr/lib/python3/site-packages/aaa/packaging-24.2.dist-info/METADATA")
+
+	tests := []struct {
+		name  string
+		a     pkg.Package
+		b     pkg.Package
+		want  string
+	}{
+		{
+			name: "top-level distribution wins over a vendored copy",
+			a:    topLevel,
+			b:    vendored,
+			want: "/usr/lib/python3/site-packages/packaging-26.3.dist-info/METADATA",
+		},
+		{
+			name: "argument order does not matter",
+			a:    vendored,
+			b:    topLevel,
+			want: "/usr/lib/python3/site-packages/packaging-26.3.dist-info/METADATA",
+		},
+		{
+			name: "equal depth falls back to the lexicographically smaller path",
+			a:    vendored,
+			b:    sibling,
+			want: "/usr/lib/python3/site-packages/aaa/packaging-24.2.dist-info/METADATA",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, primaryLocationPath(preferredPackage(tt.a, tt.b)))
+		})
+	}
+}
+
+// a top-level distribution and a copy vendored inside another one share a name
+// within the same site-packages tree; the surviving package used to depend on
+// cataloging order, which made the dependency edges pointing at that name vary
+// between runs on identical input.
+// see https://github.com/anchore/syft/issues/5357
+func Test_collectPackages_deterministicOnNameCollision(t *testing.T) {
+	site := "/usr/lib/python3/site-packages"
+	withPath := func(name, path string) pkg.Package {
+		return pkg.Package{
+			Name: name,
+			Locations: file.NewLocationSet(
+				file.NewLocation(path).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+		}
+	}
+
+	build := withPath("build", site+"/build-1.2.2.dist-info/METADATA")
+	setuptools := withPath("setuptools", site+"/setuptools-80.9.0.dist-info/METADATA")
+	topLevelPackaging := withPath("packaging", site+"/packaging-26.3.dist-info/METADATA")
+	vendoredPackaging := withPath("packaging", site+"/setuptools/_vendor/packaging-24.2.dist-info/METADATA")
+
+	// both insertion orders must produce the same result
+	orders := [][]pkg.Package{
+		{build, setuptools, topLevelPackaging, vendoredPackaging},
+		{vendoredPackaging, topLevelPackaging, setuptools, build},
+	}
+
+	var results [][]string
+	for _, pkgs := range orders {
+		index := make(map[string]map[string]pkg.Package)
+		for _, p := range pkgs {
+			if index[site] == nil {
+				index[site] = make(map[string]pkg.Package)
+			}
+			if existing, ok := index[site][p.Name]; ok {
+				index[site][p.Name] = preferredPackage(existing, p)
+				continue
+			}
+			index[site][p.Name] = p
+		}
+
+		// repeated collection of the same index must not vary
+		var names []string
+		for i := 0; i < 20; i++ {
+			var run []string
+			for _, p := range collectPackages(index, []string{site}) {
+				run = append(run, p.Name+"@"+primaryLocationPath(p))
+			}
+			if names == nil {
+				names = run
+				continue
+			}
+			require.Equal(t, names, run, "collectPackages returned a different order on run %d", i)
+		}
+		results = append(results, names)
+	}
+
+	require.Equal(t, results[0], results[1], "insertion order changed the collected packages")
+	require.Contains(t, results[0], "packaging@"+site+"/packaging-26.3.dist-info/METADATA",
+		"the top-level distribution should survive the name collision, not the vendored copy")
+}
