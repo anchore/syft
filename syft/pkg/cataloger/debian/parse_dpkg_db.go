@@ -25,6 +25,7 @@ import (
 )
 
 const (
+	// selection state, kept only as a fallback when Status is not the usual three fields
 	deinstallStatus string = "deinstall"
 )
 
@@ -177,8 +178,13 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (*dpkgExtractedMetadata, error) 
 		return nil, err
 	}
 
-	// Skip entries which have been removed but not purged, e.g. "rc" status in dpkg -l
-	if strings.Contains(raw.Status, deinstallStatus) {
+	// Skip packages that are not installed. Status is
+	// "<selection> <flag> <package-state>" (dpkg(1)). The selection state
+	// is what the admin asked for, not what is on disk: "deinstall ok installed"
+	// is still installed (ri in dpkg -l) and must be kept. "purge ok config-files"
+	// is only leftover config (pc) and must be dropped, same as
+	// "deinstall ok config-files" (rc, #3063).
+	if dpkgPackageNotInstalled(raw.Status) {
 		return nil, nil
 	}
 
@@ -195,6 +201,23 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (*dpkgExtractedMetadata, error) 
 	}
 
 	return &raw, retErr
+}
+
+// dpkgPackageNotInstalled reports whether a dpkg Status line describes a
+// package that is not on disk. The third field is the package state.
+// A line that is not the usual three fields falls back to the old
+// selection-state check so a bare "deinstall" is still skipped.
+func dpkgPackageNotInstalled(status string) bool {
+	fields := strings.Fields(status)
+	if len(fields) >= 3 {
+		switch fields[2] {
+		case "config-files", "not-installed":
+			return true
+		default:
+			return false
+		}
+	}
+	return strings.Contains(status, deinstallStatus)
 }
 
 func splitPkgList(pkgList string) (ret []string) {
