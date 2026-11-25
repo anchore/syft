@@ -187,7 +187,8 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 			// this is required to handle Windows filepaths
 			path = filepath.ToSlash(path)
 			patterns := rooted
-			if !strings.HasPrefix(path, root) {
+			// the scan root itself is reported without the trailing slash, and it is inside the root
+			if path != strings.TrimSuffix(root, "/") && !strings.HasPrefix(path, root) {
 				patterns = append(patterns[:len(patterns):len(patterns)], unanchored...)
 			}
 			for _, exclusion := range patterns {
