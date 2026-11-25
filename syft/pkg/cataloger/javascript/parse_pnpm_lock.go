@@ -65,7 +65,7 @@ type pnpmV9PackageEntry struct {
 	Dev              bool              `yaml:"dev"`
 }
 
-// pnpmV9LockYaml represents the structure of pnpm lockfiles for versions >= 9.0.
+// pnpmV9LockYaml represents the structure of pnpm lockfiles in the v9 format.
 type pnpmV9LockYaml struct {
 	LockfileVersion string                         `yaml:"lockfileVersion"`
 	Importers       map[string]any                 `yaml:"importers"` // Using interface{} for forward compatibility
@@ -146,7 +146,7 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 	return toSortedSlice(packages), nil
 }
 
-// Parse implements the PnpmLockfileParser interface for v9+ lockfiles.
+// Parse implements the PnpmLockfileParser interface for v9 lockfiles.
 func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error) {
 	if err := doc.Decode(p); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal pnpm v9 lockfile: %w", err)
@@ -191,10 +191,14 @@ func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error)
 
 // newPnpmLockfileParser is a factory function that returns the correct parser for the given lockfile version.
 func newPnpmLockfileParser(version float64) pnpmLockfileParser {
-	if version >= 9.0 {
+	switch {
+	case version == 13.0:
+		return &pnpmV13LockYaml{}
+	case version >= 9.0:
 		return &pnpmV9LockYaml{}
+	default:
+		return &pnpmV6LockYaml{}
 	}
-	return &pnpmV6LockYaml{}
 }
 
 // parsePnpmLock is the main parser function for pnpm-lock.yaml files.

@@ -1,0 +1,60 @@
+{
+	"lockfileVersion": "13.0",
+
+	"settings": {
+		"autoInstallPeers": true,
+		"excludeLinksFromLockfile": false,
+	},
+
+	"projects": {
+		".": {
+			"dependencies": {
+				"react": "18.2.0",
+				"react-dom": "18.2.0",
+			},
+		},
+	},
+
+	"packages": {
+		"js-tokens@4.0.0": {
+			"integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==",
+		},
+
+		"loose-envify@1.4.0": {
+			"integrity": "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==",
+			"hasBin": true,
+			"dependencies": {
+				"js-tokens": "4.0.0",
+			},
+		},
+
+		"react-dom@18.2.0": {
+			"integrity": "sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==",
+			"peerDependencies": {
+				"react": {
+					"specifier": "^18.2.0",
+					"version": "18.2.0",
+				},
+			},
+			"dependencies": {
+				"loose-envify": "1.4.0",
+				"scheduler": "0.23.2",
+			},
+		},
+
+		"react@18.2.0": {
+			"integrity": "sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==",
+			"engines": {"node": ">=0.10.0"},
+			"dependencies": {
+				"loose-envify": "1.4.0",
+			},
+		},
+
+		"scheduler@0.23.2": {
+			"integrity": "sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==",
+			"dependencies": {
+				"loose-envify": "1.4.0",
+			},
+		},
+	},
+}
