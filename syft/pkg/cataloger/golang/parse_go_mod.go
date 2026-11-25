@@ -403,6 +403,10 @@ func (c *goModCataloger) applyReplaceDirectives(ctx context.Context, resolver fi
 
 func (c *goModCataloger) applyExcludeDirectives(modFile *modfile.File, goModPackages map[string]pkg.Package) {
 	for _, m := range modFile.Exclude {
+		p, ok := goModPackages[m.Mod.Path]
+		if !ok || p.Version != m.Mod.Version {
+			continue
+		}
 		delete(goModPackages, m.Mod.Path)
 	}
 }
