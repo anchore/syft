@@ -501,6 +501,7 @@ catalogers:
             name: nginx
             purl: pkg:generic/nginx
             cpes:
+              - cpe:2.3:a:f5:nginx_open_source:*:*:*:*:*:*:*:*
               - cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*
               - cpe:2.3:a:nginx:nginx:*:*:*:*:*:*:*:*
             type: BinaryPkg

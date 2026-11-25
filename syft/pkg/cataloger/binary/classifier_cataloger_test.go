@@ -3596,6 +3596,17 @@ func Test_Cataloger_PackageTypes(t *testing.T) {
 			wantPURL:       "pkg:generic/haproxy@1.5.14",
 			wantCPEs:       []string{"cpe:2.3:a:haproxy:haproxy:1.5.14:*:*:*:*:*:*:*"},
 		},
+		{
+			logicalFixture: "nginx/1.25.1/linux-amd64",
+			wantType:       pkg.BinaryPkg,
+			wantPURL:       "pkg:generic/nginx@1.25.1",
+			// NVD's current product name first: single-CPE formats (CycloneDX) carry only the first
+			wantCPEs: []string{
+				"cpe:2.3:a:f5:nginx_open_source:1.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:f5:nginx:1.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:nginx:nginx:1.25.1:*:*:*:*:*:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {
