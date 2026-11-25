@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"slices"
 	"sort"
 
 	"go.yaml.in/yaml/v3"
@@ -19,7 +20,9 @@ import (
 
 var _ generic.Parser = parsePubspecLock
 
-const defaultPubRegistry string = "https://pub.dartlang.org"
+// defaultPubRegistries are the URLs pub writes in pubspec.lock for packages from the default
+// registry: older lockfiles use pub.dartlang.org, current ones use pub.dev.
+var defaultPubRegistries = []string{"https://pub.dartlang.org", "https://pub.dev"}
 
 type pubspecLock struct {
 	Packages map[string]pubspecLockPackage `yaml:"packages"`
@@ -184,7 +187,7 @@ func (p *pubspecLockPackage) getVcsURL() string {
 }
 
 func (p *pubspecLockPackage) getHostedURL() string {
-	if p.Source == "hosted" && p.Description.URL != defaultPubRegistry {
+	if p.Source == "hosted" && !slices.Contains(defaultPubRegistries, p.Description.URL) {
 		u, err := url.Parse(p.Description.URL)
 		if err != nil {
 			log.Debugf("Unable to parse registry url %w", err)

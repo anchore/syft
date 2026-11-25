@@ -111,6 +111,38 @@ func TestParsePubspecLock(t *testing.T) {
 			},
 			expectedRelationships: nil,
 		},
+		{
+			name:    "pubspec.lock using pub.dev as the default registry",
+			fixture: "testdata/pub-dev/pubspec.lock",
+			expectedPackages: []pkg.Package{
+				{
+					Name:      "ale",
+					Version:   "3.3.0",
+					PURL:      "pkg:pub/ale@3.3.0?hosted_url=pub.hosted.org",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/pub-dev/pubspec.lock")),
+					Language:  pkg.Dart,
+					Type:      pkg.DartPubPkg,
+					Metadata: pkg.DartPubspecLockEntry{
+						Name:      "ale",
+						Version:   "3.3.0",
+						HostedURL: "pub.hosted.org",
+					},
+				},
+				{
+					Name:      "async",
+					Version:   "2.13.0",
+					PURL:      "pkg:pub/async@2.13.0",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/pub-dev/pubspec.lock")),
+					Language:  pkg.Dart,
+					Type:      pkg.DartPubPkg,
+					Metadata: pkg.DartPubspecLockEntry{
+						Name:    "async",
+						Version: "2.13.0",
+					},
+				},
+			},
+			expectedRelationships: nil,
+		},
 	}
 
 	for _, test := range tests {
