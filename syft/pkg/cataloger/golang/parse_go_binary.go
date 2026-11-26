@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"go/version"
 	"io"
 	"regexp"
 	"runtime/debug"
@@ -264,7 +265,8 @@ func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, resolver file
 		symbols,
 	)
 
-	if mod.Main.Version == devel {
+	// go1.24+ stamps the main module version from VCS tags instead of (devel), falling back to a pseudo-version
+	if mod.Main.Version == devel || (version.Compare(gover, "go1.24") >= 0 && module.IsPseudoVersion(mod.Main.Version)) {
 		version := c.findMainModuleVersion(&m, gbs, reader)
 
 		if version != "" {
