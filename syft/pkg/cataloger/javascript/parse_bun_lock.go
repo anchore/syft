@@ -47,9 +47,10 @@ type bunLockfile struct {
 }
 
 type bunWorkspace struct {
-	Name            string            `json:"name"`
-	Dependencies    map[string]string `json:"dependencies"`
-	DevDependencies map[string]string `json:"devDependencies"`
+	Name                 string            `json:"name"`
+	Dependencies         map[string]string `json:"dependencies"`
+	DevDependencies      map[string]string `json:"devDependencies"`
+	OptionalDependencies map[string]string `json:"optionalDependencies"`
 }
 
 type genericBunLockAdapter struct {
@@ -95,10 +96,13 @@ func (a genericBunLockAdapter) parseBunLock(ctx context.Context, resolver file.R
 		}
 	}
 
-	// Determine dev-only packages
+	// Determine dev-only packages. Workspace optionalDependencies are production-reachable,
+	// just like dependencies: they must not be filtered out because a dev dependency also
+	// reaches the same package (and its runtime dependencies).
 	prodDeps := make(map[string]string)
 	for _, workspace := range lockfile.Workspaces {
 		maps.Copy(prodDeps, workspace.Dependencies)
+		maps.Copy(prodDeps, workspace.OptionalDependencies)
 	}
 
 	devOnlyPkgs := findDevOnlyBunPkgs(bunPkgs, prodDeps, devDeps)

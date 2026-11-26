@@ -1,0 +1,44 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 0,
+  "workspaces": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "optionalDependencies": {
+        "fsevents": "^2.3.3"
+      },
+      "devDependencies": {
+        "chokidar": "^3.6.0"
+      }
+    }
+  },
+  "packages": {
+    "chokidar": [
+      "chokidar@3.6.0",
+      "",
+      {
+        "optionalDependencies": {
+          "fsevents": "^2.3.3"
+        }
+      },
+      "sha512-7VT13fjxe2BOLdT9jESYi4NjAJVjW+N0Ghkko5s0iN9OSaK1ZjSX3t/5YQ=="
+    ],
+    "detect-libc": [
+      "detect-libc@2.0.3",
+      "",
+      {},
+      "sha512-5ob8Es1a6wbL9+U4mQyJHStM8utQ+lLQKYg=="
+    ],
+    "fsevents": [
+      "fsevents@2.3.3",
+      "",
+      {
+        "dependencies": {
+          "detect-libc": "^2.0.0"
+        }
+      },
+      "sha512-5Dv7S4SdTBLNQ3+4XmZUXtCn5oWwHkZ0z7o5qgYbF5Q=="
+    ]
+  }
+}
