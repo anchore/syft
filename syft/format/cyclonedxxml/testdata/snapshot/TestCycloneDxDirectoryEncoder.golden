@@ -33,6 +33,13 @@
         <property name="syft:package:metadataType">python-package</property>
         <property name="syft:location:0:path">/some/path/pkg1</property>
       </properties>
+      <evidence>
+        <occurrences>
+          <occurrence>
+            <location>/some/path/pkg1</location>
+          </occurrence>
+        </occurrences>
+      </evidence>
     </component>
     <component bom-ref="pkg:deb/debian/package-2@2.0.1?package-id=39392bb5e270f669" type="library">
       <name>package-2</name>
@@ -46,6 +53,13 @@
         <property name="syft:location:0:path">/some/path/pkg1</property>
         <property name="syft:metadata:installedSize">0</property>
       </properties>
+      <evidence>
+        <occurrences>
+          <occurrence>
+            <location>/some/path/pkg1</location>
+          </occurrence>
+        </occurrences>
+      </evidence>
     </component>
     <component bom-ref="os:debian@1.2.3" type="operating-system">
       <name>debian</name>

@@ -2,14 +2,17 @@ package cyclonedxjson
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/format/common/cyclonedxhelpers"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil"
 	"github.com/anchore/syft/syft/format/internal/testutil"
 	"github.com/anchore/syft/syft/pkg"
@@ -151,6 +154,167 @@ func TestCycloneDxSourcePackageEncoder_SpecVersions(t *testing.T) {
 			assert.Equal(t, tt.want, strings.Contains(buf.String(), `"source-distribution"`))
 		})
 	}
+}
+
+func TestCycloneDxLocations_SpecVersions(t *testing.T) {
+	s, _ := testutil.LocationsInput(t)
+	tests := []struct {
+		version         string
+		wantProperties  bool
+		wantOccurrences bool
+	}{
+		{version: "1.2"},
+		{version: "1.3", wantProperties: true},
+		{version: "1.4", wantProperties: true},
+		{version: "1.5", wantProperties: true, wantOccurrences: true},
+		{version: "1.6", wantProperties: true, wantOccurrences: true},
+		{version: cyclonedxutil.DefaultVersion, wantProperties: true, wantOccurrences: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.version, func(t *testing.T) {
+			enc, err := NewFormatEncoderWithConfig(EncoderConfig{Version: tt.version})
+			require.NoError(t, err)
+
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, s))
+
+			// evidence occurrences only exist from spec 1.5, and no emptied evidence element is left behind before that
+			assert.Equal(t, tt.wantOccurrences, strings.Contains(buf.String(), `"occurrences"`))
+			assert.Equal(t, tt.wantOccurrences, strings.Contains(buf.String(), `"evidence"`))
+
+			// every spec version that has properties (1.3 and later) keeps the syft:location properties, which state the
+			// layer and the full path, so the occurrences are one per distinct path
+			assert.Equal(t, tt.wantProperties, strings.Contains(buf.String(), `"syft:location:`))
+			wantExampleOccurrences := 0
+			if tt.wantOccurrences {
+				wantExampleOccurrences = 1
+			}
+			assert.Equal(t, wantExampleOccurrences, strings.Count(buf.String(), `"location":"/usr/bin/example"`))
+		})
+	}
+}
+
+func TestCycloneDxLocations_RoundTrip(t *testing.T) {
+	for _, version := range []string{"1.2", "1.3", "1.4", "1.5", "1.6", cyclonedxutil.DefaultVersion} {
+		t.Run(version, func(t *testing.T) {
+			s, want := testutil.LocationsInput(t)
+			if version == "1.2" {
+				// properties exist from spec 1.3 and occurrences from 1.5, so a 1.2 document states no locations
+				want = nil
+			}
+
+			cfg := DefaultEncoderConfig()
+			cfg.Version = version
+			enc, err := NewFormatEncoderWithConfig(cfg)
+			require.NoError(t, err)
+
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, s))
+
+			decoded, _, _, err := NewFormatDecoder().Decode(bytes.NewReader(buf.Bytes()))
+			require.NoError(t, err)
+
+			pkgs := decoded.Artifacts.Packages.PackagesByName(testutil.LocationsInputPackageName)
+			require.Len(t, pkgs, 1)
+			// a file found in several layers is a location per layer, each with its layer
+			assert.ElementsMatch(t, want, pkgs[0].Locations.CoordinateSet().ToSlice())
+		})
+	}
+}
+
+// cyclonedxhelpers.ToFormatModel is public: library callers (grype's CycloneDX presenter is one) encode its model with
+// cyclonedx.BOMEncoder.EncodeVersion, at the BOM's own spec version or an older one. The locations of a component
+// should come out the same as from syft's own encoder at that version, and decode to the same locations.
+func TestCycloneDxLocations_ToFormatModelMatchesEncoder(t *testing.T) {
+	require.Equal(t, cyclonedx.SpecVersion1_7, cyclonedxhelpers.ToFormatModel(sbom.SBOM{}).SpecVersion)
+
+	tests := []struct {
+		version cyclonedx.SpecVersion
+		// properties exist from spec 1.3, so a 1.2 document states no locations
+		wantProperties  bool
+		wantOccurrences bool
+		// cyclonedx-go removes the occurrences for 1.3 and 1.4 and leaves the evidence object, which those schemas
+		// allow to be empty; 1.2 has no evidence at all
+		wantEmptyEvidence bool
+	}{
+		{version: cyclonedx.SpecVersion1_2},
+		{version: cyclonedx.SpecVersion1_3, wantProperties: true, wantEmptyEvidence: true},
+		{version: cyclonedx.SpecVersion1_4, wantProperties: true, wantEmptyEvidence: true},
+		{version: cyclonedx.SpecVersion1_5, wantProperties: true, wantOccurrences: true},
+		{version: cyclonedx.SpecVersion1_6, wantProperties: true, wantOccurrences: true},
+		{version: cyclonedx.SpecVersion1_7, wantProperties: true, wantOccurrences: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.version.String(), func(t *testing.T) {
+			s, want := testutil.LocationsInput(t)
+
+			enc, err := NewFormatEncoderWithConfig(EncoderConfig{Version: tt.version.String()})
+			require.NoError(t, err)
+			var encoderOut bytes.Buffer
+			require.NoError(t, enc.Encode(&encoderOut, s))
+
+			var modelOut bytes.Buffer
+			modelEncoder := cyclonedx.NewBOMEncoder(&modelOut, cyclonedx.BOMFileFormatJSON)
+			require.NoError(t, modelEncoder.EncodeVersion(cyclonedxhelpers.ToFormatModel(s), tt.version))
+
+			got := locationsOf(t, modelOut.Bytes())
+			assert.Equal(t, locationsOf(t, encoderOut.Bytes()), got)
+			assert.Equal(t, tt.wantProperties, len(got.Properties) > 0)
+			assert.Equal(t, tt.wantOccurrences, len(got.Occurrences) > 0)
+			assert.Equal(t, tt.wantEmptyEvidence, strings.Contains(modelOut.String(), `"evidence":{}`))
+
+			if !tt.wantProperties {
+				want = nil
+			}
+			decoded, _, _, err := NewFormatDecoder().Decode(bytes.NewReader(modelOut.Bytes()))
+			require.NoError(t, err)
+			pkgs := decoded.Artifacts.Packages.PackagesByName(testutil.LocationsInputPackageName)
+			require.Len(t, pkgs, 1)
+			assert.ElementsMatch(t, want, pkgs[0].Locations.CoordinateSet().ToSlice())
+		})
+	}
+}
+
+type componentLocations struct {
+	Properties  []string
+	Occurrences []cyclonedx.EvidenceOccurrence
+}
+
+func locationsOf(t *testing.T, doc []byte) componentLocations {
+	t.Helper()
+	var bom cyclonedx.BOM
+	require.NoError(t, json.Unmarshal(doc, &bom))
+	var out componentLocations
+	for _, c := range *bom.Components {
+		if c.Name != testutil.LocationsInputPackageName {
+			continue
+		}
+		if c.Properties != nil {
+			for _, p := range *c.Properties {
+				if strings.HasPrefix(p.Name, "syft:location:") {
+					out.Properties = append(out.Properties, p.Name+"="+p.Value)
+				}
+			}
+		}
+		if c.Evidence != nil && c.Evidence.Occurrences != nil {
+			out.Occurrences = *c.Evidence.Occurrences
+		}
+	}
+	return out
+}
+
+// Released versions of syft and grype read package locations only from the syft:location properties, so
+// a default (JSON, 1.7) document without them decodes with no locations in those readers.
+func TestCycloneDxLocations_DefaultKeepsLocationProperties(t *testing.T) {
+	s, _ := testutil.LocationsInput(t)
+	enc, err := NewFormatEncoderWithConfig(DefaultEncoderConfig())
+	require.NoError(t, err)
+	var out bytes.Buffer
+	require.NoError(t, enc.Encode(&out, s))
+
+	got := locationsOf(t, out.Bytes())
+	assert.Contains(t, got.Properties, "syft:location:0:path=/opt/example")
+	assert.NotEmpty(t, got.Occurrences)
 }
 
 func redactor(values ...string) testutil.Redactor {

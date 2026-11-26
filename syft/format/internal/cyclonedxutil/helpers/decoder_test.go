@@ -482,6 +482,46 @@ func Test_useBomRefOverDerivedSyftArtifactID(t *testing.T) {
 
 }
 
+func Test_evidenceOccurrencesAndPackageID(t *testing.T) {
+	component := func(bomRef string, evidence *cyclonedx.Evidence) cyclonedx.Component {
+		return cyclonedx.Component{
+			BOMRef:     bomRef,
+			Type:       cyclonedx.ComponentTypeLibrary,
+			Name:       "lodash",
+			Version:    "4.17.21",
+			PackageURL: "pkg:npm/lodash@4.17.21",
+			Evidence:   evidence,
+		}
+	}
+	decodeID := func(t *testing.T, c cyclonedx.Component) artifact.ID {
+		s, err := ToSyftModel(&cyclonedx.BOM{Components: &[]cyclonedx.Component{c}})
+		require.NoError(t, err)
+		pkgs := s.Artifacts.Packages.PackagesByName("lodash")
+		require.Len(t, pkgs, 1)
+		return pkgs[0].ID()
+	}
+
+	occurrences := evidenceWithOccurrences("src/index.js")
+
+	t.Run("a bom-ref is the package ID whatever the occurrences", func(t *testing.T) {
+		assert.Equal(t, artifact.ID("pkg:npm/lodash@4.17.21"), decodeID(t, component("pkg:npm/lodash@4.17.21", nil)))
+		assert.Equal(t, artifact.ID("pkg:npm/lodash@4.17.21"), decodeID(t, component("pkg:npm/lodash@4.17.21", occurrences)))
+	})
+
+	t.Run("without a bom-ref the occurrences are part of the derived package ID", func(t *testing.T) {
+		withoutOccurrences := decodeID(t, component("", nil))
+		withOccurrences := decodeID(t, component("", occurrences))
+
+		// locations are part of a derived ID, so a package that gains locations from its occurrences is not the
+		// package it would be without them
+		assert.NotEmpty(t, withOccurrences)
+		assert.NotEqual(t, withoutOccurrences, withOccurrences)
+
+		// a relative and a rooted occurrence name the same file, so they derive the same ID
+		assert.Equal(t, withOccurrences, decodeID(t, component("", evidenceWithOccurrences("/src/index.js"))))
+	})
+}
+
 func Test_collectFiles_refusedChainIsDropped(t *testing.T) {
 	// a nested file a scan could not have produced is dropped with everything in it, not moved to the root
 	fileComponent := func(name string, children ...cyclonedx.Component) cyclonedx.Component {

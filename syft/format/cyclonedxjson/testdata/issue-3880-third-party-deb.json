@@ -1,0 +1,19 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:3f1c2a4e-5b6d-4e7f-8a9b-0c1d2e3f4a5b",
+  "version": 1,
+  "components": [
+    {
+      "bom-ref": "644d44b4eb7e02495e40d0b69ff8ae953007b437e9c768f1c1fff33f2877024f",
+      "type": "library",
+      "supplier": {"name": "Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>"},
+      "name": "zeromq3",
+      "version": "4.3.2-2ubuntu1.20.04.1~esm2",
+      "hashes": [{"alg": "SHA-256", "content": "644d44b4eb7e02495e40d0b69ff8ae953007b437e9c768f1c1fff33f2877024f"}],
+      "cpe": "cpe:2.3:a:ubuntu:zeromq3:4_3_2_2ubuntu1_20_04_1~esm2:*:*:*:*:*:*:*",
+      "purl": "pkg:deb/ubuntu/zeromq3@4.3.2-2ubuntu1.20.04.1~esm2?arch=amd64",
+      "evidence": {"occurrences": [{"location": "packages\\libzmq5_4.3.2-2ubuntu1.20.04.1~esm2_amd64.deb"}]}
+    }
+  ]
+}

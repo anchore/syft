@@ -34,6 +34,13 @@ var cycloneDXValidHash = map[string]cyclonedx.HashAlgorithm{
 	"blake3":     cyclonedx.HashAlgoBlake3,
 }
 
+// ToFormatModel returns the SBOM as a CycloneDX BOM at the latest spec version syft supports.
+//
+// The locations of each package are stated twice: as syft:location properties, which are valid at every spec version,
+// and as evidence occurrences, which exist from spec 1.5. A caller that encodes the model at an older spec version
+// with cyclonedx.BOMEncoder.EncodeVersion gets the same components and properties as before occurrences were added:
+// cyclonedx-go removes the occurrences, and in JSON at 1.3 and 1.4 leaves an empty "evidence" object on the
+// component, which those schemas allow.
 func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	cdxBOM := cyclonedx.NewBOM()
 
