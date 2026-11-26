@@ -353,3 +353,31 @@ func TestCataloger_Globs(t *testing.T) {
 		})
 	}
 }
+
+func TestArchiveCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain deb, udeb, ddeb and ipk archives",
+			fixture: "testdata/archive-glob-paths",
+			expected: []string{
+				"pkg_1.0_amd64.deb",
+				"installer/pkg-udeb_1.0_amd64.udeb",
+				"debug/pkg-dbgsym_1.0_amd64.ddeb",
+				"pkg_1.0_x86-64.ipk",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsResolverContentQueries(test.expected).
+				TestCataloger(t, NewArchiveCataloger())
+		})
+	}
+}
