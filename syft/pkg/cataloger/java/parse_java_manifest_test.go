@@ -413,6 +413,81 @@ func TestSelectName(t *testing.T) {
 			archive:  newJavaArchiveFilename("/something/google-oauth-client-1.25.0.jar"),
 			expected: "google-oauth-client",
 		},
+		{
+			desc: "Preserve numeric artifact suffix when Implementation-Version matches trailing filename version",
+			manifest: pkg.JavaManifest{
+				Main: pkg.KeyValues{
+					{Key: "Implementation-Title", Value: "library"},
+					{Key: "Implementation-Version", Value: "2.32.0-alpha"},
+					{Key: "Implementation-Vendor", Value: "OpenTelemetry"},
+					{Key: "Automatic-Module-Name", Value: "io.opentelemetry.instrumentation.logback_mdc_1_0"},
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/opentelemetry-logback-mdc-1.0-2.32.0-alpha.jar"),
+			expected: "opentelemetry-logback-mdc-1.0",
+		},
+		{
+			desc: "Preserve numeric artifact suffix for other OpenTelemetry artifacts when Implementation-Version matches",
+			manifest: pkg.JavaManifest{
+				Main: pkg.KeyValues{
+					{Key: "Implementation-Version", Value: "2.32.0-alpha"},
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/opentelemetry-logback-appender-1.0-2.32.0-alpha.jar"),
+			expected: "opentelemetry-logback-appender-1.0",
+		},
+		{
+			desc:     "Keep filename split when Implementation-Version is absent",
+			manifest: pkg.JavaManifest{},
+			archive:  newJavaArchiveFilename("/something/opentelemetry-logback-mdc-1.0-2.32.0-alpha.jar"),
+			expected: "opentelemetry-logback-mdc",
+		},
+		{
+			desc: "Keep filename split when Implementation-Version is only in subsequent section",
+			manifest: pkg.JavaManifest{
+				Main: pkg.KeyValues{
+					{Key: "Manifest-Version", Value: "1.0"},
+				},
+				Sections: []pkg.KeyValues{
+					{
+						{Key: "Name", Value: "sub"},
+						{Key: "Implementation-Version", Value: "2.32.0-alpha"},
+					},
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/opentelemetry-logback-mdc-1.0-2.32.0-alpha.jar"),
+			expected: "opentelemetry-logback-mdc",
+		},
+		{
+			desc: "Keep filename split when filename has trailing classifier",
+			manifest: pkg.JavaManifest{
+				Main: pkg.KeyValues{
+					{Key: "Implementation-Version", Value: "2.32.0-alpha"},
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/opentelemetry-logback-mdc-1.0-2.32.0-alpha-shaded.jar"),
+			expected: "opentelemetry-logback-mdc",
+		},
+		{
+			desc: "Keep filename split when Implementation-Version is non-numeric",
+			manifest: pkg.JavaManifest{
+				Main: pkg.KeyValues{
+					{Key: "Implementation-Version", Value: "alpha"},
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/foo-1.0-alpha.jar"),
+			expected: "foo",
+		},
+		{
+			desc: "Keep filename split when Implementation-Version is not dash-delimited in filename",
+			manifest: pkg.JavaManifest{
+				Main: pkg.KeyValues{
+					{Key: "Implementation-Version", Value: "2.3"},
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/foo-1.2.3.jar"),
+			expected: "foo",
+		},
 	}
 
 	for _, test := range tests {
@@ -533,6 +608,56 @@ func TestSelectVersion(t *testing.T) {
 				},
 			},
 			expected: "1.11.28",
+		},
+		{
+			name:    "Use Implementation-Version when filename absorbed numeric artifact suffix",
+			archive: newJavaArchiveFilename("/something/opentelemetry-logback-mdc-1.0-2.32.0-alpha.jar"),
+			manifest: pkg.JavaManifest{
+				Main: []pkg.KeyValue{
+					{Key: "Implementation-Version", Value: "2.32.0-alpha"},
+				},
+			},
+			expected: "2.32.0-alpha",
+		},
+		{
+			name:    "Keep filename version when Implementation-Version is absent",
+			archive: newJavaArchiveFilename("/something/opentelemetry-logback-mdc-1.0-2.32.0-alpha.jar"),
+			manifest: pkg.JavaManifest{
+				Main: []pkg.KeyValue{
+					{Key: "Manifest-Version", Value: "1.0"},
+				},
+			},
+			expected: "1.0-2.32.0-alpha",
+		},
+		{
+			name:    "Keep filename version when filename has trailing classifier",
+			archive: newJavaArchiveFilename("/something/opentelemetry-logback-mdc-1.0-2.32.0-alpha-shaded.jar"),
+			manifest: pkg.JavaManifest{
+				Main: []pkg.KeyValue{
+					{Key: "Implementation-Version", Value: "2.32.0-alpha"},
+				},
+			},
+			expected: "1.0-2.32.0-alpha-shaded",
+		},
+		{
+			name:    "Keep filename version when Implementation-Version is non-numeric",
+			archive: newJavaArchiveFilename("/something/foo-1.0-alpha.jar"),
+			manifest: pkg.JavaManifest{
+				Main: []pkg.KeyValue{
+					{Key: "Implementation-Version", Value: "alpha"},
+				},
+			},
+			expected: "1.0-alpha",
+		},
+		{
+			name:    "Keep filename version when Implementation-Version is not dash-delimited",
+			archive: newJavaArchiveFilename("/something/foo-1.2.3.jar"),
+			manifest: pkg.JavaManifest{
+				Main: []pkg.KeyValue{
+					{Key: "Implementation-Version", Value: "2.3"},
+				},
+			},
+			expected: "1.2.3",
 		},
 	}
 

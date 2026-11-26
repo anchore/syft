@@ -200,6 +200,22 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			expects: []string{"org.lz4"},
 		},
 		{
+			name: "groupId correction properly applied for opentelemetry logback_mdc_1_0",
+			pkg: pkg.Package{
+				Metadata: pkg.JavaArchive{
+					Manifest: &pkg.JavaManifest{
+						Main: pkg.KeyValues{
+							{
+								Key:   "Automatic-Module-Name",
+								Value: "io.opentelemetry.instrumentation.logback_mdc_1_0",
+							},
+						},
+					},
+				},
+			},
+			expects: []string{"io.opentelemetry.instrumentation"},
+		},
+		{
 			name: "from main Extension-Name field",
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{

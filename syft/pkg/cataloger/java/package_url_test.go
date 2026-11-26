@@ -272,6 +272,35 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 			expect: "org.apache.groovy",
 		},
 		{
+			name:    "known package list opentelemetry logback-mdc-1.0",
+			pkgName: "opentelemetry-logback-mdc-1.0",
+			version: "2.32.0-alpha",
+			metadata: pkg.JavaArchive{
+				Manifest: &pkg.JavaManifest{
+					Main: []pkg.KeyValue{
+						{Key: "Implementation-Title", Value: "library"},
+						{Key: "Implementation-Version", Value: "2.32.0-alpha"},
+						{Key: "Implementation-Vendor", Value: "OpenTelemetry"},
+						{Key: "Automatic-Module-Name", Value: "io.opentelemetry.instrumentation.logback_mdc_1_0"},
+					},
+				},
+			},
+			expect: "io.opentelemetry.instrumentation",
+		},
+		{
+			name:    "Automatic-Module-Name correction for opentelemetry logback_mdc_1_0",
+			pkgName: "unknown-artifact",
+			version: "2.32.0-alpha",
+			metadata: pkg.JavaArchive{
+				Manifest: &pkg.JavaManifest{
+					Main: []pkg.KeyValue{
+						{Key: "Automatic-Module-Name", Value: "io.opentelemetry.instrumentation.logback_mdc_1_0"},
+					},
+				},
+			},
+			expect: "io.opentelemetry.instrumentation",
+		},
+		{
 			name: "java manifest",
 			metadata: pkg.JavaArchive{
 				Manifest: &pkg.JavaManifest{
