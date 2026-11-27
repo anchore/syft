@@ -193,3 +193,61 @@ func Test_enrichmentEnabled(t *testing.T) {
 		})
 	}
 }
+
+func Test_validateEnrichmentOptions(t *testing.T) {
+	tests := []struct {
+		name       string
+		directives []string
+		wantErr    string
+	}{
+		{
+			name: "no directives",
+		},
+		{
+			name:       "documented options",
+			directives: []string{"all", "golang", "java", "javascript", "python", "vcpkg"},
+		},
+		{
+			name:       "disable everything",
+			directives: []string{"none"},
+		},
+		{
+			name:       "feature names that are not in the help output",
+			directives: []string{"cpp", "go", "maven", "node", "npm"},
+		},
+		{
+			name:       "enable and disable prefixes",
+			directives: []string{"+python", "-javascript", "-all"},
+		},
+		{
+			name:       "empty entries are ignored",
+			directives: []string{"", "all"},
+		},
+		{
+			name:       "misspelled option",
+			directives: []string{"javscript"},
+			wantErr:    `invalid enrichment option "javscript"`,
+		},
+		{
+			name:       "wrong case",
+			directives: []string{"Python"},
+			wantErr:    `invalid enrichment option "Python"`,
+		},
+		{
+			name:       "valid option next to an invalid one",
+			directives: []string{"all", "bogus"},
+			wantErr:    `invalid enrichment option "bogus"`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := validateEnrichmentOptions(test.directives)
+			if test.wantErr == "" {
+				assert.NoError(t, err)
+				return
+			}
+			assert.ErrorContains(t, err, test.wantErr)
+		})
+	}
+}
