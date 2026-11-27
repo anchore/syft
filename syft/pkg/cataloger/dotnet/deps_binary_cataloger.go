@@ -531,8 +531,9 @@ func readPEFile(resolver file.Resolver, loc file.Location) (*logicalPE, error) {
 		return nil, nil
 	}
 
-	if !ldpe.CLR.HasEvidenceOfCLR() {
-		// this is not a .NET binary
+	if !ldpe.CLR.HasEvidenceOfCLR() && ldpe.EmbeddedDepsJSON == "" {
+		// this is not a .NET binary (the apphost of a framework-dependent single-file bundle is a native PE
+		// without CLR evidence, but the deps.json bundled with it still describes a .NET application)
 		return nil, nil
 	}
 
