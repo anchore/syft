@@ -416,6 +416,55 @@ func Test_getDirectoryExclusionFunctions_crossPlatform(t *testing.T) {
 			finfo:    file.ManualInfo{},
 			walkHint: nil,
 		},
+		// paths outside the scan root are reported for files reached through a symlink pointing outside it
+		{
+			desc:     "doublestar file outside the root (reached through a symlink)",
+			root:     "/scan-root",
+			path:     "/opt/AppX/Help/manual.txt",
+			exclude:  "**/Help/**",
+			finfo:    file.ManualInfo{},
+			walkHint: fileresolver.ErrSkipPath,
+		},
+		{
+			desc:     "doublestar directory outside the root (reached through a symlink)",
+			root:     "/scan-root",
+			path:     "/opt/AppX/Help",
+			exclude:  "**/Help",
+			finfo:    file.ManualInfo{ModeValue: os.ModeDir},
+			walkHint: fs.SkipDir,
+		},
+		{
+			desc:     "relative pattern stays anchored to the root for paths outside it",
+			root:     "/scan-root",
+			path:     "/opt/AppX/manual.txt",
+			exclude:  "./*.txt",
+			finfo:    file.ManualInfo{},
+			walkHint: nil,
+		},
+		{
+			desc:     "doublestar does not match the root's own parent directories",
+			root:     "/home/Help/project",
+			path:     "/home/Help/project/manual.txt",
+			exclude:  "**/Help/**",
+			finfo:    file.ManualInfo{},
+			walkHint: nil,
+		},
+		{
+			desc:     "doublestar does not skip the scan root itself when its parent matches",
+			root:     "/home/Help/project",
+			path:     "/home/Help/project",
+			exclude:  "**/Help/**",
+			finfo:    file.ManualInfo{ModeValue: os.ModeDir},
+			walkHint: nil,
+		},
+		{
+			desc:     "doublestar does not skip the scan root itself when given with a trailing slash",
+			root:     "/home/Help/project/",
+			path:     "/home/Help/project",
+			exclude:  "**/Help/**",
+			finfo:    file.ManualInfo{ModeValue: os.ModeDir},
+			walkHint: nil,
+		},
 	}
 
 	for _, test := range testCases {
@@ -602,4 +651,87 @@ func Test_cleanDirPath(t *testing.T) {
 			assert.Equal(t, tt.want, cleanDirPath(tt.path, tt.base))
 		})
 	}
+}
+
+func Test_DirectorySource_ExclusionsThroughSymlinkedDirectories(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("creating symlinks requires elevated privileges on windows")
+	}
+	// a scan root that only holds symlinks to directories outside it (issue #5527)
+	outside := t.TempDir()
+	for _, name := range []string{"AppX/Help/manual.txt", "AppX/bin/app.txt", "AppY/Help/guide.txt", "AppY/lib/lib.txt"} {
+		require.NoError(t, os.MkdirAll(filepath.Join(outside, filepath.Dir(name)), 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(outside, name), []byte("x"), 0o600))
+	}
+	root := t.TempDir()
+	require.NoError(t, os.Symlink(filepath.Join(outside, "AppX"), filepath.Join(root, "AppX")))
+	require.NoError(t, os.Symlink(filepath.Join(outside, "AppY"), filepath.Join(root, "AppY")))
+
+	testCases := []struct {
+		desc       string
+		exclusions []string
+		excluded   []string
+		kept       []string
+	}{
+		{
+			desc:       "doublestar pattern applies to directories reached through symlinks",
+			exclusions: []string{"**/Help/**"},
+			excluded:   []string{"manual.txt", "guide.txt"},
+			kept:       []string{"app.txt", "lib.txt"},
+		},
+		{
+			desc:       "relative pattern stays anchored to the scan root",
+			exclusions: []string{"./Help/**"},
+			kept:       []string{"manual.txt", "guide.txt", "app.txt", "lib.txt"},
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			src, err := New(Config{
+				Path:    root,
+				Exclude: source.ExcludeConfig{Paths: test.exclusions},
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				require.NoError(t, src.Close())
+			})
+			res, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+			locations, err := res.FilesByGlob("**/*.txt")
+			require.NoError(t, err)
+
+			found := map[string]bool{}
+			for _, l := range locations {
+				found[filepath.Base(l.RealPath)] = true
+			}
+			for _, name := range test.excluded {
+				assert.Falsef(t, found[name], "%s should be excluded", name)
+			}
+			for _, name := range test.kept {
+				assert.Truef(t, found[name], "%s should be kept", name)
+			}
+		})
+	}
+}
+
+func Test_DirectorySource_ExclusionsDoNotSkipScanRootUnderMatchingParent(t *testing.T) {
+	// the scan root is below a directory that matches the pattern; the root itself must still be walked
+	root := filepath.Join(t.TempDir(), "Help", "project")
+	require.NoError(t, os.MkdirAll(root, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "app.txt"), []byte("x"), 0o600))
+
+	src, err := New(Config{
+		Path:    root,
+		Exclude: source.ExcludeConfig{Paths: []string{"**/Help/**"}},
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, src.Close())
+	})
+	res, err := src.FileResolver(source.SquashedScope)
+	require.NoError(t, err)
+	locations, err := res.FilesByGlob("**/*.txt")
+	require.NoError(t, err)
+	require.Len(t, locations, 1)
+	assert.Equal(t, "app.txt", filepath.Base(locations[0].RealPath))
 }
