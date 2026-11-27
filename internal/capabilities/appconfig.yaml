@@ -68,3 +68,5 @@ application: # AUTO-GENERATED - application-level config keys
     description: base Pypi url to use
   - key: python.search-remote-licenses
     description: enables Syft to use the network to fill in more detailed license information
+  - key: rust.include-dev-dependencies
+    description: include dependencies used only for tests, examples, and benchmarks; requires Cargo.toml files to exclude them
