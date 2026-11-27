@@ -895,8 +895,8 @@ github.com/secure-systems-lab/go-securesystemslib v0.11.1 h1:ayahDPjfSIqKegyt5YV
 github.com/secure-systems-lab/go-securesystemslib v0.11.1/go.mod h1:UyOjhoZLi76ir63u1ptubEevVe6dlNPmNxwgVvKqFFY=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
 github.com/sergi/go-diff v1.2.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
-github.com/sergi/go-diff v1.4.0 h1:n/SP9D5ad1fORl+llWyN+D6qoUETXNZARKjyY2/KVCw=
-github.com/sergi/go-diff v1.4.0/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
+github.com/sergi/go-diff v1.4.5 h1:3LvhZn2aCAWagLwIhga3BZiEZ82j5+oQ0vKDwkhjHCI=
+github.com/sergi/go-diff v1.4.5/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
 github.com/shopspring/decimal v1.4.0 h1:bxl37RwXBklmTi0C79JfXCEBD1cqqHt0bbgBAGFp81k=
 github.com/shopspring/decimal v1.4.0/go.mod h1:gawqmDU56v4yIKSwfBSFip1HdCCXN8/+DMd9qYNcwME=
 github.com/sigstore/fulcio v1.8.8 h1:AtVoVQ4R7YaP6RHIH9puHyB398CHS/9WYc6d+gKf5Y0=
