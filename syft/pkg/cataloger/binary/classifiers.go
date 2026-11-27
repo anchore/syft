@@ -490,7 +490,8 @@ func DefaultClassifiers() []binutils.Classifier {
 			FileGlob: "**/libstd-????????????????.so",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// clang LLVM (rustc version 1.48.0 (7eac88abb 2020-11-16))
-				`(?m)(\x00)clang LLVM \(rustc version (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)) \(\w+ \d{4}\-\d{2}\-\d{2}\)`),
+				// rustc version 1.100.0 (0ef1bc386 2026-11-09), from releases without the clang LLVM string
+				`(?m)(\x00)(clang LLVM \()?rustc version (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)) \(\w+ \d{4}\-\d{2}\-\d{2}\)`),
 			Package: "rust",
 			PURL:    mustPURL("pkg:generic/rust@version"),
 			CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),

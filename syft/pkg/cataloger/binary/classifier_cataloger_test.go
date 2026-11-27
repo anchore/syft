@@ -1167,6 +1167,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "rust-libstd/1.100.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.100.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.100.0",
+				Locations: locations("libstd-7d3c8b3343c9c95a.so"),
+				Metadata:  metadata("rust-standard-library-linux"),
+			},
+		},
+		{
 			// note: dynamic (non-snippet) test case
 
 			name:           "positive-ruby-3.2.1",
