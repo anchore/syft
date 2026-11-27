@@ -37,6 +37,10 @@ func candidateVendorsForPE(p pkg.Package) fieldCandidateSet {
 		candidates.addValue("gitforwindows")
 	}
 
+	if isMicrosoftEdge(company, product) {
+		candidates.addValue("microsoft")
+	}
+
 	return candidates
 }
 
@@ -50,9 +54,11 @@ func candidateProductsForPE(p pkg.Package) fieldCandidateSet {
 		return candidates
 	}
 
-	var product, fileDesc string
+	var company, product, fileDesc string
 	for _, kv := range meta.VersionResources {
 		switch strings.ToLower(kv.Key) {
+		case "companyname":
+			company = strings.ToLower(kv.Value)
 		case "productname":
 			product = strings.ToLower(kv.Value)
 		case "filedescription":
@@ -69,5 +75,15 @@ func candidateProductsForPE(p pkg.Package) fieldCandidateSet {
 		candidates.addValue("git")
 	}
 
+	if isMicrosoftEdge(company, product) {
+		candidates.addValue("edge_chromium")
+	}
+
 	return candidates
+}
+
+// isMicrosoftEdge reports whether the (lowercased) version resource values describe the Chromium-based Microsoft Edge
+// browser, which NVD tracks as microsoft:edge_chromium.
+func isMicrosoftEdge(company, product string) bool {
+	return strings.HasPrefix(company, "microsoft") && product == "microsoft edge"
 }
