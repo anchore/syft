@@ -2,6 +2,7 @@ package python
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -93,5 +94,19 @@ func TestParseInstalledFiles(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+func TestParseInstalledFilesNoTrailingNewline(t *testing.T) {
+	expected := []pkg.PythonFileRecord{
+		{Path: "PKG-INFO"},
+		{Path: "SOURCES.txt"},
+	}
+
+	actual, err := parseInstalledFiles(strings.NewReader("PKG-INFO\nSOURCES.txt"), "", "")
+	require.NoError(t, err)
+
+	for _, d := range deep.Equal(actual, expected) {
+		t.Errorf("diff: %+v", d)
 	}
 }

@@ -80,10 +80,10 @@ func parseInstalledFiles(reader io.Reader, location, sitePackagesRootPath string
 
 	for {
 		line, err := r.ReadString('\n')
-		if errors.Is(err, io.EOF) {
+		if errors.Is(err, io.EOF) && line == "" {
 			break
 		}
-		if err != nil {
+		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, fmt.Errorf("unable to read python installed-files file: %w", err)
 		}
 
