@@ -5,10 +5,13 @@ import (
 	"os"
 	"testing"
 
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
@@ -725,4 +728,65 @@ func Test_pdmLockDependencySpecifier(t *testing.T) {
 			assert.Equal(t, tt.want, pdmLockDependencySpecifier(tt.p))
 		})
 	}
+}
+
+func nixStoreTestPackage(name, version string, requiresDist []string) pkg.Package {
+	metadataPath := "/nix/store/pkg-" + name + "/lib/python3.12/site-packages/" + name + "-" + version + ".dist-info/METADATA"
+	loc := file.NewLocation(metadataPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
+	return pkg.Package{
+		Name:      name,
+		Version:   version,
+		Locations: file.NewLocationSet(loc),
+		Metadata: pkg.PythonPackage{
+			Name:         name,
+			Version:      version,
+			RequiresDist: requiresDist,
+		},
+	}
+}
+
+func nixEnvTestResolver(withSymlinks bool) file.Resolver {
+	requestsMetadata := "/nix/store/pkg-requests/lib/python3.12/site-packages/requests-2.32.5.dist-info/METADATA"
+	urllib3Metadata := "/nix/store/pkg-urllib3/lib/python3.12/site-packages/urllib3-2.2.3.dist-info/METADATA"
+	metadata := map[file.Coordinates]file.Metadata{
+		file.NewCoordinates(requestsMetadata, ""): {Type: stereoscopeFile.TypeRegular},
+		file.NewCoordinates(urllib3Metadata, ""):  {Type: stereoscopeFile.TypeRegular},
+	}
+	if withSymlinks {
+		envSitePackages := "/nix/store/env/lib/python3.12/site-packages"
+		metadata[file.NewCoordinates(envSitePackages+"/requests-2.32.5.dist-info", "")] = file.Metadata{
+			Type:            stereoscopeFile.TypeSymLink,
+			LinkDestination: "../../../../pkg-requests/lib/python3.12/site-packages/requests-2.32.5.dist-info",
+		}
+		metadata[file.NewCoordinates(envSitePackages+"/urllib3-2.2.3.dist-info", "")] = file.Metadata{
+			Type:            stereoscopeFile.TypeSymLink,
+			LinkDestination: "../../../../pkg-urllib3/lib/python3.12/site-packages/urllib3-2.2.3.dist-info",
+		}
+	}
+	return file.NewMockResolverForPathsWithMetadata(metadata)
+}
+
+func Test_wheelEggRelationships_symlinkedDistInfo(t *testing.T) {
+	requests := nixStoreTestPackage("requests", "2.32.5", []string{"urllib3<3,>=1.21.1"})
+	urllib3 := nixStoreTestPackage("urllib3", "2.2.3", nil)
+
+	t.Run("packages linked into a shared site-packages directory get dependency edges", func(t *testing.T) {
+		_, rels, err := wheelEggRelationships(context.Background(), nixEnvTestResolver(true), []pkg.Package{requests, urllib3}, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, rels, 1, "expected a single dependency-of relationship, got: %+v", rels)
+		rel := rels[0]
+		assert.Equal(t, artifact.DependencyOfRelationship, rel.Type)
+		fromPkg, ok := rel.From.(pkg.Package)
+		require.True(t, ok)
+		toPkg, ok := rel.To.(pkg.Package)
+		require.True(t, ok)
+		assert.Equal(t, "urllib3", fromPkg.Name)
+		assert.Equal(t, "requests", toPkg.Name)
+	})
+
+	t.Run("packages in isolated site-packages directories keep no dependency edges", func(t *testing.T) {
+		_, rels, err := wheelEggRelationships(context.Background(), nixEnvTestResolver(false), []pkg.Package{requests, urllib3}, nil, nil)
+		require.NoError(t, err)
+		assert.Empty(t, rels)
+	})
 }

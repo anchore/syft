@@ -208,6 +208,10 @@ func (r MockResolver) AllLocations(ctx context.Context) <-chan Location {
 }
 
 func (r MockResolver) FileMetadataByLocation(l Location) (Metadata, error) {
+	if m, ok := r.metadata[l.Coordinates]; ok {
+		return m, nil
+	}
+
 	info, err := os.Stat(l.RealPath)
 	if err != nil {
 		return Metadata{}, err

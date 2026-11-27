@@ -1078,6 +1078,22 @@ func Test_PackageCataloger_SitePackageRelationships(t *testing.T) {
 		},
 	}
 
+	{
+		t.Run("with symlinked dist-info directories (e.g. Nix store)", func(t *testing.T) {
+			// the environment's site-packages directory only contains symlinks to per-package
+			// *.dist-info directories elsewhere (e.g. /nix/store); the packages should still be
+			// related as if they were installed in the linking site-packages directory.
+			// see https://github.com/anchore/syft/issues/5643
+			pkgtest.NewCatalogTester().
+				WithImageResolver(t, "image-symlinked-dist-info").
+				WithPackageStringer(stringPackage).
+				ExpectsRelationshipStrings([]string{
+					"urllib3 @ 2.2.3 (/nix/store/pkg-urllib3/lib/python3.12/site-packages) [dependency-of] requests @ 2.32.5 (/nix/store/pkg-requests/lib/python3.12/site-packages)",
+				}).
+				TestCataloger(t, NewInstalledPackageCataloger())
+		})
+	}
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
