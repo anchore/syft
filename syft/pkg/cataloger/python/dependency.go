@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"sort"
 	"strings"
+
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -202,10 +205,17 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 		return pkgs, rels, err
 	}
 
+	// some environments install packages as symlinks from a shared site-packages directory into
+	// per-package directories (e.g. Nix-built python environments symlink *.dist-info dirs from the
+	// environment's site-packages into /nix/store per-package outputs). Resolve these links so that
+	// packages are grouped by the site-packages directory they are importable from, which is what
+	// determines which packages can depend on each other.
+	siteDirOverrides := findSymlinkedSitePackageDirs(ctx, resolver)
+
 	pkgsBySitePackageAndName := make(map[string]map[string]pkg.Package)
 
 	for _, p := range pkgs {
-		sitePackagesDir := deriveSitePackageDir(p)
+		sitePackagesDir := deriveSitePackageDir(p, siteDirOverrides)
 		if pkgsBySitePackageAndName[sitePackagesDir] == nil {
 			pkgsBySitePackageAndName[sitePackagesDir] = make(map[string]pkg.Package)
 		}
@@ -285,14 +295,64 @@ func collectPackages(pkgsBySitePackageAndName map[string]map[string]pkg.Package,
 	return pkgs
 }
 
-func deriveSitePackageDir(p pkg.Package) string {
+func deriveSitePackageDir(p pkg.Package, symlinkedSiteDirs map[string]string) string {
 	for _, l := range packagePrimaryLocations(p) {
-		sitePackageDir := extractSitePackageDir(l.LocalPath())
+		localPath := l.LocalPath()
+		// the metadata file itself (e.g. a symlinked *.egg-info file) or its parent directory
+		// (e.g. a symlinked *.dist-info directory) may be the target of a site-packages symlink
+		if sitePackageDir, ok := symlinkedSiteDirs[localPath]; ok {
+			return sitePackageDir
+		}
+		if sitePackageDir, ok := symlinkedSiteDirs[path.Dir(localPath)]; ok {
+			return sitePackageDir
+		}
+		sitePackageDir := extractSitePackageDir(localPath)
 		if sitePackageDir != "" {
 			return sitePackageDir
 		}
 	}
 	return ""
+}
+
+// findSymlinkedSitePackageDirs returns a map of resolved *.dist-info / *.egg-info paths to the
+// site-packages (or dist-packages) directory that links to them with a symlink of the same name.
+// This covers environments such as Nix-built python environments, where the effective site-packages
+// directory contains only symlinks into per-package directories, which would otherwise prevent
+// dependency relationships from being established between the packages in the environment.
+func findSymlinkedSitePackageDirs(ctx context.Context, resolver file.Resolver) map[string]string {
+	candidates := make(map[string][]string)
+
+	for loc := range resolver.AllLocations(ctx) {
+		p := loc.RealPath
+		base := path.Base(p)
+		if !strings.HasSuffix(base, ".dist-info") && !strings.HasSuffix(base, ".egg-info") {
+			continue
+		}
+		parent := path.Dir(p)
+		if path.Base(parent) != "site-packages" && path.Base(parent) != "dist-packages" {
+			continue
+		}
+		metadata, err := resolver.FileMetadataByLocation(loc)
+		if err != nil || metadata.Type != stereoscopeFile.TypeSymLink {
+			continue
+		}
+		target := metadata.LinkDestination
+		if target == "" {
+			continue
+		}
+		if !path.IsAbs(target) {
+			target = path.Clean(path.Join(parent, target))
+		}
+		candidates[target] = append(candidates[target], parent)
+	}
+
+	// a target may be linked from multiple site-packages directories; pick one deterministically
+	mapping := make(map[string]string)
+	for target, parents := range candidates {
+		sort.Strings(parents)
+		mapping[target] = parents[0]
+	}
+	return mapping
 }
 
 func packagePrimaryLocations(p pkg.Package) []file.Location {
