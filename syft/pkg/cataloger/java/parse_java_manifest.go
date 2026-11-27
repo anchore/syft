@@ -188,11 +188,41 @@ func isValidJavaIdentifier(field string) bool {
 		unicode.Is(unicode.Sc, r) || unicode.Is(unicode.Pc, r)
 }
 
+// refineArchiveFilenameWithManifest uses the main manifest section's Implementation-Version
+// to correct filename splits where a numeric artifact suffix (such as "-1.0" in
+// "opentelemetry-logback-mdc-1.0-2.32.0-alpha.jar") was absorbed into the version.
+func refineArchiveFilenameWithManifest(manifest *pkg.JavaManifest, filenameObj archiveFilename) archiveFilename {
+	if manifest == nil || manifest.Main == nil || filenameObj.name == "" || filenameObj.version == "" {
+		return filenameObj
+	}
+
+	implVersion := strings.TrimSpace(manifest.Main.MustGet("Implementation-Version"))
+	if implVersion == "" || !unicode.IsDigit(rune(implVersion[0])) {
+		return filenameObj
+	}
+
+	suffix := "-" + implVersion
+	if !strings.HasSuffix(filenameObj.version, suffix) {
+		return filenameObj
+	}
+
+	extraArtifactSuffix := strings.TrimSuffix(filenameObj.version, suffix)
+	if extraArtifactSuffix == "" {
+		return filenameObj
+	}
+
+	filenameObj.name = filenameObj.name + "-" + extraArtifactSuffix
+	filenameObj.version = implVersion
+	return filenameObj
+}
+
 func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
 	name := extractNameFromApacheMavenBundlePlugin(manifest)
 	if name != "" {
 		return name
 	}
+
+	filenameObj = refineArchiveFilenameWithManifest(manifest, filenameObj)
 
 	// the filename tends to be the next-best reference for the package name
 	name = extractNameFromArchiveFilename(filenameObj)
@@ -224,6 +254,7 @@ func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string 
 }
 
 func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
+	filenameObj = refineArchiveFilenameWithManifest(manifest, filenameObj)
 	if v := filenameObj.version; v != "" {
 		return v
 	}

@@ -6,6 +6,7 @@ import (
 )
 
 var groupIDCorrections = map[string]string{
+	"io.opentelemetry.instrumentation.logback_mdc_1_0": "io.opentelemetry.instrumentation",
 	"org.lz4.java": "org.lz4",
 }
 
@@ -51,6 +52,7 @@ var defaultArtifactIDToGroupID = map[string]string{
 	"commons-logging":                             "commons-logging", // see e.g. https://mvnrepository.com/artifact/commons-logging/commons-logging/1.1.1
 	"okhttp":                                      "com.squareup.okhttp3",
 	"okio":                                        "com.squareup.okio",
+	"opentelemetry-logback-mdc-1.0":               "io.opentelemetry.instrumentation",
 	"cassandra-all":                               "org.apache.cassandra",
 	"cassandra-clientutil":                        "org.apache.cassandra",
 	"cassandra-javautils":                         "org.apache.cassandra",

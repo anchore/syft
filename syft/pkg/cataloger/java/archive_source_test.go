@@ -227,3 +227,49 @@ func digestsOfFile(t *testing.T, path string) []file.Digest {
 	require.NotEmpty(t, digests)
 	return digests
 }
+
+func Test_opentelemetryLogbackMdc_coordinates(t *testing.T) {
+	entries := map[string]string{
+		"META-INF/MANIFEST.MF": "Manifest-Version: 1.0\n" +
+			"Implementation-Title: library\n" +
+			"Implementation-Version: 2.32.0-alpha\n" +
+			"Implementation-Vendor: OpenTelemetry\n" +
+			"Automatic-Module-Name: io.opentelemetry.instrumentation.logback_mdc_1_0\n",
+		"io/opentelemetry/instrumentation/logback/mdc/v1_0/OpenTelemetryAppender.class": "not really bytecode",
+	}
+
+	const jarName = "opentelemetry-logback-mdc-1.0-2.32.0-alpha.jar"
+	const expectedPURL = "pkg:maven/io.opentelemetry.instrumentation/opentelemetry-logback-mdc-1.0@2.32.0-alpha"
+
+	t.Run("archive-reading cataloger", func(t *testing.T) {
+		dir := t.TempDir()
+		_ = writeJar(t, dir, jarName, entries)
+		resolver, err := fileresolver.NewFromDirectory(dir, "")
+		require.NoError(t, err)
+
+		archiveCtx := tmpdir.WithValue(context.Background(), tmpdir.FromPath(t.TempDir()))
+		pkgs, _, err := NewArchiveCataloger(DefaultArchiveCatalogerConfig()).Catalog(archiveCtx, resolver)
+		require.NoError(t, err)
+		require.Len(t, pkgs, 1)
+		assert.Equal(t, "opentelemetry-logback-mdc-1.0", pkgs[0].Name)
+		assert.Equal(t, "2.32.0-alpha", pkgs[0].Version)
+		assert.Equal(t, expectedPURL, pkgs[0].PURL)
+	})
+
+	t.Run("contents-reading cataloger", func(t *testing.T) {
+		dir := t.TempDir()
+		explode(t, dir, entries)
+		resolver, err := fileresolver.NewFromDirectory(dir, "")
+		require.NoError(t, err)
+
+		ctx := archive.WithTraversal(context.Background(), &archive.Traversal{
+			Location: file.NewLocation(jarName),
+		})
+		pkgs, _, err := NewArchiveCataloger(DefaultArchiveCatalogerConfig()).Catalog(ctx, resolver)
+		require.NoError(t, err)
+		require.Len(t, pkgs, 1)
+		assert.Equal(t, "opentelemetry-logback-mdc-1.0", pkgs[0].Name)
+		assert.Equal(t, "2.32.0-alpha", pkgs[0].Version)
+		assert.Equal(t, expectedPURL, pkgs[0].PURL)
+	})
+}
