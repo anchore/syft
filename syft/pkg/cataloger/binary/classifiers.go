@@ -954,9 +954,20 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "chrome-binary",
 			FileGlob: "**/chrome",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// [NUL]127.0.6533.119[NUL]Default
-				`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\x00Default`,
+			EvidenceMatcher: binutils.MatchAny(
+				// older builds: [NUL]127.0.6533.119[NUL]Default
+				m.FileContentsVersionMatcher(
+					`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\x00Default`,
+				),
+				// Chrome for Testing 153: [NUL]Chrome/153.0.8010.52[NUL]
+				m.FileContentsVersionMatcher(
+					`\x00Chrome/(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+				),
+				// Chrome for Testing 156+: the version only survives in a serialized section, directly
+				// after this stable entry name: [NUL]glic-actor-ui-debounce-timer[NUL]156.0.8078.4[NUL]
+				m.FileContentsVersionMatcher(
+					`glic-actor-ui-debounce-timer\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+				),
 			),
 			Package: "chrome",
 			PURL:    mustPURL("pkg:generic/chrome@version"),

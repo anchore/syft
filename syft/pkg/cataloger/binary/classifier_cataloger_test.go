@@ -2069,6 +2069,42 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// Chrome for Testing 153: the version is prefixed with "Chrome/" instead of followed by "Default"
+			logicalFixture: "chrome/153.0.8010.52/linux-amd64",
+			expected: pkg.Package{
+				Name:      "chrome",
+				Version:   "153.0.8010.52",
+				Type:      "binary",
+				PURL:      "pkg:generic/chrome@153.0.8010.52",
+				Locations: locations("chrome"),
+				Metadata:  metadata("chrome-binary"),
+			},
+		},
+		{
+			// Chrome for Testing 156+: the version survives only in a serialized section, directly
+			// after the glic-actor-ui-debounce-timer entry name
+			logicalFixture: "chrome/156.0.8078.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "chrome",
+				Version:   "156.0.8078.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/chrome@156.0.8078.4",
+				Locations: locations("chrome"),
+				Metadata:  metadata("chrome-binary"),
+			},
+		},
+		{
+			logicalFixture: "chrome/158.0.8127.88/linux-amd64",
+			expected: pkg.Package{
+				Name:      "chrome",
+				Version:   "158.0.8127.88",
+				Type:      "binary",
+				PURL:      "pkg:generic/chrome@158.0.8127.88",
+				Locations: locations("chrome"),
+				Metadata:  metadata("chrome-binary"),
+			},
+		},
+		{
 			logicalFixture: "firefox/151.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "firefox",
