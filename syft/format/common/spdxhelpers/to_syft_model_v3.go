@@ -12,6 +12,7 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
@@ -550,7 +551,7 @@ func v3toSyftLicenses(licenseType license.Type, licenses ...spdx.AnyLicenseInfo)
 		if lic == nil {
 			continue
 		}
-		value := v3licenseInfoToExpression(lic)
+		value := v3StripBareLicenseRef(v3licenseInfoToExpression(lic))
 		if value == "" {
 			log.Debugf("skipping SPDX license during import: %#v", lic)
 			continue
@@ -603,12 +604,36 @@ func v3licenseInfoToExpression(info spdx.AnyLicenseInfo) string {
 	case spdx.AnyListedLicense:
 		return li.GetName()
 	case spdx.AnyCustomLicense:
-		if li.GetID() != "" {
-			return li.GetID()
+		if ref := v3CustomLicenseRef(li.GetID()); ref != "" {
+			return ref
 		}
 		return li.GetName()
 	}
 	return ""
+}
+
+// v3CustomLicenseRef returns the license reference for a SPDX 3.0 custom
+// license element ID, dropping the document prefix. In a parsed document the
+// ID is a compact IRI (SPDXRef:LicenseRef-<name>) or a full IRI
+// (https://example.com/spdx/doc#LicenseRef-<name>); the document prefix is
+// not part of the license reference.
+func v3CustomLicenseRef(id string) string {
+	if idx := strings.LastIndex(id, "#"); idx >= 0 {
+		return id[idx+1:]
+	}
+	return strings.TrimPrefix(id, "SPDXRef:")
+}
+
+// v3StripBareLicenseRef strips the LicenseRef- prefix from a bare custom
+// license reference (e.g. LicenseRef-UNLICENSED -> UNLICENSED), matching how
+// the SPDX 2.3 decoder treats a bare declared license (cleanSPDXID).
+// Compound expressions are left untouched so their LicenseRef- operands
+// remain valid SPDX expression tokens.
+func v3StripBareLicenseRef(value string) string {
+	if rest, ok := strings.CutPrefix(value, spdxlicense.LicenseRefPrefix); ok && rest != "" && !strings.ContainsAny(rest, " ()+") {
+		return rest
+	}
+	return value
 }
 
 //nolint:funlen

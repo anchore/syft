@@ -251,6 +251,26 @@ func Test_v3licenseInfoToExpression(t *testing.T) {
 			expected: "LicenseRef-Custom-1",
 		},
 		{
+			name:     "custom license with document-prefixed ID",
+			info:     &spdx.CustomLicense{ID: "SPDXRef:LicenseRef-UNLICENSED", Name: "UNLICENSED"},
+			expected: "LicenseRef-UNLICENSED",
+		},
+		{
+			name:     "custom license with full IRI ID",
+			info:     &spdx.CustomLicense{ID: "https://example.com/spdx/shop-web-1.4.0#LicenseRef-UNLICENSED", Name: "UNLICENSED"},
+			expected: "LicenseRef-UNLICENSED",
+		},
+		{
+			name: "disjunctive set with custom license keeps LicenseRef- operand",
+			info: &spdx.DisjunctiveLicenseSet{
+				Members: spdx.LicenseInfoList{
+					&spdx.ListedLicense{Name: "MIT"},
+					&spdx.CustomLicense{ID: "SPDXRef:LicenseRef-Acme-Commercial", Name: "Acme Commercial"},
+				},
+			},
+			expected: "(MIT OR LicenseRef-Acme-Commercial)",
+		},
+		{
 			name:     "custom license without ID falls back to name",
 			info:     &spdx.CustomLicense{Name: "Custom License"},
 			expected: "Custom License",
@@ -374,6 +394,35 @@ func Test_v3toSyftLicenses(t *testing.T) {
 				&spdx.ListedLicense{Name: "GPL-2.0-only"},
 			},
 			expected: []string{"MIT", "GPL-2.0-only"},
+		},
+		{
+			name:        "bare custom license with document-prefixed ID drops the prefix",
+			licenseType: license.Declared,
+			licenses: []spdx.AnyLicenseInfo{
+				&spdx.CustomLicense{ID: "SPDXRef:LicenseRef-UNLICENSED", Name: "UNLICENSED"},
+			},
+			expected: []string{"UNLICENSED"},
+		},
+		{
+			name:        "bare custom license with full IRI ID drops the prefix",
+			licenseType: license.Declared,
+			licenses: []spdx.AnyLicenseInfo{
+				&spdx.CustomLicense{ID: "https://example.com/spdx/shop-web-1.4.0#LicenseRef-UNLICENSED", Name: "UNLICENSED"},
+			},
+			expected: []string{"UNLICENSED"},
+		},
+		{
+			name:        "disjunctive set with custom license keeps LicenseRef- operand",
+			licenseType: license.Declared,
+			licenses: []spdx.AnyLicenseInfo{
+				&spdx.DisjunctiveLicenseSet{
+					Members: spdx.LicenseInfoList{
+						&spdx.ListedLicense{Name: "MIT"},
+						&spdx.CustomLicense{ID: "SPDXRef:LicenseRef-Acme-Commercial", Name: "Acme Commercial"},
+					},
+				},
+			},
+			expected: []string{"(MIT OR LicenseRef-Acme-Commercial)"},
 		},
 	}
 
