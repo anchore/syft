@@ -98,7 +98,7 @@ require (
 	golang.org/x/net v0.63.0
 	golang.org/x/sys v0.50.0
 	golang.org/x/time v0.16.0
-	golang.org/x/tools v0.52.0
+	golang.org/x/tools v0.53.0
 	howett.net/plist v1.0.1
 	modernc.org/sqlite v1.62.0
 )
