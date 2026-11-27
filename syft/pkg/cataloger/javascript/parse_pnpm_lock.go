@@ -44,6 +44,25 @@ type pnpmV6PackageEntry struct {
 	Resolution   map[string]string `yaml:"resolution"`
 	Dependencies map[string]string `yaml:"dependencies"`
 	Dev          bool              `yaml:"dev"`
+	Name         string            `yaml:"name"`
+	Version      string            `yaml:"version"`
+}
+
+// isNonRegistry reports a tarball or git package, which pnpm keys by its source.
+func (e pnpmV6PackageEntry) isNonRegistry() bool {
+	return e.Name != "" && e.Version != ""
+}
+
+// nameVersion reads the name and version from the entry's fields when set, else from its key.
+func (e pnpmV6PackageEntry) nameVersion(key, splitChar string, isV5 bool) (string, string, bool) {
+	if e.isNonRegistry() {
+		return e.Name, e.Version, true
+	}
+	name, ver, ok := parsePnpmPackageKey(key, splitChar)
+	if ok && isV5 {
+		ver = stripPnpmV5PeerSuffix(ver)
+	}
+	return name, ver, ok
 }
 
 // pnpmV6LockYaml represents the structure of pnpm lockfiles for versions < 9.0.
@@ -95,11 +114,22 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 
 	packages := make(map[string]pnpmPackage)
 
+	nonRegistry := make(map[string]bool)
+	for key, pkgInfo := range p.Packages {
+		if pkgInfo.isNonRegistry() {
+			nonRegistry[strings.SplitN(key, "(", 2)[0]] = true
+		}
+	}
+
 	// Direct dependencies — use sorted keys for deterministic output
 	for name, info := range sortedIter(p.Dependencies) {
 		ver, err := parseVersionField(name, info)
 		if err != nil {
 			log.WithFields("package", name, "error", err).Trace("unable to parse pnpm dependency")
+			continue
+		}
+		// a tarball or git dependency's version is its package key, and that entry reports it
+		if nonRegistry[ver] {
 			continue
 		}
 		if isV5 {
@@ -116,13 +146,10 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 
 	// All transitive dependencies — use sorted keys for deterministic output
 	for key, pkgInfo := range sortedIter(p.Packages) {
-		name, ver, ok := parsePnpmPackageKey(key, splitChar)
+		name, ver, ok := pkgInfo.nameVersion(key, splitChar, isV5)
 		if !ok {
 			log.WithFields("key", key).Trace("unable to parse pnpm package key")
 			continue
-		}
-		if isV5 {
-			ver = stripPnpmV5PeerSuffix(ver)
 		}
 		pkgKey := name + "@" + ver
 

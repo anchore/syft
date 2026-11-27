@@ -1,0 +1,42 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  '@itsmapleleaf/configs':
+    specifier: github:itsMapleLeaf/configs#1a91867fdcc06d324a77a103e310be3983bdeb1d
+    version: github.com/itsMapleLeaf/configs/1a91867fdcc06d324a77a103e310be3983bdeb1d(typescript@5.2.2)
+  '@snyk/gemfile':
+    specifier: https://codeload.github.com/snyk/gemfile/tar.gz/fff475b
+    version: '@codeload.github.com/snyk/gemfile/tar.gz/fff475b'
+  typescript:
+    specifier: ^5.2.2
+    version: 5.2.2
+
+packages:
+
+  '@codeload.github.com/snyk/gemfile/tar.gz/fff475b':
+    resolution: {tarball: https://codeload.github.com/snyk/gemfile/tar.gz/fff475b}
+    name: '@snyk/gemfile'
+    version: 0.0.0
+    engines: {node: '>= 4.2.4'}
+    dev: false
+
+  /typescript@5.2.2:
+    resolution: {integrity: sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+    dev: false
+
+  github.com/itsMapleLeaf/configs/1a91867fdcc06d324a77a103e310be3983bdeb1d(typescript@5.2.2):
+    resolution: {tarball: https://codeload.github.com/itsMapleLeaf/configs/tar.gz/1a91867fdcc06d324a77a103e310be3983bdeb1d}
+    id: github.com/itsMapleLeaf/configs/1a91867fdcc06d324a77a103e310be3983bdeb1d
+    name: '@itsmapleleaf/configs'
+    version: 4.0.0
+    peerDependencies:
+      typescript: ^5
+    dependencies:
+      typescript: 5.2.2
+    dev: false
