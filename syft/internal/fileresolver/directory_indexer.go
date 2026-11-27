@@ -226,12 +226,23 @@ func (r *directoryIndexer) indexBranch(root string, stager *progress.AtomicStage
 		if err != nil && !errors.Is(err, ErrSkipPath) && !errors.Is(err, fs.SkipDir) {
 			return nil, fmt.Errorf("unable to index ancestor path=%q: %w", targetPath, err)
 		}
-		if newRoot != "" {
+		// an ancestor symlink may resolve to the real root or one of its parents. The real root was already indexed
+		// above, and queueing a parent would walk unrelated siblings of the root, so only queue other targets.
+		if newRoot != "" && !isSameOrParentPath(newRoot, rootRealPath) {
 			roots = append(roots, newRoot)
 		}
 	}
 
 	return roots, nil
+}
+
+// isSameOrParentPath returns true when candidate is the same path as, or an ancestor of, p.
+func isSameOrParentPath(candidate, p string) bool {
+	rel, err := filepath.Rel(filepath.Clean(candidate), filepath.Clean(p))
+	if err != nil {
+		return false
+	}
+	return rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)))
 }
 
 func allContainedPaths(p string) []string {
