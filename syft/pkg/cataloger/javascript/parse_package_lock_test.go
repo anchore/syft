@@ -482,3 +482,38 @@ func Test_corruptPackageLock(t *testing.T) {
 		WithError().
 		TestParser(t, gap.parsePackageLock)
 }
+
+func TestParsePackageLockLink(t *testing.T) {
+	fixture := "testdata/pkg-lock/link-package-lock.json"
+	expectedPkgs := []pkg.Package{
+		{
+			Name:     "link-fixture",
+			Version:  "1.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/link-fixture@1.0.0",
+			Metadata: pkg.NpmPackageLockEntry{Dependencies: map[string]string{"example": "file:./packages/example"}},
+		},
+		{
+			Name:     "example",
+			Version:  "8.8.8",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/example@8.8.8",
+			Licenses: pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(context.TODO(), "Apache-2.0", file.NewLocation(fixture))),
+			Metadata: pkg.NpmPackageLockEntry{},
+		},
+	}
+	for i := range expectedPkgs {
+		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
+	}
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: expectedPkgs[1],
+			To:   expectedPkgs[0],
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
+}
