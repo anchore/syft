@@ -764,6 +764,31 @@ func TestParsePnpmLock_MultiDocument(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
 }
 
+// a runtime entry (written by pnpm for devEngines.runtime) carries a `type: variations`
+// resolution with a list of variants; it must not cause the rest of the document to be dropped
+func TestParsePnpmLock_RuntimeEntry(t *testing.T) {
+	var expectedRelationships []artifact.Relationship
+	fixture := "testdata/pnpm-runtime/pnpm-lock.yaml"
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "is-number",
+			Version:   "7.0.0",
+			PURL:      "pkg:npm/is-number@7.0.0",
+			Locations: file.NewLocationSet(file.NewLocation(fixture)),
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng=="},
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{IncludeDevDependencies: true})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
+}
+
 // pnpmDoc renders a minimal v9 lockfile document holding a single package.
 func pnpmDoc(version, name, ver, integrity string) string {
 	doc := ""

@@ -40,8 +40,16 @@ type pnpmLockfileParser interface {
 	Parse(version float64, doc *yaml.Node) ([]pnpmPackage, error)
 }
 
+// pnpmResolution holds the only resolution field syft uses. Decoding into a struct rather
+// than a map[string]string tolerates resolutions with non-scalar values, such as the
+// `variants` list pnpm writes for runtime entries (`type: variations`), which would
+// otherwise fail the whole lockfile document.
+type pnpmResolution struct {
+	Integrity string `yaml:"integrity"`
+}
+
 type pnpmV6PackageEntry struct {
-	Resolution   map[string]string `yaml:"resolution"`
+	Resolution   pnpmResolution    `yaml:"resolution"`
 	Dependencies map[string]string `yaml:"dependencies"`
 	Dev          bool              `yaml:"dev"`
 }
@@ -60,7 +68,7 @@ type pnpmV9SnapshotEntry struct {
 }
 
 type pnpmV9PackageEntry struct {
-	Resolution       map[string]string `yaml:"resolution"`
+	Resolution       pnpmResolution    `yaml:"resolution"`
 	PeerDependencies map[string]string `yaml:"peerDependencies"`
 	Dev              bool              `yaml:"dev"`
 }
@@ -126,10 +134,7 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 		}
 		pkgKey := name + "@" + ver
 
-		integrity := ""
-		if value, ok := pkgInfo.Resolution["integrity"]; ok {
-			integrity = value
-		}
+		integrity := pkgInfo.Resolution.Integrity
 
 		dependencies := make(map[string]string)
 		for depName, depVersion := range sortedIter(pkgInfo.Dependencies) {
@@ -163,8 +168,12 @@ func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error)
 			log.WithFields("key", key).Trace("unable to parse pnpm v9 package key")
 			continue
 		}
+		if isPnpmRuntimeVersion(ver) {
+			log.WithFields("key", key).Trace("skipping pnpm runtime entry")
+			continue
+		}
 		pkgKey := name + "@" + ver
-		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"], Dev: entry.Dev}
+		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution.Integrity, Dev: entry.Dev}
 	}
 
 	for key, snapshotInfo := range sortedIter(p.Snapshots) {
@@ -342,6 +351,13 @@ func stripPnpmV5PeerSuffix(version string) string {
 		return version
 	}
 	return version[:idx]
+}
+
+// isPnpmRuntimeVersion reports whether a lockfile version refers to a runtime that pnpm
+// installs from its distribution archives (e.g. "node@runtime:22.23.4" from
+// devEngines.runtime) rather than an npm registry package.
+func isPnpmRuntimeVersion(version string) bool {
+	return strings.HasPrefix(version, "runtime:")
 }
 
 // parsePnpmPackageKey extracts the package name and version from a lockfile package key.
