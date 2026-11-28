@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -332,6 +333,51 @@ func Test_parseDpkgStatus(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_dpkgPackageNotInstalled(t *testing.T) {
+	tests := []struct {
+		status string
+		skip   bool
+	}{
+		{status: "install ok installed", skip: false},
+		{status: "deinstall ok installed", skip: false},
+		{status: "hold ok unpacked", skip: false},
+		{status: "deinstall ok config-files", skip: true},
+		{status: "purge ok config-files", skip: true},
+		{status: "purge ok not-installed", skip: true},
+		{status: "deinstall", skip: true},
+		{status: "", skip: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.status, func(t *testing.T) {
+			require.Equal(t, tt.skip, dpkgPackageNotInstalled(tt.status))
+		})
+	}
+}
+
+func Test_parseDpkgStatus_selectionStateIsNotInstallState(t *testing.T) {
+	input := `Package: zlib1g
+Status: deinstall ok installed
+Version: 1:1.2.13.dfsg-1
+
+Package: tzdata
+Status: purge ok config-files
+Version: 2024a-0ubuntu0.22.04
+
+Package: apt
+Status: install ok installed
+Version: 2.6.1
+
+`
+	raw, err := parseDpkgStatus(strings.NewReader(input))
+	require.NoError(t, err)
+
+	var names []string
+	for _, entry := range raw {
+		names = append(names, entry.Package)
+	}
+	require.Equal(t, []string{"zlib1g", "apt"}, names)
 }
 
 func Test_corruptEntry(t *testing.T) {
