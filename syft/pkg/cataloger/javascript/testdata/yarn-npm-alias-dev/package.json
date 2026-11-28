@@ -1,0 +1,10 @@
+{
+  "name": "repro-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "left-pad": "1.0.0"
+  },
+  "devDependencies": {
+    "dev-chalk": "npm:chalk@^5.3.0"
+  }
+}

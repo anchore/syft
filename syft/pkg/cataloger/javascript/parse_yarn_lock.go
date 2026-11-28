@@ -57,6 +57,9 @@ type yarnPackage struct {
 	Resolved     string
 	Integrity    string
 	Dependencies map[string]string
+	// Descriptors are the lockfile keys for this entry, such as
+	// "legacy-chalk@npm:chalk@^4.1.2" or "chalk@^5.3.0".
+	Descriptors []string
 }
 
 type yarnV2PackageEntry struct {
@@ -120,50 +123,134 @@ func readPackageJSONDeps(resolver file.Resolver, lockfileLocation file.Location)
 	return prod, dev
 }
 
-// findReachable returns all package names reachable from the given roots via BFS
-// through the dependency graph.
-func findReachable(roots map[string]string, pkgByName map[string]yarnPackage) map[string]bool {
-	visited := make(map[string]bool)
-	queue := make([]string, 0, len(roots))
-
-	for name := range roots {
-		queue = append(queue, name)
+// findReachableVersions returns name@version identities reachable from roots.
+// A root or dependency is matched by its lockfile descriptor first, so an
+// npm: alias such as legacy-chalk@npm:chalk@^4.1.2 selects that entry rather
+// than every package named chalk. Yarn Berry keys often insert an npm: protocol
+// that package.json does not, so both forms are tried.
+func findReachableVersions(roots map[string]string, pkgs []yarnPackage) map[string]bool {
+	byDesc := make(map[string]int, len(pkgs))
+	byName := make(map[string][]int, len(pkgs))
+	for i := range pkgs {
+		byName[pkgs[i].Name] = append(byName[pkgs[i].Name], i)
+		for _, desc := range pkgs[i].Descriptors {
+			byDesc[desc] = i
+		}
 	}
 
-	for len(queue) > 0 {
-		name := queue[0]
-		queue = queue[1:]
-
-		if visited[name] {
-			continue
-		}
-		visited[name] = true
-
-		if pkg, exists := pkgByName[name]; exists {
-			for depName := range pkg.Dependencies {
-				if !visited[depName] {
-					queue = append(queue, depName)
-				}
+	visited := make(map[int]bool)
+	reached := make(map[string]bool)
+	queue := make([]int, 0, len(roots))
+	enqueue := func(name, spec string) {
+		for _, i := range resolveYarnDep(name, spec, byDesc, byName) {
+			if !visited[i] {
+				queue = append(queue, i)
 			}
 		}
 	}
+	for name, spec := range roots {
+		enqueue(name, spec)
+	}
 
-	return visited
+	for len(queue) > 0 {
+		i := queue[0]
+		queue = queue[1:]
+		if visited[i] {
+			continue
+		}
+		visited[i] = true
+		p := pkgs[i]
+		if p.Name != "" {
+			reached[p.Name+"@"+p.Version] = true
+		}
+		for depName, depSpec := range p.Dependencies {
+			enqueue(depName, depSpec)
+		}
+	}
+
+	return reached
+}
+
+func resolveYarnDep(name, spec string, byDesc map[string]int, byName map[string][]int) []int {
+	if i, ok := lookupYarnDescriptor(name, spec, byDesc); ok {
+		return []int{i}
+	}
+	if real := npmAliasPackage(spec); real != "" {
+		if idxs, ok := byName[real]; ok {
+			return idxs
+		}
+	}
+	return byName[name]
+}
+
+func lookupYarnDescriptor(name, spec string, byDesc map[string]int) (int, bool) {
+	if i, ok := byDesc[name+"@"+spec]; ok {
+		return i, true
+	}
+	if spec != "" && !strings.HasPrefix(spec, "npm:") {
+		if i, ok := byDesc[name+"@npm:"+spec]; ok {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
+// npmAliasPackage returns the package named by an npm: alias specifier.
+// "npm:chalk@^4.1.2" is chalk. "npm:^4.1.2" is only a protocol prefix, not an alias.
+func npmAliasPackage(spec string) string {
+	rest, ok := strings.CutPrefix(spec, "npm:")
+	if !ok || rest == "" {
+		return ""
+	}
+	name := rest
+	if strings.HasPrefix(rest, "@") {
+		slash := strings.Index(rest, "/")
+		if slash < 0 {
+			return ""
+		}
+		if at := strings.LastIndex(rest, "@"); at > slash {
+			name = rest[:at]
+		}
+	} else if at := strings.Index(rest, "@"); at >= 0 {
+		name = rest[:at]
+	}
+	if name == "" || isYarnVersionRange(name) {
+		return ""
+	}
+	return name
+}
+
+func isYarnVersionRange(s string) bool {
+	switch s[0] {
+	case '^', '~', '>', '<', '=', '*', 'v', 'x', 'X':
+		return true
+	}
+	return s[0] >= '0' && s[0] <= '9'
+}
+
+func yarnLockDescriptors(header string) []string {
+	header = strings.TrimSpace(header)
+	header = strings.TrimSuffix(header, ":")
+	parts := strings.Split(header, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		part = strings.Trim(part, "\"")
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
 }
 
 func findDevOnlyPkgs(yarnPkgs []yarnPackage, prodDeps, devDeps map[string]string) map[string]bool {
-	pkgByName := make(map[string]yarnPackage)
-	for _, p := range yarnPkgs {
-		pkgByName[p.Name] = p
-	}
-
-	prodTransitive := findReachable(prodDeps, pkgByName)
-	devTransitive := findReachable(devDeps, pkgByName)
+	prodTransitive := findReachableVersions(prodDeps, yarnPkgs)
+	devTransitive := findReachableVersions(devDeps, yarnPkgs)
 
 	devOnly := make(map[string]bool)
-	for name := range devTransitive {
-		if !prodTransitive[name] {
-			devOnly[name] = true
+	for id := range devTransitive {
+		if !prodTransitive[id] {
+			devOnly[id] = true
 		}
 	}
 
@@ -203,6 +290,7 @@ func parseYarnV1LockFile(reader io.ReadCloser) ([]yarnPackage, error) {
 		if !strings.HasPrefix(line, " ") {
 			name := line
 			pkg.Name = findPackageName(name)
+			pkg.Descriptors = yarnLockDescriptors(name)
 			continue
 		}
 		if strings.HasPrefix(line, "  ") && !strings.HasPrefix(line, "    ") {
@@ -273,7 +361,14 @@ func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
 			continue
 		}
 
-		var pkg = yarnPackage{Name: packageName, Version: value.Version, Resolved: value.Resolution, Integrity: value.Checksum, Dependencies: value.Dependencies}
+		var pkg = yarnPackage{
+			Name:         packageName,
+			Version:      value.Version,
+			Resolved:     value.Resolution,
+			Integrity:    value.Checksum,
+			Dependencies: value.Dependencies,
+			Descriptors:  yarnLockDescriptors(key),
+		}
 		var nameVersion = pkg.Name + "@" + pkg.Version
 
 		if !seenPkgs.Has(nameVersion) {
@@ -319,7 +414,7 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 
 	packages := make([]pkg.Package, 0, len(yarnPkgs))
 	for _, p := range yarnPkgs {
-		if devOnlyPkgs[p.Name] && !a.cfg.IncludeDevDependencies {
+		if devOnlyPkgs[p.Name+"@"+p.Version] && !a.cfg.IncludeDevDependencies {
 			continue
 		}
 		packages = append(packages, newYarnLockPackage(ctx, a.licenseResolver, resolver, reader.Location, p.Name, p.Version, p.Resolved, p.Integrity, p.Dependencies))
