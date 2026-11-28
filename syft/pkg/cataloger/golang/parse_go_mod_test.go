@@ -20,6 +20,20 @@ func TestParseGoMod(t *testing.T) {
 		expected []pkg.Package
 	}{
 		{
+			fixture: "testdata/go-mod-fixtures/exclude-other-version/go.mod",
+			expected: []pkg.Package{
+				{
+					Name:      "github.com/google/uuid",
+					Version:   "v1.6.0",
+					PURL:      "pkg:golang/github.com/google/uuid@v1.6.0",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/go-mod-fixtures/exclude-other-version/go.mod")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Metadata:  pkg.GolangModuleEntry{},
+				},
+			},
+		},
+		{
 			fixture: "testdata/go-mod-fixtures/one-package/go.mod",
 			expected: []pkg.Package{
 				{
