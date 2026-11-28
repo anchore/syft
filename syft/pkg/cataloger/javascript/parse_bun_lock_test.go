@@ -426,6 +426,34 @@ func TestParseBunLock_Fixtures(t *testing.T) {
 	}
 }
 
+// Workspace optionalDependencies are production-reachable: syft must keep them (and their
+// runtime dependencies) even when the same packages are also reachable from devDependencies.
+func TestParseBunLock_WorkspaceOptionalDependencies(t *testing.T) {
+	fixture := "test-fixtures/bun-workspace-optional/bun.lock"
+
+	f, err := os.Open(fixture)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = f.Close() })
+
+	// fsevents is an optional dependency of the root workspace and is also an optional
+	// dependency of the dev-only chokidar package. chokidar must be filtered out, but
+	// fsevents and its runtime dependency detect-libc must be retained by default.
+	adapter := newGenericBunLockAdapter(CatalogerConfig{IncludeDevDependencies: false})
+	pkgs, _, err := adapter.parseBunLock(
+		context.Background(),
+		nil,
+		nil,
+		file.NewLocationReadCloser(file.NewLocation(fixture), f),
+	)
+	require.NoError(t, err)
+
+	var names []string
+	for _, p := range pkgs {
+		names = append(names, p.Name)
+	}
+	assert.ElementsMatch(t, []string{"detect-libc", "fsevents"}, names)
+}
+
 func TestParseBunPackageIdentifier(t *testing.T) {
 	tests := []struct {
 		name       string
