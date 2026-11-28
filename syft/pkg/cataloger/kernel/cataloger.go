@@ -37,6 +37,8 @@ var kernelArchiveGlobs = []string{
 	"**/kernel-*",
 	"**/vmlinux",
 	"**/vmlinux-*",
+	"**/vmlinux.bin",
+	"**/vmlinux.bin-*",
 	"**/vmlinuz",
 	"**/vmlinuz-*",
 	"**/bzImage",
