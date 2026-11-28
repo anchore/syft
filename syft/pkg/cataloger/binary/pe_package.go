@@ -73,6 +73,14 @@ func newPEBinaryVersionResourcesFromMap(vr map[string]string) pkg.PEBinary {
 }
 
 func findNameFromVR(versionResources map[string]string) string {
+	// JRuby's Windows launcher (bin/jruby.exe, bin/jrubyw.exe) carries ProductName "JRuby" with the
+	// launcher's own version resources (1.0 in jruby-dist 9.4.14.0), not the JRuby runtime version.
+	// Naming it "JRuby" reports JRuby 1.0 and matches CVEs for that release. The runtime version can
+	// be found separately, e.g. from the jruby-core jar.
+	if isJRubyLauncherVR(versionResources) {
+		return "jruby-launcher"
+	}
+
 	// PE files not authored by Microsoft tend to use ProductName as an identifier.
 	nameFields := []string{"ProductName", "FileDescription", "InternalName", "OriginalFilename"}
 
@@ -93,6 +101,11 @@ func findNameFromVR(versionResources map[string]string) string {
 
 	return name
 }
+func isJRubyLauncherVR(versionResources map[string]string) bool {
+	return strings.EqualFold(spaceNormalize(versionResources["ProductName"]), "jruby") &&
+		strings.EqualFold(spaceNormalize(versionResources["FileDescription"]), "windows jruby launcher")
+}
+
 func isMicrosoftVR(versionResources map[string]string) bool {
 	return strings.Contains(strings.ToLower(versionResources["CompanyName"]), "microsoft") ||
 		strings.Contains(strings.ToLower(versionResources["ProductName"]), "microsoft")
