@@ -1,9 +1,9 @@
 package pkg
 
 import (
+	"slices"
 	"sync"
 
-	"github.com/jinzhu/copier"
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/log"
@@ -52,13 +52,7 @@ func (c *Collection) Package(id artifact.ID) *Package {
 	if !exists {
 		return nil
 	}
-	var p Package
-	if err := copier.Copy(&p, &v); err != nil {
-		log.Debugf("unable to copy package id=%q name=%q: %+v", id, v.Name, err)
-		return nil
-	}
-	p.id = v.id
-	return &p
+	return &v
 }
 
 // PackagesByPath returns all packages that were discovered from the given path: a file's full path or
@@ -259,23 +253,12 @@ func (c *Collection) Enumerate(types ...Type) <-chan Package {
 		defer c.lock.RUnlock()
 
 		for ty, ids := range c.idsByType {
-			if len(types) != 0 {
-				found := false
-			typeCheck:
-				for _, t := range types {
-					if t == ty {
-						found = true
-						break typeCheck
-					}
-				}
-				if !found {
-					continue
-				}
+			if len(types) != 0 && !slices.Contains(types, ty) {
+				continue
 			}
 			for _, id := range ids.slice {
-				p := c.Package(id)
-				if p != nil {
-					channel <- *p
+				if p, ok := c.byID[id]; ok {
+					channel <- p
 				}
 			}
 		}

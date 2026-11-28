@@ -558,3 +558,46 @@ func BenchmarkCollectionAdd(b *testing.B) {
 		})
 	}
 }
+
+func TestCatalog_PackageReturnsCopyWithID(t *testing.T) {
+	p := Package{Name: "pkg-a", Version: "1.0", Type: NpmPkg}
+	p.SetID()
+	c := NewCollection(p)
+
+	got := c.Package(p.ID())
+	require.NotNil(t, got)
+	assert.Equal(t, p.ID(), got.ID())
+
+	got.Name = "mutated"
+	assert.Equal(t, "pkg-a", c.Package(p.ID()).Name)
+}
+
+func BenchmarkCollectionPackage(b *testing.B) {
+	for _, count := range []int{1_000, 10_000} {
+		c := NewCollection()
+		ids := make([]artifact.ID, count)
+		for i := range ids {
+			p := Package{
+				Name:      fmt.Sprintf("package-%d", i),
+				Version:   "1.0.0",
+				Type:      NpmPkg,
+				Locations: file.NewLocationSet(file.NewLocation("/app/package-lock.json")),
+				Licenses:  NewLicenseSet(NewLicense("MIT")),
+				CPEs:      []cpe.CPE{cpe.Must(fmt.Sprintf("cpe:2.3:a:package-%d:package-%d:1.0.0:*:*:*:*:*:*:*", i, i), cpe.GeneratedSource)},
+				Metadata:  NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/x.tgz", Integrity: "sha512-x"},
+			}
+			p.SetID()
+			c.Add(p)
+			ids[i] = p.ID()
+		}
+
+		b.Run(fmt.Sprintf("packages=%d", count), func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				for _, id := range ids {
+					_ = c.Package(id)
+				}
+			}
+		})
+	}
+}

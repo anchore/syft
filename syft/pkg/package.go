@@ -106,38 +106,119 @@ func IsValid(p *Package) bool {
 }
 
 func Less(i, j Package) bool {
-	if i.Name == j.Name {
-		if i.Version == j.Version {
-			iLocations := i.Locations.ToSlice()
-			jLocations := j.Locations.ToSlice()
-			if i.Type == j.Type {
-				maxLen := max(len(jLocations), len(iLocations))
-				for l := range maxLen {
-					if len(iLocations) < l+1 || len(jLocations) < l+1 {
-						if len(iLocations) == len(jLocations) {
-							break
-						}
-						return len(iLocations) < len(jLocations)
-					}
-					if iLocations[l].FullNestedPath() == jLocations[l].FullNestedPath() {
-						continue
-					}
-					return iLocations[l].FullNestedPath() < jLocations[l].FullNestedPath()
-				}
-				// compare remaining metadata as a final fallback
-				// note: we cannot guarantee that IDs (which digests the metadata) are stable enough to sort on
-				// when there are potentially missing elements there is too much reduction in the dimensions to
-				// lean on ID comparison. The best fallback is to look at the string representation of the metadata.
-				return strings.Compare(fmt.Sprintf("%#v", i.Metadata), fmt.Sprintf("%#v", j.Metadata)) < 0
-			}
-			return i.Type < j.Type
-		}
+	if sameNameVersionType(&i, &j) {
+		var ki, kj sortKey
+		return lessTied(&i, &j, &ki, &kj)
+	}
+	return lessByNameVersionType(&i, &j)
+}
+
+func sameNameVersionType(i, j *Package) bool {
+	return i.Name == j.Name && i.Version == j.Version && i.Type == j.Type
+}
+
+func lessByNameVersionType(i, j *Package) bool {
+	if i.Name != j.Name {
+		return i.Name < j.Name
+	}
+	if i.Version != j.Version {
 		return i.Version < j.Version
 	}
-	return i.Name < j.Name
+	return i.Type < j.Type
 }
+
+// lessTied orders same name/version/type pkgs by locations, metadata
+func lessTied(i, j *Package, ki, kj *sortKey) bool {
+	iLocations, jLocations := ki.locationsOf(i), kj.locationsOf(j)
+	for l := range min(len(iLocations), len(jLocations)) {
+		iPath, jPath := iLocations[l].FullNestedPath(), jLocations[l].FullNestedPath()
+		if iPath != jPath {
+			return iPath < jPath
+		}
+	}
+	if len(iLocations) != len(jLocations) {
+		return len(iLocations) < len(jLocations)
+	}
+	// metadata string fallback; IDs not stable enough
+	return strings.Compare(ki.metadataOf(i), kj.metadataOf(j)) < 0
+}
+
+// sortKey caches costly-to-compare pkg fields
+type sortKey struct {
+	locations    []file.Location
+	metadata     string
+	hasLocations bool
+	hasMetadata  bool
+}
+
+func (k *sortKey) locationsOf(p *Package) []file.Location {
+	if !k.hasLocations {
+		k.locations = p.Locations.ToSlice()
+		k.hasLocations = true
+	}
+	return k.locations
+}
+
+func (k *sortKey) metadataOf(p *Package) string {
+	if !k.hasMetadata {
+		k.metadata = fmt.Sprintf("%#v", p.Metadata)
+		k.hasMetadata = true
+	}
+	return k.metadata
+}
+
+// Sort is stable Less; keys computed once, lazily
 func Sort(pkgs []Package) {
-	sort.SliceStable(pkgs, func(i, j int) bool {
-		return Less(pkgs[i], pkgs[j])
-	})
+	if len(pkgs) < 2 {
+		return
+	}
+	s := packageSorter{pkgs: pkgs, order: make([]int, len(pkgs))}
+	for i := range pkgs {
+		s.order[i] = i
+	}
+	sort.Stable(&s)
+	permute(pkgs, s.order)
+}
+
+// permute applies order to pkgs in place, consumes order
+func permute(pkgs []Package, order []int) {
+	for start := range order {
+		if order[start] == start {
+			continue
+		}
+		first := pkgs[start]
+		dst := start
+		for {
+			src := order[dst]
+			order[dst] = dst
+			if src == start {
+				pkgs[dst] = first
+				break
+			}
+			pkgs[dst] = pkgs[src]
+			dst = src
+		}
+	}
+}
+
+type packageSorter struct {
+	pkgs  []Package
+	keys  []sortKey
+	order []int
+}
+
+func (s *packageSorter) Len() int { return len(s.order) }
+
+func (s *packageSorter) Swap(i, j int) { s.order[i], s.order[j] = s.order[j], s.order[i] }
+
+func (s *packageSorter) Less(i, j int) bool {
+	a, b := s.order[i], s.order[j]
+	pa, pb := &s.pkgs[a], &s.pkgs[b]
+	if !sameNameVersionType(pa, pb) {
+		return lessByNameVersionType(pa, pb)
+	}
+	if s.keys == nil {
+		s.keys = make([]sortKey, len(s.pkgs))
+	}
+	return lessTied(pa, pb, &s.keys[a], &s.keys[b])
 }
